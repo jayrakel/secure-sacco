@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { userApi, type User } from '../api/user-api';
 import { roleApi, type Role } from '../api/role-api';
+import UserSessionsModal from '../../sessions/components/UserSessionsModal';
 import HasPermission from '../../../shared/components/HasPermission';
-import { Plus, Edit2, Trash2, Shield, Search, Loader2, ShieldAlert, X, Save } from 'lucide-react';
+import {Plus, Edit2, Trash2, Shield, Search, Loader2, ShieldAlert, X, Save, MonitorSmartphone} from 'lucide-react';
 
 export default function UserListPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -17,6 +18,7 @@ export default function UserListPage() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
     const [isSavingRoles, setIsSavingRoles] = useState(false);
+    const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -230,6 +232,20 @@ export default function UserListPage() {
                                                 </button>
                                             </HasPermission>
 
+                                            {/* SHIELDED: Session Management */}
+                                            <HasPermission permission="SESSION_READ">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedUser(user);
+                                                        setIsSessionModalOpen(true);
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition"
+                                                    title="View Active Sessions"
+                                                >
+                                                    <MonitorSmartphone size={18} />
+                                                </button>
+                                            </HasPermission>
+
                                             {/* SHIELDED: Role Assignment */}
                                             <HasPermission permission="USER_UPDATE">
                                                 <button
@@ -261,6 +277,15 @@ export default function UserListPage() {
                     </table>
                 </div>
             </div>
+
+            {/* --- SESSION MANAGEMENT MODAL --- */}
+            {isSessionModalOpen && selectedUser && (
+                <UserSessionsModal
+                    userId={selectedUser.id}
+                    userName={`${selectedUser.firstName} ${selectedUser.lastName}`}
+                    onClose={() => setIsSessionModalOpen(false)}
+                />
+            )}
 
             {/* --- ROLE ASSIGNMENT MODAL --- */}
             {isRoleModalOpen && selectedUser && (

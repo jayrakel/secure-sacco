@@ -5,6 +5,7 @@ import { DashboardLayout } from "./shared/layouts/DashboardLayout";
 import UserListPage from "./features/users/pages/UserListPage";
 import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 import ProtectedRoute from "./shared/components/ProtectedRoute";
+import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
@@ -42,6 +43,12 @@ function App() {
                         <Route path="/roles" element={
                             <ProtectedRoute requiredPermissions={['ROLE_READ']}>
                                 <RolesPermissionsPage />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="/security" element={
+                            <ProtectedRoute>
+                                <SecuritySettingsPage />
                             </ProtectedRoute>
                         } />
 
