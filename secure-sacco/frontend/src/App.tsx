@@ -3,8 +3,8 @@ import { AuthProvider } from "./features/auth/context/AuthProvider";
 import LoginPage from "./features/auth/pages/LoginPage";
 import { ProtectedRoute } from "./shared/components/ProtectedRoute";
 import { DashboardLayout } from "./shared/layouts/DashboardLayout";
-import {UserListPage} from "./features/users/pages/UserListPage";
-import {RolesPermissionsPage} from "./features/users/pages/RolesPermissionsPage";
+import UserListPage from "./features/users/pages/UserListPage";
+import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
