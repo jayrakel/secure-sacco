@@ -36,10 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchCurrentUser = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Step 1: Handshake to ensure XSRF-TOKEN cookie is set
-            await apiClient.get('/auth/csrf');
-
-            // Step 2: Fetch current user session
+            // Directly fetch current user session (Browser will automatically send the SACCO_SESSION cookie)
             const response = await apiClient.get('/auth/me');
 
             if (response.data) {
@@ -48,9 +45,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(null);
             }
         } catch (error: any) {
-            // If we get a 401/403, the session cookie may be stale (e.g. after server restart).
-            // Call logout to have the server expire the SACCOSESSION cookie immediately,
-            // so the next login gets a clean session.
+            // If we get a 401/403, the session cookie is missing or expired.
+            // Call logout to clear any stale state.
             if (error?.response?.status === 401 || error?.response?.status === 403) {
                 try { await apiClient.post('/auth/logout'); } catch { /* ignore */ }
             }
