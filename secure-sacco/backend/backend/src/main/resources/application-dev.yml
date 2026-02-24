@@ -1,0 +1,6 @@
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false   # Allow session cookie over plain HTTP in local dev
+

@@ -1,15 +1,34 @@
 server:
   port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: true
+        same-site: strict
 
 spring:
   application:
     name: ${APP_NAME:Secure SACCO}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/sacco_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+
+  session:
+    store-type: redis
+    redis:
+      flush-mode: on_save
+      namespace: ${APP_NAME:secure-sacco}-sessions
+    timeout: 30m # 1800s
 
   jpa:
     hibernate:
@@ -35,16 +54,16 @@ spring:
         exposure:
           include: health,info,metrics,loggers,env
     endpoint:
-        health:
-            show-details: when-authorized
+      health:
+        show-details: always
 
 logging:
-    level:
-        root: INFO
-        org.springframework.security: DEBUG
-        org.springframework.web.cors: DEBUG
-        org.springframework.web: DEBUG
-        org.flywaydb: INFO
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    org.springframework.web.cors: DEBUG
+    org.springframework.web: DEBUG
+    org.flywaydb: INFO
 
 app:
   official-email-domain: ${APP_OFFICIAL_EMAIL_DOMAIN:jaytechwave.org}
