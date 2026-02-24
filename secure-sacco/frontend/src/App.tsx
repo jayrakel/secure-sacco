@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from "./features/auth/context/AuthProvider";
 import LoginPage from "./features/auth/pages/LoginPage";
-import { ProtectedRoute } from "./shared/components/ProtectedRoute";
 import { DashboardLayout } from "./shared/layouts/DashboardLayout";
 import UserListPage from "./features/users/pages/UserListPage";
 import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
+import ProtectedRoute from "./shared/components/ProtectedRoute";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
@@ -21,14 +21,33 @@ function App() {
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
 
-                    <Route element={<ProtectedRoute />}>
-                        <Route element={<DashboardLayout />}>
-                            <Route path="/dashboard" element={<DashboardOverview />} />
-                            <Route path="/users" element={<UserListPage />} />
-                            <Route path="/roles" element={<RolesPermissionsPage />} />
-                        </Route>
+                    {/* All routes inside here will render with the Dashboard Sidebar/Header */}
+                    <Route element={<DashboardLayout />}>
+
+                        {/* Standard logged-in user protection (No specific permission needed) */}
+                        <Route path="/dashboard" element={
+                            <ProtectedRoute>
+                                <DashboardOverview />
+                            </ProtectedRoute>
+                        } />
+
+                        {/* Shielded: Requires USER_READ */}
+                        <Route path="/users" element={
+                            <ProtectedRoute requiredPermissions={['USER_READ']}>
+                                <UserListPage />
+                            </ProtectedRoute>
+                        } />
+
+                        {/* Shielded: Requires ROLE_READ */}
+                        <Route path="/roles" element={
+                            <ProtectedRoute requiredPermissions={['ROLE_READ']}>
+                                <RolesPermissionsPage />
+                            </ProtectedRoute>
+                        } />
+
                     </Route>
 
+                    {/* Fallback route */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
             </BrowserRouter>

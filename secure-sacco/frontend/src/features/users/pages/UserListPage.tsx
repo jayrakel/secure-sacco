@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { userApi, type User } from '../api/user-api';
 import { roleApi, type Role } from '../api/role-api';
+import HasPermission from '../../../shared/components/HasPermission';
 import { Plus, Edit2, Trash2, Shield, Search, Loader2, ShieldAlert, X, Save } from 'lucide-react';
 
 export default function UserListPage() {
@@ -125,10 +126,14 @@ export default function UserListPage() {
                     <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
                     <p className="text-slate-500 text-sm mt-1">Manage system access, roles, and security.</p>
                 </div>
-                <button className="bg-slate-900 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-sm">
-                    <Plus size={18} />
-                    Add New User
-                </button>
+
+                {/* SHIELDED: Only users with USER_CREATE can see this button */}
+                <HasPermission permission="USER_CREATE">
+                    <button className="bg-slate-900 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-sm">
+                        <Plus size={18} />
+                        Add New User
+                    </button>
+                </HasPermission>
             </div>
 
             {/* Toolbar Section */}
@@ -213,27 +218,40 @@ export default function UserListPage() {
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition">
-                                            <button
-                                                onClick={() => handleStatusToggle(user.id, user.status)}
-                                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
-                                                title={user.status === 'ACTIVE' ? 'Suspend User' : 'Activate User'}
-                                            >
-                                                <ShieldAlert size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => openRoleModal(user)}
-                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                                title="Assign Roles"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(user.id)}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                title="Delete User"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+
+                                            {/* SHIELDED: Status Toggle */}
+                                            <HasPermission permission="USER_UPDATE">
+                                                <button
+                                                    onClick={() => handleStatusToggle(user.id, user.status)}
+                                                    className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
+                                                    title={user.status === 'ACTIVE' ? 'Suspend User' : 'Activate User'}
+                                                >
+                                                    <ShieldAlert size={18} />
+                                                </button>
+                                            </HasPermission>
+
+                                            {/* SHIELDED: Role Assignment */}
+                                            <HasPermission permission="USER_UPDATE">
+                                                <button
+                                                    onClick={() => openRoleModal(user)}
+                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                    title="Assign Roles"
+                                                >
+                                                    <Edit2 size={18} />
+                                                </button>
+                                            </HasPermission>
+
+                                            {/* SHIELDED: Delete User */}
+                                            <HasPermission permission="USER_UPDATE">
+                                                <button
+                                                    onClick={() => handleDelete(user.id)}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                    title="Delete User"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </HasPermission>
+
                                         </div>
                                     </td>
                                 </tr>
