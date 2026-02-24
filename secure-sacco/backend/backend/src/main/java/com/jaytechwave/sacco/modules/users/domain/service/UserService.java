@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.users.domain.service;
 
+import com.jaytechwave.sacco.modules.core.service.PasswordValidator;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
@@ -18,6 +19,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordValidator passwordValidator;
 
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
@@ -34,6 +36,9 @@ public class UserService {
             String phoneNumber,
             String rawPassword
     ) {
+        // BE-03: Enforce password policy even for bootstrap users
+        validatePasswordPolicy(rawPassword);
+
         String normalizedLoginEmail = normalizeEmail(loginEmail);
         String normalizedOfficialEmail = normalizeEmail(officialEmail);
         String normalizedPhone = normalizePhone(phoneNumber);
@@ -42,47 +47,44 @@ public class UserService {
             throw new IllegalStateException("User already exists with email: " + normalizedLoginEmail);
         }
 
-        if (userRepository.existsByEmail(normalizedOfficialEmail)) {
-            throw new IllegalStateException("User already exists with official email: " + normalizedOfficialEmail);
-        }
-
-        if (normalizedPhone!= null &&
-                userRepository.existsByPhoneNumber(normalizedPhone)) {
-            throw new IllegalStateException("User already exists with phone number: " + normalizedPhone);
-        }
-
         var systemAdminRole = roleRepository.findByName("SYSTEM_ADMIN")
-                .orElseThrow(() -> new IllegalStateException(
-                        "SYSTEM_ADMIN role not found. Ensure V1_1__seed_identity.sql has run successfully."
-                ));
+                .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found."));
 
         User user = User.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(normalizedLoginEmail)
                 .officialEmail(normalizedOfficialEmail)
-                .phoneNumber(phoneNumber)
-                .passwordHash(passwordEncoder.encode(rawPassword))
+                .phoneNumber(normalizedPhone)
+                .passwordHash(passwordEncoder.encode(rawPassword)) // Uses Argon2 bean
                 .status(UserStatus.ACTIVE)
                 .isDeleted(false)
                 .build();
 
         user.getRoles().add(systemAdminRole);
-
         return userRepository.save(user);
     }
 
-    private String normalizeEmail(String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
+    @Transactional
+    public void createNewUser(User user, String rawPassword) {
+        validatePasswordPolicy(rawPassword);
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        userRepository.save(user);
+    }
+
+    private void validatePasswordPolicy(String rawPassword) {
+        if (!passwordValidator.isValid(rawPassword)) {
+            throw new IllegalArgumentException(passwordValidator.getRequirementsMessage());
         }
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("Email is required");
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private String normalizePhone(String phone) {
-        if (phone == null) return null;{
-            String value = phone.trim();
-            return value.isBlank()? null : value;
-        }
+        if (phone == null || phone.isBlank()) return null;
+        return phone.trim();
     }
 }
