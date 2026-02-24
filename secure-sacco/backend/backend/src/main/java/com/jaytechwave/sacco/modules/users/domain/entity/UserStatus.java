@@ -5,6 +5,6 @@ package com.jaytechwave.sacco.modules.users.domain.entity;
  */
 public enum UserStatus {
     ACTIVE,
-    INACTIVE,
-    BLOCKED
+    DISABLED,
+    LOCKED
 }
