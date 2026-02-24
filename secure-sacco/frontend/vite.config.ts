@@ -1,15 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite' // <-- 1. Import this
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    tailwindcss() // <-- 2. Add it to the plugins array
+  ],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // Ensure this matches your Spring Boot server.port
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
-        cookieDomainRewrite: 'localhost', // Rewrite cookie domain so browser stores them against localhost:5173
+        cookieDomainRewrite: 'localhost',
       },
     },
   },
