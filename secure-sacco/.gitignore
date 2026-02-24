@@ -1,0 +1,57 @@
+# ===== Java / Maven =====
+target/
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+hs_err_pid*
+replay_pid*
+
+# ===== Spring / logs =====
+logs/
+*.log
+
+# ===== IntelliJ IDEA =====
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ===== VS Code =====
+.vscode/
+
+# ===== Eclipse =====
+.classpath
+.project
+.settings/
+
+# ===== Mac / Windows =====
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ===== Node / React =====
+node_modules/
+dist/
+build/
+.npm/
+.pnpm-store/
+.yarn/
+.yarn-cache/
+.yarn-unplugged/
+.yarn-integrity
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ===== Env files / secrets =====
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+
+# ===== Docker volumes (if any local) =====
+**/data/
