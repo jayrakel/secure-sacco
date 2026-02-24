@@ -1,4 +1,4 @@
-import apiClient from '../../../shared/api/api-client.ts';
+import apiClient from '../../../shared/api/api-client';
 
 export interface Permission {
     id: string;
@@ -14,10 +14,8 @@ export interface Role {
 }
 
 export const roleApi = {
-    getRoles: () => apiClient.get<Role[]>('/roles'),
-    getPermissions: () => apiClient.get<Permission[]>('/roles/permissions'),
-    updateRolePermissions: (roleId: string, permissionIds: string[]) =>
-        apiClient.put(`/roles/${roleId}/permissions`, { permissionIds }),
-    createRole: (data: { name: string; description: string }) =>
-        apiClient.post('/roles', data)
+    getAllRoles: async () => {
+        const response = await apiClient.get<Role[]>('/roles');
+        return response.data;
+    }
 };
