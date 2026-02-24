@@ -30,9 +30,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         Set<GrantedAuthority> authorities = new HashSet<>();
 
-        // 2. Map Roles to GrantedAuthorities
+        // Map Roles AND Permissions to GrantedAuthorities
         user.getRoles().forEach(role -> {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+
+            // Add individual permissions
+            role.getPermissions().forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(permission.getCode()))
+            );
         });
 
         // 3. Return Spring Security User object

@@ -6,9 +6,9 @@ import java.util.regex.Pattern;
 @Service
 public class PasswordValidator {
 
-    // Regex for: 12+ chars, at least one upper, one lower, one digit, and one special char
+    // Updated Regex: Added _, ., -, and # to the allowed special characters list
     private static final String PASSWORD_PATTERN =
-            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{12,}$";
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&_\\-.#])[A-Za-z\\d@$!%*?&_\\-.#]{12,}$";
 
     private static final Pattern pattern = Pattern.compile(PASSWORD_PATTERN);
 
