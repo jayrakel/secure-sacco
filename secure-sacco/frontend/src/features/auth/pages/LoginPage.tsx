@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, ChevronRight, AlertTriangle, RefreshCw, X, ArrowRight, Loader2 } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ChevronRight, AlertTriangle, RefreshCw, X, Loader2, Smartphone, ArrowLeft } from 'lucide-react'; // Added Smartphone & ArrowLeft
 
-// Using our existing context and API client
 import { useAuth } from '../context/AuthProvider';
 import apiClient from '../../../shared/api/api-client';
 
-// Stubbing out the Settings context for now
-// import { useSettings } from '../context/SettingsContext';
-// import BrandedSpinner from '../components/BrandedSpinner';
-
 export default function LoginPage() {
-    const [identifier, setIdentifier] = useState(''); // Changed from email to identifier
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [localLoading, setLocalLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // UI states for future features
+    // --- NEW: MFA UI States ---
+    const [requiresMfa, setRequiresMfa] = useState(false);
+    const [mfaToken, setMfaToken] = useState('');
+    const [mfaCode, setMfaCode] = useState('');
+
+    // UI states for Forgot Password
     const [showForgotModal, setShowForgotModal] = useState(false);
     const [forgotEmail, setForgotEmail] = useState('');
     const [forgotStatus, setForgotStatus] = useState({ type: '', message: '' });
@@ -26,7 +26,6 @@ export default function LoginPage() {
     const navigate = useNavigate();
     const { refreshUser } = useAuth();
 
-    // Fallback constants until SettingsContext is implemented
     const SACCO_NAME = "Secure SACCO";
     const SACCO_TAGLINE = "Secure, Transparent, and Automated Management.";
     const logoUrl = null;
@@ -40,28 +39,21 @@ export default function LoginPage() {
 
         try {
             // 1. Send credentials to backend
-            await apiClient.post('/auth/login', {
+            const response = await apiClient.post('/auth/login', {
                 identifier: identifier.trim(),
                 password,
             });
 
-            // 2. Fetch the user profile
-            await refreshUser();
-
-            // 3. Redirect Logic (Simplified for now)
-            navigate('/dashboard');
-
-            /* TODO: Implement RBAC Routing once permissions are mapped in the frontend
-            const userData = authService.getCurrentUser();
-            if (userData?.systemSetupRequired) { navigate('/system-setup'); return; }
-            if (userData?.mustChangePassword) { navigate('/change-password'); return; }
-
-            switch (userData?.role) {
-                case 'ADMIN': navigate('/admin-dashboard'); break;
-                // ... other roles
-                default: navigate('/member-dashboard'); break;
+            // --- 2. INTERCEPT MFA CHALLENGE ---
+            if (response.data?.status === 'REQUIRES_MFA') {
+                setMfaToken(response.data.mfaToken);
+                setRequiresMfa(true);
+                return; // Stop here and wait for the user to enter the code
             }
-            */
+
+            // 3. Normal Login Success Flow
+            await refreshUser();
+            navigate('/dashboard');
 
         } catch (err: any) {
             console.error("Login Error:", err);
@@ -77,20 +69,47 @@ export default function LoginPage() {
         }
     };
 
+    // --- NEW: Handle the second step of MFA Login ---
+    const handleMfaVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLocalLoading(true);
+        setError('');
+
+        try {
+            await apiClient.post('/auth/login/mfa', {
+                mfaToken,
+                code: mfaCode.trim()
+            });
+
+            // Successfully validated MFA, fetch user and redirect
+            await refreshUser();
+            navigate('/dashboard');
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Invalid authenticator code. Please try again.');
+        } finally {
+            setLocalLoading(false);
+        }
+    };
+
+    const cancelMfa = () => {
+        setRequiresMfa(false);
+        setMfaToken('');
+        setMfaCode('');
+        setPassword(''); // Clear password for security if they go back
+        setError('');
+    };
+
     const handleForgotPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         setForgotStatus({ type: 'loading', message: 'Sending reset link...' });
 
         try {
-            // Using 'forgotEmail' here
             const response = await apiClient.post('/auth/forgot-password', { email: forgotEmail });
-
             setForgotStatus({
                 type: 'success',
                 message: response.data.message || 'If an account exists, a reset link has been sent.'
             });
-            setForgotEmail(''); // Clear the input
-
+            setForgotEmail('');
         } catch (err: any) {
             setForgotStatus({
                 type: 'error',
@@ -103,7 +122,6 @@ export default function LoginPage() {
         if (!identifier) return;
         setResendStatus('Sending...');
         try {
-            // await apiClient.post('/auth/resend-verification', { identifier });
             setTimeout(() => {
                 setResendStatus('Sent! Check your inbox.');
                 setShowResend(false);
@@ -154,8 +172,17 @@ export default function LoginPage() {
                             )}
                         </div>
 
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2 text-center">Welcome Back</h2>
-                        <p className="text-slate-500 mb-8 text-center">Enter your credentials to access the portal.</p>
+                        {requiresMfa ? (
+                            <>
+                                <h2 className="text-2xl font-bold text-slate-800 mb-2 text-center">Two-Factor Auth</h2>
+                                <p className="text-slate-500 mb-8 text-center">Enter the 6-digit code from your authenticator app.</p>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="text-2xl font-bold text-slate-800 mb-2 text-center">Welcome Back</h2>
+                                <p className="text-slate-500 mb-8 text-center">Enter your credentials to access the portal.</p>
+                            </>
+                        )}
 
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r">
@@ -176,59 +203,105 @@ export default function LoginPage() {
                             <div className="mb-6 p-4 bg-blue-50 text-blue-700 text-sm rounded border border-blue-100">{resendStatus}</div>
                         )}
 
-                        <form onSubmit={handleLogin} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Email or Phone Number</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full border border-slate-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none transition"
-                                        value={identifier}
-                                        onChange={e => setIdentifier(e.target.value)}
-                                        placeholder="admin@jaytechwave.org or +254..."
-                                    />
+                        {requiresMfa ? (
+                            /* --- MFA ENTRY FORM --- */
+                            <form onSubmit={handleMfaVerify} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Authenticator Code</label>
+                                    <div className="relative">
+                                        <Smartphone className="absolute left-3 top-3 text-slate-400" size={20} />
+                                        <input
+                                            type="text"
+                                            required
+                                            maxLength={6}
+                                            autoFocus
+                                            className="w-full border border-slate-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none transition tracking-widest text-center text-lg font-mono"
+                                            value={mfaCode}
+                                            onChange={e => setMfaCode(e.target.value.replace(/\D/g, ''))} // Only allow numbers
+                                            placeholder="123456"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Password</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
-                                    <input
-                                        type="password"
-                                        required
-                                        className="w-full border border-slate-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none transition"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="flex justify-end">
+                                <button
+                                    disabled={localLoading || mfaCode.length < 6}
+                                    className="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition flex justify-center gap-2 items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {localLoading ? (
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="animate-spin" size={20} />
+                                            <span>Verifying...</span>
+                                        </div>
+                                    ) : (
+                                        <>Verify & Login <ChevronRight size={20} /></>
+                                    )}
+                                </button>
+
                                 <button
                                     type="button"
-                                    onClick={() => setShowForgotModal(true)}
-                                    className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                    onClick={cancelMfa}
+                                    disabled={localLoading}
+                                    className="w-full flex justify-center items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition mt-4"
                                 >
-                                    Forgot Password?
+                                    <ArrowLeft size={16} /> Back to standard login
                                 </button>
-                            </div>
-
-                            <button
-                                disabled={localLoading}
-                                className="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition flex justify-center gap-2 items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {localLoading ? (
-                                    <div className="flex items-center gap-2">
-                                        <Loader2 className="animate-spin" size={20} />
-                                        <span>Verifying...</span>
+                            </form>
+                        ) : (
+                            /* --- STANDARD LOGIN FORM --- */
+                            <form onSubmit={handleLogin} className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Email or Phone Number</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
+                                        <input
+                                            type="text"
+                                            required
+                                            className="w-full border border-slate-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none transition"
+                                            value={identifier}
+                                            onChange={e => setIdentifier(e.target.value)}
+                                            placeholder="admin@jaytechwave.org or +254..."
+                                        />
                                     </div>
-                                ) : (
-                                    <>Sign In <ChevronRight size={20} /></>
-                                )}
-                            </button>
-                        </form>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Password</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-3 text-slate-400" size={20} />
+                                        <input
+                                            type="password"
+                                            required
+                                            className="w-full border border-slate-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none transition"
+                                            value={password}
+                                            onChange={e => setPassword(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowForgotModal(true)}
+                                        className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                                    >
+                                        Forgot Password?
+                                    </button>
+                                </div>
+
+                                <button
+                                    disabled={localLoading}
+                                    className="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition flex justify-center gap-2 items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {localLoading ? (
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="animate-spin" size={20} />
+                                            <span>Verifying...</span>
+                                        </div>
+                                    ) : (
+                                        <>Sign In <ChevronRight size={20} /></>
+                                    )}
+                                </button>
+                            </form>
+                        )}
                     </div>
                 </div>
 
