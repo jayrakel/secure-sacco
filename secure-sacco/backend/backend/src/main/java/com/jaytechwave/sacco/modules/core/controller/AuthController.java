@@ -4,6 +4,9 @@ import com.jaytechwave.sacco.modules.core.dto.LoginRequest;
 import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService;
 import com.jaytechwave.sacco.modules.core.service.LoginAttemptService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.core.dto.ForgotPasswordRequest;
+import com.jaytechwave.sacco.modules.core.dto.ResetPasswordRequest;
+import com.jaytechwave.sacco.modules.core.service.PasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -31,14 +34,17 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final LoginAttemptService loginAttemptService;
     private final SecurityAuditService securityAuditService;
+    private final PasswordResetService passwordResetService;
 
     // --- FIX 1: Added SecurityAuditService to the constructor parameters ---
     public AuthController(AuthenticationManager authenticationManager,
                           LoginAttemptService loginAttemptService,
+                          PasswordResetService passwordResetService,
                           SecurityAuditService securityAuditService) {
         this.authenticationManager = authenticationManager;
         this.loginAttemptService = loginAttemptService;
         this.securityAuditService = securityAuditService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/login")
@@ -138,6 +144,29 @@ public class AuthController {
         responseBody.put("roles", userDetails.getRoles());
 
         return ResponseEntity.ok(responseBody);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        passwordResetService.generatePasswordResetToken(request.getEmail());
+
+        securityAuditService.logEventWithActorAndIp(request.getEmail(), "PASSWORD_RESET_REQUESTED", "Account: " + request.getEmail(), getClientIP(httpRequest), "User requested a password reset link");
+
+        // Always return a generic success message to prevent user enumeration
+        return ResponseEntity.ok(Map.of("message", "If an account with that email exists, a password reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
+        try {
+            passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+
+            securityAuditService.logEventWithActorAndIp("SYSTEM", "PASSWORD_RESET_COMPLETED", "Token Used", getClientIP(httpRequest), "Password successfully reset via token");
+
+            return ResponseEntity.ok(Map.of("message", "Password has been successfully reset. You may now log in."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Bad Request", "message", e.getMessage()));
+        }
     }
 
     /**

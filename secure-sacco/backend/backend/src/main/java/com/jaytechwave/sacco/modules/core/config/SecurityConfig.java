@@ -54,7 +54,12 @@ public class SecurityConfig {
                         .maximumSessions(5) // Limit maximum concurrent sessions per user
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/login", "/api/v1/auth/csrf").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/csrf",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password")
+                        .permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
