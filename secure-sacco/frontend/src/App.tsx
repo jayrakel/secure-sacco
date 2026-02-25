@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from "./features/auth/context/AuthProvider";
 import LoginPage from "./features/auth/pages/LoginPage";
+import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
 import { DashboardLayout } from "./shared/layouts/DashboardLayout";
 import UserListPage from "./features/users/pages/UserListPage";
 import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
@@ -25,6 +26,12 @@ function App() {
                     <Route path="/login" element={
                         <GuestRoute>
                             <LoginPage />
+                        </GuestRoute>
+                    } />
+
+                    <Route path="/reset-password" element={
+                        <GuestRoute>
+                            <ResetPasswordPage />
                         </GuestRoute>
                     } />
 
