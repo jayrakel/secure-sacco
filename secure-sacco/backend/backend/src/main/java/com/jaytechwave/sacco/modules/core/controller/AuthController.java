@@ -1,94 +1,140 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
 import com.jaytechwave.sacco.modules.core.dto.LoginRequest;
-import com.jaytechwave.sacco.modules.users.domain.entity.User;
-import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService;
+import com.jaytechwave.sacco.modules.core.service.LoginAttemptService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
+    private final LoginAttemptService loginAttemptService;
 
-    // Required for Spring Security 6 manual context saving
-    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+    public AuthController(AuthenticationManager authenticationManager, LoginAttemptService loginAttemptService) {
+        this.authenticationManager = authenticationManager;
+        this.loginAttemptService = loginAttemptService;
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
-                                   HttpServletRequest req,
-                                   HttpServletResponse res) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+        String identifier = loginRequest.getIdentifier();
+        String clientIp = getClientIP(request);
 
-        // 1. Perform Authentication
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getIdentifier(), request.getPassword())
-        );
+        // 1. Check if the IP or the Account is locked out
+        if (loginAttemptService.isBlocked(identifier) || loginAttemptService.isBlocked(clientIp)) {
+            long remainingSeconds = Math.max(
+                    loginAttemptService.getRemainingLockoutTimeSeconds(identifier),
+                    loginAttemptService.getRemainingLockoutTimeSeconds(clientIp)
+            );
+            long minutes = (remainingSeconds / 60) + 1;
 
-        // 2. Create a new context and set the authentication
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of(
+                            "error", "Too Many Requests",
+                            "message", "Account or IP is locked due to multiple failed login attempts. Please try again in " + minutes + " minute(s)."
+                    ));
+        }
 
-        // 3. EXPLICITLY save the context to the session (Spring Security 6+ Requirement)
-        securityContextRepository.saveContext(context, req, res);
+        try {
+            // 2. Attempt Authentication
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(identifier, loginRequest.getPassword())
+            );
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Login successful",
-                "sessionId", req.getSession().getId()
-        ));
+            // 3. Success! Clear failure counters for both IP and Account
+            loginAttemptService.loginSucceeded(identifier);
+            loginAttemptService.loginSucceeded(clientIp);
+
+            // Establish Session
+            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+            securityContext.setAuthentication(authentication);
+            SecurityContextHolder.setContext(securityContext);
+            request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+
+            // Build Response
+            CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("message", "Login successful");
+            responseBody.put("user", Map.of(
+                    "id", userDetails.getId(),
+                    "email", userDetails.getUsername(),
+                    "firstName", userDetails.getFirstName(),
+                    "lastName", userDetails.getLastName(),
+                    "permissions", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()),
+                    "roles", userDetails.getRoles()
+            ));
+
+            return ResponseEntity.ok(responseBody);
+
+        } catch (AuthenticationException e) {
+            // 4. Failure! Record the failed attempt for both IP and Account
+            loginAttemptService.loginFailed(identifier);
+            loginAttemptService.loginFailed(clientIp);
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized", "message", "Invalid credentials."));
+        }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate(); // Deletes session from Redis
-        }
+        request.getSession().invalidate();
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok(Map.of("message", "Logout successful"));
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized", "message", "Not authenticated"));
         }
 
-        String email = authentication.getName();
-        User user = userRepository.findByEmailOrPhoneNumber(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
 
-        // Build Response mapping Profile + Permissions
-        Map<String, Object> response = new HashMap<>();
-        response.put("id", user.getId());
-        response.put("firstName", user.getFirstName());
-        response.put("lastName", user.getLastName());
-        response.put("email", user.getEmail());
-        response.put("phoneNumber", user.getPhoneNumber());
-        response.put("permissions", authentication.getAuthorities().stream()
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("id", userDetails.getId());
+        responseBody.put("email", userDetails.getUsername());
+        responseBody.put("firstName", userDetails.getFirstName());
+        responseBody.put("lastName", userDetails.getLastName());
+
+        List<String> permissions = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
+        responseBody.put("permissions", permissions);
+        responseBody.put("roles", userDetails.getRoles());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(responseBody);
+    }
+
+    /**
+     * Helper to extract the real IP address, even if the request passes through a proxy or load balancer.
+     */
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null || xfHeader.isEmpty() || !xfHeader.contains(request.getRemoteAddr())) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0];
     }
 }
