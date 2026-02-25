@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.dto.SessionDTOs.SessionResponse;
 import com.jaytechwave.sacco.modules.core.service.SessionService;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +18,22 @@ import java.util.UUID;
 public class SessionController {
 
     private final SessionService sessionService;
+    private final SecurityAuditService securityAuditService; // --- NEW ---
 
-    @PreAuthorize("hasAuthority('SESSION_READ')")
+    @PreAuthorize("hasAuthority('SESSION_READ') or #userId.toString() == authentication.principal.id.toString()")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<SessionResponse>> getUserSessions(@PathVariable UUID userId) {
         return ResponseEntity.ok(sessionService.getUserSessions(userId));
     }
 
-    @PreAuthorize("hasAuthority('SESSION_REVOKE')")
+    @PreAuthorize("hasAuthority('SESSION_REVOKE') or #userId.toString() == authentication.principal.id.toString()")
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<?> revokeAllUserSessions(@PathVariable UUID userId) {
         sessionService.revokeAllUserSessions(userId);
+
+        // --- ADDED AUDIT LOG ---
+        securityAuditService.logEvent("SESSION_REVOKED_ALL", "Target User ID: " + userId, "Wiped all active sessions");
+
         return ResponseEntity.ok(Map.of("message", "All active sessions for the user have been revoked."));
     }
 
@@ -35,6 +41,10 @@ public class SessionController {
     @DeleteMapping("/{sessionId}")
     public ResponseEntity<?> revokeSpecificSession(@PathVariable String sessionId) {
         sessionService.revokeSpecificSession(sessionId);
+
+        // --- ADDED AUDIT LOG ---
+        securityAuditService.logEvent("SESSION_REVOKED_SINGLE", "Target Session ID: " + sessionId, "Single session terminated");
+
         return ResponseEntity.ok(Map.of("message", "Session revoked successfully."));
     }
 }

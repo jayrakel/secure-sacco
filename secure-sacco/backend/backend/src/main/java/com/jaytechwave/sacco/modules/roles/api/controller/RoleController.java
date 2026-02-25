@@ -1,7 +1,7 @@
 package com.jaytechwave.sacco.modules.roles.api.controller;
 
 import com.jaytechwave.sacco.modules.roles.api.dto.RoleDTOs.*;
-import com.jaytechwave.sacco.modules.roles.domain.service.RoleService;
+import com.jaytechwave.sacco.modules.roles.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

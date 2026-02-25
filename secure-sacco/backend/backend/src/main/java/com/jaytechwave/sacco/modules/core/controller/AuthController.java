@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.core.controller;
 import com.jaytechwave.sacco.modules.core.dto.LoginRequest;
 import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService;
 import com.jaytechwave.sacco.modules.core.service.LoginAttemptService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -29,10 +30,15 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final LoginAttemptService loginAttemptService;
+    private final SecurityAuditService securityAuditService;
 
-    public AuthController(AuthenticationManager authenticationManager, LoginAttemptService loginAttemptService) {
+    // --- FIX 1: Added SecurityAuditService to the constructor parameters ---
+    public AuthController(AuthenticationManager authenticationManager,
+                          LoginAttemptService loginAttemptService,
+                          SecurityAuditService securityAuditService) {
         this.authenticationManager = authenticationManager;
         this.loginAttemptService = loginAttemptService;
+        this.securityAuditService = securityAuditService;
     }
 
     @PostMapping("/login")
@@ -42,6 +48,10 @@ public class AuthController {
 
         // 1. Check if the IP or the Account is locked out
         if (loginAttemptService.isBlocked(identifier) || loginAttemptService.isBlocked(clientIp)) {
+
+            // Log that a locked user tried to get in
+            securityAuditService.logEventWithActorAndIp(identifier, "LOGIN_BLOCKED", "Account: " + identifier, clientIp, "Attempted to log in while locked out");
+
             long remainingSeconds = Math.max(
                     loginAttemptService.getRemainingLockoutTimeSeconds(identifier),
                     loginAttemptService.getRemainingLockoutTimeSeconds(clientIp)
@@ -90,6 +100,9 @@ public class AuthController {
             // 4. Failure! Record the failed attempt for both IP and Account
             loginAttemptService.loginFailed(identifier);
             loginAttemptService.loginFailed(clientIp);
+
+            // --- FIX 2: Moved the LOGIN_FAILED audit log here ---
+            securityAuditService.logEventWithActorAndIp(identifier, "LOGIN_FAILED", "Account: " + identifier, clientIp, "Invalid credentials");
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Unauthorized", "message", "Invalid credentials."));

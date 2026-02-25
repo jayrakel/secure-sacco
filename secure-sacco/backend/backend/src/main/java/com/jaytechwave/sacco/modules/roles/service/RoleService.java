@@ -1,10 +1,11 @@
-package com.jaytechwave.sacco.modules.roles.domain.service;
+package com.jaytechwave.sacco.modules.roles.service;
 
 import com.jaytechwave.sacco.modules.roles.api.dto.RoleDTOs.*;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Permission;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import com.jaytechwave.sacco.modules.roles.domain.repository.PermissionRepository;
 import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional(readOnly = true)
     public List<RoleResponse> getAllRoles() {
@@ -55,7 +57,17 @@ public class RoleService {
                 .permissions(permissions)
                 .build();
 
-        return mapToRoleResponse(roleRepository.save(role));
+        // Save the role first so we get the DB-generated properties
+        Role savedRole = roleRepository.save(role);
+
+        // --- ADDED AUDIT LOG ---
+        securityAuditService.logEvent(
+                "ROLE_CREATED",
+                "Role: " + savedRole.getName(),
+                "Created role with description: " + savedRole.getDescription()
+        );
+
+        return mapToRoleResponse(savedRole);
     }
 
     @Transactional
@@ -74,7 +86,14 @@ public class RoleService {
         }
 
         role.setPermissions(newPermissions);
-        roleRepository.save(role);
+        Role savedRole = roleRepository.save(role);
+
+        // --- ADDED AUDIT LOG ---
+        securityAuditService.logEvent(
+                "PERMISSIONS_UPDATED",
+                "Role: " + savedRole.getName(),
+                "Assigned " + newPermissions.size() + " permissions"
+        );
     }
 
     // --- READ-ONLY PERMISSIONS ---
