@@ -21,7 +21,14 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+import com.jaytechwave.sacco.modules.core.dto.MfaDTOs.*;
+import com.jaytechwave.sacco.modules.core.service.MfaService;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import dev.samstevens.totp.exceptions.QrGenerationException;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.UUID;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,16 +42,25 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
     private final SecurityAuditService securityAuditService;
     private final PasswordResetService passwordResetService;
+    private final MfaService mfaService;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final UserRepository userRepository;
 
     // --- FIX 1: Added SecurityAuditService to the constructor parameters ---
     public AuthController(AuthenticationManager authenticationManager,
                           LoginAttemptService loginAttemptService,
+                          SecurityAuditService securityAuditService,
                           PasswordResetService passwordResetService,
-                          SecurityAuditService securityAuditService) {
+                          MfaService mfaService,
+                          CustomUserDetailsService customUserDetailsService,
+                          UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
         this.loginAttemptService = loginAttemptService;
         this.securityAuditService = securityAuditService;
         this.passwordResetService = passwordResetService;
+        this.mfaService = mfaService;
+        this.customUserDetailsService = customUserDetailsService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
@@ -72,35 +88,31 @@ public class AuthController {
         }
 
         try {
-            // 2. Attempt Authentication
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(identifier, loginRequest.getPassword())
             );
 
-            // 3. Success! Clear failure counters for both IP and Account
             loginAttemptService.loginSucceeded(identifier);
             loginAttemptService.loginSucceeded(clientIp);
 
-            // Establish Session
-            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-            securityContext.setAuthentication(authentication);
-            SecurityContextHolder.setContext(securityContext);
-            request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
-
-            // Build Response
             CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("message", "Login successful");
-            responseBody.put("user", Map.of(
-                    "id", userDetails.getId(),
-                    "email", userDetails.getUsername(),
-                    "firstName", userDetails.getFirstName(),
-                    "lastName", userDetails.getLastName(),
-                    "permissions", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()),
-                    "roles", userDetails.getRoles()
-            ));
 
-            return ResponseEntity.ok(responseBody);
+            // --- INTERCEPT FOR MFA ---
+            if (userDetails.isMfaEnabled()) {
+                String mfaToken = mfaService.createPreAuthToken(userDetails.getId());
+                securityAuditService.logEventWithActorAndIp(identifier, "MFA_CHALLENGE_ISSUED", "Account: " + identifier, clientIp, "Password valid, pending MFA");
+
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                        "status", "REQUIRES_MFA",
+                        "mfaToken", mfaToken,
+                        "message", "MFA is required. Please submit your authenticator code."
+                ));
+            }
+
+            // Establish Session (Normal Flow)
+            establishSession(request, authentication);
+
+            return ResponseEntity.ok(buildLoginResponse(userDetails));
 
         } catch (AuthenticationException e) {
             // 4. Failure! Record the failed attempt for both IP and Account
@@ -112,6 +124,78 @@ public class AuthController {
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Unauthorized", "message", "Invalid credentials."));
+        }
+    }
+
+    // --- HELPER METHODS FOR SESSION & RESPONSE ---
+    private void establishSession(HttpServletRequest request, Authentication authentication) {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+    }
+
+    private Map<String, Object> buildLoginResponse(CustomUserDetailsService.CustomUserDetails userDetails) {
+        return Map.of(
+                "message", "Login successful",
+                "user", Map.of(
+                        "id", userDetails.getId(),
+                        "email", userDetails.getUsername(),
+                        "firstName", userDetails.getFirstName(),
+                        "lastName", userDetails.getLastName(),
+                        "permissions", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()),
+                        "roles", userDetails.getRoles()
+                )
+        );
+    }
+
+    // --- NEW MFA ENDPOINTS ---
+
+    @PostMapping("/login/mfa")
+    public ResponseEntity<?> loginMfa(@Valid @RequestBody MfaLoginRequest mfaRequest, HttpServletRequest httpRequest) {
+        try {
+            UUID userId = mfaService.verifyPreAuthToken(mfaRequest.getMfaToken());
+            User user = userRepository.findById(userId).orElseThrow();
+
+            if (!mfaService.verifyCode(user.getMfaSecret(), mfaRequest.getCode())) {
+                securityAuditService.logEventWithActorAndIp(user.getEmail(), "MFA_FAILED", "Account: " + user.getEmail(), getClientIP(httpRequest), "Invalid TOTP Code");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized", "message", "Invalid MFA code."));
+            }
+
+            // Manually build Authentication object since they passed MFA
+            UserDetails userDetails = customUserDetailsService.loadUserByUsername(user.getEmail());
+            Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+            establishSession(httpRequest, authentication);
+            mfaService.clearPreAuthToken(mfaRequest.getMfaToken());
+
+            securityAuditService.logEventWithActorAndIp(user.getEmail(), "LOGIN_SUCCESS", "Account: " + user.getEmail(), getClientIP(httpRequest), "MFA login successful");
+
+            return ResponseEntity.ok(buildLoginResponse((CustomUserDetailsService.CustomUserDetails) userDetails));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized", "message", "Token expired or invalid."));
+        }
+    }
+
+    @GetMapping("/mfa/setup")
+    public ResponseEntity<?> generateMfaQrCode(Authentication authentication) throws QrGenerationException {
+        CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+        Map<String, String> mfaData = mfaService.generateMfaSetup(userDetails.getId());
+        return ResponseEntity.ok(mfaData);
+    }
+
+    @PostMapping("/mfa/enable")
+    public ResponseEntity<?> enableMfa(@Valid @RequestBody VerifyMfaRequest request, Authentication authentication, HttpServletRequest httpRequest) {
+        try {
+            CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+            mfaService.enableMfa(userDetails.getId(), request.getCode());
+
+            securityAuditService.logEventWithActorAndIp(userDetails.getUsername(), "MFA_ENABLED", "Account: " + userDetails.getUsername(), getClientIP(httpRequest), "User successfully turned on MFA");
+
+            return ResponseEntity.ok(Map.of("message", "MFA successfully enabled."));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Bad Request", "message", e.getMessage()));
         }
     }
 

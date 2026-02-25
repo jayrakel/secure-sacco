@@ -53,4 +53,11 @@ public class User {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
+    @Column(name = "mfa_enabled", nullable = false)
+    @Builder.Default
+    private boolean mfaEnabled = false;
+
+    @Column(name = "mfa_secret")
+    private String mfaSecret;
+
 }

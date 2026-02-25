@@ -26,6 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
@@ -63,7 +64,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 true,
                 true,
                 !user.isDeleted(),
-                authorities
+                authorities,
+                user.isMfaEnabled()
         );
     }
 
@@ -76,18 +78,21 @@ public class CustomUserDetailsService implements UserDetailsService {
         private final String firstName;
         private final String lastName;
         private final List<String> roles;
+        private final boolean mfaEnabled;
 
         public CustomUserDetails(UUID id, String username, String password,
                                  String firstName, String lastName, List<String> roles,
                                  boolean enabled, boolean accountNonExpired,
                                  boolean credentialsNonExpired, boolean accountNonLocked,
-                                 Set<GrantedAuthority> authorities) {
+                                 Set<GrantedAuthority> authorities,
+                                 boolean mfaEnabled) {
 
             super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
             this.id = id;
             this.firstName = firstName;
             this.lastName = lastName;
             this.roles = roles;
+            this.mfaEnabled = mfaEnabled;
         }
     }
 }
