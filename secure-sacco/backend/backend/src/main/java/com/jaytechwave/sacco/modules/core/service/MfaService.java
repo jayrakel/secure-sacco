@@ -32,12 +32,17 @@ public class MfaService {
     public Map<String, String> generateMfaSetup(UUID userId) throws QrGenerationException {
         User user = userRepository.findById(userId).orElseThrow();
 
-        SecretGenerator secretGenerator = new DefaultSecretGenerator();
-        String secret = secretGenerator.generate();
+        String secret = user.getMfaSecret();
 
-        // Save the secret, but DO NOT enable MFA yet
-        user.setMfaSecret(secret);
-        userRepository.save(user);
+        // --- FIX: Only generate a NEW secret if they don't already have a pending one ---
+        if (secret == null || secret.isEmpty()) {
+            SecretGenerator secretGenerator = new DefaultSecretGenerator();
+            secret = secretGenerator.generate();
+
+            // Save the new secret, but DO NOT enable MFA yet
+            user.setMfaSecret(secret);
+            userRepository.save(user);
+        }
 
         QrData data = new QrData.Builder()
                 .label(user.getEmail())
@@ -69,10 +74,21 @@ public class MfaService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public void disableMfa(UUID userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setMfaEnabled(false);
+        user.setMfaSecret(null); // Clear the secret so a new one is generated next time
+        userRepository.save(user);
+    }
+
     public boolean verifyCode(String secret, String code) {
         TimeProvider timeProvider = new SystemTimeProvider();
         CodeGenerator codeGenerator = new DefaultCodeGenerator();
-        CodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+        DefaultCodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+
+        verifier.setAllowedTimePeriodDiscrepancy(1);
+
         return verifier.isValidCode(secret, code);
     }
 

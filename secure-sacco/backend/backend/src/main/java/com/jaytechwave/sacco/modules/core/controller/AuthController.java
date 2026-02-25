@@ -144,7 +144,8 @@ public class AuthController {
                         "firstName", userDetails.getFirstName(),
                         "lastName", userDetails.getLastName(),
                         "permissions", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()),
-                        "roles", userDetails.getRoles()
+                        "roles", userDetails.getRoles(),
+                        "mfaEnabled", userDetails.isMfaEnabled()
                 )
         );
     }
@@ -191,12 +192,33 @@ public class AuthController {
             CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
             mfaService.enableMfa(userDetails.getId(), request.getCode());
 
+            refreshSessionAuthentication(userDetails.getUsername(), httpRequest);
+
             securityAuditService.logEventWithActorAndIp(userDetails.getUsername(), "MFA_ENABLED", "Account: " + userDetails.getUsername(), getClientIP(httpRequest), "User successfully turned on MFA");
 
             return ResponseEntity.ok(Map.of("message", "MFA successfully enabled."));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Bad Request", "message", e.getMessage()));
         }
+    }
+
+    @PostMapping("/mfa/disable")
+    public ResponseEntity<?> disableMfa(Authentication authentication, HttpServletRequest httpRequest) {
+        CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+        mfaService.disableMfa(userDetails.getId());
+
+        refreshSessionAuthentication(userDetails.getUsername(), httpRequest);
+
+        securityAuditService.logEventWithActorAndIp(userDetails.getUsername(), "MFA_DISABLED", "Account: " + userDetails.getUsername(), getClientIP(httpRequest), "User intentionally disabled MFA");
+
+        return ResponseEntity.ok(Map.of("message", "MFA successfully disabled."));
+    }
+
+    private void refreshSessionAuthentication(String username, HttpServletRequest request) {
+        UserDetails updatedUserDetails = customUserDetailsService.loadUserByUsername(username);
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(updatedUserDetails, null, updatedUserDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
+        request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
     }
 
     @PostMapping("/logout")
@@ -226,6 +248,7 @@ public class AuthController {
                 .collect(Collectors.toList());
         responseBody.put("permissions", permissions);
         responseBody.put("roles", userDetails.getRoles());
+        responseBody.put("mfaEnabled", userDetails.isMfaEnabled());
 
         return ResponseEntity.ok(responseBody);
     }
