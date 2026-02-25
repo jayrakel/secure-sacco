@@ -6,6 +6,7 @@ import {
     ShieldCheck,
     UserCircle,
     Shield,
+    Settings,
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
@@ -15,14 +16,20 @@ export const Sidebar = () => {
     const { user } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    // Added Security to the navigation list
-    const navItems = [
+    // Define all navigation items with an optional adminOnly flag
+    const allNavItems = [
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { label: 'User Management', path: '/users', icon: Users },
         { label: 'Roles & Permissions', path: '/roles', icon: ShieldCheck },
         { label: 'Members', path: '/members', icon: UserCircle },
         { label: 'Security', path: '/security', icon: Shield },
+        { label: 'Platform Settings', path: '/settings', icon: Settings, adminOnly: true },
     ];
+
+    // Filter items: show if it's NOT adminOnly OR if the user has the SYSTEM_ADMIN role
+    const navItems = allNavItems.filter(item =>
+        !item.adminOnly || user?.roles?.includes('ROLE_SYSTEM_ADMIN')
+    );
 
     return (
         <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col relative shrink-0 z-20`}>

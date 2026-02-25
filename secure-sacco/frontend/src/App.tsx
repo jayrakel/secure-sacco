@@ -7,7 +7,9 @@ import UserListPage from "./features/users/pages/UserListPage";
 import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 import ProtectedRoute from "./shared/components/ProtectedRoute";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
+import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
+import HasPermission from "./shared/components/HasPermission";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
@@ -62,6 +64,19 @@ function App() {
                         <Route path="/security" element={
                             <ProtectedRoute>
                                 <SecuritySettingsPage />
+                            </ProtectedRoute>
+                        } />
+
+                        {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
+                        <Route path="/settings" element={
+                            <ProtectedRoute>
+                                <HasPermission permission="ROLE_SYSTEM_ADMIN" fallback={
+                                    <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
+                                        Access Denied: You do not have permission to view global settings.
+                                    </div>
+                                }>
+                                    <SaccoSettingsPage />
+                                </HasPermission>
                             </ProtectedRoute>
                         } />
 
