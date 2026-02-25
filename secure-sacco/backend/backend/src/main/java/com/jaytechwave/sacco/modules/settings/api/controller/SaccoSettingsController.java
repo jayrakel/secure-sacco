@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.settings.api.controller;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.settings.api.dto.SaccoSettingsDTOs.*;
 import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
+import com.jaytechwave.sacco.modules.settings.domain.service.PrefixGeneratorService;
 import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -21,6 +22,7 @@ public class SaccoSettingsController {
 
     private final SaccoSettingsService settingsService;
     private final SecurityAuditService auditService;
+    private final PrefixGeneratorService prefixGeneratorService; // Injected generator
 
     @GetMapping
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
@@ -36,6 +38,14 @@ public class SaccoSettingsController {
                 "padLength", settings.getMemberNumberPadLength(),
                 "enabledModules", settings.getEnabledModules()
         ));
+    }
+
+    // --- NEW: Generate Prefix Preview ---
+    @GetMapping("/generate-prefix")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<?> generatePrefixPreview(@RequestParam String name) {
+        String generatedPrefix = prefixGeneratorService.generate(name);
+        return ResponseEntity.ok(Map.of("prefix", generatedPrefix));
     }
 
     @PostMapping("/initialize")
