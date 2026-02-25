@@ -14,6 +14,10 @@ export interface CoreSettingsPayload {
     padLength: number;
 }
 
+export interface UpdateFlagsPayload {
+    flags: Record<string, boolean>;
+}
+
 export const settingsApi = {
     getSettings: async () => {
         const response = await apiClient.get<SaccoSettings>('/settings/sacco');
@@ -27,6 +31,11 @@ export const settingsApi = {
 
     updateCoreSettings: async (payload: CoreSettingsPayload) => {
         const response = await apiClient.put('/settings/sacco', payload);
+        return response.data;
+    },
+
+    updateFeatureFlags: async (payload: UpdateFlagsPayload) => {
+        const response = await apiClient.put('/settings/sacco/flags', payload);
         return response.data;
     },
 

@@ -10,6 +10,7 @@ import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
+import { SettingsProvider } from "./features/settings/context/SettingsContext";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
@@ -22,6 +23,7 @@ const DashboardOverview = () => (
 function App() {
     return (
         <AuthProvider>
+            <SettingsProvider>
             <BrowserRouter>
                 <Routes>
                     {/* Wrap Login in GuestRoute */}
@@ -86,6 +88,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
             </BrowserRouter>
+            </SettingsProvider>
         </AuthProvider>
     );
 }
