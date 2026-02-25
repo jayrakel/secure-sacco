@@ -1,18 +1,19 @@
 package com.jaytechwave.sacco.modules.core.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisIndexedHttpSession;
-import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 
 @Configuration
-@EnableRedisIndexedHttpSession
+@EnableRedisIndexedHttpSession(
+        redisNamespace = "${spring.session.redis.namespace:spring:session}",
+        maxInactiveIntervalInSeconds = 1800
+)
 public class SessionConfig {
 
     @Value("${server.servlet.session.cookie.secure:true}")
@@ -21,12 +22,10 @@ public class SessionConfig {
     @Value("${server.servlet.session.cookie.same-site:Strict}")
     private String sameSite;
 
+    // --- FIX: Switch from Jackson JSON to standard Java Serialization ---
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
-        ObjectMapper mapper = new ObjectMapper();
-        // Register Spring Security Jackson modules to handle Principal/Authorities
-        mapper.registerModules(SecurityJackson2Modules.getModules(getClass().getClassLoader()));
-        return new GenericJackson2JsonRedisSerializer(mapper);
+        return new JdkSerializationRedisSerializer();
     }
 
     @Bean
