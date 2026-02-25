@@ -15,17 +15,12 @@ import org.springframework.session.web.http.CookieSerializer;
 @EnableRedisIndexedHttpSession
 public class SessionConfig {
 
-    /**
-     * Driven by server.servlet.session.cookie.secure in application.yml.
-     * Defaults to true; set to false in application-dev.yml for local HTTP.
-     */
     @Value("${server.servlet.session.cookie.secure:true}")
     private boolean secureCookie;
 
-    /**
-     * Custom Redis Serializer to ensure User Principals and SecurityContext
-     * are serialized as JSON instead of binary Java serialization.
-     */
+    @Value("${server.servlet.session.cookie.same-site:Strict}")
+    private String sameSite;
+
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
         ObjectMapper mapper = new ObjectMapper();
@@ -34,18 +29,14 @@ public class SessionConfig {
         return new GenericJackson2JsonRedisSerializer(mapper);
     }
 
-    /**
-     * Explicitly configures the session cookie flags.
-     * The Secure flag is profile-driven so local HTTP dev still works.
-     */
     @Bean
     public CookieSerializer cookieSerializer() {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
         serializer.setCookieName("SACCO_SESSION");
         serializer.setUseHttpOnlyCookie(true);
-        serializer.setUseSecureCookie(secureCookie);  // false in dev profile, true otherwise
-        serializer.setSameSite("Strict");
-        serializer.setCookiePath("/");
+        // --- DYNAMIC PROPERTIES ---
+        serializer.setUseSecureCookie(secureCookie);
+        serializer.setSameSite(sameSite);
         return serializer;
     }
 }

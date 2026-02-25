@@ -3,9 +3,9 @@ server:
   servlet:
     session:
       cookie:
-        secure: true
+        secure: true       # Forces the session cookie to ONLY be sent over HTTPS
         http-only: true
-        same-site: strict
+        same-site: Strict  # Prevents the cookie from being sent on cross-site requests
 
 spring:
   application:
@@ -81,3 +81,9 @@ app:
           parallelism: ${APP_ARGON2_PARALLELISM:1}
           memory: ${APP_ARGON2_MEMORY:65536}
           iterations: ${APP_ARGON2_ITERATIONS:3}
+
+# --- SECURITY & CORS BASELINE (PROD DEFAULTS) ---
+sacco:
+  security:
+    cors:
+      allowed-origins: "https://app.securesacco.com" # Change this to your actual frontend prod URL
