@@ -8,6 +8,7 @@ interface User {
     lastName: string;
     phoneNumber?: string;
     permissions: string[];
+    roles: string[];
 }
 
 interface AuthContextType {
@@ -68,9 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = async () => {
         try {
             await apiClient.post('/auth/logout');
+        } catch (error) {
+            console.error("Logout failed:", error);
         } finally {
             setUser(null);
-            // Hard redirect to clear local state and force a fresh CSRF handshake on next visit
             window.location.href = '/login';
         }
     };

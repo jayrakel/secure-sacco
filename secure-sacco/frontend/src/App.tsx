@@ -6,6 +6,7 @@ import UserListPage from "./features/users/pages/UserListPage";
 import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 import ProtectedRoute from "./shared/components/ProtectedRoute";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
+import GuestRoute from "./shared/components/GuestRoute";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
@@ -20,7 +21,12 @@ function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/login" element={<LoginPage />} />
+                    {/* Wrap Login in GuestRoute */}
+                    <Route path="/login" element={
+                        <GuestRoute>
+                            <LoginPage />
+                        </GuestRoute>
+                    } />
 
                     {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                     <Route element={<DashboardLayout />}>
