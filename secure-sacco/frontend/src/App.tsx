@@ -10,6 +10,7 @@ import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
+import MemberListPage from "./features/members/pages/MemberListPage";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
 
 // Temporary Placeholder to fix the ReferenceError
@@ -60,6 +61,13 @@ function App() {
                         <Route path="/roles" element={
                             <ProtectedRoute requiredPermissions={['ROLE_READ']}>
                                 <RolesPermissionsPage />
+                            </ProtectedRoute>
+                        } />
+
+                        {/* Shielded: Requires MEMBERS_READ */}
+                        <Route path="/members" element={
+                            <ProtectedRoute requiredPermissions={['MEMBERS_READ']}>
+                                <MemberListPage />
                             </ProtectedRoute>
                         } />
 
