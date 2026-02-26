@@ -46,7 +46,6 @@ public class AuthController {
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
 
-    // --- FIX 1: Added SecurityAuditService to the constructor parameters ---
     public AuthController(AuthenticationManager authenticationManager,
                           LoginAttemptService loginAttemptService,
                           SecurityAuditService securityAuditService,
@@ -119,7 +118,6 @@ public class AuthController {
             loginAttemptService.loginFailed(identifier);
             loginAttemptService.loginFailed(clientIp);
 
-            // --- FIX 2: Moved the LOGIN_FAILED audit log here ---
             securityAuditService.logEventWithActorAndIp(identifier, "LOGIN_FAILED", "Account: " + identifier, clientIp, "Invalid credentials");
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -136,17 +134,27 @@ public class AuthController {
     }
 
     private Map<String, Object> buildLoginResponse(CustomUserDetailsService.CustomUserDetails userDetails) {
+        // Fetch full user to check for Member relation
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("id", userDetails.getId());
+        userMap.put("email", userDetails.getUsername());
+        userMap.put("firstName", userDetails.getFirstName());
+        userMap.put("lastName", userDetails.getLastName());
+        userMap.put("permissions", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+        userMap.put("roles", userDetails.getRoles());
+        userMap.put("mfaEnabled", userDetails.isMfaEnabled());
+
+        // Attach Member details if this user is a Member
+        if (user.getMember() != null) {
+            userMap.put("memberNumber", user.getMember().getMemberNumber());
+            userMap.put("memberStatus", user.getMember().getStatus().name());
+        }
+
         return Map.of(
                 "message", "Login successful",
-                "user", Map.of(
-                        "id", userDetails.getId(),
-                        "email", userDetails.getUsername(),
-                        "firstName", userDetails.getFirstName(),
-                        "lastName", userDetails.getLastName(),
-                        "permissions", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()),
-                        "roles", userDetails.getRoles(),
-                        "mfaEnabled", userDetails.isMfaEnabled()
-                )
+                "user", userMap
         );
     }
 
@@ -236,6 +244,7 @@ public class AuthController {
         }
 
         CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
 
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("id", userDetails.getId());
@@ -249,6 +258,11 @@ public class AuthController {
         responseBody.put("permissions", permissions);
         responseBody.put("roles", userDetails.getRoles());
         responseBody.put("mfaEnabled", userDetails.isMfaEnabled());
+
+        if (user.getMember() != null) {
+            responseBody.put("memberNumber", user.getMember().getMemberNumber());
+            responseBody.put("memberStatus", user.getMember().getStatus().name());
+        }
 
         return ResponseEntity.ok(responseBody);
     }

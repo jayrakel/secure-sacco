@@ -21,7 +21,11 @@ export const Sidebar = () => {
     const { settings } = useSettings();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const allNavItems = [
+    // Determine if the logged-in user is a Staff member or just a regular SACCO Member.
+    // If they have any role OTHER than 'MEMBER', we consider them staff.
+    const isStaff = user?.roles?.some(role => role !== 'MEMBER');
+
+    const staffNavItems = [
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { label: 'User Management', path: '/users', icon: Users },
         { label: 'Roles & Permissions', path: '/roles', icon: ShieldCheck },
@@ -36,14 +40,23 @@ export const Sidebar = () => {
         { label: 'Platform Settings', path: '/settings', icon: Settings, adminOnly: true },
     ];
 
-    const navItems = allNavItems.filter(item => {
+    const memberNavItems = [
+        { label: 'My Portal', path: '/member/dashboard', icon: LayoutDashboard },
+        { label: 'Security', path: '/security', icon: Shield },
+    ];
+
+    // Select which menu to show based on persona
+    const activeNavList = isStaff ? staffNavItems : memberNavItems;
+
+    const navItems = activeNavList.filter(item => {
         // 1. Check Admin Roles
         if (item.adminOnly && !user?.roles?.includes('ROLE_SYSTEM_ADMIN')) return false;
 
         // 2. Check Feature Flags for dynamic modules
         if (item.module) {
             if (!settings?.initialized) return false; // Hide completely if system isn't setup
-            return settings.enabledModules?.[item.module] === true;
+            // Cast module as keyof enabledModules to satisfy TS
+            return settings.enabledModules?.[item.module as keyof typeof settings.enabledModules] === true;
         }
 
         return true;
@@ -84,6 +97,9 @@ export const Sidebar = () => {
                 <div className="p-4 border-t border-slate-800 bg-slate-950/50 shrink-0">
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Logged in as</p>
                     <p className="text-sm font-medium truncate mt-0.5">{user?.firstName} {user?.lastName}</p>
+                    {user?.memberNumber && (
+                        <p className="text-xs font-mono text-emerald-400 mt-1">{user.memberNumber}</p>
+                    )}
                 </div>
             )}
         </aside>
