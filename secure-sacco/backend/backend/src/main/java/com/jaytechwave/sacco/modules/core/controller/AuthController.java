@@ -134,8 +134,8 @@ public class AuthController {
     }
 
     private Map<String, Object> buildLoginResponse(CustomUserDetailsService.CustomUserDetails userDetails) {
-        // Fetch full user to check for Member relation
-        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        // Fetch full user and fetch member eagerly to avoid LazyInitializationException
+        User user = userRepository.findWithMemberByEmail(userDetails.getUsername()).orElseThrow();
 
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("id", userDetails.getId());
@@ -244,7 +244,7 @@ public class AuthController {
         }
 
         CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow();
+        User user = userRepository.findWithMemberByEmail(userDetails.getUsername()).orElseThrow();
 
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("id", userDetails.getId());
