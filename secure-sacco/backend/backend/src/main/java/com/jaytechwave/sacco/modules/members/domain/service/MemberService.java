@@ -4,12 +4,19 @@ import com.jaytechwave.sacco.modules.members.api.dto.MemberDTOs.*;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
+import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -19,13 +26,18 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberNumberGeneratorService numberGeneratorService;
 
+    // Injections for User Auto-Provisioning
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+
     @Transactional
     public MemberResponse createMember(CreateMemberRequest request) {
         // Pass null for currentMember since this is a new registration
         validateUniqueConstraints(request.getNationalId(), request.getEmail(), request.getPhoneNumber(), null);
 
+        // 1. Create the Member Profile
         String generatedMemberNumber = numberGeneratorService.generateNextMemberNumber();
-
         Member member = Member.builder()
                 .memberNumber(generatedMemberNumber)
                 .firstName(request.getFirstName())
@@ -36,11 +48,35 @@ public class MemberService {
                 .email(request.getEmail())
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
-                .status(MemberStatus.ACTIVE)
+                .status(MemberStatus.ACTIVE) // Later changed to PENDING_PAYMENT in Epic MEM-03
                 .isDeleted(false)
                 .build();
 
-        return MemberResponse.fromEntity(memberRepository.save(member));
+        Member savedMember = memberRepository.save(member);
+
+        // 2. Auto-Provision the Member Portal User Account
+        Role memberRole = roleRepository.findByName("MEMBER")
+                .orElseThrow(() -> new IllegalStateException("System 'MEMBER' role not found. Please ensure DB is seeded."));
+
+        User portalUser = User.builder()
+                .email(request.getEmail())
+                // Set a highly secure random dummy password; they will set their real one during activation
+                .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString() + UUID.randomUUID().toString()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .status(UserStatus.PENDING_ACTIVATION)
+                .mfaEnabled(false)
+                .member(savedMember)
+                .roles(Set.of(memberRole))
+                .build();
+
+        userRepository.save(portalUser);
+
+        // 3. Link the User back to the Member (Forward FK update)
+        savedMember.setUser(portalUser);
+        memberRepository.save(savedMember);
+
+        return MemberResponse.fromEntity(savedMember);
     }
 
     public Page<MemberResponse> getMembers(String q, MemberStatus status, Pageable pageable) {
@@ -94,7 +130,6 @@ public class MemberService {
      * Skips the database lookup if the value belongs to the current member being updated.
      */
     private void validateUniqueConstraints(String nationalId, String email, String phone, Member currentMember) {
-
         if (nationalId != null && !nationalId.trim().isEmpty()) {
             if (currentMember == null || !nationalId.equals(currentMember.getNationalId())) {
                 if (memberRepository.existsByNationalId(nationalId)) {
@@ -107,6 +142,10 @@ public class MemberService {
             if (currentMember == null || !email.equalsIgnoreCase(currentMember.getEmail())) {
                 if (memberRepository.existsByEmail(email)) {
                     throw new IllegalArgumentException("Email address is already registered to another member.");
+                }
+                // Also ensure the email isn't taken by an admin/staff user
+                if (userRepository.existsByEmail(email)) {
+                    throw new IllegalArgumentException("Email address is already registered as a system user.");
                 }
             }
         }

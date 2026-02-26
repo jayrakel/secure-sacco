@@ -23,8 +23,11 @@ public class MemberDTOs {
         private String lastName;
         private String nationalId;
         private String phoneNumber;
+
+        @NotBlank(message = "Email address is required for portal access")
         @Email(message = "Invalid email format")
         private String email;
+
         private LocalDate dateOfBirth;
         private Gender gender;
     }

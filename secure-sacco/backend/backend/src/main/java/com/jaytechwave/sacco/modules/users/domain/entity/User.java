@@ -60,4 +60,8 @@ public class User {
     @Column(name = "mfa_secret")
     private String mfaSecret;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private com.jaytechwave.sacco.modules.members.domain.entity.Member member;
+
 }
