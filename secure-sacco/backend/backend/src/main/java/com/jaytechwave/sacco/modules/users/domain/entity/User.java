@@ -57,6 +57,14 @@ public class User {
     @Builder.Default
     private boolean mfaEnabled = false;
 
+    @Column(name = "phone_verified", nullable = false)
+    @Builder.Default
+    private boolean phoneVerified = false;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
+
     @Column(name = "mfa_secret")
     private String mfaSecret;
 

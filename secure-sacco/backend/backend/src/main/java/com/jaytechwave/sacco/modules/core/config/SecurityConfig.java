@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/login/mfa",
                                 "/api/v1/auth/csrf",
                                 "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/activation/**",
                                 "/api/v1/auth/reset-password")
                         .permitAll()
                         .anyRequest().authenticated()

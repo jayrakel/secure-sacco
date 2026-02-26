@@ -9,12 +9,14 @@ import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.users.domain.service.UserActivationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.Set;
 import java.util.UUID;
@@ -30,6 +32,7 @@ public class MemberService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserActivationService activationService;
 
     @Transactional
     public MemberResponse createMember(CreateMemberRequest request) {
@@ -75,6 +78,7 @@ public class MemberService {
         // 3. Link the User back to the Member (Forward FK update)
         savedMember.setUser(portalUser);
         memberRepository.save(savedMember);
+        activationService.initiateActivation(portalUser);
 
         return MemberResponse.fromEntity(savedMember);
     }
@@ -125,10 +129,6 @@ public class MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("Member not found with ID: " + id));
     }
 
-    /**
-     * Validates that National ID, Email, and Phone are unique across the system.
-     * Skips the database lookup if the value belongs to the current member being updated.
-     */
     private void validateUniqueConstraints(String nationalId, String email, String phone, Member currentMember) {
         if (nationalId != null && !nationalId.trim().isEmpty()) {
             if (currentMember == null || !nationalId.equals(currentMember.getNationalId())) {
