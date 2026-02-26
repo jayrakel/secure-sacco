@@ -44,14 +44,19 @@ public class SecurityConfig {
                         // withHttpOnlyFalse() ensures the frontend JS (Axios) can read the XSRF-TOKEN cookie
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(requestHandler)
+                        .ignoringRequestMatchers(
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/login/mfa",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/auth/activation/**",
+                                "/error"
+                        )
                 )
-                // Inject our custom filter immediately after the basic auth filter
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-                // ------------------------------
-
                 .sessionManagement(session -> session
-                        .sessionFixation().migrateSession() // Generates a new session ID upon authentication
-                        .maximumSessions(5) // Limit maximum concurrent sessions per user
+                        .sessionFixation().migrateSession()
+                        .maximumSessions(5)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -60,7 +65,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/csrf",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/activation/**",
-                                "/api/v1/auth/reset-password")
+                                "/api/v1/auth/reset-password",
+                                "/error"
+                                )
                         .permitAll()
                         .anyRequest().authenticated()
                 )

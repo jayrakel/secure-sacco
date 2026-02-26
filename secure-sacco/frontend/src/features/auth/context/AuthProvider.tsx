@@ -10,6 +10,8 @@ interface User {
     permissions: string[];
     roles: string[];
     mfaEnabled?: boolean;
+    memberNumber?: string;
+    memberStatus?: string;
 }
 
 interface AuthContextType {

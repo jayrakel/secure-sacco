@@ -11,7 +11,9 @@ import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
 import MemberListPage from "./features/members/pages/MemberListPage";
+import MemberDashboardPage from "./features/members/pages/MemberDashboardPage";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
+import ActivationPage from "./features/auth/pages/ActivationPage";
 
 // Temporary Placeholder to fix the ReferenceError
 const DashboardOverview = () => (
@@ -25,77 +27,90 @@ function App() {
     return (
         <AuthProvider>
             <SettingsProvider>
-            <BrowserRouter>
-                <Routes>
-                    {/* Wrap Login in GuestRoute */}
-                    <Route path="/login" element={
-                        <GuestRoute>
-                            <LoginPage />
-                        </GuestRoute>
-                    } />
-
-                    <Route path="/reset-password" element={
-                        <GuestRoute>
-                            <ResetPasswordPage />
-                        </GuestRoute>
-                    } />
-
-                    {/* All routes inside here will render with the Dashboard Sidebar/Header */}
-                    <Route element={<DashboardLayout />}>
-
-                        {/* Standard logged-in user protection (No specific permission needed) */}
-                        <Route path="/dashboard" element={
-                            <ProtectedRoute>
-                                <DashboardOverview />
-                            </ProtectedRoute>
+                <BrowserRouter>
+                    <Routes>
+                        {/* Wrap Login in GuestRoute */}
+                        <Route path="/login" element={
+                            <GuestRoute>
+                                <LoginPage />
+                            </GuestRoute>
                         } />
 
-                        {/* Shielded: Requires USER_READ */}
-                        <Route path="/users" element={
-                            <ProtectedRoute requiredPermissions={['USER_READ']}>
-                                <UserListPage />
-                            </ProtectedRoute>
+                        <Route path="/reset-password" element={
+                            <GuestRoute>
+                                <ResetPasswordPage />
+                            </GuestRoute>
                         } />
 
-                        {/* Shielded: Requires ROLE_READ */}
-                        <Route path="/roles" element={
-                            <ProtectedRoute requiredPermissions={['ROLE_READ']}>
-                                <RolesPermissionsPage />
-                            </ProtectedRoute>
+                        <Route path="/activate" element={
+                            <GuestRoute>
+                                <ActivationPage />
+                            </GuestRoute>
                         } />
 
-                        {/* Shielded: Requires MEMBERS_READ */}
-                        <Route path="/members" element={
-                            <ProtectedRoute requiredPermissions={['MEMBERS_READ']}>
-                                <MemberListPage />
-                            </ProtectedRoute>
-                        } />
+                        {/* All routes inside here will render with the Dashboard Sidebar/Header */}
+                        <Route element={<DashboardLayout />}>
 
-                        <Route path="/security" element={
-                            <ProtectedRoute>
-                                <SecuritySettingsPage />
-                            </ProtectedRoute>
-                        } />
+                            {/* Standard logged-in user protection (No specific permission needed) */}
+                            <Route path="/dashboard" element={
+                                <ProtectedRoute>
+                                    <DashboardOverview />
+                                </ProtectedRoute>
+                            } />
 
-                        {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
-                        <Route path="/settings" element={
-                            <ProtectedRoute>
-                                <HasPermission permission="ROLE_SYSTEM_ADMIN" fallback={
-                                    <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
-                                        Access Denied: You do not have permission to view global settings.
-                                    </div>
-                                }>
-                                    <SaccoSettingsPage />
-                                </HasPermission>
-                            </ProtectedRoute>
-                        } />
+                            {/* Member Portal Route */}
+                            <Route path="/member/dashboard" element={
+                                <ProtectedRoute>
+                                    <MemberDashboardPage />
+                                </ProtectedRoute>
+                            } />
 
-                    </Route>
+                            {/* Shielded: Requires USER_READ */}
+                            <Route path="/users" element={
+                                <ProtectedRoute requiredPermissions={['USER_READ']}>
+                                    <UserListPage />
+                                </ProtectedRoute>
+                            } />
 
-                    {/* Fallback route */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-            </BrowserRouter>
+                            {/* Shielded: Requires ROLE_READ */}
+                            <Route path="/roles" element={
+                                <ProtectedRoute requiredPermissions={['ROLE_READ']}>
+                                    <RolesPermissionsPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* Shielded: Requires MEMBERS_READ */}
+                            <Route path="/members" element={
+                                <ProtectedRoute requiredPermissions={['MEMBERS_READ']}>
+                                    <MemberListPage />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/security" element={
+                                <ProtectedRoute>
+                                    <SecuritySettingsPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
+                            <Route path="/settings" element={
+                                <ProtectedRoute>
+                                    <HasPermission permission="ROLE_SYSTEM_ADMIN" fallback={
+                                        <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
+                                            Access Denied: You do not have permission to view global settings.
+                                        </div>
+                                    }>
+                                        <SaccoSettingsPage />
+                                    </HasPermission>
+                                </ProtectedRoute>
+                            } />
+
+                        </Route>
+
+                        {/* Fallback route */}
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    </Routes>
+                </BrowserRouter>
             </SettingsProvider>
         </AuthProvider>
     );

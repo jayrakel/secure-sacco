@@ -35,6 +35,57 @@ public class UserActivationService {
         generateEmailToken(user);
     }
 
+    // --- Frontend Integration Methods ---
+
+    /**
+     * Validates the email token when the user first clicks the link from their email.
+     */
+    @Transactional(readOnly = true)
+    public void verifyActivationLink(String tokenString) {
+        VerificationToken token = tokenRepository.findByTokenAndTokenTypeAndIsUsedFalse(tokenString, VerificationTokenType.EMAIL_ACTIVATION)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired activation link."));
+
+        if (token.getExpiryDate().isBefore(ZonedDateTime.now())) {
+            throw new IllegalArgumentException("Activation link has expired. Please contact support.");
+        }
+    }
+
+    /**
+     * Completes the activation by verifying the OTP, Email Token, and setting the password simultaneously.
+     */
+    @Transactional
+    public void completeActivation(String emailTokenString, String otpCode, String newPassword) {
+        // 1. Verify Email Token
+        VerificationToken emailToken = tokenRepository.findByTokenAndTokenTypeAndIsUsedFalse(emailTokenString, VerificationTokenType.EMAIL_ACTIVATION)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired email token."));
+
+        validateToken(emailToken, emailTokenString);
+        User user = emailToken.getUser();
+
+        // 2. Verify OTP
+        VerificationToken otpToken = tokenRepository.findFirstByUserIdAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(user.getId(), VerificationTokenType.PHONE_ACTIVATION)
+                .orElseThrow(() -> new IllegalArgumentException("No active OTP found. Please request a new one."));
+
+        validateToken(otpToken, otpCode);
+
+        // 3. Mark both used
+        emailToken.setUsed(true);
+        otpToken.setUsed(true);
+        tokenRepository.save(emailToken);
+        tokenRepository.save(otpToken);
+
+        // 4. Finalize User Setup
+        user.setEmailVerified(true);
+        user.setPhoneVerified(true);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        log.info("🎉 User {} is now fully activated.", user.getEmail());
+    }
+
+    // --- Individual Retry Methods ---
+
     @Transactional
     public void requestNewOtp(String email) {
         generateOtp(findUserByEmail(email));
@@ -43,37 +94,6 @@ public class UserActivationService {
     @Transactional
     public void requestNewEmailToken(String email) {
         generateEmailToken(findUserByEmail(email));
-    }
-
-    @Transactional
-    public void verifyOtp(String email, String code) {
-        User user = findUserByEmail(email);
-        VerificationToken token = tokenRepository.findFirstByUserIdAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(user.getId(), VerificationTokenType.PHONE_ACTIVATION)
-                .orElseThrow(() -> new IllegalArgumentException("No active OTP found. Please request a new one."));
-
-        validateToken(token, code);
-
-        token.setUsed(true);
-        tokenRepository.save(token);
-
-        user.setPhoneVerified(true);
-        checkAndActivate(user);
-    }
-
-    @Transactional
-    public void verifyEmail(String tokenString, String newPassword) {
-        VerificationToken token = tokenRepository.findByTokenAndTokenTypeAndIsUsedFalse(tokenString, VerificationTokenType.EMAIL_ACTIVATION)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired email token."));
-
-        validateToken(token, tokenString);
-
-        token.setUsed(true);
-        tokenRepository.save(token);
-
-        User user = token.getUser();
-        user.setEmailVerified(true);
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
-        checkAndActivate(user);
     }
 
     // --- Internal Helpers ---
@@ -87,7 +107,6 @@ public class UserActivationService {
                 .expiryDate(ZonedDateTime.now().plusMinutes(10)).build();
         tokenRepository.save(token);
 
-        // TODO: Replace with real SMS provider gateway later
         log.info("📢 [MOCK SMS] OTP for {}: {}", user.getPhoneNumber() != null ? user.getPhoneNumber() : "User", code);
     }
 
@@ -100,7 +119,6 @@ public class UserActivationService {
                 .expiryDate(ZonedDateTime.now().plusHours(24)).build();
         tokenRepository.save(token);
 
-        // TODO: Replace with real SMTP Email sender later
         log.info("📧 [MOCK EMAIL] Activation Link for {}: http://localhost:5173/activate?token={}", user.getEmail(), uuidToken);
     }
 
@@ -126,14 +144,6 @@ public class UserActivationService {
         if (recentRequests >= 3) {
             throw new IllegalStateException("Too many requests. Please try again after 15 minutes.");
         }
-    }
-
-    private void checkAndActivate(User user) {
-        if (user.isPhoneVerified() && user.isEmailVerified()) {
-            user.setStatus(UserStatus.ACTIVE);
-            log.info("🎉 User {} is now fully activated.", user.getEmail());
-        }
-        userRepository.save(user);
     }
 
     private User findUserByEmail(String email) {
