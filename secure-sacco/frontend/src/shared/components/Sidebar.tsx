@@ -16,22 +16,30 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+// 🛡️ 1. Define the TypeScript Interface so TS knows these optional fields exist
+interface NavItem {
+    label: string;
+    path: string;
+    icon: React.ElementType;
+    module?: string;
+    adminOnly?: boolean;
+    requiredPermission?: string;
+}
+
 export const Sidebar = () => {
     const { user } = useAuth();
     const { settings } = useSettings();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    // Determine if the logged-in user is a Staff member or just a regular SACCO Member.
-    // If they have any role OTHER than 'MEMBER', we consider them staff.
     const isStaff = user?.roles?.some(role => role !== 'MEMBER');
 
-    const staffNavItems = [
+    // 🛡️ 2. Apply the Type here
+    const staffNavItems: NavItem[] = [
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { label: 'User Management', path: '/users', icon: Users },
-        { label: 'Roles & Permissions', path: '/roles', icon: ShieldCheck },
+        { label: 'User Management', path: '/users', icon: Users, requiredPermission: 'USER_READ' },
+        { label: 'Roles & Permissions', path: '/roles', icon: ShieldCheck, requiredPermission: 'ROLE_READ' },
 
-        // Modules dependent on Feature Flags
-        { label: 'Members', path: '/members', icon: UserCircle, module: 'members' },
+        { label: 'Members', path: '/members', icon: UserCircle, module: 'members', requiredPermission: 'MEMBERS_READ' },
         { label: 'Loans', path: '/loans', icon: Coins, module: 'loans' },
         { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings' },
         { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports' },
@@ -40,22 +48,22 @@ export const Sidebar = () => {
         { label: 'Platform Settings', path: '/settings', icon: Settings, adminOnly: true },
     ];
 
-    const memberNavItems = [
+    // 🛡️ 3. Apply the Type here too
+    const memberNavItems: NavItem[] = [
         { label: 'My Portal', path: '/member/dashboard', icon: LayoutDashboard },
         { label: 'Security', path: '/security', icon: Shield },
     ];
 
-    // Select which menu to show based on persona
     const activeNavList = isStaff ? staffNavItems : memberNavItems;
 
     const navItems = activeNavList.filter(item => {
-        // 1. Check Admin Roles
+        // Now TypeScript knows these properties are perfectly safe to check!
         if (item.adminOnly && !user?.roles?.includes('ROLE_SYSTEM_ADMIN')) return false;
 
-        // 2. Check Feature Flags for dynamic modules
+        if (item.requiredPermission && !user?.permissions?.includes(item.requiredPermission)) return false;
+
         if (item.module) {
-            if (!settings?.initialized) return false; // Hide completely if system isn't setup
-            // Cast module as keyof enabledModules to satisfy TS
+            if (!settings?.initialized) return false;
             return settings.enabledModules?.[item.module as keyof typeof settings.enabledModules] === true;
         }
 

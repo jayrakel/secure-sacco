@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.users.domain.repository;
 
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
     Optional<User> findByPhoneNumber(String phoneNumber);
+
+    @EntityGraph(attributePaths = {"member"})
+    Optional<User> findWithMemberByEmail(String email);
 
     @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.phoneNumber = :identifier")
     Optional<User> findByEmailOrPhoneNumber(@Param("identifier") String identifier);
