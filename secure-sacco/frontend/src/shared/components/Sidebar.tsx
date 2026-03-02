@@ -22,12 +22,12 @@ import { useState, useEffect } from 'react';
 
 interface NavItem {
     label: string;
-    path?: string; // Optional because parent tabs don't need a path
+    path?: string;
     icon: React.ElementType;
     module?: string;
     adminOnly?: boolean;
     requiredPermission?: string;
-    subItems?: NavItem[]; // Array for nested sub-tabs
+    subItems?: NavItem[];
 }
 
 export const Sidebar = () => {
@@ -79,6 +79,8 @@ export const Sidebar = () => {
     const memberNavItems: NavItem[] = [
         { label: 'My Portal', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Security', path: '/security', icon: Shield },
+        {label: 'Savings Vault', path: '/dashboard/savings', icon: PiggyBank, requiredPermission: 'SAVINGS_READ', module: 'savings' },
+
     ];
 
     const activeNavList = isStaff ? staffNavItems : memberNavItems;

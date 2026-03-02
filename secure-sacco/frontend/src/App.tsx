@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import SavingsManagementPage from './features/savings/pages/SavingsManagementPage';
 import { AuthProvider } from "./features/auth/context/AuthProvider";
 import LoginPage from "./features/auth/pages/LoginPage";
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
@@ -83,6 +84,13 @@ function App() {
                                 <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
                                     <JournalEntriesPage />
                                 </ProtectedRoute>
+                            } />
+
+                            {/* Staff Savings Route */}
+                            <Route path="savings" element={
+                                <HasPermission permission="SAVINGS_READ">
+                                    <SavingsManagementPage />
+                                </HasPermission>
                             } />
 
                             <Route path="/security" element={
