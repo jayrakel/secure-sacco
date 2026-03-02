@@ -1,5 +1,7 @@
 package com.jaytechwave.sacco.modules.savings.api.controller;
 
+import org.springframework.security.core.Authentication;
+import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService.CustomUserDetails;
 import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs.*;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import jakarta.validation.Valid;
@@ -26,5 +28,15 @@ public class SavingsController {
     @PreAuthorize("hasAnyAuthority('SAVINGS_MANUAL_POST', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<SavingsTransactionResponse> manualWithdrawal(@Valid @RequestBody ManualWithdrawalRequest request) {
         return ResponseEntity.ok(savingsService.processManualWithdrawal(request));
+    }
+
+    @PostMapping("/deposits/mpesa/initiate")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<InitiateMpesaResponse> initiateMpesaDeposit(
+            @Valid @RequestBody MpesaDepositRequest request,
+            Authentication authentication) {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return ResponseEntity.ok(savingsService.initiateMpesaDeposit(request, userDetails.getUsername()));
     }
 }

@@ -1,5 +1,10 @@
 package com.jaytechwave.sacco.modules.savings.domain.service;
 
+import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
+import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
+import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
@@ -26,6 +31,8 @@ public class SavingsService {
     private final SavingsTransactionRepository savingsTransactionRepository;
     private final MemberRepository memberRepository;
     private final JournalEntryService journalEntryService;
+    private final PaymentService paymentService;
+    private final UserRepository userRepository;
 
     @Transactional
     public SavingsTransactionResponse processManualDeposit(ManualDepositRequest request) {
@@ -153,6 +160,56 @@ public class SavingsService {
                 transaction.getReference(),
                 transaction.getStatus().name(),
                 transaction.getPostedAt()
+        );
+    }
+
+    @Transactional
+    public InitiateMpesaResponse initiateMpesaDeposit(MpesaDepositRequest request, String email) {
+        // 1. Fetch User strictly from Authentication Context to prevent spoofing
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getMember() == null || user.getMember().getStatus() != MemberStatus.ACTIVE) {
+            throw new IllegalStateException("Only active members can initiate M-Pesa deposits.");
+        }
+
+        Member member = user.getMember();
+
+        // 2. Get or Auto-create Account
+        SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
+                .orElseGet(() -> savingsAccountRepository.save(SavingsAccount.builder()
+                        .memberId(member.getId())
+                        .status(SavingsAccountStatus.ACTIVE)
+                        .build()));
+
+        if (account.getStatus() == SavingsAccountStatus.FROZEN) {
+            throw new IllegalStateException("Savings account is frozen. Cannot accept deposits.");
+        }
+
+        // 3. Create a PENDING Savings Transaction with "DEP-" prefix
+        String ref = "DEP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        SavingsTransaction transaction = SavingsTransaction.builder()
+                .savingsAccountId(account.getId())
+                .type(TransactionType.DEPOSIT)
+                .channel(TransactionChannel.MPESA)
+                .amount(request.amount())
+                .reference(ref)
+                .status(TransactionStatus.PENDING)
+                .build();
+
+        savingsTransactionRepository.save(transaction);
+
+        // 4. Call Payment Service for Daraja STK Push
+        InitiateStkResponse paymentResponse = paymentService.initiateMpesaStkPush(
+                new InitiateStkRequest(request.phoneNumber(), request.amount(), ref),
+                member.getId()
+        );
+
+        return new InitiateMpesaResponse(
+                paymentResponse.message(),
+                paymentResponse.checkoutRequestID(),
+                paymentResponse.customerMessage()
         );
     }
 }

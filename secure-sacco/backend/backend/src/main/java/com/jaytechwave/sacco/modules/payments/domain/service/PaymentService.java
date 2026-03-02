@@ -121,6 +121,17 @@ public class PaymentService {
             payment.setFailureReason(stkCallback.getResultDesc());
             paymentRepository.save(payment);
             log.warn("Payment FAILED. Reason: {}", stkCallback.getResultDesc());
+
+            // --- ADD THIS TO BROADCAST THE FAILURE ---
+            if (payment.getMemberId() != null) {
+                eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent(
+                        payment.getId(),
+                        payment.getMemberId(),
+                        payment.getAmount(),
+                        payment.getAccountReference(),
+                        stkCallback.getResultDesc()
+                ));
+            }
         }
     }
 }

@@ -41,4 +41,19 @@ public class SavingsDTOs {
             String status,
             LocalDateTime postedAt
     ) {}
+
+    public record MpesaDepositRequest(
+            @NotNull(message = "Phone number is required")
+            String phoneNumber,
+
+            @NotNull(message = "Amount is required")
+            @DecimalMin(value = "1.0", message = "Amount must be at least 1.0")
+            BigDecimal amount
+    ) {}
+
+    public record InitiateMpesaResponse(
+            String message,
+            String checkoutRequestId,
+            String customerMessage
+    ) {}
 }
