@@ -41,7 +41,7 @@ export const Sidebar = () => {
         'Accounting': false // Default state
     });
 
-    const isStaff = user?.roles?.some(role => role !== 'MEMBER');
+    const isStaff = user?.roles?.some(role => role !== 'ROLE_MEMBER');
 
     // Auto-expand the Accounting menu if we are on an accounting page
     useEffect(() => {
@@ -79,7 +79,7 @@ export const Sidebar = () => {
     const memberNavItems: NavItem[] = [
         { label: 'My Portal', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Security', path: '/security', icon: Shield },
-        {label: 'Savings Vault', path: '/dashboard/savings', icon: PiggyBank, requiredPermission: 'SAVINGS_READ', module: 'savings' },
+        {label: 'Savings Vault', path: '/savings', icon: PiggyBank, module: 'savings' },
 
     ];
 

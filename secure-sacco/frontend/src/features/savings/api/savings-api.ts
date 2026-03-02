@@ -48,5 +48,10 @@ export const savingsApi = {
         const url = `/savings/me/statement${params.toString() ? '?' + params.toString() : ''}`;
         const response = await apiClient.get<StatementTransactionResponse[]>(url);
         return response.data;
+    },
+
+    initiateMpesaDeposit: async (data: { phoneNumber: string; amount: number }) => {
+        const response = await apiClient.post('/savings/deposits/mpesa/initiate', data);
+        return response.data;
     }
 };

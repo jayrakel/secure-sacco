@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SavingsManagementPage from './features/savings/pages/SavingsManagementPage';
-import { AuthProvider } from "./features/auth/context/AuthProvider";
+import MemberSavingsPage from './features/savings/pages/MemberSavingsPage';
+import { AuthProvider, useAuth } from "./features/auth/context/AuthProvider";
 import LoginPage from "./features/auth/pages/LoginPage";
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
 import ActivationPage from './features/auth/pages/ActivationPage';
@@ -17,6 +18,23 @@ import MemberDashboardPage from "./features/members/pages/MemberDashboardPage";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
+
+// --- NEW WRAPPER COMPONENT ---
+// This safely accesses the user context because it will be rendered INSIDE the AuthProvider
+const SavingsRouteWrapper = () => {
+    const { user } = useAuth();
+
+    // Check if the user is STRICTLY just a member (no staff roles)
+    const isOnlyMember = user?.roles?.includes('ROLE_MEMBER') && !user?.roles?.some(r => r !== 'MEMBER');
+
+    return isOnlyMember ? (
+        <MemberSavingsPage />
+    ) : (
+        <HasPermission permission="SAVINGS_READ">
+            <SavingsManagementPage />
+        </HasPermission>
+    );
+};
 
 function App() {
     return (
@@ -47,7 +65,6 @@ function App() {
                         {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                         <Route element={<DashboardLayout />}>
 
-                            {/* 2. UPDATE THIS ROUTE to use MemberDashboardPage */}
                             <Route path="/dashboard" element={
                                 <ProtectedRoute>
                                     <MemberDashboardPage />
@@ -80,18 +97,15 @@ function App() {
                                     <ChartOfAccountsPage />
                                 </ProtectedRoute>
                             } />
+
                             <Route path="/accounting/journals" element={
                                 <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
                                     <JournalEntriesPage />
                                 </ProtectedRoute>
                             } />
 
-                            {/* Staff Savings Route */}
-                            <Route path="savings" element={
-                                <HasPermission permission="SAVINGS_READ">
-                                    <SavingsManagementPage />
-                                </HasPermission>
-                            } />
+                            {/* --- UPDATED SAVINGS ROUTE --- */}
+                            <Route path="savings" element={<SavingsRouteWrapper />} />
 
                             <Route path="/security" element={
                                 <ProtectedRoute>
