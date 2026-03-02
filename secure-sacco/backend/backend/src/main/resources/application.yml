@@ -91,25 +91,25 @@ sacco:
   safaricom:
     daraja:
       # Environment: 'production' or 'sandbox'
-      env: ${DARAJA_ENV:production}
+      env: ${MPESA_ENV:production}
 
       # Credentials
-      consumer-key: ${DARAJA_CONSUMER_KEY}
-      consumer-secret: ${DARAJA_CONSUMER_SECRET}
-      passkey: ${DARAJA_PASSKEY}
+      consumer-key: ${MPESA_CONSUMER_KEY}
+      consumer-secret: ${MPESA_CONSUMER_SECRET}
+      passkey: ${MPESA_PASSKEY}
 
       # Shortcodes (Paybill / Till Number)
-      shortcode: ${DARAJA_SHORTCODE}
-      b2c-shortcode: ${DARAJA_B2C_SHORTCODE:}
+      shortcode: ${MPESA_SHORTCODE}
+      b2c-shortcode: ${MPESA_B2C_SHORTCODE:}
 
       # Webhooks / Callbacks
       # Base URL for Daraja to send asynchronous responses back to your server
-      callback-base-url: ${DARAJA_CALLBACK_BASE_URL:https://api.securesacco.com}
+      callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://api.securesacco.com}
 
       # Specific API Endpoints Callbacks (Relative paths)
       endpoints:
-        mpesa-express-callback: /api/v1/payments/daraja/stk-callback
-        c2b-validation: /api/v1/payments/daraja/c2b-validate
-        c2b-confirmation: /api/v1/payments/daraja/c2b-confirm
-        b2c-result: /api/v1/payments/daraja/b2c-result
-        b2c-queue-timeout: /api/v1/payments/daraja/b2c-queue-timeout
+        mpesa-express-callback: /api/v1/payments/mpesa/stk-callback
+        c2b-validation: /api/v1/payments/mpesa/c2b-validate
+        c2b-confirmation: /api/v1/payments/mpesa/c2b-confirm
+        b2c-result: /api/v1/payments/mpesa/b2c-result
+        b2c-queue-timeout: /api/v1/payments/mpesa/b2c-queue-timeout
