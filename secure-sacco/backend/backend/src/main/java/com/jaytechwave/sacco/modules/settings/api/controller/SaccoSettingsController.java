@@ -25,7 +25,7 @@ public class SaccoSettingsController {
     private final PrefixGeneratorService prefixGeneratorService; // Injected generator
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getSettings() {
         if (!settingsService.isInitialized()) {
             return ResponseEntity.ok(Map.of("initialized", false));
@@ -36,7 +36,7 @@ public class SaccoSettingsController {
                 "saccoName", settings.getSaccoName(),
                 "prefix", settings.getMemberNumberPrefix(),
                 "padLength", settings.getMemberNumberPadLength(),
-                "registrationFee", settings.getRegistrationFee(), // <--- NEW FIELD ADDED
+                "registrationFee", settings.getRegistrationFee(),
                 "enabledModules", settings.getEnabledModules()
         ));
     }
