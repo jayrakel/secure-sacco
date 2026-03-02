@@ -72,6 +72,12 @@ public class JournalEntryService {
         return mapToResponse(savedEntry);
     }
 
+    public List<JournalEntryResponse> getAllJournalEntries() {
+        return journalEntryRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private void validateDoubleEntry(List<JournalEntryLineRequest> lines) {
         if (lines == null || lines.size() < 2) {
             throw new IllegalArgumentException("Journal entry must have at least two lines (a debit and a credit).");
