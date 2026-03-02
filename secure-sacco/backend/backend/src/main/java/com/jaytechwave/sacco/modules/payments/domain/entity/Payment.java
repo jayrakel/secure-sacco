@@ -27,6 +27,9 @@ public class Payment {
     @Column(name = "transaction_ref", unique = true, length = 100)
     private String transactionRef;
 
+    @Column(name = "member_id")
+    private UUID memberId;
+
     @Column(name = "internal_ref", unique = true, nullable = false, length = 100)
     private String internalRef;
 
@@ -52,12 +55,9 @@ public class Payment {
     @Column(name = "sender_name", length = 150)
     private String senderName;
 
-    @Column(nullable = false, length = 50)
-    @Builder.Default
-    private String status = "PENDING";
-
-    @Column(name = "member_id")
-    private UUID memberId;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PaymentStatus status;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "provider_metadata", columnDefinition = "jsonb")

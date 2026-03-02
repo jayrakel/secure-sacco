@@ -76,7 +76,7 @@ public class Member {
     @PrePersist
     protected void onCreate() {
         if (status == null) {
-            status = MemberStatus.ACTIVE;
+            status = MemberStatus.PENDING;
         }
     }
 }

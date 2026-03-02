@@ -1,24 +1,33 @@
 package com.jaytechwave.sacco.modules.payments.domain.service;
 
-import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkCallbackResponse; // <-- Missing import added
+import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
+import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkCallbackResponse;
+import com.jaytechwave.sacco.modules.members.domain.service.MemberService;
 import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkPushSyncResponse;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
+import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus; // Assuming you have this Enum
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
 
     private final DarajaApiService darajaApiService;
     private final PaymentRepository paymentRepository;
+    private final MemberService memberService;
+    private final JournalEntryService journalEntryService;
 
     @Transactional
-    public InitiateStkResponse initiateMpesaStkPush(InitiateStkRequest request) {
+    public InitiateStkResponse initiateMpesaStkPush(InitiateStkRequest request, UUID memberId) { // <--- Added memberId
 
         String formattedPhone = request.phoneNumber().replaceAll("\\s+", ""); // Remove spaces
         if (formattedPhone.startsWith("+")) {
@@ -42,14 +51,14 @@ public class PaymentService {
 
         // 2. Save Pending Payment in DB
         Payment payment = Payment.builder()
-                // We use Daraja's CheckoutRequestID as our internal tracker to map callbacks later
+                .memberId(memberId) // <--- Use the passed-in memberId
                 .internalRef(darajaResponse.getCheckoutRequestID())
                 .amount(request.amount())
                 .paymentMethod("MPESA")
                 .paymentType("STK_PUSH")
                 .accountReference(request.accountReference())
                 .senderPhoneNumber(formattedPhone)
-                .status("PENDING")
+                .status(PaymentStatus.PENDING) // <--- Use Enum (if applicable)
                 .build();
 
         paymentRepository.save(payment);
@@ -74,24 +83,47 @@ public class PaymentService {
 
         // ResultCode 0 means the user entered their PIN successfully and had funds
         if (stkCallback.getResultCode() == 0) {
-            payment.setStatus("COMPLETED");
+            payment.setStatus(PaymentStatus.COMPLETED); // <--- Use Enum
+
+            String receiptNumber = null;
 
             // Extract the Mpesa Receipt Number (e.g., NLJ7RT61SV)
             if (stkCallback.getCallbackMetadata() != null && stkCallback.getCallbackMetadata().getItem() != null) {
                 for (StkCallbackResponse.Item item : stkCallback.getCallbackMetadata().getItem()) {
                     if ("MpesaReceiptNumber".equals(item.getName())) {
-                        payment.setTransactionRef(String.valueOf(item.getValue()));
+                        receiptNumber = String.valueOf(item.getValue());
+                        payment.setTransactionRef(receiptNumber);
                     }
                 }
             }
 
-            // TODO: Here you could trigger an application event (e.g., ApplicationEventPublisher)
-            // to automatically credit the member's SACCO savings account now that the payment is confirmed.
+            log.info("Payment SUCCESS. Receipt: {}", receiptNumber);
+
+            // ==========================================
+            // THE STATE MACHINE & ACCOUNTING ENGINE TRIGGER
+            // ==========================================
+            if (payment.getMemberId() != null) {
+                // If this payment was for a registration fee
+                if (payment.getAccountReference() != null && payment.getAccountReference().startsWith("REG-")) {
+
+                    // 1. Activate Member
+                    memberService.activateMember(payment.getMemberId());
+
+                    // 2. Post Accounting Journal!
+                    journalEntryService.postRegistrationFeeTemplate(
+                            payment.getMemberId(),
+                            payment.getAmount(),
+                            receiptNumber != null ? receiptNumber : checkoutRequestID
+                    );
+                }
+                // (Later you can add an else-if here for "DEP-" for savings deposits)
+            }
 
         } else {
             // ResultCode != 0 means failure (e.g. user canceled prompt, wrong PIN, insufficient funds)
-            payment.setStatus("FAILED");
+            payment.setStatus(PaymentStatus.FAILED); // <--- Use Enum
             payment.setFailureReason(stkCallback.getResultDesc());
+            log.warn("Payment FAILED. Reason: {}", stkCallback.getResultDesc());
         }
 
         paymentRepository.save(payment);

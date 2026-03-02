@@ -21,7 +21,7 @@ sacco:
 
       # NOTE: Daraja callbacks CANNOT hit "localhost".
       # Use a tunneling tool like Ngrok (e.g., https://1a2b-3c4d.ngrok-free.app) for local development.
-      callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://36e7-102-0-25-80.ngrok-free.app}
+      callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://efad-102-0-25-80.ngrok-free.app}
 server:
   servlet:
     session:

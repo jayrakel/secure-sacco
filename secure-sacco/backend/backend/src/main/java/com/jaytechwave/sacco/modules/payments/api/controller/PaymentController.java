@@ -5,14 +5,18 @@ import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkCallbackResp
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -22,12 +26,21 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final ObjectMapper objectMapper;
+    private final UserRepository UserRepository;
 
     @PostMapping("/stk-push")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<InitiateStkResponse> initiateStkPush(@Valid @RequestBody InitiateStkRequest request) {
-        InitiateStkResponse response = paymentService.initiateMpesaStkPush(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<InitiateStkResponse> initiateStkPush
+            (@Valid @RequestBody InitiateStkRequest request,
+             Authentication authentication) {
+
+        // Get the authenticated user's ID
+        User user = UserRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        UUID memberId = user.getMember() != null ? user.getMember().getId() : null;
+
+        return ResponseEntity.ok(paymentService.initiateMpesaStkPush(request, memberId));
     }
 
     // --- NEW WEBHOOK ENDPOINT ---

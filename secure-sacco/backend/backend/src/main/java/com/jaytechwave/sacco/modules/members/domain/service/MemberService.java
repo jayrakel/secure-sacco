@@ -11,16 +11,17 @@ import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.users.domain.service.UserActivationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -51,7 +52,7 @@ public class MemberService {
                 .email(request.getEmail())
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
-                .status(MemberStatus.ACTIVE) // Later changed to PENDING_PAYMENT in Epic MEM-03
+                .status(MemberStatus.PENDING)
                 .isDeleted(false)
                 .build();
 
@@ -81,6 +82,21 @@ public class MemberService {
         activationService.initiateActivation(portalUser);
 
         return MemberResponse.fromEntity(savedMember);
+    }
+
+    @Transactional
+    public void activateMember(UUID memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        if (member.getStatus() != MemberStatus.PENDING) {
+            log.warn("Member {} cannot be activated — current status is {}.", member.getMemberNumber(), member.getStatus());
+            return;
+        }
+
+        member.setStatus(MemberStatus.ACTIVE);
+        memberRepository.save(member);
+        log.info("Member {} has been activated successfully after fee payment.", member.getMemberNumber());
     }
 
     public Page<MemberResponse> getMembers(String q, MemberStatus status, Pageable pageable) {
