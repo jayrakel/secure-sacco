@@ -21,4 +21,10 @@ public class SavingsController {
     public ResponseEntity<SavingsTransactionResponse> manualDeposit(@Valid @RequestBody ManualDepositRequest request) {
         return ResponseEntity.ok(savingsService.processManualDeposit(request));
     }
+
+    @PostMapping("/withdrawals/manual")
+    @PreAuthorize("hasAnyAuthority('SAVINGS_MANUAL_POST', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<SavingsTransactionResponse> manualWithdrawal(@Valid @RequestBody ManualWithdrawalRequest request) {
+        return ResponseEntity.ok(savingsService.processManualWithdrawal(request));
+    }
 }

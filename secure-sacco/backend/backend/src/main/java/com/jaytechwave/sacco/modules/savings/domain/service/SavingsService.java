@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -78,6 +79,70 @@ public class SavingsService {
         );
 
         log.info("Processed manual CASH deposit of {} for member {}", request.amount(), member.getMemberNumber());
+
+        return new SavingsTransactionResponse(
+                transaction.getId(),
+                transaction.getSavingsAccountId(),
+                transaction.getType().name(),
+                transaction.getChannel().name(),
+                transaction.getAmount(),
+                transaction.getReference(),
+                transaction.getStatus().name(),
+                transaction.getPostedAt()
+        );
+    }
+
+    @Transactional
+    public SavingsTransactionResponse processManualWithdrawal(ManualWithdrawalRequest request) {
+        // 1. Validate Member
+        Member member = memberRepository.findById(request.memberId())
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        if (member.getStatus() != MemberStatus.ACTIVE) {
+            throw new IllegalStateException("Withdrawals can only be made by ACTIVE members.");
+        }
+
+        // 2. Fetch Account & Verify Status
+        SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
+                .orElseThrow(() -> new IllegalStateException("Savings account not found. Cannot withdraw."));
+
+        if (account.getStatus() == SavingsAccountStatus.FROZEN) {
+            throw new IllegalStateException("Savings account is frozen. Cannot process withdrawal.");
+        }
+
+        // 3. ENFORCE BALANCE RULE
+        BigDecimal currentBalance = savingsTransactionRepository.calculateBalance(account.getId());
+        if (currentBalance.compareTo(request.amount()) < 0) {
+            throw new IllegalStateException(String.format("Insufficient funds. Requested: %s, Available: %s", request.amount(), currentBalance));
+        }
+
+        // 4. Create the Transaction Record
+        String reference = request.referenceNotes() != null && !request.referenceNotes().isBlank()
+                ? request.referenceNotes()
+                : "WDL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        SavingsTransaction transaction = SavingsTransaction.builder()
+                .savingsAccountId(account.getId())
+                .type(TransactionType.WITHDRAWAL)
+                .channel(TransactionChannel.CASH) // Manual withdrawal implies over-the-counter cash payout
+                .amount(request.amount())
+                .reference(reference)
+                .status(TransactionStatus.POSTED)
+                .postedAt(LocalDateTime.now())
+                .build();
+
+        transaction = savingsTransactionRepository.save(transaction);
+
+        // 5. Post to Accounting Ledger (Dr Savings Liability / Cr Cash on Hand)
+        journalEntryService.postSavingsTransaction(
+                member.getId(),
+                request.amount(),
+                "WITHDRAWAL",
+                "CASH",
+                reference
+        );
+
+        log.info("Processed manual CASH withdrawal of {} for member {}", request.amount(), member.getMemberNumber());
 
         return new SavingsTransactionResponse(
                 transaction.getId(),

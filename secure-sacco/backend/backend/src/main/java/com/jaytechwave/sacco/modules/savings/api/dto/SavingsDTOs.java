@@ -20,6 +20,17 @@ public class SavingsDTOs {
             String referenceNotes
     ) {}
 
+    public record ManualWithdrawalRequest(
+            @NotNull(message = "Member ID is required")
+            UUID memberId,
+
+            @NotNull(message = "Amount is required")
+            @DecimalMin(value = "1.0", message = "Amount must be at least 1.0")
+            BigDecimal amount,
+
+            String referenceNotes
+    ) {}
+
     public record SavingsTransactionResponse(
             UUID transactionId,
             UUID savingsAccountId,
