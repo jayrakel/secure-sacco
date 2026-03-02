@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -181,5 +182,70 @@ public class JournalEntryService {
                 entry.getStatus().name(),
                 lineResponses
         );
+    }
+
+    @Transactional
+    public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference) {
+
+        // 1. Idempotency Check
+        String journalRef = "SAV-" + reference;
+        Optional<JournalEntry> existingEntry = journalEntryRepository.findByReferenceNumber(journalRef);
+        if (existingEntry.isPresent()) {
+            log.info("Idempotency triggered: Journal entry for savings transaction {} already exists. Skipping.", journalRef);
+            return mapToResponse(existingEntry.get());
+        }
+
+        String debitAccountCode;
+        String creditAccountCode;
+
+        // 2. Routing Logic (The Templates)
+        if ("DEPOSIT".equalsIgnoreCase(type)) {
+            creditAccountCode = "2100"; // Increase Savings Liability
+            debitAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000"; // Increase Asset
+        } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
+            debitAccountCode = "2100"; // Decrease Savings Liability
+            creditAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000"; // Decrease Asset
+        } else {
+            throw new IllegalArgumentException("Unsupported savings transaction type: " + type);
+        }
+
+        // 3. Fetch Accounts
+        Account debitAccount = accountRepository.findByAccountCode(debitAccountCode)
+                .orElseThrow(() -> new IllegalStateException("System Account " + debitAccountCode + " not found"));
+        Account creditAccount = accountRepository.findByAccountCode(creditAccountCode)
+                .orElseThrow(() -> new IllegalStateException("System Account " + creditAccountCode + " not found"));
+
+        // 4. Build and Post Journal
+        JournalEntry entry = JournalEntry.builder()
+                .transactionDate(java.time.LocalDate.now())
+                .referenceNumber(journalRef)
+                .description("Savings " + type + " via " + channel + " for Member: " + memberId)
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        JournalEntryLine debitLine = JournalEntryLine.builder()
+                .journalEntry(entry)
+                .account(debitAccount)
+                .memberId(memberId)
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Savings " + type + " Debit")
+                .build();
+
+        JournalEntryLine creditLine = JournalEntryLine.builder()
+                .journalEntry(entry)
+                .account(creditAccount)
+                .memberId(memberId)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Savings " + type + " Credit")
+                .build();
+
+        entry.setLines(java.util.List.of(debitLine, creditLine));
+        JournalEntry savedEntry = journalEntryRepository.save(entry);
+
+        log.info("Posted Savings Journal Entry: {} with amount {}", journalRef, amount);
+
+        return mapToResponse(savedEntry);
     }
 }
