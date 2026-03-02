@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { User, Shield, CreditCard } from 'lucide-react';
+import { User, Shield, CreditCard, ChevronRight } from 'lucide-react';
+import { PaymentModal } from '../../payments/components/PaymentModal';
 
 const MemberDashboardPage: React.FC = () => {
     const { user } = useAuth();
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+    const REGISTRATION_FEE = 1000;
 
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -52,18 +56,39 @@ const MemberDashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Placeholder for future Payment / Accounting integration */}
+                    {/* Active Payment CTA */}
                     {user?.memberStatus !== 'ACTIVE' && (
-                        <div className="mt-6 p-6 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 text-center flex flex-col items-center justify-center space-y-3">
-                            <CreditCard className="text-slate-400" size={32} />
-                            <div>
-                                <h4 className="font-semibold text-slate-700">M-Pesa Integration Pending</h4>
-                                <p className="text-sm text-slate-500 mt-1">The secure payment gateway for registration fees is being configured.</p>
+                        <div className="mt-6 p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                                    <CreditCard size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-slate-800">Registration Fee</h4>
+                                    <p className="text-sm text-slate-500 mt-0.5">KES {REGISTRATION_FEE.toLocaleString()} one-time payment</p>
+                                </div>
                             </div>
+                            <button
+                                onClick={() => setIsPaymentModalOpen(true)}
+                                className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                Pay via M-Pesa
+                                <ChevronRight size={18} />
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Payment Modal Component */}
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                amount={REGISTRATION_FEE}
+                accountReference={`REG-${user?.id?.substring(0, 8).toUpperCase() || 'FEE'}`}
+                title="Pay Registration Fee"
+                description="Please provide your M-Pesa registered phone number. We will send a secure prompt directly to your phone to authorize the transaction."
+            />
         </div>
     );
 };
