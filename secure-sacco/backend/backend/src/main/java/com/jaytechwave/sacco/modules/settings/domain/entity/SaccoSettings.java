@@ -7,6 +7,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,4 +49,8 @@ public class SaccoSettings {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @Column(name = "registration_fee", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal registrationFee = new BigDecimal("1000.00");
 }

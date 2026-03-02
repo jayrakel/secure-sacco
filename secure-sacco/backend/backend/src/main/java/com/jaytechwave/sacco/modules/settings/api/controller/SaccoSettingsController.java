@@ -36,6 +36,7 @@ public class SaccoSettingsController {
                 "saccoName", settings.getSaccoName(),
                 "prefix", settings.getMemberNumberPrefix(),
                 "padLength", settings.getMemberNumberPadLength(),
+                "registrationFee", settings.getRegistrationFee(), // <--- NEW FIELD ADDED
                 "enabledModules", settings.getEnabledModules()
         ));
     }
@@ -52,7 +53,13 @@ public class SaccoSettingsController {
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> initializeSettings(@Valid @RequestBody InitializeRequest request, Authentication auth, HttpServletRequest httpRequest) {
         try {
-            SaccoSettings settings = settingsService.initializeSettings(request.getSaccoName(), request.getPrefix(), request.getPadLength());
+            // Pass the new registrationFee parameter
+            SaccoSettings settings = settingsService.initializeSettings(
+                    request.getSaccoName(),
+                    request.getPrefix(),
+                    request.getPadLength(),
+                    request.getRegistrationFee() // <--- ADDED
+            );
 
             auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_INITIALIZED", "Global Settings", getClientIP(httpRequest), "SACCO core settings initialized.");
 
@@ -65,7 +72,13 @@ public class SaccoSettingsController {
     @PutMapping
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> updateCoreSettings(@Valid @RequestBody UpdateCoreRequest request, Authentication auth, HttpServletRequest httpRequest) {
-        SaccoSettings settings = settingsService.updateCoreSettings(request.getSaccoName(), request.getPrefix(), request.getPadLength());
+        // Pass the new registrationFee parameter
+        SaccoSettings settings = settingsService.updateCoreSettings(
+                request.getSaccoName(),
+                request.getPrefix(),
+                request.getPadLength(),
+                request.getRegistrationFee() // <--- ADDED
+        );
 
         auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_UPDATED", "Global Settings", getClientIP(httpRequest), "Updated core SACCO settings.");
 

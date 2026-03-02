@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 public class SaccoSettingsDTOs {
@@ -21,6 +22,11 @@ public class SaccoSettingsDTOs {
 
         @Min(value = 1, message = "Pad length must be at least 1")
         private int padLength = 7;
+
+        // --- NEW FIELD ---
+        @NotNull(message = "Registration fee is required")
+        @Min(value = 0, message = "Registration fee cannot be negative")
+        private BigDecimal registrationFee;
     }
 
     @Data
@@ -34,6 +40,11 @@ public class SaccoSettingsDTOs {
 
         @Min(value = 1, message = "Pad length must be at least 1")
         private int padLength;
+
+        // --- NEW FIELD ---
+        @NotNull(message = "Registration fee is required")
+        @Min(value = 0, message = "Registration fee cannot be negative")
+        private BigDecimal registrationFee;
     }
 
     @Data

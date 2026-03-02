@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @Service
@@ -27,7 +28,7 @@ public class SaccoSettingsService {
     }
 
     @Transactional
-    public SaccoSettings initializeSettings(String saccoName, String prefix, int padLength) {
+    public SaccoSettings initializeSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee) {
         if (isInitialized()) {
             throw new IllegalStateException("SACCO settings are already initialized. Use update instead.");
         }
@@ -44,6 +45,7 @@ public class SaccoSettingsService {
                 .saccoName(saccoName)
                 .memberNumberPrefix(prefix.toUpperCase())
                 .memberNumberPadLength(padLength)
+                .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00")) // Handle default
                 .enabledModules(initialModules)
                 .build();
 
@@ -51,7 +53,7 @@ public class SaccoSettingsService {
     }
 
     @Transactional
-    public SaccoSettings updateCoreSettings(String saccoName, String prefix, int padLength) {
+    public SaccoSettings updateCoreSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee) {
         SaccoSettings settings = getSettings();
 
         if (prefix == null || prefix.length() != 3) {
@@ -60,10 +62,17 @@ public class SaccoSettingsService {
         if (padLength < 1) {
             throw new IllegalArgumentException("Pad length must be at least 1.");
         }
+        if (registrationFee != null && registrationFee.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Registration fee cannot be negative.");
+        }
 
         settings.setSaccoName(saccoName);
         settings.setMemberNumberPrefix(prefix.toUpperCase());
         settings.setMemberNumberPadLength(padLength);
+
+        if (registrationFee != null) {
+            settings.setRegistrationFee(registrationFee);
+        }
 
         return settingsRepository.save(settings);
     }
