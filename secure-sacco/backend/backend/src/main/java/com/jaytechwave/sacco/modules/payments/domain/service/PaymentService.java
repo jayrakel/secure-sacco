@@ -1,16 +1,16 @@
 package com.jaytechwave.sacco.modules.payments.domain.service;
 
-import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkCallbackResponse;
-import com.jaytechwave.sacco.modules.members.domain.service.MemberService;
 import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkPushSyncResponse;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
-import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus; // Assuming you have this Enum
+import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
+import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,17 +23,18 @@ public class PaymentService {
 
     private final DarajaApiService darajaApiService;
     private final PaymentRepository paymentRepository;
-    private final MemberService memberService;
-    private final JournalEntryService journalEntryService;
+
+    // Decoupled Event Publisher replaces direct service injections
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public InitiateStkResponse initiateMpesaStkPush(InitiateStkRequest request, UUID memberId) { // <--- Added memberId
+    public InitiateStkResponse initiateMpesaStkPush(InitiateStkRequest request, UUID memberId) {
 
-        String formattedPhone = request.phoneNumber().replaceAll("\\s+", ""); // Remove spaces
+        String formattedPhone = request.phoneNumber().replaceAll("\\s+", "");
         if (formattedPhone.startsWith("+")) {
-            formattedPhone = formattedPhone.substring(1); // Remove +
+            formattedPhone = formattedPhone.substring(1);
         } else if (formattedPhone.startsWith("0")) {
-            formattedPhone = "254" + formattedPhone.substring(1); // Replace 0 with 254
+            formattedPhone = "254" + formattedPhone.substring(1);
         }
         String formattedAmount = String.valueOf(request.amount().intValue());
 
@@ -51,14 +52,14 @@ public class PaymentService {
 
         // 2. Save Pending Payment in DB
         Payment payment = Payment.builder()
-                .memberId(memberId) // <--- Use the passed-in memberId
+                .memberId(memberId)
                 .internalRef(darajaResponse.getCheckoutRequestID())
                 .amount(request.amount())
                 .paymentMethod("MPESA")
                 .paymentType("STK_PUSH")
                 .accountReference(request.accountReference())
                 .senderPhoneNumber(formattedPhone)
-                .status(PaymentStatus.PENDING) // <--- Use Enum (if applicable)
+                .status(PaymentStatus.PENDING)
                 .build();
 
         paymentRepository.save(payment);
@@ -83,7 +84,7 @@ public class PaymentService {
 
         // ResultCode 0 means the user entered their PIN successfully and had funds
         if (stkCallback.getResultCode() == 0) {
-            payment.setStatus(PaymentStatus.COMPLETED); // <--- Use Enum
+            payment.setStatus(PaymentStatus.COMPLETED);
 
             String receiptNumber = null;
 
@@ -97,35 +98,29 @@ public class PaymentService {
                 }
             }
 
+            // Save the payment state BEFORE publishing events, so listeners see it as COMPLETED
+            paymentRepository.save(payment);
             log.info("Payment SUCCESS. Receipt: {}", receiptNumber);
 
             // ==========================================
-            // THE STATE MACHINE & ACCOUNTING ENGINE TRIGGER
+            // BROADCAST THE EVENT TO ALL OTHER DOMAINS
             // ==========================================
             if (payment.getMemberId() != null) {
-                // If this payment was for a registration fee
-                if (payment.getAccountReference() != null && payment.getAccountReference().startsWith("REG-")) {
-
-                    // 1. Activate Member
-                    memberService.activateMember(payment.getMemberId());
-
-                    // 2. Post Accounting Journal!
-                    journalEntryService.postRegistrationFeeTemplate(
-                            payment.getMemberId(),
-                            payment.getAmount(),
-                            receiptNumber != null ? receiptNumber : checkoutRequestID
-                    );
-                }
-                // (Later you can add an else-if here for "DEP-" for savings deposits)
+                eventPublisher.publishEvent(new PaymentCompletedEvent(
+                        payment.getId(),
+                        payment.getMemberId(),
+                        payment.getAmount(),
+                        payment.getAccountReference(),
+                        receiptNumber != null ? receiptNumber : checkoutRequestID
+                ));
             }
 
         } else {
             // ResultCode != 0 means failure (e.g. user canceled prompt, wrong PIN, insufficient funds)
-            payment.setStatus(PaymentStatus.FAILED); // <--- Use Enum
+            payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason(stkCallback.getResultDesc());
+            paymentRepository.save(payment);
             log.warn("Payment FAILED. Reason: {}", stkCallback.getResultDesc());
         }
-
-        paymentRepository.save(payment);
     }
 }
