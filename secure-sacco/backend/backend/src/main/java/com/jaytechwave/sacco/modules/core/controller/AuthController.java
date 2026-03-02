@@ -7,8 +7,10 @@ import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.dto.ForgotPasswordRequest;
 import com.jaytechwave.sacco.modules.core.dto.ResetPasswordRequest;
 import com.jaytechwave.sacco.modules.core.service.PasswordResetService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -230,9 +232,30 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        request.getSession().invalidate();
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        // 1. Invalidate Spring Session server-side
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        // 2. Clear Security Context
         SecurityContextHolder.clearContext();
+
+        // 3. Force browser to delete the SESSION cookie
+        Cookie sessionCookie = new Cookie("SESSION", null);
+        sessionCookie.setPath("/");
+        sessionCookie.setHttpOnly(true);
+        sessionCookie.setMaxAge(0);
+        // sessionCookie.setSecure(true); // Uncomment if running over HTTPS in prod
+        response.addCookie(sessionCookie);
+
+        // 4. Force browser to delete the CSRF cookie
+        Cookie csrfCookie = new Cookie("XSRF-TOKEN", null);
+        csrfCookie.setPath("/");
+        csrfCookie.setMaxAge(0);
+        response.addCookie(csrfCookie);
+
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import apiClient from '../../../shared/api/api-client.ts';
+import apiClient from '../../../shared/api/api-client';
 
 interface User {
     id: string;
@@ -65,20 +65,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchCurrentUser();
     }, [fetchCurrentUser]);
 
-    const login = (userData: User) => {
+    const login = useCallback((userData: User) => {
         setUser(userData);
-    };
+    }, []);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
+            // Hit the backend endpoint to invalidate Redis/DB session and clear cookies
             await apiClient.post('/auth/logout');
         } catch (error) {
-            console.error("Logout failed:", error);
+            console.error('Server logout failed, clearing local state anyway', error);
         } finally {
+            // 1. Clear the React Context state immediately
             setUser(null);
+
+            // 2. Use a hard redirect.
+            // This completely flushes any caches in browser memory!
             window.location.href = '/login';
         }
-    };
+    }, []);
 
     return (
         <AuthContext.Provider

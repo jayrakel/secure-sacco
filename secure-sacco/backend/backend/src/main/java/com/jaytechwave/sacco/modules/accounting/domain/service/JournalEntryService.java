@@ -72,6 +72,7 @@ public class JournalEntryService {
         return mapToResponse(savedEntry);
     }
 
+    @Transactional(readOnly = true)
     public List<JournalEntryResponse> getAllJournalEntries() {
         return journalEntryRepository.findAll().stream()
                 .map(this::mapToResponse)
