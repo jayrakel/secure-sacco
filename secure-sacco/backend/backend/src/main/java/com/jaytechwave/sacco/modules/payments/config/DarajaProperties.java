@@ -6,7 +6,8 @@ import lombok.Data;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "safaricom.daraja")
+// Update the prefix to match the YAML indentation
+@ConfigurationProperties(prefix = "sacco.safaricom.daraja")
 public class DarajaProperties {
     private String env;
     private String consumerKey;
