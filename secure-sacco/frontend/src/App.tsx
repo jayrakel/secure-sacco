@@ -14,6 +14,8 @@ import HasPermission from "./shared/components/HasPermission";
 import MemberListPage from "./features/members/pages/MemberListPage";
 import MemberDashboardPage from "./features/members/pages/MemberDashboardPage"; // <-- 1. ADD THIS IMPORT
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
+import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
+import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 
 function App() {
     return (
@@ -69,6 +71,17 @@ function App() {
                             <Route path="/members" element={
                                 <ProtectedRoute requiredPermissions={['MEMBERS_READ']}>
                                     <MemberListPage />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/accounting/accounts" element={
+                                <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ChartOfAccountsPage />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="/accounting/journals" element={
+                                <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <JournalEntriesPage />
                                 </ProtectedRoute>
                             } />
 
