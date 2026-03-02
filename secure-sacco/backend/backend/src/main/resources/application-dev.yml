@@ -4,6 +4,24 @@ sacco:
     cors:
       allowed-origins: "http://localhost:5173"
 
+  safaricom:
+    daraja:
+      env: sandbox
+
+      # These are placeholder/default Sandbox credentials.
+      # Override these by setting environment variables locally if you create a custom sandbox app.
+      consumer-key: ${DARAJA_CONSUMER_KEY_DEV:your_sandbox_consumer_key_here}
+      consumer-secret: ${DARAJA_CONSUMER_SECRET_DEV:your_sandbox_consumer_secret_here}
+
+      # Default Daraja Sandbox Passkey
+      passkey: ${DARAJA_PASSKEY_DEV:bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919}
+
+      # Default Daraja Sandbox Paybill
+      shortcode: ${DARAJA_SHORTCODE_DEV:174379}
+
+      # NOTE: Daraja callbacks CANNOT hit "localhost".
+      # Use a tunneling tool like Ngrok (e.g., https://1a2b-3c4d.ngrok-free.app) for local development.
+      callback-base-url: ${DARAJA_CALLBACK_BASE_URL_DEV:https://your-ngrok-url.ngrok-free.app}
 server:
   servlet:
     session:
