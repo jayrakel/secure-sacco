@@ -24,8 +24,9 @@ import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
 
-    // Check if the user is STRICTLY just a member (no staff roles)
-    const isOnlyMember = user?.roles?.includes('ROLE_MEMBER') && !user?.roles?.some(r => r !== 'MEMBER');
+    // A pure ROLE_MEMBER user has exactly that one role and no staff/admin permissions
+    const isOnlyMember = user?.roles?.includes('ROLE_MEMBER') &&
+        !user?.roles?.some(r => r !== 'ROLE_MEMBER');
 
     return isOnlyMember ? (
         <MemberSavingsPage />
@@ -129,7 +130,7 @@ function App() {
                         </Route>
 
                         {/* Fallback route */}
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
                 </BrowserRouter>
             </SettingsProvider>
