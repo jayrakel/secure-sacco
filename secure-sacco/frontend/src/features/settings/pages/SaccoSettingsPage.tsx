@@ -12,6 +12,7 @@ const SaccoSettingsPage: React.FC = () => {
     const [saccoName, setSaccoName] = useState('');
     const [prefix, setPrefix] = useState('');
     const [padLength, setPadLength] = useState<number>(7);
+    const [registrationFee, setRegistrationFee] = useState<number>(1000); // <--- NEW STATE
 
     // Feature Flags State
     const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>({
@@ -35,8 +36,10 @@ const SaccoSettingsPage: React.FC = () => {
                 setSettings(data);
                 if (data.initialized) {
                     setSaccoName(data.saccoName || '');
-                    setPrefix(data.prefix || '');
+                    // Remove any trailing hyphen from the database before showing it in the input
+                    setPrefix(data.prefix?.replace('-', '') || '');
                     setPadLength(data.padLength || 7);
+                    setRegistrationFee(data.registrationFee || 1000); // <--- INITIALIZE STATE
                     setPrefixManuallyEdited(true);
                     if (data.enabledModules) {
                         setEnabledModules(data.enabledModules);
@@ -69,7 +72,14 @@ const SaccoSettingsPage: React.FC = () => {
         setIsSavingCore(true);
         setError(''); setSuccess('');
 
-        const payload = { saccoName, prefix: prefix.toUpperCase(), padLength };
+        // Append the hyphen back for the backend if needed, or send as is based on your API design
+        // Your backend service adds the hyphen if prefix is exactly 3 chars, so we just send 3 chars.
+        const payload = {
+            saccoName,
+            prefix: prefix.toUpperCase(),
+            padLength,
+            registrationFee // <--- ADD TO PAYLOAD
+        };
 
         try {
             if (settings?.initialized) {
@@ -154,6 +164,17 @@ const SaccoSettingsPage: React.FC = () => {
                                 value={padLength} onChange={(e) => setPadLength(parseInt(e.target.value) || 0)}
                             />
                         </div>
+                    </div>
+
+                    {/* --- NEW REGISTRATION FEE INPUT --- */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Registration Fee (KES)</label>
+                        <input
+                            type="number" required min={0}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                            value={registrationFee} onChange={(e) => setRegistrationFee(parseFloat(e.target.value) || 0)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Amount charged to new members via M-Pesa upon signup.</p>
                     </div>
 
                     <button

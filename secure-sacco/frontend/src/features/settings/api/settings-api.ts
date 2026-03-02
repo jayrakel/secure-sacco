@@ -5,6 +5,7 @@ export interface SaccoSettings {
     saccoName?: string;
     prefix?: string;
     padLength?: number;
+    registrationFee?: number; // <--- NEW FIELD ADDED
     enabledModules?: Record<string, boolean>;
 }
 
@@ -12,6 +13,7 @@ export interface CoreSettingsPayload {
     saccoName: string;
     prefix: string;
     padLength: number;
+    registrationFee: number; // <--- NEW FIELD ADDED
 }
 
 export interface UpdateFlagsPayload {

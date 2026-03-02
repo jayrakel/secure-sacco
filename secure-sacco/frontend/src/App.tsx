@@ -12,7 +12,7 @@ import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
 import MemberListPage from "./features/members/pages/MemberListPage";
-import MemberDashboardPage from "./features/members/pages/MemberDashboardPage"; // <-- 1. ADD THIS IMPORT
+import MemberDashboardPage from "./features/members/pages/MemberDashboardPage";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
