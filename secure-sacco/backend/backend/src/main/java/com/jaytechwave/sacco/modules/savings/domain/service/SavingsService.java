@@ -19,8 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -211,5 +212,85 @@ public class SavingsService {
                 paymentResponse.checkoutRequestID(),
                 paymentResponse.customerMessage()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public SavingsBalanceResponse getMyBalance(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getMember() == null) {
+            throw new IllegalStateException("User is not a registered member.");
+        }
+
+        return savingsAccountRepository.findByMemberId(user.getMember().getId())
+                .map(account -> new SavingsBalanceResponse(
+                        savingsTransactionRepository.calculateBalance(account.getId()),
+                        account.getStatus().name()
+                ))
+                // Return gracefully with zero balance if they haven't deposited yet
+                .orElseGet(() -> new SavingsBalanceResponse(BigDecimal.ZERO, SavingsAccountStatus.ACTIVE.name()));
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatementTransactionResponse> getMemberStatement(UUID memberId, LocalDate from, LocalDate to) {
+        Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(memberId);
+        if (accountOpt.isEmpty()) {
+            return Collections.emptyList(); // No account yet = empty statement
+        }
+
+        // Pull all records chronologically to calculate the running balance accurately
+        List<SavingsTransaction> allTxs = savingsTransactionRepository
+                .findBySavingsAccountIdOrderByCreatedAtAsc(accountOpt.get().getId());
+
+        BigDecimal runningBalance = BigDecimal.ZERO;
+        List<StatementTransactionResponse> statement = new ArrayList<>();
+
+        for (SavingsTransaction tx : allTxs) {
+            // Update running balance only for posted transactions
+            if (tx.getStatus() == TransactionStatus.POSTED) {
+                if (tx.getType() == TransactionType.DEPOSIT) {
+                    runningBalance = runningBalance.add(tx.getAmount());
+                } else if (tx.getType() == TransactionType.WITHDRAWAL) {
+                    runningBalance = runningBalance.subtract(tx.getAmount());
+                }
+            }
+
+            LocalDateTime txDate = tx.getPostedAt() != null ? tx.getPostedAt() : tx.getCreatedAt();
+
+            // Check date bounds (inclusive)
+            boolean inRange = true;
+            if (from != null && txDate.toLocalDate().isBefore(from)) inRange = false;
+            if (to != null && txDate.toLocalDate().isAfter(to)) inRange = false;
+
+            if (inRange) {
+                statement.add(new StatementTransactionResponse(
+                        tx.getId(),
+                        tx.getType().name(),
+                        tx.getChannel().name(),
+                        tx.getAmount(),
+                        tx.getReference(),
+                        tx.getStatus().name(),
+                        txDate,
+                        runningBalance
+                ));
+            }
+        }
+
+        // Reverse to show newest transactions first
+        Collections.reverse(statement);
+        return statement;
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatementTransactionResponse> getMyStatement(String email, LocalDate from, LocalDate to) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getMember() == null) {
+            throw new IllegalStateException("User is not a registered member.");
+        }
+
+        return getMemberStatement(user.getMember().getId(), from, to);
     }
 }

@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.savings.api.controller;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService.CustomUserDetails;
 import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs.*;
@@ -9,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/savings")
@@ -38,5 +43,32 @@ public class SavingsController {
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return ResponseEntity.ok(savingsService.initiateMpesaDeposit(request, userDetails.getUsername()));
+    }
+
+    @GetMapping("/me/balance")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<SavingsBalanceResponse> getMyBalance(Authentication authentication) {
+        return ResponseEntity.ok(savingsService.getMyBalance(authentication.getName()));
+    }
+
+    @GetMapping("/me/statement")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<StatementTransactionResponse>> getMyStatement(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Authentication authentication) {
+
+        return ResponseEntity.ok(savingsService.getMyStatement(authentication.getName(), from, to));
+    }
+
+    // Accountant/Staff Endpoint
+    @GetMapping("/members/{memberId}/statement")
+    @PreAuthorize("hasAnyAuthority('SAVINGS_READ', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<List<StatementTransactionResponse>> getMemberStatement(
+            @PathVariable UUID memberId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        return ResponseEntity.ok(savingsService.getMemberStatement(memberId, from, to));
     }
 }

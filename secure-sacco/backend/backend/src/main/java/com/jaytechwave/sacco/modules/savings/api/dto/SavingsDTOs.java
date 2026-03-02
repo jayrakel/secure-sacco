@@ -56,4 +56,20 @@ public class SavingsDTOs {
             String checkoutRequestId,
             String customerMessage
     ) {}
+
+    public record SavingsBalanceResponse(
+            BigDecimal availableBalance,
+            String accountStatus
+    ) {}
+
+    public record StatementTransactionResponse(
+            UUID transactionId,
+            String type,
+            String channel,
+            BigDecimal amount,
+            String reference,
+            String status,
+            LocalDateTime postedAt,
+            BigDecimal runningBalance
+    ) {}
 }

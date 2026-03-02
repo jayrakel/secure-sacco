@@ -14,6 +14,9 @@ import java.util.UUID;
 @Repository
 public interface SavingsTransactionRepository extends JpaRepository<SavingsTransaction, UUID> {
     List<SavingsTransaction> findBySavingsAccountIdOrderByCreatedAtDesc(UUID savingsAccountId);
+
+    List<SavingsTransaction> findBySavingsAccountIdOrderByCreatedAtAsc(UUID savingsAccountId);
+
     Optional<SavingsTransaction> findByReference(String reference);
 
     @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'DEPOSIT' THEN t.amount ELSE -t.amount END), 0) " +
