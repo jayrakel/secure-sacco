@@ -101,4 +101,9 @@ public class LoanDTOs {
             BigDecimal guaranteedAmount,
             String status
     ) {}
+
+    public record ReviewLoanRequest(
+            @NotBlank(message = "Review notes are required")
+            String notes
+    ) {}
 }

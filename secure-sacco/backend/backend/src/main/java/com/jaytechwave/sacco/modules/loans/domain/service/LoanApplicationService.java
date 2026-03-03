@@ -149,6 +149,63 @@ public class LoanApplicationService {
         loanApplicationRepository.save(app);
     }
 
+    @Transactional(readOnly = true)
+    public List<LoanApplicationResponse> getApplicationsByStatus(LoanStatus status) {
+        return loanApplicationRepository.findByStatus(status).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanApplicationResponse> getMyApplications(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        if (user.getMember() == null) return List.of();
+
+        return loanApplicationRepository.findByMemberIdOrderByCreatedAtDesc(user.getMember().getId())
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public LoanApplicationResponse verifyApplication(UUID applicationId, ReviewLoanRequest request, String email) {
+        User officer = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+        if (app.getStatus() != LoanStatus.PENDING_VERIFICATION) {
+            throw new IllegalStateException("Application is not in the Verification queue.");
+        }
+
+        // Advance to Tier 2 (Committee Review)
+        app.setStatus(LoanStatus.PENDING_APPROVAL);
+        app.setVerifiedBy(officer.getId());
+        app.setVerifiedAt(java.time.LocalDateTime.now());
+        app.setVerificationNotes(request.notes());
+
+        return mapToResponse(loanApplicationRepository.save(app));
+    }
+
+    @Transactional
+    public LoanApplicationResponse rejectApplication(UUID applicationId, ReviewLoanRequest request, String email) {
+        User officer = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+        if (app.getStatus() == LoanStatus.PENDING_VERIFICATION) {
+            app.setVerifiedBy(officer.getId());
+            app.setVerifiedAt(java.time.LocalDateTime.now());
+            app.setVerificationNotes(request.notes());
+        } else if (app.getStatus() == LoanStatus.PENDING_APPROVAL) {
+            app.setCommitteeApprovedBy(officer.getId());
+            app.setCommitteeApprovedAt(java.time.LocalDateTime.now());
+            app.setCommitteeNotes(request.notes());
+        } else {
+            throw new IllegalStateException("Application cannot be rejected at this stage.");
+        }
+
+        app.setStatus(LoanStatus.REJECTED);
+        return mapToResponse(loanApplicationRepository.save(app));
+    }
+
     // --- MAPPERS ---
 
     private LoanApplicationResponse mapToResponse(LoanApplication app) {

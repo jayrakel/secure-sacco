@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.loans.api.controller;
 
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
+import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanApplicationService;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import jakarta.validation.Valid;
@@ -69,5 +70,35 @@ public class LoanApplicationController {
             Authentication authentication) {
         loanApplicationService.submitApplication(id, authentication.getName());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<List<LoanApplicationResponse>> getMyApplications(Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.getMyApplications(authentication.getName()));
+    }
+
+    @GetMapping("/queue/{status}")
+    @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
+    public ResponseEntity<List<LoanApplicationResponse>> getApplicationsQueue(@PathVariable String status) {
+        return ResponseEntity.ok(loanApplicationService.getApplicationsByStatus(LoanStatus.valueOf(status.toUpperCase())));
+    }
+
+    @PostMapping("/{id}/verify")
+    @PreAuthorize("hasAuthority('LOANS_APPROVE')")
+    public ResponseEntity<LoanApplicationResponse> verifyApplication(
+            @PathVariable UUID id,
+            @Valid @RequestBody ReviewLoanRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.verifyApplication(id, request, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
+    public ResponseEntity<LoanApplicationResponse> rejectApplication(
+            @PathVariable UUID id,
+            @Valid @RequestBody ReviewLoanRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.rejectApplication(id, request, authentication.getName()));
     }
 }
