@@ -359,4 +359,22 @@ public class JournalEntryService {
 
         journalEntryRepository.save(entry);
     }
+
+    @Transactional
+    public void postPenaltyCreation(UUID memberId, BigDecimal amount, String reference) {
+        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
+        Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENC-" + reference)
+                .description("Penalty levied against member")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId).debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Receivable").build());
+        entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Income Accrued").build());
+
+        journalEntryRepository.save(entry);
+    }
 }
