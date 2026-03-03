@@ -93,6 +93,15 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.verifyApplication(id, request, authentication.getName()));
     }
 
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('LOANS_COMMITTEE_APPROVE')")
+    public ResponseEntity<LoanApplicationResponse> approveApplication(
+            @PathVariable UUID id,
+            @Valid @RequestBody ReviewLoanRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.approveApplication(id, request, authentication.getName()));
+    }
+
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
     public ResponseEntity<LoanApplicationResponse> rejectApplication(

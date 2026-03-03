@@ -185,6 +185,25 @@ public class LoanApplicationService {
     }
 
     @Transactional
+    public LoanApplicationResponse approveApplication(UUID applicationId, ReviewLoanRequest request, String email) {
+        User committeeMember = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+        if (app.getStatus() != LoanStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Application is not in the Committee Approval queue.");
+        }
+
+        // Advance to APPROVED (Ready for Treasurer to Disburse)
+        app.setStatus(LoanStatus.APPROVED);
+        app.setCommitteeApprovedBy(committeeMember.getId());
+        app.setCommitteeApprovedAt(java.time.LocalDateTime.now());
+        app.setCommitteeNotes(request.notes());
+
+        return mapToResponse(loanApplicationRepository.save(app));
+    }
+
+    @Transactional
     public LoanApplicationResponse rejectApplication(UUID applicationId, ReviewLoanRequest request, String email) {
         User officer = userRepository.findByEmail(email).orElseThrow();
         LoanApplication app = loanApplicationRepository.findById(applicationId)
