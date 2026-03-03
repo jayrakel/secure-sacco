@@ -126,4 +126,25 @@ public class LoanDTOs {
             String receiptNumber,
             String status
     ) {}
+
+    public record LoanSummaryResponse(
+            UUID applicationId,
+            String productName,
+            BigDecimal principalAmount,
+            BigDecimal totalOutstanding,
+            BigDecimal totalArrears,
+            BigDecimal prepaymentCredit,
+            java.time.LocalDate nextDueDate,
+            BigDecimal nextDueAmount,
+            String status
+    ) {}
+
+    public record ArrearsSummaryResponse(
+            UUID loanApplicationId,
+            UUID memberId,
+            String memberName,
+            String memberNumber,
+            long daysInArrears,
+            BigDecimal arrearsAmount
+    ) {}
 }
