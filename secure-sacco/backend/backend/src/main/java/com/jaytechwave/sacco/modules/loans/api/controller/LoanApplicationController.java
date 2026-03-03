@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,5 +35,39 @@ public class LoanApplicationController {
             @Valid @RequestBody PayLoanFeeRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(loanApplicationService.initiateFeePayment(id, request, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/guarantors")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<GuarantorResponse> addGuarantor(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddGuarantorRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.addGuarantor(id, request, authentication.getName()));
+    }
+
+    @DeleteMapping("/{id}/guarantors/{guarantorId}")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<Void> removeGuarantor(
+            @PathVariable UUID id,
+            @PathVariable UUID guarantorId,
+            Authentication authentication) {
+        loanApplicationService.removeGuarantor(id, guarantorId, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/guarantors")
+    @PreAuthorize("isAuthenticated()") // Needed by member and staff later
+    public ResponseEntity<List<GuarantorResponse>> getGuarantors(@PathVariable UUID id) {
+        return ResponseEntity.ok(loanApplicationService.getGuarantors(id));
+    }
+
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<Void> submitApplication(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        loanApplicationService.submitApplication(id, authentication.getName());
+        return ResponseEntity.ok().build();
     }
 }

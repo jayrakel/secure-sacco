@@ -83,4 +83,22 @@ public class LoanDTOs {
             String purpose,
             LocalDateTime createdAt
     ) {}
+
+    public record AddGuarantorRequest(
+            @NotBlank(message = "Guarantor Member Number is required")
+            String memberNumber,
+
+            @NotNull(message = "Guaranteed amount is required")
+            @DecimalMin(value = "1.0", message = "Amount must be at least 1")
+            BigDecimal guaranteedAmount
+    ) {}
+
+    public record GuarantorResponse(
+            UUID id,
+            UUID guarantorMemberId,
+            String guarantorName,
+            String guarantorMemberNumber,
+            BigDecimal guaranteedAmount,
+            String status
+    ) {}
 }

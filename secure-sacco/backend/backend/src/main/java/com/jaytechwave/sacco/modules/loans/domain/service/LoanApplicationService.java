@@ -3,6 +3,8 @@ package com.jaytechwave.sacco.modules.loans.domain.service;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
@@ -13,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,24 +27,20 @@ public class LoanApplicationService {
 
     private final LoanApplicationRepository loanApplicationRepository;
     private final LoanProductRepository loanProductRepository;
+    private final LoanGuarantorRepository loanGuarantorRepository;
+    private final MemberRepository memberRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
 
+    // --- APPLICATION CREATION & FEES ---
+
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow();
+        if (user.getMember() == null) throw new IllegalStateException("Only members can apply.");
 
-        if (user.getMember() == null) {
-            throw new IllegalStateException("Only registered members can apply for loans.");
-        }
-
-        LoanProduct product = loanProductRepository.findById(request.productId())
-                .orElseThrow(() -> new IllegalArgumentException("Loan product not found"));
-
-        if (!product.getIsActive()) {
-            throw new IllegalStateException("Selected loan product is not active.");
-        }
+        LoanProduct product = loanProductRepository.findById(request.productId()).orElseThrow();
+        if (!product.getIsActive()) throw new IllegalStateException("Product is not active.");
 
         LoanApplication application = LoanApplication.builder()
                 .memberId(user.getMember().getId())
@@ -51,33 +52,104 @@ public class LoanApplicationService {
                 .purpose(request.purpose())
                 .build();
 
-        application = loanApplicationRepository.save(application);
-        return mapToResponse(application);
+        return mapToResponse(loanApplicationRepository.save(application));
     }
 
     @Transactional
     public InitiateStkResponse initiateFeePayment(UUID applicationId, PayLoanFeeRequest request, String email) {
         User user = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId).orElseThrow();
 
-        LoanApplication application = loanApplicationRepository.findById(applicationId)
-                .orElseThrow(() -> new IllegalArgumentException("Loan application not found"));
-
-        if (!application.getMemberId().equals(user.getMember().getId())) {
-            throw new IllegalStateException("You can only pay fees for your own applications.");
+        if (!app.getMemberId().equals(user.getMember().getId())) throw new IllegalStateException("Not authorized.");
+        if (app.getStatus() != LoanStatus.PENDING_FEE || app.getApplicationFeePaid()) {
+            throw new IllegalStateException("Fee not required right now.");
         }
 
-        if (application.getStatus() != LoanStatus.PENDING_FEE || application.getApplicationFeePaid()) {
-            throw new IllegalStateException("This application does not require a fee payment right now.");
-        }
-
-        // Generate unique reference linking to this exact application
-        String reference = "LNFEE-" + application.getId().toString();
-
+        String reference = "LNFEE-" + app.getId().toString();
         return paymentService.initiateMpesaStkPush(
-                new InitiateStkRequest(request.phoneNumber(), application.getApplicationFee(), reference),
+                new InitiateStkRequest(request.phoneNumber(), app.getApplicationFee(), reference),
                 user.getMember().getId()
         );
     }
+
+    // --- GUARANTOR CAPTURE ---
+
+    @Transactional
+    public GuarantorResponse addGuarantor(UUID applicationId, AddGuarantorRequest request, String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId).orElseThrow();
+
+        if (!app.getMemberId().equals(user.getMember().getId())) throw new IllegalStateException("Not authorized.");
+        if (app.getStatus() != LoanStatus.PENDING_GUARANTORS) throw new IllegalStateException("Not accepting guarantors right now.");
+
+        Member guarantorMember = memberRepository.findByMemberNumber(request.memberNumber())
+                .orElseThrow(() -> new IllegalArgumentException("Member number not found."));
+
+        if (guarantorMember.getId().equals(user.getMember().getId())) {
+            throw new IllegalStateException("You cannot guarantee your own loan.");
+        }
+
+        // Duplicate Check
+        boolean exists = loanGuarantorRepository.findByLoanApplicationId(applicationId).stream()
+                .anyMatch(g -> g.getGuarantorMemberId().equals(guarantorMember.getId()));
+        if (exists) throw new IllegalStateException("This member is already a guarantor.");
+
+        LoanGuarantor guarantor = LoanGuarantor.builder()
+                .loanApplication(app)
+                .guarantorMemberId(guarantorMember.getId())
+                .guaranteedAmount(request.guaranteedAmount())
+                .status(GuarantorStatus.PENDING)
+                .build();
+
+        guarantor = loanGuarantorRepository.save(guarantor);
+        return mapToGuarantorResponse(guarantor, guarantorMember);
+    }
+
+    @Transactional
+    public void removeGuarantor(UUID applicationId, UUID guarantorId, String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId).orElseThrow();
+
+        if (!app.getMemberId().equals(user.getMember().getId())) throw new IllegalStateException("Not authorized.");
+        if (app.getStatus() != LoanStatus.PENDING_GUARANTORS) throw new IllegalStateException("Cannot modify guarantors right now.");
+
+        LoanGuarantor guarantor = loanGuarantorRepository.findById(guarantorId).orElseThrow();
+        if (!guarantor.getLoanApplication().getId().equals(applicationId)) {
+            throw new IllegalStateException("Guarantor does not belong to this application.");
+        }
+
+        loanGuarantorRepository.delete(guarantor);
+    }
+
+    @Transactional(readOnly = true)
+    public List<GuarantorResponse> getGuarantors(UUID applicationId) {
+        return loanGuarantorRepository.findByLoanApplicationId(applicationId).stream()
+                .map(g -> {
+                    Member m = memberRepository.findById(g.getGuarantorMemberId()).orElseThrow();
+                    return mapToGuarantorResponse(g, m);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void submitApplication(UUID applicationId, String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId).orElseThrow();
+
+        if (!app.getMemberId().equals(user.getMember().getId())) throw new IllegalStateException("Not authorized.");
+        if (app.getStatus() != LoanStatus.PENDING_GUARANTORS) throw new IllegalStateException("Application is not in a valid state to submit.");
+
+        List<LoanGuarantor> guarantors = loanGuarantorRepository.findByLoanApplicationId(applicationId);
+        if (guarantors.isEmpty()) {
+            throw new IllegalStateException("You must add at least one guarantor before submitting.");
+        }
+
+        // Advance to Tier 1 Verification (Loans Officer Queue)
+        app.setStatus(LoanStatus.PENDING_VERIFICATION);
+        loanApplicationRepository.save(app);
+    }
+
+    // --- MAPPERS ---
 
     private LoanApplicationResponse mapToResponse(LoanApplication app) {
         return new LoanApplicationResponse(
@@ -85,6 +157,15 @@ public class LoanApplicationService {
                 app.getLoanProduct().getName(), app.getPrincipalAmount(),
                 app.getApplicationFee(), app.getApplicationFeePaid(),
                 app.getStatus().name(), app.getPurpose(), app.getCreatedAt()
+        );
+    }
+
+    private GuarantorResponse mapToGuarantorResponse(LoanGuarantor guarantor, Member member) {
+        String fullName = member.getUser().getFirstName() + " " + member.getUser().getLastName();
+        return new GuarantorResponse(
+                guarantor.getId(), member.getId(), fullName,
+                member.getMemberNumber(), guarantor.getGuaranteedAmount(),
+                guarantor.getStatus().name()
         );
     }
 }
