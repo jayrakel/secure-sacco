@@ -1,0 +1,117 @@
+"Title","Description","Priority","Status","Assignee","Created","Completed","Labels","Estimate"
+"LOAN-01A-BE-01 Loan products config (terms, rates, fees)","Goal: Create loan product configuration to avoid hardcoding rules.
+
+Acceptance criteria:
+- DB schema for loan_products including: repayment_frequency=WEEKLY, term_weeks, interest_model, interest_rate, application_fee, grace_period_days
+- API endpoints: GET/POST/PUT loan products (admin-only)
+- Seed at least 1 default product for testing","High","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01A-BE-02 Loan application schema + statuses","Goal: Support loan application lifecycle states.
+
+Acceptance criteria:
+- DB tables: loan_applications, loan_guarantors (link to members), committee_reviews (optional table or fields)
+- Statuses: PENDING_FEE, PENDING_GUARANTORS, PENDING_LOAN_OFFICER_VERIFICATION, PENDING_COMMITTEE_APPROVAL, APPROVED, REJECTED
+- Audit fields + indexes by member_id and status","High","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01A-BE-03 Application fee payment (M-Pesa STK) + GL posting","Goal: Application requires an application fee (auto-confirmed).
+
+Acceptance criteria:
+- Endpoint to initiate application fee STK push for an application
+- Callback updates payment status
+- On SUCCESS: post GL journal using template Application Fee
+- Application transitions from PENDING_FEE -> PENDING_GUARANTORS
+- Idempotent callback handling (no double-posting)","High","Backlog","","2026-03-03","","Backend, Loans, Payments, Accounting",""
+"LOAN-01A-BE-04 Guarantors capture + validation","Goal: Capture guarantors for loan application.
+
+Acceptance criteria:
+- API to add/remove guarantors on an application
+- Prevent duplicates; max guarantors configurable per product (optional)
+- Read endpoint returns guarantors list","Medium","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01A-BE-05 Loan officer verification & approval","Acceptance criteria:
+- Permission: LOANS_APPROVE
+- Endpoints: verify/approve/reject application
+- On approve: transitions to PENDING_COMMITTEE_APPROVAL (or APPROVED if committee step disabled)
+- Audit log: who approved/rejected and when","High","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01A-BE-06 Committee approval step","Acceptance criteria:
+- Permission: LOANS_COMMITTEE_APPROVE
+- Endpoint: approve/reject at committee stage
+- Audit log for committee decision
+- On approve: application status -> APPROVED","High","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01B-BE-01 Disbursement (Treasurer only) + GL posting","Goal: Treasurer disburses approved loans (not Loans Officer).
+
+Acceptance criteria:
+- Permission: LOANS_DISBURSE
+- Endpoint: POST /loans/{id}/disburse
+- Only allowed when application status APPROVED
+- Create loan record + set disbursement_date
+- Post GL journal (Disbursement template)
+- Loan enters IN_GRACE state for grace_period_days","High","Backlog","","2026-03-03","","Backend, Loans, Accounting",""
+"LOAN-01C-BE-01 Loan schedule generation (weekly) with countdown","Goal: Generate fixed weekly due schedule that advances with time regardless of payment.
+
+Acceptance criteria:
+- Create schedule table: loan_schedule_items (week_no, due_date, amount_due, status)
+- First due date = disbursement_date + grace_period_days (aligned to weekly cadence)
+- Generate N weeks according to product.term_weeks
+- Status transitions: DUE -> OVERDUE -> PAID (as payments are applied)","High","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01C-BE-02 Weekly schedule job (advance periods + mark overdue)","Acceptance criteria:
+- Job runs daily (or weekly) to mark items past due as OVERDUE if not fully covered
+- Must not depend on 'payment attempts'—overdue is based on due_date
+- Emits/creates penalty trigger event for missed/underpaid installments (wired to PEN module)","High","Backlog","","2026-03-03","","Backend, Loans, Penalties",""
+"LOAN-01D-BE-01 M-Pesa loan repayment (STK) initiate + callback","Goal: Repayments are NOT manual; they are posted automatically via M-Pesa callbacks.
+
+Acceptance criteria:
+- Endpoint for member to initiate STK push repayment for own loan
+- Callback updates payment SUCCESS/FAILED
+- On SUCCESS: create loan_repayment record and apply allocation engine
+- Idempotent: prevent double posting if callback retries","High","Backlog","","2026-03-03","","Backend, Loans, Payments",""
+"LOAN-01D-BE-02 Repayment allocation engine (interest->principal->credit)","Acceptance criteria:
+- Allocate repayment only to loan interest due, then principal due (oldest due first)
+- Remainder becomes prepayment credit (covers future weeks)
+- Underpayment creates/maintains arrears for that due period
+- Penalties are NOT auto-deducted from repayments","High","Backlog","","2026-03-03","","Backend, Loans",""
+"LOAN-01D-BE-03 Arrears + prepayment reporting endpoints","Acceptance criteria:
+- Member endpoints: view outstanding, arrears, credit, next due
+- Staff endpoints: arrears list across members
+- Countdown reduces weekly regardless of payment; arrears computed from schedule coverage","Medium","Backlog","","2026-03-03","","Backend, Loans, Reports",""
+"PEN-01-BE-01 Penalty rules schema (admin configurable)","Goal: Support multiple penalty types with rule-driven amounts and interest accrual timing.
+
+Acceptance criteria:
+- DB: penalty_rules (code, trigger, base_amount_type/value, grace_period_days, interest_period_days, interest_rate, interest_mode)
+- Admin API to CRUD rules
+- Seed rule: LOAN_MISSED_INSTALLMENT","High","Backlog","","2026-03-03","","Backend, Penalties",""
+"PEN-01-BE-02 Penalty instances + accrual ledger (audit + idempotent)","Acceptance criteria:
+- DB: penalties (member_id, type, reference_type/id, status)
+- DB: penalty_accruals (penalty_id, kind=PRINCIPAL|INTEREST, amount, accrued_at, idempotency_key)
+- Each accrual links to GL journal via reference fields","High","Backlog","","2026-03-03","","Backend, Penalties, Accounting",""
+"PEN-01-BE-03 Create loan missed-installment penalties from schedule job","Acceptance criteria:
+- When schedule item becomes OVERDUE/UNDERPAID: create penalty principal accrual (rule-based)
+- Post GL journal: Dr Penalty Receivable / Cr Penalty Income (reference to accrual id)
+- Do not auto-deduct from loan repayments","High","Backlog","","2026-03-03","","Backend, Penalties, Loans, Accounting",""
+"PEN-01-BE-04 Penalty interest accrual job (periodic, rule-driven)","Acceptance criteria:
+- Job runs daily to add interest accrual when grace+period elapses
+- Supports SIMPLE/COMPOUND modes per rule
+- Posts GL journal: Dr Penalty Interest Receivable / Cr Penalty Interest Income","High","Backlog","","2026-03-03","","Backend, Penalties, Accounting",""
+"PEN-01-BE-05 Penalty payment (STK) ONE/ALL + allocation + GL posting","Acceptance criteria:
+- Endpoint: list member OPEN penalties (for dropdown)
+- Initiate STK for ONE penalty or ALL penalties
+- Allocation for ALL: oldest first; interest then principal per penalty; supports partial payments
+- Post GL journal reducing receivables; mark penalties PAID when cleared","High","Backlog","","2026-03-03","","Backend, Penalties, Payments, Accounting",""
+"PEN-01-BE-06 Treasurer waiver/adjustment creates GL reversing journal","Acceptance criteria:
+- Permission: PENALTIES_WAIVE_ADJUST
+- Endpoint to waive/adjust a penalty (full/partial)
+- Must create reversing GL journal entry (no direct edit of financial truth)
+- Audit log who waived and why","High","Backlog","","2026-03-03","","Backend, Penalties, Accounting",""
+"LOAN-01-FE-01 Loan application UI (fee, guarantors, status tracking)","Acceptance criteria:
+- Member can create application, pay application fee (STK), add guarantors
+- Shows application status through approval stages","Medium","Backlog","","2026-03-03","","Frontend, Loans",""
+"LOAN-01-FE-02 Staff approvals UI (Loan Officer + Committee)","Acceptance criteria:
+- Loan officer verify/approve/reject UI (permission-gated)
+- Committee approval UI (permission-gated)","Medium","Backlog","","2026-03-03","","Frontend, Loans",""
+"LOAN-01-FE-03 Treasurer disbursement UI","Acceptance criteria:
+- Treasurer sees approved loans and can disburse (permission-gated)
+- Shows grace period and repayment start date","Medium","Backlog","","2026-03-03","","Frontend, Loans",""
+"LOAN-01-FE-04 Member loan dashboard (schedule, arrears, credit, repay)","Acceptance criteria:
+- Shows next due, running schedule, arrears, prepayment credit
+- Member can initiate repayment (STK) and see status","Medium","Backlog","","2026-03-03","","Frontend, Loans",""
+"PEN-01-FE-01 Penalties tab (dynamic dropdown + pay ONE/ALL)","Acceptance criteria:
+- Dropdown lists only OPEN penalties; if none, hide/disable dropdown
+- 'All' option present
+- Initiate STK payment; show success/failure and refresh lists","Medium","Backlog","","2026-03-03","","Frontend, Penalties",""

@@ -1,0 +1,18 @@
+Title,Description,Project
+Loan Products Configuration,Admins can define loan products (term interest model app fees default grace period).,LOAN-01 Loans Core
+Loan Application & Application Fee,Member applies via UI. M-Pesa STK push for app fee. Callback auto-confirms and advances state.,LOAN-01 Loans Core
+Guarantor Capture Module,Capture guarantors for the loan application.,LOAN-01 Loans Core
+Loans Officer Verification (Tier 1),Requires LOANS_APPROVE permission. Officer reviews and advances state.,LOAN-01 Loans Core
+Committee Final Approval (Tier 2),Requires LOANS_COMMITTEE_APPROVE permission. Committee approves final limit/terms.,LOAN-01 Loans Core
+Treasurer Disbursement & GL Posting,Requires LOANS_DISBURSE permission. Post GL Journal (Cr Bank Dr Loan Receivable). State -> ACTIVE.,LOAN-01 Loans Core
+Unbreakable Weekly Schedule Engine,Generate Week 1..N schedule. Time passes chronologically regardless of payment behavior.,LOAN-01 Loans Core
+Arrears & Prepayment Calculation Tracking,Underpaid -> Arrears. Overpaid -> Prepayment Credit. Credit auto-covers future weeks.,LOAN-01 Loans Core
+M-Pesa STK Loan Repayment (Automated),Trigger STK via UI. Callback automatically records payment. NO manual posting allowed.,LOAN-01 Loans Core
+Waterfall Repayment Allocation Engine,Allocate strictly: 1) Interest (oldest) 2) Principal (oldest) 3) Prepayment Credit. Do NOT pay penalties.,LOAN-01 Loans Core
+Member & Staff Loan Dashboard UI,Unified UI showing active loans weekly countdowns arrears balances and prepayment credits.,LOAN-01 Loans Core
+Penalty Rules Configuration,Admins define penalty rules (e.g. LOAN_MISSED_INSTALLMENT) fixed amounts and interest rates.,PEN-01 Penalties Engine
+Schedule Engine Trigger: Missed Installment Penalty,Loan schedule shortfall generates Penalty Instance + GL Journal (Dr Penalty Receivable Cr Penalty Income).,PEN-01 Penalties Engine
+Periodic Penalty Interest Accrual Job,Background job calculates interest on outstanding penalties + posts GL journals.,PEN-01 Penalties Engine
+Member Penalties UI & Dynamic Dropdown,Requires PENALTIES_READ_SELF. Dropdown shows OPEN penalties only + 'Select ALL' option.,PEN-01 Penalties Engine
+Penalty Payment Processing & Allocation,Requires PENALTIES_PAY_SELF. STK Push + callback. Allocates oldest first (interest then principal). Posts GL.,PEN-01 Penalties Engine
+Treasurer Penalty Adjustments & Waivers,Requires PENALTIES_WAIVE_ADJUST. Waive/adjust penalty + strictly generate Reversing GL Journal.,PEN-01 Penalties Engine
