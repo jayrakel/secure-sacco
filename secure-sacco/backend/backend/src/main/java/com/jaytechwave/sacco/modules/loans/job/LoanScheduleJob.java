@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.loans.job;
 
+import com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 public class LoanScheduleJob {
 
     private final LoanScheduleService loanScheduleService;
+    private final LoanRepaymentService loanRepaymentService;
 
     /**
      * Runs automatically every day at 00:01 AM server time.
@@ -21,7 +23,15 @@ public class LoanScheduleJob {
     public void executeDailyScheduleCheck() {
         log.info("Starting Daily Loan Schedule Engine Check...");
         try {
+            // 1. Advance the timeline (PENDING -> DUE)
+            loanScheduleService.advancePendingInstallments();
+
+            // 2. Consume any Prepayment Credits automatically for the newly DUE items
+            loanRepaymentService.autoConsumeAllPrepayments();
+
+            // 3. Mark strictly past-due items as OVERDUE and trigger penalties
             loanScheduleService.processPastDueInstallments();
+
             log.info("Successfully completed Daily Loan Schedule Engine Check.");
         } catch (Exception e) {
             log.error("Critical error during Daily Loan Schedule Engine Check: {}", e.getMessage(), e);

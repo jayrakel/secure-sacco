@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface LoanApplicationRepository extends JpaRepository<LoanApplication, UUID> {
     List<LoanApplication> findByMemberIdOrderByCreatedAtDesc(UUID memberId);
     List<LoanApplication> findByStatus(LoanStatus status);
+    List<LoanApplication> findByPrepaymentBalanceGreaterThan(java.math.BigDecimal amount);
 }

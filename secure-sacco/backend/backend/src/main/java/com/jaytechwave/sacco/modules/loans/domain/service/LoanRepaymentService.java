@@ -55,67 +55,21 @@ public class LoanRepaymentService {
     @Transactional
     public void processCompletedRepayment(UUID repaymentId, String receiptNumber) {
         LoanRepayment repayment = loanRepaymentRepository.findById(repaymentId).orElseThrow();
-
-        // Idempotency: Prevent double posting
-        if (repayment.getStatus() == LoanRepaymentStatus.COMPLETED) {
-            log.info("Idempotency hit: Repayment {} already processed.", repaymentId);
-            return;
-        }
+        if (repayment.getStatus() == LoanRepaymentStatus.COMPLETED) return;
 
         LoanApplication app = repayment.getLoanApplication();
-        BigDecimal remaining = repayment.getAmount();
-        BigDecimal interestAllocated = BigDecimal.ZERO;
-        BigDecimal principalAllocated = BigDecimal.ZERO;
 
-        List<LoanScheduleItem> items = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId());
+        // 1. Temporarily dump the entire M-Pesa payment into Prepayment Credit
+        app.setPrepaymentBalance(app.getPrepaymentBalance().add(repayment.getAmount()));
 
-        // PASS 1: Pay Interest (Oldest first)
-        for (LoanScheduleItem item : items) {
-            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
-            BigDecimal unpaidInterest = item.getInterestDue().subtract(item.getInterestPaid());
-            if (unpaidInterest.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal toPay = unpaidInterest.min(remaining);
-                item.setInterestPaid(item.getInterestPaid().add(toPay));
-                interestAllocated = interestAllocated.add(toPay);
-                remaining = remaining.subtract(toPay);
-            }
-        }
+        // 2. Run the Waterfall Engine to consume the credit for ONLY active Due/Overdue items
+        BigDecimal[] allocations = executeWaterfallAllocation(app);
+        BigDecimal interestAllocated = allocations[0];
+        BigDecimal principalAllocated = allocations[1];
 
-        // PASS 2: Pay Principal (Oldest first)
-        for (LoanScheduleItem item : items) {
-            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
-            BigDecimal unpaidPrincipal = item.getPrincipalDue().subtract(item.getPrincipalPaid());
-            if (unpaidPrincipal.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal toPay = unpaidPrincipal.min(remaining);
-                item.setPrincipalPaid(item.getPrincipalPaid().add(toPay));
-                principalAllocated = principalAllocated.add(toPay);
-                remaining = remaining.subtract(toPay);
-            }
-        }
+        // 3. What is left over is the true un-utilized prepayment
+        BigDecimal prepaymentAllocated = repayment.getAmount().subtract(interestAllocated).subtract(principalAllocated);
 
-        // STATUS UPDATES
-        for (LoanScheduleItem item : items) {
-            BigDecimal totalPaid = item.getPrincipalPaid().add(item.getInterestPaid());
-            if (totalPaid.compareTo(item.getTotalDue()) >= 0) {
-                item.setStatus(LoanScheduleStatus.PAID);
-            } else if (item.getDueDate().isBefore(LocalDate.now()) && totalPaid.compareTo(item.getTotalDue()) < 0) {
-                item.setStatus(LoanScheduleStatus.OVERDUE);
-            }
-        }
-        scheduleItemRepository.saveAll(items);
-
-        // PASS 3: Prepayment Credit Engine
-        BigDecimal prepaymentAllocated = remaining;
-        if (prepaymentAllocated.compareTo(BigDecimal.ZERO) > 0) {
-            app.setPrepaymentBalance(app.getPrepaymentBalance().add(prepaymentAllocated));
-        }
-
-        // Close loan if fully paid
-        boolean fullyPaid = items.stream().allMatch(i -> i.getStatus() == LoanScheduleStatus.PAID);
-        if (fullyPaid) app.setStatus(LoanStatus.CLOSED);
-        loanApplicationRepository.save(app);
-
-        // Update Repayment State
         repayment.setPrincipalAllocated(principalAllocated);
         repayment.setInterestAllocated(interestAllocated);
         repayment.setPrepaymentAllocated(prepaymentAllocated);
@@ -123,10 +77,76 @@ public class LoanRepaymentService {
         repayment.setReceiptNumber(receiptNumber);
         loanRepaymentRepository.save(repayment);
 
-        // POST TO GL
         journalEntryService.postLoanRepayment(app.getMemberId(), repayment.getAmount(), interestAllocated, receiptNumber);
+        log.info("Allocated Mpesa Repayment {}. Int: {}, Prin: {}, Excess Credit: {}", receiptNumber, interestAllocated, principalAllocated, prepaymentAllocated);
+    }
 
-        log.info("Successfully allocated Mpesa Loan Repayment {}. Int: {}, Prin: {}, Prep: {}", receiptNumber, interestAllocated, principalAllocated, prepaymentAllocated);
+    // --- THE WATERFALL ENGINE ---
+
+    @Transactional
+    public void autoConsumeAllPrepayments() {
+        List<LoanApplication> appsWithCredit = loanApplicationRepository.findByPrepaymentBalanceGreaterThan(BigDecimal.ZERO)
+                .stream().filter(app -> app.getStatus() == LoanStatus.ACTIVE || app.getStatus() == LoanStatus.IN_GRACE).toList();
+
+        for (LoanApplication app : appsWithCredit) {
+            BigDecimal[] allocated = executeWaterfallAllocation(app);
+            if (allocated[0].compareTo(BigDecimal.ZERO) > 0 || allocated[1].compareTo(BigDecimal.ZERO) > 0) {
+                log.info("Auto-consumed Prepayment Credit for App {}. Paid Int: {}, Prin: {}", app.getId(), allocated[0], allocated[1]);
+            }
+        }
+    }
+
+    @Transactional
+    public BigDecimal[] executeWaterfallAllocation(LoanApplication app) {
+        BigDecimal remainingCredit = app.getPrepaymentBalance();
+        BigDecimal interestPaidThisRun = BigDecimal.ZERO;
+        BigDecimal principalPaidThisRun = BigDecimal.ZERO;
+
+        List<LoanScheduleItem> targetItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId())
+                .stream().filter(i -> i.getStatus() == LoanScheduleStatus.DUE || i.getStatus() == LoanScheduleStatus.OVERDUE).toList();
+
+        // PASS 1: Pay Interest (Oldest first)
+        for (LoanScheduleItem item : targetItems) {
+            if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
+            BigDecimal unpaidInterest = item.getInterestDue().subtract(item.getInterestPaid());
+            if (unpaidInterest.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal toPay = unpaidInterest.min(remainingCredit);
+                item.setInterestPaid(item.getInterestPaid().add(toPay));
+                interestPaidThisRun = interestPaidThisRun.add(toPay);
+                remainingCredit = remainingCredit.subtract(toPay);
+            }
+        }
+
+        // PASS 2: Pay Principal (Oldest first)
+        for (LoanScheduleItem item : targetItems) {
+            if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
+            BigDecimal unpaidPrincipal = item.getPrincipalDue().subtract(item.getPrincipalPaid());
+            if (unpaidPrincipal.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal toPay = unpaidPrincipal.min(remainingCredit);
+                item.setPrincipalPaid(item.getPrincipalPaid().add(toPay));
+                principalPaidThisRun = principalPaidThisRun.add(toPay);
+                remainingCredit = remainingCredit.subtract(toPay);
+            }
+        }
+
+        // STATUS UPDATES
+        for (LoanScheduleItem item : targetItems) {
+            if (item.getPrincipalPaid().add(item.getInterestPaid()).compareTo(item.getTotalDue()) >= 0) {
+                item.setStatus(LoanScheduleStatus.PAID);
+            }
+        }
+        scheduleItemRepository.saveAll(targetItems);
+
+        // Save true remainder back to Prepayment Balance
+        app.setPrepaymentBalance(remainingCredit);
+
+        List<LoanScheduleItem> allItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId());
+        if (allItems.stream().allMatch(i -> i.getStatus() == LoanScheduleStatus.PAID)) {
+            app.setStatus(LoanStatus.CLOSED);
+        }
+        loanApplicationRepository.save(app);
+
+        return new BigDecimal[]{interestPaidThisRun, principalPaidThisRun};
     }
 
     @Transactional

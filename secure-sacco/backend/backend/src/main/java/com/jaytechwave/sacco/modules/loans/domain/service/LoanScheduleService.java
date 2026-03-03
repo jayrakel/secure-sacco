@@ -61,7 +61,7 @@ public class LoanScheduleService {
                     .totalDue(currentPrincipal.add(currentInterest))
                     .principalPaid(BigDecimal.ZERO)
                     .interestPaid(BigDecimal.ZERO)
-                    .status(LoanScheduleStatus.PENDING)
+                    .status(week == 1 ? LoanScheduleStatus.DUE : LoanScheduleStatus.PENDING)
                     .build();
 
             scheduleItemRepository.save(item);
@@ -71,6 +71,20 @@ public class LoanScheduleService {
         }
 
         log.info("Generated {} weekly schedule items for Loan Application {}", termWeeks, application.getId());
+    }
+
+    @Transactional
+    public void advancePendingInstallments() {
+        LocalDate today = LocalDate.now();
+        // Move to DUE if due date is within the current active week (7 days)
+        List<LoanScheduleItem> pendingToDue = scheduleItemRepository.findByStatusAndDueDateLessThanEqual(
+                LoanScheduleStatus.PENDING, today.plusDays(7));
+
+        for (LoanScheduleItem item : pendingToDue) {
+            item.setStatus(LoanScheduleStatus.DUE);
+            scheduleItemRepository.save(item);
+            log.info("Advanced schedule item {} to DUE", item.getId());
+        }
     }
 
     @Transactional

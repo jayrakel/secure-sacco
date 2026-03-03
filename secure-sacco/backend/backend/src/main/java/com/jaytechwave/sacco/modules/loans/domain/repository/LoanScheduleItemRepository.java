@@ -14,4 +14,6 @@ public interface LoanScheduleItemRepository extends JpaRepository<LoanScheduleIt
     List<LoanScheduleItem> findByLoanApplicationIdOrderByWeekNumberAsc(UUID loanApplicationId);
 
     List<LoanScheduleItem> findByDueDateBeforeAndStatusIn(LocalDate date, List<LoanScheduleStatus> statuses);
+
+    List<LoanScheduleItem> findByStatusAndDueDateLessThanEqual(com.jaytechwave.sacco.modules.loans.domain.entity.LoanScheduleStatus status, java.time.LocalDate date);
 }
