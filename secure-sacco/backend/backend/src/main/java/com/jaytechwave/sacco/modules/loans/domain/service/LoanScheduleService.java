@@ -3,15 +3,18 @@ package com.jaytechwave.sacco.modules.loans.domain.service;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanApplication;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanScheduleItem;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanScheduleStatus;
+import com.jaytechwave.sacco.modules.loans.domain.event.LoanInstallmentOverdueEvent;
 import com.jaytechwave.sacco.modules.loans.domain.repository.LoanScheduleItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 public class LoanScheduleService {
 
     private final LoanScheduleItemRepository scheduleItemRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void generateWeeklySchedule(LoanApplication application) {
@@ -67,5 +71,39 @@ public class LoanScheduleService {
         }
 
         log.info("Generated {} weekly schedule items for Loan Application {}", termWeeks, application.getId());
+    }
+
+    @Transactional
+    public void processPastDueInstallments() {
+        // Find everything strictly before today that is still marked PENDING or DUE
+        List<LoanScheduleItem> pastDueItems = scheduleItemRepository.findByDueDateBeforeAndStatusIn(
+                LocalDate.now(),
+                List.of(LoanScheduleStatus.PENDING, LoanScheduleStatus.DUE)
+        );
+
+        for (LoanScheduleItem item : pastDueItems) {
+            BigDecimal totalPaid = item.getPrincipalPaid().add(item.getInterestPaid());
+            BigDecimal shortfall = item.getTotalDue().subtract(totalPaid);
+
+            if (shortfall.compareTo(BigDecimal.ZERO) > 0) {
+                // Member did not fully pay this installment!
+                item.setStatus(LoanScheduleStatus.OVERDUE);
+                scheduleItemRepository.save(item);
+
+                // Shout to the PEN module to apply the MISSED_INSTALLMENT penalty
+                eventPublisher.publishEvent(new LoanInstallmentOverdueEvent(
+                        item.getLoanApplication().getId(),
+                        item.getId(),
+                        shortfall,
+                        item.getDueDate()
+                ));
+
+                log.info("Marked schedule item {} as OVERDUE. Shortfall: {}", item.getId(), shortfall);
+            } else {
+                // Saftey check: It was somehow fully paid but the status didn't update
+                item.setStatus(LoanScheduleStatus.PAID);
+                scheduleItemRepository.save(item);
+            }
+        }
     }
 }
