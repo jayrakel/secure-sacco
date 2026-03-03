@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.loans.domain.service;
 
+import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
@@ -31,6 +32,7 @@ public class LoanApplicationService {
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
+    private final JournalEntryService journalEntryService;
 
     // --- APPLICATION CREATION & FEES ---
 
@@ -222,6 +224,36 @@ public class LoanApplicationService {
         }
 
         app.setStatus(LoanStatus.REJECTED);
+        return mapToResponse(loanApplicationRepository.save(app));
+    }
+
+    @Transactional
+    public LoanApplicationResponse disburseApplication(UUID applicationId, String email) {
+        User treasurer = userRepository.findByEmail(email).orElseThrow();
+        LoanApplication app = loanApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+        if (app.getStatus() != LoanStatus.APPROVED) {
+            throw new IllegalStateException("Application must be strictly APPROVED by the Committee before disbursement.");
+        }
+
+        // 1. Post the Immutable GL Journal
+        journalEntryService.postLoanDisbursement(
+                app.getMemberId(),
+                app.getPrincipalAmount(),
+                app.getId().toString()
+        );
+
+        // 2. Advance Status & Audit Timestamps
+        if (app.getLoanProduct().getGracePeriodDays() > 0) {
+            app.setStatus(LoanStatus.IN_GRACE);
+        } else {
+            app.setStatus(LoanStatus.ACTIVE);
+        }
+
+        app.setDisbursedBy(treasurer.getId());
+        app.setDisbursedAt(java.time.LocalDateTime.now());
+
         return mapToResponse(loanApplicationRepository.save(app));
     }
 

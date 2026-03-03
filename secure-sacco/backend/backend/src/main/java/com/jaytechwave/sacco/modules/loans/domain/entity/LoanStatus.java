@@ -8,6 +8,7 @@ public enum LoanStatus {
     PENDING_APPROVAL,     // Committee review
     APPROVED,             // Ready for disbursement
     REJECTED,
+    IN_GRACE,
     ACTIVE,               // Disbursed
     CLOSED,               // Fully paid
     DEFAULTED

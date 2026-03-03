@@ -110,4 +110,12 @@ public class LoanApplicationController {
             Authentication authentication) {
         return ResponseEntity.ok(loanApplicationService.rejectApplication(id, request, authentication.getName()));
     }
+
+    @PostMapping("/{id}/disburse")
+    @PreAuthorize("hasAuthority('LOANS_DISBURSE')")
+    public ResponseEntity<LoanApplicationResponse> disburseApplication(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.disburseApplication(id, authentication.getName()));
+    }
 }

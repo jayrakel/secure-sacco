@@ -290,4 +290,43 @@ public class JournalEntryService {
         // Save the entry ONCE (CascadeType.ALL will automatically save the lines!)
         journalEntryRepository.save(entry);
     }
+
+    @Transactional
+    public void postLoanDisbursement(UUID memberId, BigDecimal principalAmount, String reference) {
+        Account bankAccount = accountRepository.findByAccountCode("1002") // Equity Bank Account
+                .orElseThrow(() -> new IllegalStateException("Bank account (1002) not found"));
+
+        Account loansReceivable = accountRepository.findByAccountCode("1200") // Member Loans Receivable
+                .orElseThrow(() -> new IllegalStateException("Loans Receivable account (1200) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("LNDIS-" + reference)
+                .description("Loan disbursement")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // Debit Loans Receivable (Asset increases - members owe us more)
+        JournalEntryLine debitLine = JournalEntryLine.builder()
+                .account(loansReceivable)
+                .memberId(memberId)
+                .debitAmount(principalAmount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Loan principle receivable")
+                .build();
+
+        // Credit Bank (Asset decreases - cash leaves the Sacco bank)
+        JournalEntryLine creditLine = JournalEntryLine.builder()
+                .account(bankAccount)
+                .memberId(memberId)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(principalAmount)
+                .description("Loan disbursement payout")
+                .build();
+
+        entry.addLine(debitLine);
+        entry.addLine(creditLine);
+
+        journalEntryRepository.save(entry);
+    }
 }
