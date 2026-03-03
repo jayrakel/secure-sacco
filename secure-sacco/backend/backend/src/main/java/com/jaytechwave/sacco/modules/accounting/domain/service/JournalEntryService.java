@@ -329,4 +329,34 @@ public class JournalEntryService {
 
         journalEntryRepository.save(entry);
     }
+
+    @Transactional
+    public void postLoanRepayment(UUID memberId, BigDecimal totalAmount, BigDecimal interestAmount, String reference) {
+        Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
+        Account loanReceivable = accountRepository.findByAccountCode("1200").orElseThrow();
+        Account interestIncome = accountRepository.findByAccountCode("4110").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("LNREP-" + reference)
+                .description("Loan repayment via M-Pesa")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // 1. DEBIT: Cash/Mpesa Clearing (Asset increases)
+        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId).debitAmount(totalAmount).creditAmount(BigDecimal.ZERO).description("Loan Repayment Received").build());
+
+        // 2. CREDIT: Interest Income (Revenue increases)
+        if (interestAmount.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(interestIncome).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(interestAmount).description("Loan Interest Income").build());
+        }
+
+        // 3. CREDIT: Loan Receivable (Asset decreases - member owes less)
+        BigDecimal principalPortion = totalAmount.subtract(interestAmount);
+        if (principalPortion.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(loanReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(principalPortion).description("Loan Principal Repayment").build());
+        }
+
+        journalEntryRepository.save(entry);
+    }
 }

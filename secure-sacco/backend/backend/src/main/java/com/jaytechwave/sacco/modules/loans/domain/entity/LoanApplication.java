@@ -77,6 +77,10 @@ public class LoanApplication {
     @Column(name = "disbursed_at")
     private LocalDateTime disbursedAt;
 
+    @Builder.Default
+    @Column(name = "prepayment_balance", nullable = false, precision = 15, scale = 2)
+    private BigDecimal prepaymentBalance = BigDecimal.ZERO;
+
     // --- Audit Fields ---
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.loans.api.controller;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanApplicationService;
+import com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class LoanApplicationController {
 
     private final LoanApplicationService loanApplicationService;
+    private final LoanRepaymentService loanRepaymentService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
@@ -117,5 +119,14 @@ public class LoanApplicationController {
             @PathVariable UUID id,
             Authentication authentication) {
         return ResponseEntity.ok(loanApplicationService.disburseApplication(id, authentication.getName()));
+    }
+
+    @PostMapping("/{id}/repay")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<InitiateStkResponse> initiateRepayment(
+            @PathVariable UUID id,
+            @Valid @RequestBody RepayLoanRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanRepaymentService.initiateRepayment(id, request, authentication.getName()));
     }
 }

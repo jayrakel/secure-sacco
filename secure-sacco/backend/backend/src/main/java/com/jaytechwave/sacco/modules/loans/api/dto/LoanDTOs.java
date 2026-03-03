@@ -106,4 +106,24 @@ public class LoanDTOs {
             @NotBlank(message = "Review notes are required")
             String notes
     ) {}
+
+    public record RepayLoanRequest(
+            @NotBlank(message = "Phone number is required")
+            String phoneNumber,
+
+            @NotNull(message = "Amount is required")
+            @DecimalMin(value = "1.0", message = "Amount must be at least 1")
+            BigDecimal amount
+    ) {}
+
+    public record LoanRepaymentResponse(
+            UUID id,
+            UUID loanApplicationId,
+            BigDecimal amount,
+            BigDecimal principalAllocated,
+            BigDecimal interestAllocated,
+            BigDecimal prepaymentAllocated,
+            String receiptNumber,
+            String status
+    ) {}
 }
