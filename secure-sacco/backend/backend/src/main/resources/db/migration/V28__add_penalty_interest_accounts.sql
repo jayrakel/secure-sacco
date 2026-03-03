@@ -1,0 +1,4 @@
+INSERT INTO accounts (id, account_code, account_name, account_type, description, is_active, created_at) VALUES
+                                                                                                            ('d3e4f5a6-1b2c-3d4e-5f6a-7b8c9d0e1f2a', '1310', 'Penalty Interest Receivable', 'ASSET', 'Interest accrued on unpaid penalties', TRUE, CURRENT_TIMESTAMP),
+                                                                                                            ('e4f5a6b7-2c3d-4e5f-6a7b-8c9d0e1f2a3b', '4130', 'Penalty Interest Income', 'REVENUE', 'Income generated from penalty interest', TRUE, CURRENT_TIMESTAMP)
+ON CONFLICT (account_code) DO NOTHING;

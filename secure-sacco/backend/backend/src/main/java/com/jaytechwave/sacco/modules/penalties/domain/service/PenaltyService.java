@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -78,5 +79,79 @@ public class PenaltyService {
         journalEntryService.postPenaltyCreation(app.getMemberId(), penaltyAmount, tempAccrualId.toString());
 
         log.info("Applied ledger-backed {} penalty to Member {}. Amount: {}", rule.getCode(), app.getMemberId(), penaltyAmount);
+    }
+
+    @Transactional
+    public void processPenaltyInterestAccruals() {
+        List<Penalty> openPenalties = penaltyRepository.findByStatus(PenaltyStatus.OPEN);
+        java.time.LocalDate today = java.time.LocalDate.now();
+
+        for (Penalty penalty : openPenalties) {
+            PenaltyRule rule = penalty.getPenaltyRule();
+
+            // Skip if no interest is configured
+            if (rule.getInterestMode() == InterestMode.NONE || rule.getInterestRate().compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            // Find the date of the LAST interest accrual
+            java.time.LocalDate lastAccrualDate = penalty.getAccruals().stream()
+                    .filter(a -> a.getAccrualKind() == AccrualKind.INTEREST)
+                    .map(a -> a.getAccruedAt().toLocalDate())
+                    .max(java.time.LocalDate::compareTo)
+                    .orElse(null);
+
+            java.time.LocalDate targetDate;
+            if (lastAccrualDate == null) {
+                // First time interest: Wait for (Creation Date + Grace Period + Interest Period)
+                targetDate = penalty.getCreatedAt().toLocalDate()
+                        .plusDays(rule.getGracePeriodDays())
+                        .plusDays(rule.getInterestPeriodDays());
+            } else {
+                // Subsequent interest: Wait for (Last Accrual + Interest Period)
+                targetDate = lastAccrualDate.plusDays(rule.getInterestPeriodDays());
+            }
+
+            if (!today.isBefore(targetDate)) { // It's time!
+                BigDecimal interestAmount;
+
+                // MATH: Flat vs Compounding
+                if (rule.getInterestMode() == InterestMode.FLAT) {
+                    interestAmount = penalty.getOriginalAmount()
+                            .multiply(rule.getInterestRate())
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                } else { // COMPOUND
+                    interestAmount = penalty.getOutstandingAmount()
+                            .multiply(rule.getInterestRate())
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                }
+
+                if (interestAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    // STRICT IDEMPOTENCY: "INT-{penaltyId}-{targetDate}"
+                    String idempotencyKey = "INT-" + penalty.getId().toString() + "-" + targetDate.toString();
+
+                    if (!penaltyAccrualRepository.existsByIdempotencyKey(idempotencyKey)) {
+                        UUID accrualId = UUID.randomUUID();
+                        PenaltyAccrual accrual = PenaltyAccrual.builder()
+                                .id(accrualId)
+                                .accrualKind(AccrualKind.INTEREST)
+                                .amount(interestAmount)
+                                .accruedAt(java.time.LocalDateTime.now())
+                                .idempotencyKey(idempotencyKey)
+                                .journalReference("PENI-" + accrualId.toString())
+                                .build();
+
+                        penalty.addAccrual(accrual);
+                        penalty.setOutstandingAmount(penalty.getOutstandingAmount().add(interestAmount));
+                        penaltyRepository.save(penalty);
+
+                        // Immutable double-entry GL update
+                        journalEntryService.postPenaltyInterestAccrual(penalty.getMemberId(), interestAmount, accrualId.toString());
+
+                        log.info("Accrued {} interest of {} for Penalty {}.", rule.getInterestMode(), interestAmount, penalty.getId());
+                    }
+                }
+            }
+        }
     }
 }

@@ -377,4 +377,25 @@ public class JournalEntryService {
 
         journalEntryRepository.save(entry);
     }
+
+    @Transactional
+    public void postPenaltyInterestAccrual(UUID memberId, BigDecimal amount, String reference) {
+        Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
+        Account interestIncome = accountRepository.findByAccountCode("4130").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENI-" + reference) // PENalty Interest
+                .description("Penalty interest accrual")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // 1. DEBIT: Penalty Interest Receivable (Asset increases)
+        entry.addLine(JournalEntryLine.builder().account(interestReceivable).memberId(memberId).debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Interest Receivable").build());
+
+        // 2. CREDIT: Penalty Interest Income (Revenue increases)
+        entry.addLine(JournalEntryLine.builder().account(interestIncome).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Interest Income Accrued").build());
+
+        journalEntryRepository.save(entry);
+    }
 }
