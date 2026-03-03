@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -247,5 +248,46 @@ public class JournalEntryService {
         log.info("Posted Savings Journal Entry: {} with amount {}", journalRef, amount);
 
         return mapToResponse(savedEntry);
+    }
+
+    @Transactional
+    public void postLoanApplicationFee(UUID memberId, BigDecimal amount, String reference) {
+        Account mpesaClearing = accountRepository.findByAccountCode("1001")
+                .orElseThrow(() -> new IllegalStateException("M-Pesa Clearing account (1001) not found"));
+
+        Account feeIncome = accountRepository.findByAccountCode("4100")
+                .orElseThrow(() -> new IllegalStateException("Loan Fee Income account (4100) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("FEE-" + reference)
+                .description("Loan application fee payment")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // Debit M-Pesa Clearing (Asset increases)
+        JournalEntryLine debitLine = JournalEntryLine.builder()
+                .account(mpesaClearing)
+                .memberId(memberId) // Tracks which member paid!
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Loan application fee received via M-Pesa")
+                .build();
+
+        // Credit Fee Income (Revenue increases)
+        JournalEntryLine creditLine = JournalEntryLine.builder()
+                .account(feeIncome)
+                .memberId(memberId) // Tracks which member paid!
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Loan application fee income")
+                .build();
+
+        // Attach the lines to the main entry
+        entry.addLine(debitLine);
+        entry.addLine(creditLine);
+
+        // Save the entry ONCE (CascadeType.ALL will automatically save the lines!)
+        journalEntryRepository.save(entry);
     }
 }

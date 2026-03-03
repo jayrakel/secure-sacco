@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class LoanDTOs {
@@ -51,5 +52,35 @@ public class LoanDTOs {
             BigDecimal applicationFee,
             Integer gracePeriodDays,
             Boolean isActive
+    ) {}
+
+    public record CreateLoanApplicationRequest(
+            @NotNull(message = "Loan Product ID is required")
+            UUID productId,
+
+            @NotNull(message = "Principal amount is required")
+            @DecimalMin(value = "1.0", message = "Amount must be at least 1")
+            BigDecimal principalAmount,
+
+            @NotBlank(message = "Purpose is required")
+            String purpose
+    ) {}
+
+    public record PayLoanFeeRequest(
+            @NotBlank(message = "Phone number is required")
+            String phoneNumber
+    ) {}
+
+    public record LoanApplicationResponse(
+            UUID id,
+            UUID memberId,
+            UUID productId,
+            String productName,
+            BigDecimal principalAmount,
+            BigDecimal applicationFee,
+            Boolean applicationFeePaid,
+            String status,
+            String purpose,
+            LocalDateTime createdAt
     ) {}
 }
