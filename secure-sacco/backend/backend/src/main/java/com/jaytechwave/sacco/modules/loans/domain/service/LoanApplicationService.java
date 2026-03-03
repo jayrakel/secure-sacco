@@ -33,6 +33,7 @@ public class LoanApplicationService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final JournalEntryService journalEntryService;
+    private final LoanScheduleService loanScheduleService;
 
     // --- APPLICATION CREATION & FEES ---
 
@@ -253,6 +254,8 @@ public class LoanApplicationService {
 
         app.setDisbursedBy(treasurer.getId());
         app.setDisbursedAt(java.time.LocalDateTime.now());
+
+        loanScheduleService.generateWeeklySchedule(app);
 
         return mapToResponse(loanApplicationRepository.save(app));
     }
