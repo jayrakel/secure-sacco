@@ -19,6 +19,7 @@ import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
+import LoanManagementPage from './features/loans/pages/LoanManagementPage'; // <--- NEW IMPORT
 
 // --- NEW WRAPPER COMPONENT ---
 // This safely accesses the user context because it will be rendered INSIDE the AuthProvider
@@ -106,12 +107,20 @@ function App() {
                                 </ProtectedRoute>
                             } />
 
-                            {/* --- UPDATED SAVINGS ROUTE --- */}
+                            {/* --- SAVINGS ROUTE --- */}
                             <Route path="savings" element={<SavingsRouteWrapper />} />
 
+                            {/* --- MEMBER LOANS ROUTE --- */}
                             <Route path="my-loans" element={
                                 <ProtectedRoute>
                                     <MyLoansPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* --- STAFF LOANS ROUTE --- */}
+                            <Route path="loans" element={
+                                <ProtectedRoute>
+                                    <LoanManagementPage />
                                 </ProtectedRoute>
                             } />
 

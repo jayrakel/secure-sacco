@@ -50,4 +50,16 @@ export const loanApi = {
 
     addGuarantor: (id: string, data: { guarantorMemberNumber: string; amountPledged: number }) =>
         apiClient.post<LoanGuarantor>(`/api/v1/loans/applications/${id}/guarantors`, data).then(res => res.data),
+
+    getAllApplications: () =>
+        apiClient.get<LoanApplication[]>('/api/v1/loans/applications').then(res => res.data),
+
+    verifyApplication: (id: string, data: { status: 'VERIFIED' | 'REJECTED'; comments: string }) =>
+        apiClient.put<LoanApplication>(`/api/v1/loans/applications/${id}/verify`, data).then(res => res.data),
+
+    committeeApprove: (id: string, data: { status: 'APPROVED' | 'REJECTED'; comments: string }) =>
+        apiClient.put<LoanApplication>(`/api/v1/loans/applications/${id}/committee-approve`, data).then(res => res.data),
+
+    disburseLoan: (id: string) =>
+        apiClient.post<LoanApplication>(`/api/v1/loans/applications/${id}/disburse`).then(res => res.data),
 };

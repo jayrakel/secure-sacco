@@ -1,0 +1,64 @@
+import { useState } from 'react';
+import { loanApi, type LoanApplication } from '../api/loan-api';
+
+interface VerifyLoanModalProps {
+    application: LoanApplication;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+export function VerifyLoanModal({ application, onClose, onSuccess }: VerifyLoanModalProps) {
+    const [comments, setComments] = useState('');
+    const [action, setAction] = useState<'VERIFIED' | 'REJECTED' | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!action) return;
+        setLoading(true);
+        setError('');
+        try {
+            await loanApi.verifyApplication(application.id, { status: action, comments });
+            onSuccess();
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to verify application.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <h2 className="text-xl font-semibold mb-4">Officer Verification</h2>
+                <p className="text-sm text-gray-600 mb-4">Application: {application.loanProduct.name} - {application.principalAmount} KES</p>
+
+                {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
+
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Review Comments (Optional)</label>
+                        <textarea
+                            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                            rows={3}
+                            value={comments}
+                            onChange={(e) => setComments(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded" disabled={loading}>
+                            Cancel
+                        </button>
+                        <button type="submit" onClick={() => setAction('REJECTED')} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50" disabled={loading}>
+                            Reject
+                        </button>
+                        <button type="submit" onClick={() => setAction('VERIFIED')} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50" disabled={loading}>
+                            Verify & Send to Committee
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
