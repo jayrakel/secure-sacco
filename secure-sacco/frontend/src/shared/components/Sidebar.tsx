@@ -59,6 +59,7 @@ export const Sidebar = () => {
         { label: 'Loans', path: '/loans', icon: Coins, module: 'loans' },
         { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings' },
 
+
         // --- NEW NESTED ACCOUNTING TAB ---
         {
             label: 'Accounting',
@@ -79,8 +80,8 @@ export const Sidebar = () => {
     const memberNavItems: NavItem[] = [
         { label: 'My Portal', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Security', path: '/security', icon: Shield },
-        {label: 'Savings Vault', path: '/savings', icon: PiggyBank, module: 'savings' },
-
+        { label: 'Savings Vault', path: '/savings', icon: PiggyBank, module: 'savings' },
+        { label: 'My Loans', path: '/my-loans', icon: Coins, module: 'loans' }, // <--- ADDED PERFECTLY HERE
     ];
 
     const activeNavList = isStaff ? staffNavItems : memberNavItems;
