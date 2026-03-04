@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { loanApi, type LoanApplication } from '../api/loan-api';
 import { VerifyLoanModal } from '../components/VerifyLoanModal';
 import { CommitteeApproveModal } from '../components/CommitteeApproveModal';
+import { DisburseLoanModal } from '../components/DisburseLoanModal'; // <--- NEW
 import HasPermission from '../../../shared/components/HasPermission';
 
 export default function LoanManagementPage() {
@@ -11,6 +12,7 @@ export default function LoanManagementPage() {
 
     const [verifyApp, setVerifyApp] = useState<LoanApplication | null>(null);
     const [committeeApp, setCommitteeApp] = useState<LoanApplication | null>(null);
+    const [disburseApp, setDisburseApp] = useState<LoanApplication | null>(null); // <--- NEW STATE
 
     const fetchApplications = () => {
         setLoading(true);
@@ -21,16 +23,6 @@ export default function LoanManagementPage() {
     };
 
     useEffect(() => { fetchApplications(); }, []);
-
-    const handleDisburse = async (id: string) => {
-        if (!window.confirm("Are you sure you want to officially disburse these funds? This will update the GL.")) return;
-        try {
-            await loanApi.disburseLoan(id);
-            fetchApplications();
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to disburse.");
-        }
-    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -75,21 +67,21 @@ export default function LoanManagementPage() {
                                 {/* Loan Officer Action */}
                                 <HasPermission permission="LOANS_APPROVE">
                                     {app.status === 'PENDING_APPROVAL' && (
-                                        <button onClick={() => setVerifyApp(app)} className="text-blue-600 hover:text-blue-900">Verify (Officer)</button>
+                                        <button onClick={() => setVerifyApp(app)} className="text-blue-600 hover:text-blue-900 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors">Verify</button>
                                     )}
                                 </HasPermission>
 
                                 {/* Committee Action */}
                                 <HasPermission permission="LOANS_COMMITTEE_APPROVE">
                                     {app.status === 'VERIFIED' && (
-                                        <button onClick={() => setCommitteeApp(app)} className="text-purple-600 hover:text-purple-900">Approve (Committee)</button>
+                                        <button onClick={() => setCommitteeApp(app)} className="text-purple-600 hover:text-purple-900 font-semibold px-2 py-1 rounded hover:bg-purple-50 transition-colors">Approve</button>
                                     )}
                                 </HasPermission>
 
-                                {/* Treasurer Action */}
+                                {/* Treasurer Action perfectly triggers the new Modal */}
                                 <HasPermission permission="LOANS_DISBURSE">
                                     {app.status === 'APPROVED' && (
-                                        <button onClick={() => handleDisburse(app.id)} className="text-emerald-600 hover:text-emerald-900">Disburse Funds</button>
+                                        <button onClick={() => setDisburseApp(app)} className="text-emerald-600 hover:text-emerald-900 font-semibold px-2 py-1 rounded hover:bg-emerald-50 transition-colors">Disburse</button>
                                     )}
                                 </HasPermission>
                             </td>
@@ -102,8 +94,10 @@ export default function LoanManagementPage() {
                 </table>
             </div>
 
+            {/* Render the Modals */}
             {verifyApp && <VerifyLoanModal application={verifyApp} onClose={() => setVerifyApp(null)} onSuccess={() => { setVerifyApp(null); fetchApplications(); }} />}
             {committeeApp && <CommitteeApproveModal application={committeeApp} onClose={() => setCommitteeApp(null)} onSuccess={() => { setCommitteeApp(null); fetchApplications(); }} />}
+            {disburseApp && <DisburseLoanModal application={disburseApp} onClose={() => setDisburseApp(null)} onSuccess={() => { setDisburseApp(null); fetchApplications(); }} />}
         </div>
     );
 }
