@@ -23,6 +23,7 @@ export interface LoanGuarantor {
     status: string;
 }
 
+// THIS is the export that was missing!
 export interface LoanApplication {
     id: string;
     memberId: string;
@@ -35,7 +36,20 @@ export interface LoanApplication {
     guarantors: LoanGuarantor[];
 }
 
+export interface LoanSummary {
+    applicationId: string;
+    productName: string;
+    principalAmount: number;
+    totalOutstanding: number;
+    totalArrears: number;
+    prepaymentCredit: number;
+    nextDueDate: string | null;
+    nextDueAmount: number;
+    status: string;
+}
+
 export const loanApi = {
+    // --- MEMBER ENDPOINTS ---
     getProducts: () =>
         apiClient.get<LoanProduct[]>('/api/v1/loans/products?activeOnly=true').then(res => res.data),
 
@@ -51,6 +65,13 @@ export const loanApi = {
     addGuarantor: (id: string, data: { guarantorMemberNumber: string; amountPledged: number }) =>
         apiClient.post<LoanGuarantor>(`/api/v1/loans/applications/${id}/guarantors`, data).then(res => res.data),
 
+    getLoanSummary: (id: string) =>
+        apiClient.get<LoanSummary>(`/api/v1/loans/reports/${id}/summary/member`).then(res => res.data),
+
+    repayLoan: (id: string, data: { phoneNumber: string; amount: number }) =>
+        apiClient.post<{ checkoutRequestID: string }>(`/api/v1/loans/applications/${id}/repay`, data).then(res => res.data),
+
+    // --- STAFF ENDPOINTS ---
     getAllApplications: () =>
         apiClient.get<LoanApplication[]>('/api/v1/loans/applications').then(res => res.data),
 
