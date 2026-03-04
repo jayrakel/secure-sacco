@@ -16,7 +16,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Calculator,
-    ChevronDown
+    ChevronDown,
+    AlertCircle // <--- IMPORTED PERFECTLY HERE
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -81,7 +82,8 @@ export const Sidebar = () => {
         { label: 'My Portal', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Security', path: '/security', icon: Shield },
         { label: 'Savings Vault', path: '/savings', icon: PiggyBank, module: 'savings' },
-        { label: 'My Loans', path: '/my-loans', icon: Coins, module: 'loans' }, // <--- ADDED PERFECTLY HERE
+        { label: 'My Loans', path: '/my-loans', icon: Coins, module: 'loans' },
+        { label: 'Penalties', path: '/my-penalties', icon: AlertCircle }, // <--- ADDED PERFECTLY HERE
     ];
 
     const activeNavList = isStaff ? staffNavItems : memberNavItems;

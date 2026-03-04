@@ -20,8 +20,8 @@ export function AddGuarantorModal({ applicationId, onClose, onSuccess }: AddGuar
         setError('');
         try {
             await loanApi.addGuarantor(applicationId, {
-                guarantorMemberNumber: memberNumber,
-                amountPledged: parseFloat(amount),
+                memberNumber: memberNumber,
+                guaranteedAmount: parseFloat(amount),
             });
             onSuccess();
         } catch (err: any) {

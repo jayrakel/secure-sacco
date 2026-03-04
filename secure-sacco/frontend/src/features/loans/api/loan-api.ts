@@ -19,7 +19,7 @@ export interface LoanGuarantor {
     guarantorMemberId: string;
     guarantorMemberNumber: string;
     guarantorName: string;
-    amountPledged: number;
+    guaranteedAmount: number;
     status: string;
 }
 
@@ -27,11 +27,15 @@ export interface LoanGuarantor {
 export interface LoanApplication {
     id: string;
     memberId: string;
-    loanProduct: LoanProduct;
+    productId: string;
+    productName: string;
+    termWeeks: number;
+    gracePeriodDays: number;
     principalAmount: number;
     applicationFee: number;
-    isApplicationFeePaid: boolean;
+    applicationFeePaid: boolean;
     status: string;
+    purpose: string;
     createdAt: string;
     guarantors: LoanGuarantor[];
 }
@@ -51,36 +55,39 @@ export interface LoanSummary {
 export const loanApi = {
     // --- MEMBER ENDPOINTS ---
     getProducts: () =>
-        apiClient.get<LoanProduct[]>('/api/v1/loans/products?activeOnly=true').then(res => res.data),
+        apiClient.get<LoanProduct[]>('/loans/products?activeOnly=true').then(res => res.data),
 
     getMyApplications: () =>
-        apiClient.get<LoanApplication[]>('/api/v1/loans/applications/my').then(res => res.data),
+        apiClient.get<LoanApplication[]>('/loans/applications/my').then(res => res.data),
 
-    createApplication: (data: { loanProductId: string; principalAmount: number }) =>
-        apiClient.post<LoanApplication>('/api/v1/loans/applications', data).then(res => res.data),
+    createApplication: (data: { productId: string; principalAmount: number; purpose: string }) =>
+        apiClient.post<LoanApplication>('/loans/applications', data).then(res => res.data),
 
     payFee: (id: string, data: { phoneNumber: string }) =>
-        apiClient.post<{ checkoutRequestID: string }>(`/api/v1/loans/applications/${id}/pay-fee`, data).then(res => res.data),
+        apiClient.post<{ checkoutRequestID: string }>(`/loans/applications/${id}/pay-fee`, data).then(res => res.data),
 
-    addGuarantor: (id: string, data: { guarantorMemberNumber: string; amountPledged: number }) =>
-        apiClient.post<LoanGuarantor>(`/api/v1/loans/applications/${id}/guarantors`, data).then(res => res.data),
+    addGuarantor: (id: string, data: { memberNumber: string; guaranteedAmount: number }) =>
+        apiClient.post<LoanGuarantor>(`/loans/applications/${id}/guarantors`, data).then(res => res.data),
 
     getLoanSummary: (id: string) =>
-        apiClient.get<LoanSummary>(`/api/v1/loans/reports/${id}/summary/member`).then(res => res.data),
+        apiClient.get<LoanSummary>(`/loans/reports/${id}/summary/member`).then(res => res.data),
 
     repayLoan: (id: string, data: { phoneNumber: string; amount: number }) =>
-        apiClient.post<{ checkoutRequestID: string }>(`/api/v1/loans/applications/${id}/repay`, data).then(res => res.data),
+        apiClient.post<{ checkoutRequestID: string }>(`/loans/applications/${id}/repay`, data).then(res => res.data),
 
     // --- STAFF ENDPOINTS ---
     getAllApplications: () =>
-        apiClient.get<LoanApplication[]>('/api/v1/loans/applications').then(res => res.data),
+        apiClient.get<LoanApplication[]>('/loans/applications/all').then(res => res.data),
 
-    verifyApplication: (id: string, data: { status: 'VERIFIED' | 'REJECTED'; comments: string }) =>
-        apiClient.put<LoanApplication>(`/api/v1/loans/applications/${id}/verify`, data).then(res => res.data),
+    verifyApplication: (id: string, data: { notes: string }) =>
+        apiClient.post<LoanApplication>(`/loans/applications/${id}/verify`, data).then(res => res.data),
 
-    committeeApprove: (id: string, data: { status: 'APPROVED' | 'REJECTED'; comments: string }) =>
-        apiClient.put<LoanApplication>(`/api/v1/loans/applications/${id}/committee-approve`, data).then(res => res.data),
+    committeeApprove: (id: string, data: { notes: string }) =>
+        apiClient.post<LoanApplication>(`/loans/applications/${id}/approve`, data).then(res => res.data),
+
+    rejectApplication: (id: string, data: { notes: string }) =>
+        apiClient.post<LoanApplication>(`/loans/applications/${id}/reject`, data).then(res => res.data),
 
     disburseLoan: (id: string) =>
-        apiClient.post<LoanApplication>(`/api/v1/loans/applications/${id}/disburse`).then(res => res.data),
+        apiClient.post<LoanApplication>(`/loans/applications/${id}/disburse`).then(res => res.data),
 };

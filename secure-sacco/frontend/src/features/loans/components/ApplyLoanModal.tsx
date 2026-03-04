@@ -10,6 +10,7 @@ export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
     const [products, setProducts] = useState<LoanProduct[]>([]);
     const [selectedProductId, setSelectedProductId] = useState('');
     const [amount, setAmount] = useState('');
+    const [purpose, setPurpose] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -26,8 +27,9 @@ export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
         setError('');
         try {
             await loanApi.createApplication({
-                loanProductId: selectedProductId,
+                productId: selectedProductId,
                 principalAmount: parseFloat(amount),
+                purpose,
             });
             onSuccess();
         } catch (err: any) {
@@ -67,6 +69,18 @@ export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
                             <p><strong>App Fee:</strong> {selectedProduct.applicationFee} KES</p>
                         </div>
                     )}
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Purpose of Loan</label>
+                        <input
+                            type="text"
+                            className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                            value={purpose}
+                            onChange={(e) => setPurpose(e.target.value)}
+                            placeholder="e.g. Business expansion, school fees..."
+                            required
+                        />
+                    </div>
 
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Principal Amount (KES)</label>

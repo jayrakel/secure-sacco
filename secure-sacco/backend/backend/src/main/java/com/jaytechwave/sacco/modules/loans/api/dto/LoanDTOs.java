@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class LoanDTOs {
@@ -76,12 +77,15 @@ public class LoanDTOs {
             UUID memberId,
             UUID productId,
             String productName,
+            Integer termWeeks,
+            Integer gracePeriodDays,
             BigDecimal principalAmount,
             BigDecimal applicationFee,
             Boolean applicationFeePaid,
             String status,
             String purpose,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            List<GuarantorResponse> guarantors
     ) {}
 
     public record AddGuarantorRequest(

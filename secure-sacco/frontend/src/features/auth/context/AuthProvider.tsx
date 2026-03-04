@@ -50,11 +50,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(null);
             }
         } catch (error: any) {
-            // If we get a 401/403, the session cookie is missing or expired.
-            // Call logout to clear any stale state.
-            if (error?.response?.status === 401 || error?.response?.status === 403) {
-                try { await apiClient.post('/auth/logout'); } catch { /* ignore */ }
-            }
+            // If we get a 401/403, the session cookie is missing or expired — just clear local state.
+            // Do NOT call /auth/logout here; there is no valid session to invalidate and it would
+            // generate an extra 401 in the console.
             setUser(null);
         } finally {
             setIsLoading(false);

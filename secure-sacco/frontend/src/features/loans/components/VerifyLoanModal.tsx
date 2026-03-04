@@ -8,7 +8,7 @@ interface VerifyLoanModalProps {
 }
 
 export function VerifyLoanModal({ application, onClose, onSuccess }: VerifyLoanModalProps) {
-    const [comments, setComments] = useState('');
+    const [notes, setNotes] = useState('');
     const [action, setAction] = useState<'VERIFIED' | 'REJECTED' | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -19,7 +19,11 @@ export function VerifyLoanModal({ application, onClose, onSuccess }: VerifyLoanM
         setLoading(true);
         setError('');
         try {
-            await loanApi.verifyApplication(application.id, { status: action, comments });
+            if (action === 'VERIFIED') {
+                await loanApi.verifyApplication(application.id, { notes });
+            } else {
+                await loanApi.rejectApplication(application.id, { notes });
+            }
             onSuccess();
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to verify application.');
@@ -32,7 +36,7 @@ export function VerifyLoanModal({ application, onClose, onSuccess }: VerifyLoanM
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
                 <h2 className="text-xl font-semibold mb-4">Officer Verification</h2>
-                <p className="text-sm text-gray-600 mb-4">Application: {application.loanProduct.name} - {application.principalAmount} KES</p>
+                <p className="text-sm text-gray-600 mb-4">Application: {application.productName} - {application.principalAmount} KES</p>
 
                 {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
 
@@ -42,8 +46,8 @@ export function VerifyLoanModal({ application, onClose, onSuccess }: VerifyLoanM
                         <textarea
                             className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
                             rows={3}
-                            value={comments}
-                            onChange={(e) => setComments(e.target.value)}
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
                         />
                     </div>
                     <div className="flex justify-end gap-3">

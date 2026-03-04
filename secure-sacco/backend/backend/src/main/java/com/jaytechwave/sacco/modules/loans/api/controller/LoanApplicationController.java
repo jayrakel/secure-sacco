@@ -80,6 +80,12 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.getMyApplications(authentication.getName()));
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE') or hasAuthority('LOANS_DISBURSE')")
+    public ResponseEntity<List<LoanApplicationResponse>> getAllApplications() {
+        return ResponseEntity.ok(loanApplicationService.getAllApplications());
+    }
+
     @GetMapping("/queue/{status}")
     @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
     public ResponseEntity<List<LoanApplicationResponse>> getApplicationsQueue(@PathVariable String status) {

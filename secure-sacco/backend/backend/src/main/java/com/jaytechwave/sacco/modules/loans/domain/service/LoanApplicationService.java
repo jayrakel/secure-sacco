@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -153,6 +152,13 @@ public class LoanApplicationService {
     }
 
     @Transactional(readOnly = true)
+    public List<LoanApplicationResponse> getAllApplications() {
+        return loanApplicationRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<LoanApplicationResponse> getApplicationsByStatus(LoanStatus status) {
         return loanApplicationRepository.findByStatus(status).stream()
                 .map(this::mapToResponse)
@@ -263,11 +269,23 @@ public class LoanApplicationService {
     // --- MAPPERS ---
 
     private LoanApplicationResponse mapToResponse(LoanApplication app) {
+        List<GuarantorResponse> guarantors = loanGuarantorRepository
+                .findByLoanApplicationId(app.getId())
+                .stream()
+                .map(g -> {
+                    Member m = memberRepository.findById(g.getGuarantorMemberId()).orElseThrow();
+                    return mapToGuarantorResponse(g, m);
+                })
+                .collect(Collectors.toList());
+
         return new LoanApplicationResponse(
                 app.getId(), app.getMemberId(), app.getLoanProduct().getId(),
-                app.getLoanProduct().getName(), app.getPrincipalAmount(),
+                app.getLoanProduct().getName(), app.getLoanProduct().getTermWeeks(),
+                app.getLoanProduct().getGracePeriodDays(),
+                app.getPrincipalAmount(),
                 app.getApplicationFee(), app.getApplicationFeePaid(),
-                app.getStatus().name(), app.getPurpose(), app.getCreatedAt()
+                app.getStatus().name(), app.getPurpose(), app.getCreatedAt(),
+                guarantors
         );
     }
 

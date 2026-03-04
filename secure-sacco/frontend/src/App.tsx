@@ -19,14 +19,12 @@ import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
-import LoanManagementPage from './features/loans/pages/LoanManagementPage'; // <--- NEW IMPORT
+import LoanManagementPage from './features/loans/pages/LoanManagementPage';
+import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
 
-// --- NEW WRAPPER COMPONENT ---
-// This safely accesses the user context because it will be rendered INSIDE the AuthProvider
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
 
-    // A pure ROLE_MEMBER user has exactly that one role and no staff/admin permissions
     const isOnlyMember = user?.roles?.includes('ROLE_MEMBER') &&
         !user?.roles?.some(r => r !== 'ROLE_MEMBER');
 
@@ -114,6 +112,13 @@ function App() {
                             <Route path="my-loans" element={
                                 <ProtectedRoute>
                                     <MyLoansPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* --- MEMBER PENALTIES ROUTE --- */}
+                            <Route path="my-penalties" element={
+                                <ProtectedRoute>
+                                    <MemberPenaltiesPage />
                                 </ProtectedRoute>
                             } />
 

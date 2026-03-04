@@ -56,7 +56,7 @@ export default function LoanManagementPage() {
                     {applications.map((app) => (
                         <tr key={app.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{app.memberId}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.loanProduct.name}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.productName}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{app.principalAmount} KES</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(app.status)}`}>
@@ -66,7 +66,7 @@ export default function LoanManagementPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                 {/* Loan Officer Action */}
                                 <HasPermission permission="LOANS_APPROVE">
-                                    {app.status === 'PENDING_APPROVAL' && (
+                                    {app.status === 'PENDING_VERIFICATION' && (
                                         <button onClick={() => setVerifyApp(app)} className="text-blue-600 hover:text-blue-900 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors">Verify</button>
                                     )}
                                 </HasPermission>

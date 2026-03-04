@@ -77,7 +77,7 @@ export default function MyLoansPage() {
                         return (
                             <div key={app.id} className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
                                 <div className={`p-4 flex justify-between items-start border-b ${getStatusColor(app.status)} border-opacity-50`}>
-                                    <h3 className="text-lg font-bold text-slate-800">{app.loanProduct.name}</h3>
+                                    <h3 className="text-lg font-bold text-slate-800">{app.productName}</h3>
                                     <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${getStatusColor(app.status)}`}>
                     {app.status.replace('_', ' ')}
                   </span>
@@ -90,21 +90,21 @@ export default function MyLoansPage() {
                                     </div>
                                     <div className="flex justify-between border-b border-slate-100 pb-2">
                                         <span className="text-slate-500">Application Fee</span>
-                                        <span className="font-medium text-slate-800">{app.applicationFee.toLocaleString()} KES {app.isApplicationFeePaid ? <span className="text-emerald-600 text-xs font-bold">(PAID)</span> : <span className="text-amber-600 text-xs font-bold">(UNPAID)</span>}</span>
+                                        <span className="font-medium text-slate-800">{app.applicationFee.toLocaleString()} KES {app.applicationFeePaid ? <span className="text-emerald-600 text-xs font-bold">(PAID)</span> : <span className="text-amber-600 text-xs font-bold">(UNPAID)</span>}</span>
                                     </div>
                                     <div className="flex justify-between pb-2">
                                         <span className="text-slate-500">Applied On</span>
                                         <span className="font-medium text-slate-800">{new Date(app.createdAt).toLocaleDateString()}</span>
                                     </div>
 
-                                    {app.guarantors.length > 0 && (
+                                    {(app.guarantors?.length ?? 0) > 0 && (
                                         <div className="mt-4 pt-3 border-t border-slate-100">
                                             <strong className="text-slate-700 text-xs uppercase tracking-wider">Guarantor Pledges:</strong>
                                             <ul className="space-y-1.5 mt-2">
                                                 {app.guarantors.map(g => (
                                                     <li key={g.id} className="flex justify-between text-xs bg-slate-50 p-2 rounded border border-slate-100">
                                                         <span className="font-medium">{g.guarantorName || g.guarantorMemberNumber}</span>
-                                                        <span className="text-slate-500">{g.amountPledged.toLocaleString()} KES ({g.status})</span>
+                                                        <span className="text-slate-500">{g.guaranteedAmount.toLocaleString()} KES ({g.status})</span>
                                                     </li>
                                                 ))}
                                             </ul>

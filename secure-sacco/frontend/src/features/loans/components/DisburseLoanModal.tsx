@@ -13,7 +13,7 @@ export function DisburseLoanModal({ application, onClose, onSuccess }: DisburseL
     const [error, setError] = useState('');
 
     // Timeline Math Engine
-    const gracePeriod = application.loanProduct.gracePeriodDays || 0;
+    const gracePeriod = application.gracePeriodDays || 0;
     const today = new Date();
 
     // The system starts the true schedule immediately after the grace period ends
@@ -52,12 +52,12 @@ export function DisburseLoanModal({ application, onClose, onSuccess }: DisburseL
 
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-500">Loan Product</span>
-                        <span className="font-medium text-slate-800">{application.loanProduct.name}</span>
+                        <span className="font-medium text-slate-800">{application.productName}</span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-500">Term</span>
-                        <span className="font-medium text-slate-800">{application.loanProduct.termWeeks} weeks</span>
+                        <span className="font-medium text-slate-800">{application.termWeeks} weeks</span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">
