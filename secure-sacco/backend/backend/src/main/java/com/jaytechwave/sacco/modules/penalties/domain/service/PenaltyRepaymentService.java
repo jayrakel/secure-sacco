@@ -41,7 +41,7 @@ public class PenaltyRepaymentService {
                 .stream().map(p -> new PenaltySummaryResponse(
                         p.getId(), p.getPenaltyRule().getCode(), p.getPenaltyRule().getName(),
                         p.getOriginalAmount(), p.getOutstandingAmount(), p.getPrincipalPaid(),
-                        p.getInterestPaid(), p.getStatus().name(), p.getCreatedAt()
+                        p.getInterestPaid(), p.getAmountWaived(), p.getStatus().name(), p.getCreatedAt() // <--- Added amountWaived
                 )).collect(Collectors.toList());
     }
 
@@ -102,7 +102,11 @@ public class PenaltyRepaymentService {
             }
 
             // Update Header status
-            BigDecimal newOutstanding = totalPrincipalOwed.add(totalInterestOwed).subtract(penalty.getPrincipalPaid()).subtract(penalty.getInterestPaid());
+            BigDecimal newOutstanding = totalPrincipalOwed.add(totalInterestOwed)
+                    .subtract(penalty.getPrincipalPaid())
+                    .subtract(penalty.getInterestPaid())
+                    .subtract(penalty.getAmountWaived());
+
             penalty.setOutstandingAmount(newOutstanding);
             if (newOutstanding.compareTo(BigDecimal.ZERO) <= 0) penalty.setStatus(PenaltyStatus.PAID);
         }

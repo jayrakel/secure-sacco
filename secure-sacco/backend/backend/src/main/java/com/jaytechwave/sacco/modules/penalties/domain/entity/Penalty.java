@@ -60,6 +60,10 @@ public class Penalty {
     @Builder.Default
     private List<PenaltyAccrual> accruals = new ArrayList<>();
 
+    @Builder.Default
+    @Column(name = "amount_waived", nullable = false, precision = 15, scale = 2)
+    private BigDecimal amountWaived = BigDecimal.ZERO;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -427,4 +427,25 @@ public class JournalEntryService {
 
         journalEntryRepository.save(entry);
     }
+
+    @Transactional
+    public void postPenaltyWaiver(UUID memberId, BigDecimal amount, String reference) {
+        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
+        Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENW-" + reference)
+                .description("Penalty waiver/adjustment")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // 1. DEBIT: Penalty Income (Reversing the Revenue we previously claimed)
+        entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId).debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Waiver - Income Reversal").build());
+
+        // 2. CREDIT: Penalty Receivable (Reducing the Asset the member owes us)
+        entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Waiver - Receivable Reduction").build());
+
+        journalEntryRepository.save(entry);
+    }
 }

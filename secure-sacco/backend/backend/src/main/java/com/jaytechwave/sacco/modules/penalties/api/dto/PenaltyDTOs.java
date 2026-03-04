@@ -61,7 +61,7 @@ public class PenaltyDTOs {
     public record PenaltySummaryResponse(
             UUID id, String ruleCode, String ruleName,
             BigDecimal originalAmount, BigDecimal outstandingAmount,
-            BigDecimal principalPaid, BigDecimal interestPaid,
+            BigDecimal principalPaid, BigDecimal interestPaid, BigDecimal amountWaived,
             String status, java.time.LocalDateTime createdAt
     ) {}
 
@@ -74,5 +74,14 @@ public class PenaltyDTOs {
     public record PenaltyRepaymentResponse(
             UUID id, BigDecimal amount, BigDecimal principalAllocated,
             BigDecimal interestAllocated, String status
+    ) {}
+
+    public record WaivePenaltyRequest(
+            @NotNull(message = "Amount is required")
+            @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
+            BigDecimal amount,
+
+            @NotBlank(message = "Reason is required for auditing purposes")
+            String reason
     ) {}
 }

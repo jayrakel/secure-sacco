@@ -1,5 +1,10 @@
 package com.jaytechwave.sacco.modules.penalties.domain.service;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.penalties.api.dto.PenaltyDTOs.PenaltySummaryResponse;
+import com.jaytechwave.sacco.modules.penalties.api.dto.PenaltyDTOs.WaivePenaltyRequest;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanApplication;
 import com.jaytechwave.sacco.modules.loans.domain.event.LoanInstallmentOverdueEvent;
@@ -28,6 +33,8 @@ public class PenaltyService {
     private final PenaltyRuleRepository penaltyRuleRepository;
     private final LoanApplicationRepository loanApplicationRepository;
     private final JournalEntryService journalEntryService;
+    private final UserRepository userRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public void applyMissedInstallmentPenalty(LoanInstallmentOverdueEvent event) {
@@ -153,5 +160,49 @@ public class PenaltyService {
                 }
             }
         }
+    }
+
+    @Transactional
+    public PenaltySummaryResponse waivePenalty(UUID penaltyId, WaivePenaltyRequest request, String email, String ipAddress) {
+        User treasurer = userRepository.findByEmail(email).orElseThrow();
+        Penalty penalty = penaltyRepository.findById(penaltyId)
+                .orElseThrow(() -> new IllegalArgumentException("Penalty not found"));
+
+        if (penalty.getStatus() == PenaltyStatus.PAID || penalty.getStatus() == PenaltyStatus.WAIVED) {
+            throw new IllegalStateException("Cannot waive a penalty that is already fully Paid or Waived.");
+        }
+
+        if (request.amount().compareTo(penalty.getOutstandingAmount()) > 0) {
+            throw new IllegalArgumentException("Waiver amount cannot exceed the current outstanding balance.");
+        }
+
+        // Apply Waiver
+        penalty.setAmountWaived(penalty.getAmountWaived().add(request.amount()));
+        penalty.setOutstandingAmount(penalty.getOutstandingAmount().subtract(request.amount()));
+
+        if (penalty.getOutstandingAmount().compareTo(BigDecimal.ZERO) == 0) {
+            penalty.setStatus(PenaltyStatus.WAIVED);
+        }
+        penaltyRepository.save(penalty);
+
+        // 1. Immutable Accounting Reversal
+        journalEntryService.postPenaltyWaiver(penalty.getMemberId(), request.amount(), penalty.getId().toString());
+
+        // 2. Strict Security Audit Log
+        securityAuditService.logEventWithActorAndIp(
+                email,
+                "WAIVE_PENALTY",
+                "PENALTY-" + penalty.getId().toString(),
+                ipAddress,
+                String.format("Waived %s KES. Reason: %s", request.amount(), request.reason())
+        );
+
+        log.info("Penalty {} waived by amount {} by user {}. Reason: {}", penalty.getId(), request.amount(), email, request.reason());
+
+        return new PenaltySummaryResponse(
+                penalty.getId(), penalty.getPenaltyRule().getCode(), penalty.getPenaltyRule().getName(),
+                penalty.getOriginalAmount(), penalty.getOutstandingAmount(), penalty.getPrincipalPaid(),
+                penalty.getInterestPaid(), penalty.getAmountWaived(), penalty.getStatus().name(), penalty.getCreatedAt()
+        );
     }
 }
