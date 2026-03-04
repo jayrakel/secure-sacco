@@ -44,6 +44,14 @@ public class Penalty {
     @Column(name = "outstanding_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal outstandingAmount;
 
+    @Builder.Default
+    @Column(name = "principal_paid", nullable = false, precision = 15, scale = 2)
+    private BigDecimal principalPaid = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(name = "interest_paid", nullable = false, precision = 15, scale = 2)
+    private BigDecimal interestPaid = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private PenaltyStatus status;
@@ -59,6 +67,7 @@ public class Penalty {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
 
     // Helper to keep bi-directional relationship in sync
     public void addAccrual(PenaltyAccrual accrual) {

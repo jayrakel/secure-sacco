@@ -57,4 +57,22 @@ public class PenaltyDTOs {
             String interestMode,
             Boolean isActive
     ) {}
+
+    public record PenaltySummaryResponse(
+            UUID id, String ruleCode, String ruleName,
+            BigDecimal originalAmount, BigDecimal outstandingAmount,
+            BigDecimal principalPaid, BigDecimal interestPaid,
+            String status, java.time.LocalDateTime createdAt
+    ) {}
+
+    public record PayPenaltyRequest(
+            @NotBlank(message = "Phone number is required") String phoneNumber,
+            @NotNull(message = "Amount is required") @DecimalMin(value = "1.0", message = "Amount must be at least 1") BigDecimal amount,
+            UUID penaltyId // If null, the engine will automatically pay ALL open penalties oldest-first!
+    ) {}
+
+    public record PenaltyRepaymentResponse(
+            UUID id, BigDecimal amount, BigDecimal principalAllocated,
+            BigDecimal interestAllocated, String status
+    ) {}
 }

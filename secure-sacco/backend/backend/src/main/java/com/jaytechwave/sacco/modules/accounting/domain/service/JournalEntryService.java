@@ -398,4 +398,33 @@ public class JournalEntryService {
 
         journalEntryRepository.save(entry);
     }
+
+    @Transactional
+    public void postPenaltyRepayment(UUID memberId, BigDecimal totalAllocated, BigDecimal interestAllocated, BigDecimal principalAllocated, String reference) {
+        Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
+        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
+        Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENREP-" + reference)
+                .description("Penalty repayment via M-Pesa")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // 1. DEBIT: M-Pesa Clearing (Asset increases)
+        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId).debitAmount(totalAllocated).creditAmount(BigDecimal.ZERO).description("Penalty Repayment Received").build());
+
+        // 2. CREDIT: Penalty Interest Receivable (Asset decreases)
+        if (interestAllocated.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(interestReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(interestAllocated).description("Penalty Interest Cleared").build());
+        }
+
+        // 3. CREDIT: Penalty Principal Receivable (Asset decreases)
+        if (principalAllocated.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(principalAllocated).description("Penalty Principal Cleared").build());
+        }
+
+        journalEntryRepository.save(entry);
+    }
 }
