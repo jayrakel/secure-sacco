@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.reports.api.controller;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.FinancialOverviewDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
 import com.jaytechwave.sacco.modules.reports.domain.service.ReportService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -66,5 +67,13 @@ public class ReportController {
         }
 
         return ResponseEntity.ok(reportService.getMemberStatement(memberId, from, to));
+    }
+
+    // --- NEW: LOAN ARREARS AGING REPORT ---
+    @GetMapping("/loans/arrears")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<List<LoanArrearsDTO>> getLoanArrearsReport(
+            @RequestParam(required = false) String bucket) {
+        return ResponseEntity.ok(reportService.getLoanArrearsReport(bucket));
     }
 }

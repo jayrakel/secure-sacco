@@ -38,4 +38,15 @@ public class ReportDTOs {
         private String activeLoanStatus = "NONE";
         private String nextDueDate = null;
     }
+
+    @Data
+    public static class LoanArrearsDTO {
+        private String memberNumber;
+        private String memberName;
+        private String loanId;
+        private String productName;
+        private BigDecimal amountOverdue;
+        private int daysOverdue;
+        private String bucket;
+    }
 }

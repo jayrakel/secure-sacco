@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.reports.domain.service;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.FinancialOverviewDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
 import com.jaytechwave.sacco.modules.reports.domain.repository.MemberFinancialOverviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -170,6 +171,60 @@ public class ReportService {
         if (toDate != null && !toDate.isEmpty()) {
             LocalDateTime to = LocalDateTime.parse(toDate, DateTimeFormatter.ISO_DATE_TIME);
             results = results.stream().filter(r -> LocalDateTime.parse(r.getDate()).isBefore(to)).collect(Collectors.toList());
+        }
+
+        return results;
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoanArrearsDTO> getLoanArrearsReport(String bucketFilter) {
+        String sql = """
+            SELECT 
+                m.member_number,
+                u.first_name,
+                u.last_name,
+                la.id AS loan_id,
+                p.name AS product_name,
+                SUM(lsi.principal_due + lsi.interest_due - lsi.principal_paid - lsi.interest_paid) AS amount_overdue,
+                MAX(CURRENT_DATE - CAST(lsi.due_date AS DATE)) AS days_overdue
+            FROM loan_schedule_items lsi
+            JOIN loan_applications la ON lsi.loan_application_id = la.id
+            JOIN members m ON la.member_id = m.id
+            JOIN users u ON m.id = u.member_id
+            JOIN loan_products p ON la.loan_product_id = p.id
+            WHERE lsi.due_date < CURRENT_DATE
+              AND lsi.status != 'PAID'
+              AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED')
+            GROUP BY m.member_number, u.first_name, u.last_name, la.id, p.name
+            ORDER BY days_overdue DESC
+            """;
+
+        List<LoanArrearsDTO> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
+            var dto = new LoanArrearsDTO();
+            dto.setMemberNumber(rs.getString("member_number"));
+            dto.setMemberName(rs.getString("first_name") + " " + rs.getString("last_name"));
+            dto.setLoanId(rs.getString("loan_id"));
+            dto.setProductName(rs.getString("product_name"));
+            dto.setAmountOverdue(rs.getBigDecimal("amount_overdue"));
+
+            int days = rs.getInt("days_overdue");
+            dto.setDaysOverdue(days);
+
+            // Standard Banking Aging Buckets
+            if (days <= 7) dto.setBucket("1-7 Days");
+            else if (days <= 30) dto.setBucket("8-30 Days");
+            else if (days <= 60) dto.setBucket("31-60 Days");
+            else if (days <= 90) dto.setBucket("61-90 Days");
+            else dto.setBucket("90+ Days");
+
+            return dto;
+        });
+
+        // Optionally filter by bucket if the endpoint requested it
+        if (bucketFilter != null && !bucketFilter.isBlank()) {
+            return results.stream()
+                    .filter(r -> r.getBucket().equalsIgnoreCase(bucketFilter))
+                    .collect(Collectors.toList());
         }
 
         return results;
