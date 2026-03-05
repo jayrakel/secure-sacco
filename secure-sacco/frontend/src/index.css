@@ -32,3 +32,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ── Print styles for Member Statement ──────────────────────────── */
+@media print {
+  /* Hide everything except the statement printable region */
+  body > * { display: none !important; }
+  #statement-printable { display: block !important; }
+
+  #statement-printable {
+    font-family: 'Georgia', serif;
+    color: #111;
+    background: white;
+    padding: 24px;
+    font-size: 11pt;
+  }
+
+  .print-break-avoid { break-inside: avoid; }
+}

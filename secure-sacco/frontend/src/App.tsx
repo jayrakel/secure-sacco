@@ -24,6 +24,7 @@ import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage'
 import { ReportsHubPage } from './features/reports/pages/ReportsHubPage';
 import { LoanArrearsPage } from './features/reports/pages/LoanArrearsPage';
 import { DailyCollectionsPage } from './features/reports/pages/DailyCollectionsPage';
+import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -152,6 +153,14 @@ function App() {
                                     <DailyCollectionsPage />
                                 </ProtectedRoute>
                             } />
+
+                            {/* --- MEMBER STATEMENT ROUTE (staff + member self-view) --- */}
+                            <Route path="/reports/statements" element={
+                                <ProtectedRoute>
+                                    <MemberStatementPage />
+                                </ProtectedRoute>
+                            } />
+
 
                             <Route path="/security" element={
                                 <ProtectedRoute>
