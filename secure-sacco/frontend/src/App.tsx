@@ -25,6 +25,7 @@ import { ReportsHubPage } from './features/reports/pages/ReportsHubPage';
 import { LoanArrearsPage } from './features/reports/pages/LoanArrearsPage';
 import { DailyCollectionsPage } from './features/reports/pages/DailyCollectionsPage';
 import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
+import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -158,6 +159,13 @@ function App() {
                             <Route path="/reports/statements" element={
                                 <ProtectedRoute>
                                     <MemberStatementPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* --- INCOME REPORT ROUTE --- */}
+                            <Route path="/reports/income" element={
+                                <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
+                                    <IncomeReportPage />
                                 </ProtectedRoute>
                             } />
 

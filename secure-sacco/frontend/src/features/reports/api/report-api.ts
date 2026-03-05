@@ -51,6 +51,22 @@ export interface PaymentLineDTO {
 export const ARREARS_BUCKETS = ['1-7 Days', '8-30 Days', '31-60 Days', '61-90 Days', '90+ Days'] as const;
 export type ArrearsBucket = typeof ARREARS_BUCKETS[number];
 
+export interface IncomeLineDTO {
+    accountCode: string;
+    accountName: string;
+    category: string;       // FEES | INTEREST | PENALTIES | OTHER
+    totalCredit: number;
+    totalDebit: number;
+    netIncome: number;
+}
+
+export interface IncomeReportDTO {
+    periodFrom: string;
+    periodTo:   string;
+    lines:      IncomeLineDTO[];
+    grandTotalIncome: number;
+}
+
 export const reportApi = {
     getLoanArrears: async (): Promise<LoanArrearsDTO[]> => {
         const res = await apiClient.get<LoanArrearsDTO[]>('/reports/loans/arrears');
@@ -80,6 +96,11 @@ export const reportApi = {
 
     getMySummary: async (): Promise<MemberMiniSummaryDTO> => {
         const res = await apiClient.get<MemberMiniSummaryDTO>('/reports/me/summary');
+        return res.data;
+    },
+
+    getIncomeReport: async (from: string, to: string): Promise<IncomeReportDTO> => {
+        const res = await apiClient.get<IncomeReportDTO>(`/reports/income?from=${from}&to=${to}`);
         return res.data;
     },
 };
