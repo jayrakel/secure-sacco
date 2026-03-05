@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.FinancialOvervie
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.DailyCollectionDTO;
 import com.jaytechwave.sacco.modules.reports.domain.repository.MemberFinancialOverviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -228,5 +229,44 @@ public class ReportService {
         }
 
         return results;
+    }
+
+    @Transactional(readOnly = true)
+    public DailyCollectionDTO getDailyCollections(String dateStr) {
+        String targetDate = (dateStr == null || dateStr.isBlank())
+                ? java.time.LocalDate.now().toString()
+                : dateStr;
+
+        DailyCollectionDTO dto = new DailyCollectionDTO();
+        dto.setDate(targetDate);
+
+        // 1. Group by Payment Method (MPESA, BANK_TRANSFER, etc.)
+        String channelSql = """
+                SELECT payment_method, SUM(amount) AS total
+                FROM payments
+                WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                GROUP BY payment_method
+                """;
+        jdbcTemplate.query(channelSql, rs -> {
+            dto.getByChannel().put(rs.getString("payment_method"), rs.getBigDecimal("total"));
+        }, targetDate);
+
+        // 2. Group by Payment Type (C2B, STK_PUSH, B2C, etc.)
+        String typeSql = """
+                SELECT payment_type, SUM(amount) AS total
+                FROM payments
+                WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                GROUP BY payment_type
+                """;
+        jdbcTemplate.query(typeSql, rs -> {
+            dto.getByType().put(rs.getString("payment_type"), rs.getBigDecimal("total"));
+        }, targetDate);
+
+        // 3. Calculate Grand Total
+        BigDecimal grandTotal = dto.getByChannel().values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        dto.setTotalCollected(grandTotal);
+
+        return dto;
     }
 }

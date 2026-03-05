@@ -76,4 +76,11 @@ public class ReportController {
             @RequestParam(required = false) String bucket) {
         return ResponseEntity.ok(reportService.getLoanArrearsReport(bucket));
     }
+
+    @GetMapping("/collections/daily")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.DailyCollectionDTO> getDailyCollections(
+            @RequestParam(required = false) String date) {
+        return ResponseEntity.ok(reportService.getDailyCollections(date));
+    }
 }

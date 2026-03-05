@@ -2,6 +2,8 @@ package com.jaytechwave.sacco.modules.reports.api.dto;
 
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ReportDTOs {
@@ -48,5 +50,13 @@ public class ReportDTOs {
         private BigDecimal amountOverdue;
         private int daysOverdue;
         private String bucket;
+    }
+
+    @Data
+    public static class DailyCollectionDTO {
+        private String date;
+        private BigDecimal totalCollected = BigDecimal.ZERO;
+        private Map<String, BigDecimal> byChannel = new HashMap<>();
+        private Map<String, BigDecimal> byType = new HashMap<>();
     }
 }
