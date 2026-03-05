@@ -73,7 +73,7 @@ const SavingsManagementPage: React.FC = () => {
             </div>
 
             {/* Search Section */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div className="relative max-w-xl">
                     <label className="block text-sm font-medium text-slate-700 mb-2">Search Member</label>
                     <div className="relative">
@@ -83,7 +83,7 @@ const SavingsManagementPage: React.FC = () => {
                             placeholder="Enter Member Name or Number (e.g., MEM-000001)..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                         />
                     </div>
 
@@ -97,7 +97,7 @@ const SavingsManagementPage: React.FC = () => {
                                     className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b last:border-0 flex items-center justify-between"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                        <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
                                             <User size={16} />
                                         </div>
                                         <div>
@@ -117,7 +117,7 @@ const SavingsManagementPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Column: Stats & Actions */}
                     <div className="space-y-6">
-                        <div className="bg-blue-600 text-white p-6 rounded-xl shadow-sm">
+                        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white p-6 rounded-2xl shadow-sm">
                             <div className="flex items-center gap-3 mb-6 opacity-90">
                                 <User size={24} />
                                 <div>
@@ -155,7 +155,7 @@ const SavingsManagementPage: React.FC = () => {
                                 <Clock size={18} className="text-slate-500"/>
                                 Official Statement
                             </h3>
-                            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1">
+                            <button className="text-slate-600 hover:text-slate-800 text-sm font-medium flex items-center gap-1">
                                 <Download size={16} /> Export
                             </button>
                         </div>

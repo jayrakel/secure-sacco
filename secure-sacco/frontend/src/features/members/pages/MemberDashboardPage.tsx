@@ -1,109 +1,245 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { useSettings } from '../../settings/context/SettingsContext'; // <--- NEW IMPORT
-import { User, Shield, CreditCard, ChevronRight, Clock, CheckCircle2 } from 'lucide-react';
+import { useSettings } from '../../settings/context/SettingsContext';
+import { reportApi, type MemberMiniSummaryDTO } from '../../reports/api/report-api';
+import {
+    PiggyBank, Coins, AlertCircle, CalendarCheck,
+    CreditCard, ChevronRight, CheckCircle2, Clock,
+    TrendingUp, ArrowUpRight, Loader2,
+} from 'lucide-react';
 import { PaymentModal } from '../../payments/components/PaymentModal';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = (n: number) =>
+    n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const LOAN_STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+    ACTIVE:             { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Active'        },
+    PENDING_APPROVAL:   { bg: 'bg-blue-50',    text: 'text-blue-700',    label: 'Pending'       },
+    APPROVED:           { bg: 'bg-violet-50',  text: 'text-violet-700',  label: 'Approved'      },
+    REJECTED:           { bg: 'bg-red-50',     text: 'text-red-700',     label: 'Rejected'      },
+    CLOSED:             { bg: 'bg-slate-100',  text: 'text-slate-600',   label: 'Closed'        },
+    NONE:               { bg: 'bg-slate-100',  text: 'text-slate-500',   label: 'No Active Loan'},
+};
+
+// ─── Stat card ────────────────────────────────────────────────────────────────
+const StatCard: React.FC<{
+    label: string;
+    value: string;
+    sub?: string;
+    icon: React.ElementType;
+    iconBg: string;
+    iconColor: string;
+    accent?: string;
+}> = ({ label, value, sub, icon: Icon, iconBg, iconColor, accent }) => (
+    <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex items-start justify-between gap-4 ${accent ?? ''}`}>
+        <div className="min-w-0">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
+            <p className="text-2xl font-bold text-slate-800 mt-1 leading-none">{value}</p>
+            {sub && <p className="text-xs text-slate-400 mt-1.5">{sub}</p>}
+        </div>
+        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
+        </div>
+    </div>
+);
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 const MemberDashboardPage: React.FC = () => {
     const { user } = useAuth();
-    const { settings } = useSettings(); // <--- USE GLOBAL SETTINGS
+    const { settings } = useSettings();
+    const [summary, setSummary] = useState<MemberMiniSummaryDTO | null>(null);
+    const [summaryLoading, setSummaryLoading] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-    // Dynamically pull the registration fee, fallback to 1000 if loading
     const registrationFee = settings?.registrationFee || 1000;
-
-    const isActive = user?.memberStatus === 'ACTIVE';
+    const isActive  = user?.memberStatus === 'ACTIVE';
     const isPending = user?.memberStatus === 'PENDING';
 
+    useEffect(() => {
+        if (!isActive) return;
+        setSummaryLoading(true);
+        reportApi.getMySummary()
+            .then(setSummary)
+            .catch(() => setSummary(null))
+            .finally(() => setSummaryLoading(false));
+    }, [isActive]);
+
+    const loanStyle = LOAN_STATUS_STYLE[summary?.activeLoanStatus ?? 'NONE'] ?? LOAN_STATUS_STYLE.NONE;
+
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="max-w-5xl mx-auto space-y-6 pb-10">
+
+            {/* ── Welcome header ── */}
+            <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Member Portal</h1>
-                    <p className="text-slate-500 text-sm mt-1">Welcome back, {user?.firstName}!</p>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                        Welcome back, {user?.firstName}
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                        Member #{user?.memberNumber ?? 'Pending'} &nbsp;·&nbsp; {new Date().toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                </div>
+                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                    {isActive ? <CheckCircle2 size={13} /> : <Clock size={13} />}
+                    {isActive ? 'Active Member' : 'Pending Activation'}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Profile Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
-                        <User size={40} />
-                    </div>
-                    <h2 className="text-xl font-bold text-slate-800">{user?.firstName} {user?.lastName}</h2>
-                    <p className="text-slate-500 text-sm mt-1">{user?.email}</p>
-                    <div className="mt-4 px-4 py-2 bg-slate-50 rounded-lg w-full border border-slate-100">
-                        <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Member Number</p>
-                        <p className="text-lg font-mono font-semibold text-blue-700">{user?.memberNumber || 'Pending'}</p>
-                    </div>
-                </div>
-
-                {/* Registration Status Card */}
-                <div className="md:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-center">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Shield className={isActive ? "text-emerald-600" : "text-amber-500"} size={24} />
-                        <h3 className="text-lg font-bold text-slate-800">Account Status</h3>
-                    </div>
-
-                    <div className={`p-4 rounded-lg border-l-4 ${
-                        isActive
-                            ? 'bg-emerald-50 border-emerald-500 text-emerald-800'
-                            : 'bg-amber-50 border-amber-500 text-amber-800'
-                    }`}>
-                        <div className="flex items-start gap-3">
-                            <div className="mt-0.5">
-                                {isActive ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                            </div>
-                            <div>
-                                <p className="font-bold text-base">
-                                    {isActive ? 'Fully Registered & Active' : 'Awaiting Registration Fee'}
-                                </p>
-                                <p className="text-sm mt-1 opacity-90 leading-relaxed">
-                                    {isActive
-                                        ? 'Your account is fully set up. You can now access savings and loans.'
-                                        : 'Please pay your registration fee to unlock your SACCO Member Number and full benefits.'}
-                                </p>
-                            </div>
+            {/* ── Pending activation banner ── */}
+            {isPending && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                            <Clock className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="font-semibold text-amber-900">Account Activation Required</p>
+                            <p className="text-sm text-amber-700 mt-0.5">
+                                Pay the KES {registrationFee.toLocaleString()} registration fee via M-Pesa to unlock your full member benefits.
+                            </p>
                         </div>
                     </div>
+                    <button
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-sm transition-colors shrink-0 shadow-sm"
+                    >
+                        <CreditCard size={16} /> Pay Now
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
 
-                    {/* Active Payment CTA for PENDING Users */}
-                    {isPending && (
-                        <div className="mt-6 p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                                    <CreditCard size={24} />
+            {/* ── KPI stat cards (only for active members) ── */}
+            {isActive && (
+                <>
+                    {summaryLoading ? (
+                        <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
+                            <Loader2 className="animate-spin text-emerald-600" size={28} />
+                            <span className="text-sm">Loading your account summary…</span>
+                        </div>
+                    ) : summary ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <StatCard
+                                label="Savings Balance"
+                                value={`KES ${fmt(summary.savingsBalance)}`}
+                                sub="Total deposited savings"
+                                icon={PiggyBank}
+                                iconBg="bg-emerald-50"
+                                iconColor="text-emerald-600"
+                            />
+                            <StatCard
+                                label="Loan Arrears"
+                                value={summary.loanArrears > 0 ? `KES ${fmt(summary.loanArrears)}` : 'Clear'}
+                                sub={summary.loanArrears > 0 ? 'Overdue repayment balance' : 'No outstanding arrears'}
+                                icon={Coins}
+                                iconBg={summary.loanArrears > 0 ? 'bg-rose-50' : 'bg-emerald-50'}
+                                iconColor={summary.loanArrears > 0 ? 'text-rose-600' : 'text-emerald-600'}
+                            />
+                            <StatCard
+                                label="Penalties"
+                                value={summary.penaltyOutstanding > 0 ? `KES ${fmt(summary.penaltyOutstanding)}` : 'Clear'}
+                                sub={summary.penaltyOutstanding > 0 ? 'Outstanding penalty balance' : 'No penalties outstanding'}
+                                icon={AlertCircle}
+                                iconBg={summary.penaltyOutstanding > 0 ? 'bg-amber-50' : 'bg-emerald-50'}
+                                iconColor={summary.penaltyOutstanding > 0 ? 'text-amber-600' : 'text-emerald-600'}
+                            />
+                            <StatCard
+                                label="Next Due Date"
+                                value={summary.nextDueDate
+                                    ? new Date(summary.nextDueDate).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
+                                    : '—'
+                                }
+                                sub={summary.nextDueDate ? 'Next loan repayment' : 'No upcoming payments'}
+                                icon={CalendarCheck}
+                                iconBg="bg-sky-50"
+                                iconColor="text-sky-600"
+                            />
+                        </div>
+                    ) : null}
+
+                    {/* ── Active loan status pill ── */}
+                    {summary && (
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+                                    <TrendingUp className="w-5 h-5 text-sky-600" />
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-800">Registration Fee</h4>
-                                    <p className="text-sm text-slate-500 mt-0.5">KES {registrationFee.toLocaleString()} one-time payment</p>
+                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Loan Status</p>
+                                    <p className="text-sm font-semibold text-slate-800 mt-0.5">{loanStyle.label}</p>
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center sm:items-end w-full sm:w-auto">
-                                <button
-                                    onClick={() => setIsPaymentModalOpen(true)}
-                                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm mb-2"
-                                >
-                                    Pay via M-Pesa
-                                    <ChevronRight size={18} />
-                                </button>
-                                <p className="text-xs text-slate-400 italic text-center sm:text-right">
-                                    *After paying on your phone, refresh this page.
-                                </p>
-                            </div>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${loanStyle.bg} ${loanStyle.text}`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+                                {loanStyle.label}
+                            </span>
                         </div>
                     )}
+
+                    {/* ── Quick actions ── */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a href="/savings" className="group bg-white border border-slate-200 hover:border-emerald-300 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                                    <PiggyBank className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">View Savings</p>
+                                    <p className="text-xs text-slate-400">Statement & deposits</p>
+                                </div>
+                            </div>
+                            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                        </a>
+                        <a href="/my-loans" className="group bg-white border border-slate-200 hover:border-sky-300 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+                                    <Coins className="w-5 h-5 text-sky-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">My Loans</p>
+                                    <p className="text-xs text-slate-400">Applications & repayments</p>
+                                </div>
+                            </div>
+                            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                        </a>
+                    </div>
+                </>
+            )}
+
+            {/* ── Profile card (always visible) ── */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Account Details</h2>
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xl font-bold border border-emerald-200 uppercase shrink-0">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-1 flex-1">
+                        <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Full Name</p>
+                            <p className="text-sm font-semibold text-slate-800">{user?.firstName} {user?.lastName}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Email</p>
+                            <p className="text-sm text-slate-600 truncate">{user?.email}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Member Number</p>
+                            <p className="text-sm font-mono font-bold text-emerald-700">{user?.memberNumber || '—'}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Payment Modal Component */}
             <PaymentModal
                 isOpen={isPaymentModalOpen}
                 onClose={() => setIsPaymentModalOpen(false)}
-                amount={registrationFee} // <--- PASS DYNAMIC FEE
+                amount={registrationFee}
                 accountReference={`REG-${user?.id?.substring(0, 8).toUpperCase() || 'FEE'}`}
                 title="Pay Registration Fee"
-                description="Please provide your M-Pesa registered phone number. We will send a secure prompt directly to your phone to authorize the transaction."
+                description="We'll send a secure M-Pesa prompt to your phone to authorize the transaction."
             />
         </div>
     );

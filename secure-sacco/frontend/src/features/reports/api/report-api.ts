@@ -51,20 +51,18 @@ export interface PaymentLineDTO {
 export const ARREARS_BUCKETS = ['1-7 Days', '8-30 Days', '31-60 Days', '61-90 Days', '90+ Days'] as const;
 export type ArrearsBucket = typeof ARREARS_BUCKETS[number];
 
-export interface IncomeLineDTO {
-    accountCode: string;
-    accountName: string;
-    category: string;       // FEES | INTEREST | PENALTIES | OTHER
-    totalCredit: number;
-    totalDebit: number;
-    netIncome: number;
+// Matches backend ReportDTOs.IncomeCategoryDTO exactly
+export interface IncomeCategoryDTO {
+    category: string;   // account_name from the journal (e.g. "Interest Income")
+    amount:   number;   // net CREDIT − DEBIT for that account
 }
 
+// Matches backend ReportDTOs.IncomeReportDTO exactly
 export interface IncomeReportDTO {
-    periodFrom: string;
-    periodTo:   string;
-    lines:      IncomeLineDTO[];
-    grandTotalIncome: number;
+    fromDate:    string;              // "YYYY-MM-DD"
+    toDate:      string;              // "YYYY-MM-DD"
+    totalIncome: number;
+    categories:  IncomeCategoryDTO[];
 }
 
 export const reportApi = {

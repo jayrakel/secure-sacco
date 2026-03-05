@@ -14,7 +14,7 @@ import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
 import MemberListPage from "./features/members/pages/MemberListPage";
-import MemberDashboardPage from "./features/members/pages/MemberDashboardPage";
+import DashboardRouter from "./features/dashboard/pages/DashboardRouter";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
@@ -26,6 +26,7 @@ import { LoanArrearsPage } from './features/reports/pages/LoanArrearsPage';
 import { DailyCollectionsPage } from './features/reports/pages/DailyCollectionsPage';
 import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
 import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
+import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -73,7 +74,7 @@ function App() {
 
                             <Route path="/dashboard" element={
                                 <ProtectedRoute>
-                                    <MemberDashboardPage />
+                                    <DashboardRouter />
                                 </ProtectedRoute>
                             } />
 
@@ -124,6 +125,13 @@ function App() {
                             <Route path="my-penalties" element={
                                 <ProtectedRoute>
                                     <MemberPenaltiesPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* --- MEMBER PERSONAL REPORTS --- */}
+                            <Route path="my-reports" element={
+                                <ProtectedRoute>
+                                    <MemberPersonalReportsPage />
                                 </ProtectedRoute>
                             } />
 
