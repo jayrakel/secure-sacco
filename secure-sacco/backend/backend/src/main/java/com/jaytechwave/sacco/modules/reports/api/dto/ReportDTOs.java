@@ -59,4 +59,18 @@ public class ReportDTOs {
         private Map<String, BigDecimal> byChannel = new HashMap<>();
         private Map<String, BigDecimal> byType = new HashMap<>();
     }
+
+    @Data
+    public static class IncomeCategoryDTO {
+        private String category;
+        private BigDecimal amount;
+    }
+
+    @Data
+    public static class IncomeReportDTO {
+        private String fromDate;
+        private String toDate;
+        private BigDecimal totalIncome = BigDecimal.ZERO;
+        private java.util.List<IncomeCategoryDTO> categories = new java.util.ArrayList<>();
+    }
 }

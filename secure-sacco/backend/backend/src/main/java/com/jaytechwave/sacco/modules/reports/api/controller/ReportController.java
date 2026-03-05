@@ -83,4 +83,12 @@ public class ReportController {
             @RequestParam(required = false) String date) {
         return ResponseEntity.ok(reportService.getDailyCollections(date));
     }
+
+    @GetMapping("/income")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeReportDTO> getIncomeReport(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        return ResponseEntity.ok(reportService.getIncomeReport(from, to));
+    }
 }

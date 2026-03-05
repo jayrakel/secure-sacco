@@ -269,4 +269,54 @@ public class ReportService {
 
         return dto;
     }
+
+    @Transactional(readOnly = true)
+    public com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeReportDTO getIncomeReport(String fromDateStr, String toDateStr) {
+        var report = new com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeReportDTO();
+        report.setFromDate(fromDateStr);
+        report.setToDate(toDateStr);
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT 
+                a.account_name AS category,
+                SUM(CASE WHEN jel.type = 'CREDIT' THEN jel.amount ELSE -jel.amount END) AS total_income
+            FROM journal_entry_lines jel
+            JOIN accounts a ON jel.account_id = a.id
+            JOIN journal_entries je ON jel.journal_entry_id = je.id
+            WHERE a.account_type = 'INCOME'
+              AND je.status = 'POSTED'
+            """);
+
+        java.util.List<Object> params = new java.util.ArrayList<>();
+
+        if (fromDateStr != null && !fromDateStr.isBlank()) {
+            sql.append(" AND je.transaction_date >= CAST(? AS DATE)");
+            params.add(fromDateStr);
+        }
+        if (toDateStr != null && !toDateStr.isBlank()) {
+            sql.append(" AND je.transaction_date <= CAST(? AS DATE)");
+            params.add(toDateStr);
+        }
+
+        sql.append(" GROUP BY a.account_name ORDER BY total_income DESC");
+
+        List<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeCategoryDTO> categories = jdbcTemplate.query(sql.toString(), (rs, rowNum) -> {
+            var cat = new com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeCategoryDTO();
+            cat.setCategory(rs.getString("category"));
+            cat.setAmount(rs.getBigDecimal("total_income"));
+            return cat;
+        }, params.toArray());
+
+        BigDecimal grandTotal = BigDecimal.ZERO;
+        for (var cat : categories) {
+            if(cat.getAmount() != null) {
+                grandTotal = grandTotal.add(cat.getAmount());
+            }
+        }
+
+        report.setCategories(categories);
+        report.setTotalIncome(grandTotal);
+
+        return report;
+    }
 }
