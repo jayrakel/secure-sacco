@@ -72,7 +72,7 @@ export const Sidebar = () => {
             ]
         },
 
-        { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports' },
+        { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
 
         { label: 'Security', path: '/security', icon: Shield },
         { label: 'Platform Settings', path: '/settings', icon: Settings, adminOnly: true },
