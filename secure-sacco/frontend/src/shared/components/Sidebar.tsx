@@ -17,7 +17,7 @@ import {
     ChevronRight,
     Calculator,
     ChevronDown,
-    AlertCircle // <--- IMPORTED PERFECTLY HERE
+    AlertCircle
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -39,7 +39,7 @@ export const Sidebar = () => {
 
     // State to track which dropdowns are open
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-        'Accounting': false // Default state
+        'Accounting': false
     });
 
     const isStaff = user?.roles?.some(role => role !== 'ROLE_MEMBER');
@@ -60,8 +60,6 @@ export const Sidebar = () => {
         { label: 'Loans', path: '/loans', icon: Coins, module: 'loans' },
         { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings' },
 
-
-        // --- NEW NESTED ACCOUNTING TAB ---
         {
             label: 'Accounting',
             icon: Calculator,
@@ -83,15 +81,21 @@ export const Sidebar = () => {
         { label: 'Security', path: '/security', icon: Shield },
         { label: 'Savings Vault', path: '/savings', icon: PiggyBank, module: 'savings' },
         { label: 'My Loans', path: '/my-loans', icon: Coins, module: 'loans' },
-        { label: 'Penalties', path: '/my-penalties', icon: AlertCircle }, // <--- ADDED PERFECTLY HERE
+        { label: 'Penalties', path: '/my-penalties', icon: AlertCircle },
     ];
 
     const activeNavList = isStaff ? staffNavItems : memberNavItems;
 
     const filterNavItems = (items: NavItem[]): NavItem[] => {
+        // SYSTEM_ADMIN implicitly has access to all routes and permissions.
+        // This mirrors the bypass already present in HasPermission and ProtectedRoute.
+        const isSystemAdmin = user?.permissions?.includes('ROLE_SYSTEM_ADMIN');
+
         return items.filter(item => {
-            if (item.adminOnly && !user?.roles?.includes('ROLE_SYSTEM_ADMIN')) return false;
-            if (item.requiredPermission && !user?.permissions?.includes(item.requiredPermission)) return false;
+            if (item.adminOnly && !isSystemAdmin) return false;
+            // SYSTEM_ADMIN bypasses requiredPermission checks (fixes Reports not appearing
+            // for SYSTEM_ADMIN because REPORTS_READ was not granted to them in the DB).
+            if (item.requiredPermission && !isSystemAdmin && !user?.permissions?.includes(item.requiredPermission)) return false;
             if (item.module) {
                 if (!settings?.initialized) return false;
                 return settings.enabledModules?.[item.module as keyof typeof settings.enabledModules] === true;
@@ -109,7 +113,7 @@ export const Sidebar = () => {
     const navItems = filterNavItems(activeNavList);
 
     const toggleMenu = (label: string) => {
-        if (isCollapsed) setIsCollapsed(false); // Auto-expand sidebar if trying to open a menu
+        if (isCollapsed) setIsCollapsed(false);
         setExpandedMenus(prev => ({ ...prev, [label]: !prev[label] }));
     };
 

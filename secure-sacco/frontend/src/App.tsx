@@ -22,6 +22,7 @@ import MyLoansPage from './features/loans/pages/MyLoansPage';
 import LoanManagementPage from './features/loans/pages/LoanManagementPage';
 import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
 import { ReportsHubPage } from './features/reports/pages/ReportsHubPage';
+import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -131,11 +132,14 @@ function App() {
                             } />
 
                             {/* --- REPORTS ROUTE --- */}
-                            <Route path="/reports" element={
-                                <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
-                                    <ReportsHubPage />
-                                </ProtectedRoute>
-                            } />
+                            <Route path="reports">
+                                <Route index element={
+                                    <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
+                                        <ReportsHubPage />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="statements" element={<MemberStatementPage />} />
+                            </Route>
 
                             <Route path="/security" element={
                                 <ProtectedRoute>

@@ -152,6 +152,7 @@ public class AuthController {
         if (user.getMember() != null) {
             userMap.put("memberNumber", user.getMember().getMemberNumber());
             userMap.put("memberStatus", user.getMember().getStatus().name());
+            userMap.put("memberId", user.getMember().getId());
         }
 
         return Map.of(
@@ -285,6 +286,7 @@ public class AuthController {
         if (user.getMember() != null) {
             responseBody.put("memberNumber", user.getMember().getMemberNumber());
             responseBody.put("memberStatus", user.getMember().getStatus().name());
+            responseBody.put("memberId", user.getMember().getId());
         }
 
         return ResponseEntity.ok(responseBody);

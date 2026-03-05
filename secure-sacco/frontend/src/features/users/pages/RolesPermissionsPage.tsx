@@ -226,7 +226,7 @@ export default function RolesPermissionsPage() {
                                                             <input
                                                                 type="checkbox"
                                                                 disabled={isSystemAdmin}
-                                                                checked={editedPermissionIds.includes(perm.id) || isSystemAdmin}
+                                                                checked={editedPermissionIds.includes(perm.id)}
                                                                 onChange={() => handleTogglePermission(perm.id)}
                                                                 className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 disabled:opacity-50"
                                                             />

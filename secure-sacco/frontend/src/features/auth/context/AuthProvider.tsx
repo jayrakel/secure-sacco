@@ -12,6 +12,7 @@ interface User {
     mfaEnabled?: boolean;
     memberNumber?: string;
     memberStatus?: string;
+    memberId?: string;
 }
 
 interface AuthContextType {
