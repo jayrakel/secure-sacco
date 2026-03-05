@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.FinancialOvervie
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.PaymentLineDTO;
 import com.jaytechwave.sacco.modules.reports.domain.service.ReportService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -82,6 +83,14 @@ public class ReportController {
     public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.DailyCollectionDTO> getDailyCollections(
             @RequestParam(required = false) String date) {
         return ResponseEntity.ok(reportService.getDailyCollections(date));
+    }
+
+    // --- DRILLDOWN: Individual rows for the Daily Collections page ---
+    @GetMapping("/collections/daily/lines")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<List<PaymentLineDTO>> getDailyCollectionLines(
+            @RequestParam(required = false) String date) {
+        return ResponseEntity.ok(reportService.getDailyCollectionLines(date));
     }
 
     @GetMapping("/income")

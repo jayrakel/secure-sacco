@@ -60,6 +60,23 @@ public class ReportDTOs {
         private Map<String, BigDecimal> byType = new HashMap<>();
     }
 
+    // Individual payment row for the drilldown table on the Daily Collections page.
+    // Fields map 1-to-1 with columns on the `payments` table.
+    @Data
+    public static class PaymentLineDTO {
+        private String id;
+        private String transactionRef;    // M-Pesa receipt number (e.g. NLJ7RT615V)
+        private String internalRef;       // Internal tracking reference
+        private BigDecimal amount;
+        private String paymentMethod;     // MPESA, BANK_TRANSFER
+        private String paymentType;       // C2B, STK_PUSH
+        private String accountReference;  // Member number typed by payer
+        private String senderName;
+        private String senderPhoneNumber;
+        private String status;
+        private String createdAt;
+    }
+
     @Data
     public static class IncomeCategoryDTO {
         private String category;

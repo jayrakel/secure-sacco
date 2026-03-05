@@ -270,6 +270,54 @@ public class ReportService {
         return dto;
     }
 
+
+    // --- DRILLDOWN: Individual payment rows for the Daily Collections report ---
+    @Transactional(readOnly = true)
+    public List<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.PaymentLineDTO> getDailyCollectionLines(String dateStr) {
+        String targetDate = (dateStr == null || dateStr.isBlank())
+                ? java.time.LocalDate.now().toString()
+                : dateStr;
+
+        String sql = """
+                SELECT
+                    id,
+                    transaction_ref,
+                    internal_ref,
+                    amount,
+                    payment_method,
+                    payment_type,
+                    account_reference,
+                    sender_name,
+                    sender_phone_number,
+                    status,
+                    created_at
+                FROM payments
+                WHERE CAST(created_at AS DATE) = CAST(? AS DATE)
+                  AND status = 'COMPLETED'
+                ORDER BY created_at DESC
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            var dto = new com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.PaymentLineDTO();
+            dto.setId(rs.getString("id"));
+            dto.setTransactionRef(rs.getString("transaction_ref"));
+            dto.setInternalRef(rs.getString("internal_ref"));
+            dto.setAmount(rs.getBigDecimal("amount"));
+            dto.setPaymentMethod(rs.getString("payment_method"));
+            dto.setPaymentType(rs.getString("payment_type"));
+            dto.setAccountReference(rs.getString("account_reference"));
+            dto.setSenderName(rs.getString("sender_name"));
+            dto.setSenderPhoneNumber(rs.getString("sender_phone_number"));
+            dto.setStatus(rs.getString("status"));
+            java.sql.Timestamp ts = rs.getTimestamp("created_at");
+            if (ts != null) {
+                dto.setCreatedAt(ts.toLocalDateTime()
+                        .format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            }
+            return dto;
+        }, targetDate);
+    }
+
     @Transactional(readOnly = true)
     public com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeReportDTO getIncomeReport(String fromDateStr, String toDateStr) {
         var report = new com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeReportDTO();
