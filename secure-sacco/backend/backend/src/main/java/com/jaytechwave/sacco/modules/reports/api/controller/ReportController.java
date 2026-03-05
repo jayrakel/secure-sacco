@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.reports.api.controller;
 
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.FinancialOverviewDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
 import com.jaytechwave.sacco.modules.reports.domain.service.ReportService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -28,6 +29,21 @@ public class ReportController {
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<List<FinancialOverviewDTO>> getFinancialOverview() {
         return ResponseEntity.ok(reportService.getMemberFinancialOverview());
+    }
+
+    // --- NEW: MINI SUMMARY WIDGET ENDPOINT ---
+    @GetMapping("/me/summary")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<MemberMiniSummaryDTO> getMySummary() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new AccessDeniedException("User session not found"));
+
+        if (user.getMember() == null) {
+            return ResponseEntity.ok(new MemberMiniSummaryDTO());
+        }
+
+        return ResponseEntity.ok(reportService.getMySummary(user.getMember().getId()));
     }
 
     @GetMapping("/members/{memberId}/statement")

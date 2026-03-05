@@ -29,4 +29,13 @@ public class ReportDTOs {
         private String reference;
         private String description;
     }
+
+    @Data
+    public static class MemberMiniSummaryDTO {
+        private BigDecimal savingsBalance = BigDecimal.ZERO;
+        private BigDecimal loanArrears = BigDecimal.ZERO;
+        private BigDecimal penaltyOutstanding = BigDecimal.ZERO;
+        private String activeLoanStatus = "NONE";
+        private String nextDueDate = null;
+    }
 }

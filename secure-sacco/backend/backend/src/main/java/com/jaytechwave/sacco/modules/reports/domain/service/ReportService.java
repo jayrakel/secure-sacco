@@ -2,12 +2,14 @@ package com.jaytechwave.sacco.modules.reports.domain.service;
 
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.FinancialOverviewDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
 import com.jaytechwave.sacco.modules.reports.domain.repository.MemberFinancialOverviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +40,45 @@ public class ReportService {
             dto.setPenaltyOutstanding(entity.getPenaltyOutstanding());
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    // --- NEW: MINI SUMMARY WIDGET ENGINE ---
+    @Transactional(readOnly = true)
+    public MemberMiniSummaryDTO getMySummary(UUID memberId) {
+        MemberMiniSummaryDTO summary = new MemberMiniSummaryDTO();
+
+        // 1. Fetch live balances perfectly from our Read Model View
+        overviewRepository.findById(memberId).ifPresent(overview -> {
+            summary.setSavingsBalance(overview.getTotalSavings() != null ? overview.getTotalSavings() : BigDecimal.ZERO);
+            summary.setLoanArrears(overview.getLoanArrears() != null ? overview.getLoanArrears() : BigDecimal.ZERO);
+            summary.setPenaltyOutstanding(overview.getPenaltyOutstanding() != null ? overview.getPenaltyOutstanding() : BigDecimal.ZERO);
+        });
+
+        // 2. Fetch specific Next Due Date and Active Loan Status via ultra-fast subquery
+        String sql = """
+            SELECT 
+                la.status AS loan_status,
+                (SELECT MIN(due_date) FROM loan_schedule_items WHERE loan_application_id = la.id AND status != 'PAID') AS next_due_date
+            FROM loan_applications la
+            WHERE la.member_id = ? AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED')
+            LIMIT 1
+            """;
+
+        try {
+            jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+                summary.setActiveLoanStatus(rs.getString("loan_status"));
+                java.sql.Date date = rs.getDate("next_due_date");
+                if (date != null) {
+                    summary.setNextDueDate(date.toLocalDate().toString());
+                }
+                return null;
+            }, memberId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            // No active loan, which perfectly defaults activeLoanStatus to "NONE"
+            summary.setActiveLoanStatus("NONE");
+        }
+
+        return summary;
     }
 
     @Transactional(readOnly = true)
