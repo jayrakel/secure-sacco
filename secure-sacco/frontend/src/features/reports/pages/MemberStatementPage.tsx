@@ -143,7 +143,7 @@ const ModuleSection: React.FC<{
                             <div className="flex flex-col items-center shrink-0 w-6">
                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${cfg.timelineDot}`} />
                                 {idx < items.length - 1 && (
-                                    <div className={`w-px flex-1 min-h-[18px] border-l-2 border-dashed ${cfg.timelineLine} mt-1`} />
+                                    <div className={`w-px flex-1 min-h-4.5 border-l-2 border-dashed ${cfg.timelineLine} mt-1`} />
                                 )}
                             </div>
 
