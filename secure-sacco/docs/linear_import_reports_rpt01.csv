@@ -1,0 +1,63 @@
+"Title","Description","Priority","Status","Assignee","Created","Completed","Labels","Estimate"
+"RPT-01-BE-01 Reporting read models (views/materialized tables)","Goal: Create fast, consistent reporting sources derived from GL + core modules.
+
+Acceptance criteria:
+- Define reporting strategy: SQL views or materialized views for high-traffic reports
+- Create at least these views:
+  * v_member_savings_balance (member_id, balance)
+  * v_member_loan_summary (member_id, outstanding_principal, outstanding_interest, arrears, credit)
+  * v_member_penalty_summary (member_id, penalty_outstanding)
+- Add migration + indexes as needed","High","Backlog","","2026-03-05","","Backend, Reports, DB",""
+"RPT-01-BE-02 Member statement API (Savings + Loans + Penalties + Payments)","Goal: One unified statement for a member across modules.
+
+Acceptance criteria:
+- Endpoint: GET /api/v1/reports/members/{memberId}/statement?from=&to=
+- Includes sections or unified timeline:
+  * savings transactions
+  * loan repayments and disbursement events
+  * penalty accruals and penalty payments
+- Supports pagination (or limits) and sorting by date
+- RBAC: member can access self; staff requires REPORTS_READ","High","Backlog","","2026-03-05","","Backend, Reports",""
+"RPT-01-BE-03 Member mini-summary API (dashboard widgets)","Acceptance criteria:
+- Endpoint: GET /api/v1/reports/me/summary
+- Returns: savings balance, active loan status + next due date, arrears, penalty outstanding
+- Uses reporting views/read model for performance","Medium","Backlog","","2026-03-05","","Backend, Reports",""
+"RPT-01-BE-04 Loan arrears report (list + aging buckets)","Acceptance criteria:
+- Endpoint: GET /api/v1/reports/loans/arrears?bucket=7,30,60,90
+- Returns loans in arrears with member, amount overdue, days overdue, bucket
+- RBAC: REPORTS_READ; optionally REPORTS_ARREARS_READ","High","Backlog","","2026-03-05","","Backend, Reports, Loans",""
+"RPT-01-BE-05 Daily collections report (cash + mpesa)","Acceptance criteria:
+- Endpoint: GET /api/v1/reports/collections/daily?date=
+- Includes totals by channel (CASH/MPESA) and by purpose (Savings/Loan/Penalty/Fee)
+- Data source: GL journals + payment records
+- RBAC: REPORTS_READ","Medium","Backlog","","2026-03-05","","Backend, Reports, Accounting",""
+"RPT-01-BE-06 Income report from GL (fees/interest/penalties)","Acceptance criteria:
+- Endpoint: GET /api/v1/reports/income?from=&to=
+- Aggregates by income account categories:
+  * application fees
+  * loan interest income
+  * penalty income + penalty interest income
+- RBAC: REPORTS_READ","Medium","Backlog","","2026-03-05","","Backend, Reports, Accounting",""
+"RPT-01-FE-01 Reports hub screen (navigation + permissions)","Acceptance criteria:
+- /reports landing page with links tiles:
+  * Member Statements
+  * Loan Arrears
+  * Daily Collections
+  * Income Report
+- Tiles shown/hidden by permissions","Medium","Backlog","","2026-03-05","","Frontend, Reports",""
+"RPT-01-FE-02 Member statement UI (staff + member self)","Acceptance criteria:
+- Date range picker
+- Timeline/sections showing savings, loans, penalties
+- Export/print button (PDF export can be V2; CSV export optional)","High","Backlog","","2026-03-05","","Frontend, Reports",""
+"RPT-01-FE-03 Arrears report UI (filters + buckets)","Acceptance criteria:
+- Table with arrears bucket filters
+- Search by member number/name
+- Link to member loan detail","High","Backlog","","2026-03-05","","Frontend, Reports",""
+"RPT-01-FE-04 Daily collections UI","Acceptance criteria:
+- Date picker
+- Summary cards (totals by channel/purpose)
+- Drilldown list of transactions","Medium","Backlog","","2026-03-05","","Frontend, Reports",""
+"RPT-01-FE-05 Income report UI","Acceptance criteria:
+- Date range
+- Breakdown by income category
+- Totals + simple table","Medium","Backlog","","2026-03-05","","Frontend, Reports",""
