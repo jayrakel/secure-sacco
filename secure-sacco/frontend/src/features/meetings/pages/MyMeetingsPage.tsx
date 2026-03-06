@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { meetingsApi } from '../api/meetings-api';
 import type { MyMeetingSummary, AttendanceStatus } from '../api/meetings-api';
-import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle, LogIn } from 'lucide-react';
 import { format } from 'date-fns';
 
-// Append Z so the browser treats the backend's UTC LocalDateTime as UTC
-const parseUtc = (dateStr: string) => new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+const parseUtc = (dateStr: string) =>
+    new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
 
 const ATTENDANCE_CONFIG: Record<AttendanceStatus, { label: string; color: string; Icon: React.ElementType }> = {
     PRESENT: { label: 'Present',  color: 'text-green-600 bg-green-50',   Icon: CheckCircle2 },
@@ -14,25 +14,40 @@ const ATTENDANCE_CONFIG: Record<AttendanceStatus, { label: string; color: string
     EXCUSED: { label: 'Excused',  color: 'text-slate-600 bg-slate-50',   Icon: AlertCircle },
 };
 
-const MEETING_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-    SCHEDULED: { label: 'Upcoming',  color: 'text-blue-600 bg-blue-50' },
-    CANCELED:  { label: 'Canceled',  color: 'text-slate-500 bg-slate-100' },
-};
-
 export default function MyMeetingsPage() {
     const [meetings, setMeetings] = useState<MyMeetingSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [checkingIn, setCheckingIn] = useState<string | null>(null);
+    const [checkInErrors, setCheckInErrors] = useState<Record<string, string>>({});
+    const now = new Date();
 
-    useEffect(() => {
+    const load = () => {
         meetingsApi.getMyMeetings()
             .then(setMeetings)
             .catch(() => setError('Failed to load your meeting history.'))
             .finally(() => setLoading(false));
-    }, []);
+    };
+
+    useEffect(() => { load(); }, []);
+
+    const handleCheckIn = async (meetingId: string) => {
+        setCheckingIn(meetingId);
+        setCheckInErrors(prev => ({ ...prev, [meetingId]: '' }));
+        try {
+            await meetingsApi.checkIn(meetingId);
+            load(); // refresh to get updated status
+        } catch (e: any) {
+            setCheckInErrors(prev => ({
+                ...prev,
+                [meetingId]: e.response?.data?.message || 'Check-in failed. Please try again.',
+            }));
+        } finally {
+            setCheckingIn(null);
+        }
+    };
 
     const completed = meetings.filter(m => m.meetingStatus === 'COMPLETED');
-
     const stats = {
         total:   completed.length,
         present: completed.filter(m => m.myStatus === 'PRESENT').length,
@@ -43,24 +58,66 @@ export default function MyMeetingsPage() {
         ? Math.round(((stats.present + stats.late) / stats.total) * 100)
         : 0;
 
-    const renderStatus = (m: MyMeetingSummary) => {
-        // Completed meetings show attendance status
+    const renderStatusCell = (m: MyMeetingSummary) => {
+        const startAt = parseUtc(m.startAt);
+        const hasStarted = now >= startAt;
+
+        // Completed — show attendance badge
         if (m.meetingStatus === 'COMPLETED' && m.myStatus) {
             const cfg = ATTENDANCE_CONFIG[m.myStatus];
             const Icon = cfg.Icon;
             return (
                 <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${cfg.color}`}>
-                    <Icon size={11} />
-                    {cfg.label}
+                    <Icon size={11} /> {cfg.label}
                 </span>
             );
         }
-        // Scheduled / Canceled meetings show meeting status
-        const cfg = MEETING_STATUS_CONFIG[m.meetingStatus];
+
+        // Already checked in (PRESENT or LATE on a SCHEDULED meeting)
+        if (m.meetingStatus === 'SCHEDULED' && m.myStatus &&
+            (m.myStatus === 'PRESENT' || m.myStatus === 'LATE')) {
+            const cfg = ATTENDANCE_CONFIG[m.myStatus];
+            const Icon = cfg.Icon;
+            return (
+                <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${cfg.color}`}>
+                    <Icon size={11} /> Checked In
+                </span>
+            );
+        }
+
+        // Canceled
+        if (m.meetingStatus === 'CANCELED') {
+            return (
+                <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full text-slate-500 bg-slate-100">
+                    Canceled
+                </span>
+            );
+        }
+
+        // Scheduled + not started yet
+        if (!hasStarted) {
+            return (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full text-blue-600 bg-blue-50">
+                    <Clock size={11} /> {format(startAt, 'HH:mm')}
+                </span>
+            );
+        }
+
+        // Scheduled + started → show Check In button
         return (
-            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${cfg.color}`}>
-                {cfg.label}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+                <button
+                    onClick={() => handleCheckIn(m.meetingId)}
+                    disabled={checkingIn === m.meetingId}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                    <LogIn size={11} />
+                    {checkingIn === m.meetingId ? 'Checking in…' : 'Check In'}
+                </button>
+                {checkInErrors[m.meetingId] && (
+                    <p className="text-xs text-red-500">{checkInErrors[m.meetingId]}</p>
+                )}
+            </div>
         );
     };
 
@@ -68,16 +125,17 @@ export default function MyMeetingsPage() {
         <div className="max-w-4xl mx-auto">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">My Meetings</h1>
-                <p className="text-slate-500 text-sm mt-1">Your meeting attendance history and upcoming sessions.</p>
+                <p className="text-slate-500 text-sm mt-1">
+                    Check in when a meeting starts. Your attendance is recorded automatically.
+                </p>
             </div>
 
-            {/* Stats — only based on completed meetings */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {[
-                    { label: 'Meetings Held',   value: stats.total,                 color: 'text-blue-600' },
-                    { label: 'Attended',         value: stats.present + stats.late,  color: 'text-green-600' },
-                    { label: 'Absent',           value: stats.absent,               color: 'text-red-600' },
-                    { label: 'Attendance Rate',  value: `${attendanceRate}%`,       color: 'text-indigo-600' },
+                    { label: 'Meetings Held',  value: stats.total,                color: 'text-blue-600' },
+                    { label: 'Attended',        value: stats.present + stats.late, color: 'text-green-600' },
+                    { label: 'Absent',          value: stats.absent,              color: 'text-red-600' },
+                    { label: 'Attendance Rate', value: `${attendanceRate}%`,      color: 'text-indigo-600' },
                 ].map(s => (
                     <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -105,7 +163,7 @@ export default function MyMeetingsPage() {
                         <thead>
                         <tr className="border-b border-slate-100 bg-slate-50">
                             <th className="text-left text-xs font-semibold text-slate-500 px-4 py-3">Meeting</th>
-                            <th className="text-left text-xs font-semibold text-slate-500 px-4 py-3">Date & Time</th>
+                            <th className="text-left text-xs font-semibold text-slate-500 px-4 py-3">Date</th>
                             <th className="text-right text-xs font-semibold text-slate-500 px-4 py-3">Status</th>
                         </tr>
                         </thead>
@@ -124,7 +182,7 @@ export default function MyMeetingsPage() {
                                     </p>
                                 </td>
                                 <td className="px-4 py-3 text-right">
-                                    {renderStatus(m)}
+                                    {renderStatusCell(m)}
                                 </td>
                             </tr>
                         ))}

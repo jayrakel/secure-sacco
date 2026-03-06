@@ -66,4 +66,7 @@ export const meetingsApi = {
 
     getMyMeetings: (): Promise<MyMeetingSummary[]> =>
         axios.get(`${API}/my`).then(r => r.data),
+
+    checkIn: (id: string): Promise<AttendanceRecord> =>
+        axios.post(`${API}/${id}/checkin`).then(r => r.data),
 };
