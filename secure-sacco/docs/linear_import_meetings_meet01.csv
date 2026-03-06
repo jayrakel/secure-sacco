@@ -1,0 +1,72 @@
+"Title","Description","Priority","Status","Assignee","Created","Completed","Labels","Estimate"
+"MEET-01-BE-01 Meetings schema (members meetings)","Goal: Store meetings that members attend.
+
+Acceptance criteria:
+- DB: meetings table with fields:
+  * id (uuid), title, description (optional), meeting_type
+  * start_at, end_at, late_after_minutes
+  * status (SCHEDULED, COMPLETED, CANCELED)
+  * created_at, updated_at
+- Indexes on start_at and status","High","Backlog","","2026-03-05","","Backend, Meetings, DB",""
+"MEET-01-BE-02 Attendance schema","Acceptance criteria:
+- DB: meeting_attendance table with:
+  * meeting_id, member_id
+  * status (PRESENT, LATE, ABSENT, EXCUSED)
+  * recorded_by_user_id, recorded_at
+- Unique constraint (meeting_id, member_id)
+- Index on meeting_id","High","Backlog","","2026-03-05","","Backend, Meetings, DB",""
+"MEET-01-BE-03 Meetings API","Acceptance criteria:
+- Endpoints:
+  * GET /api/v1/meetings (list; supports from/to filters)
+  * POST /api/v1/meetings (create) [Secretary only]
+  * PUT /api/v1/meetings/{id} (edit) [Secretary only]
+  * POST /api/v1/meetings/{id}/cancel [Secretary only]
+  * POST /api/v1/meetings/{id}/complete [Secretary only]
+- RBAC: MEETINGS_MANAGE required for create/edit/cancel/complete
+- Audit log on cancel/complete","High","Backlog","","2026-03-05","","Backend, Meetings",""
+"MEET-01-BE-04 Attendance recording API (bulk)","Acceptance criteria:
+- Endpoints:
+  * GET /api/v1/meetings/{id}/attendance
+  * PUT /api/v1/meetings/{id}/attendance (bulk upsert list)
+- RBAC: ATTENDANCE_RECORD required
+- Who can record: Secretary + Chairperson (configurable later)
+- Idempotent updates: submitting same list twice does not duplicate records","High","Backlog","","2026-03-05","","Backend, Meetings",""
+"MEET-01-BE-05 Penalty rules seed for meetings (late/absent)","Goal: Enable automatic meeting penalties via existing Penalties+GL model.
+
+Acceptance criteria:
+- Seed penalty rules:
+  * MEETING_LATE
+  * MEETING_ABSENT
+- Rules are admin-editable later; seed provides defaults
+- Each penalty accrual posts to GL as receivable+income","Medium","Backlog","","2026-03-05","","Backend, Meetings, Penalties, Accounting",""
+"MEET-01-BE-06 Generate penalties on meeting completion (idempotent)","Acceptance criteria:
+- On meeting completion:
+  * For each member with status LATE -> create penalty accrual (MEETING_LATE)
+  * For each member with status ABSENT -> create penalty accrual (MEETING_ABSENT)
+- Idempotency: no duplicate penalty for same (meeting_id, member_id, rule_code)
+- Posts GL journal using existing accounting posting engine
+- Treasurer waiver continues via GL reversing journals (already implemented)","High","Backlog","","2026-03-05","","Backend, Meetings, Penalties, Accounting",""
+"MEET-01-BE-07 RBAC: roles mapping for meetings","Acceptance criteria:
+- Add permissions:
+  * MEETINGS_READ
+  * MEETINGS_MANAGE
+  * ATTENDANCE_RECORD
+- Map roles:
+  * Secretary: MEETINGS_MANAGE + ATTENDANCE_RECORD + MEETINGS_READ
+  * Chairperson: ATTENDANCE_RECORD + MEETINGS_READ
+  * Treasurer: MEETINGS_READ (optional)
+  * Member: MEETINGS_READ (self UI only)
+- Ensure SYSTEM_ADMIN still has all permissions via sync migration","High","Backlog","","2026-03-05","","Backend, Meetings, Auth",""
+"MEET-01-FE-01 Meetings list & details screen","Acceptance criteria:
+- List upcoming and past meetings
+- View meeting details (date/time, status)
+- Secretary sees create/edit/cancel/complete actions (permission-gated)","Medium","Backlog","","2026-03-05","","Frontend, Meetings",""
+"MEET-01-FE-02 Attendance marking screen","Acceptance criteria:
+- Select a meeting and load member list
+- Bulk mark: Present / Late / Absent / Excused
+- Submit updates
+- Only Secretary/Chairperson can access (permission-gated)","High","Backlog","","2026-03-05","","Frontend, Meetings",""
+"MEET-01-FE-03 Member view: my meetings + attendance history","Acceptance criteria:
+- Member can view upcoming meetings
+- Member can view their own attendance history
+- Penalties linked to meetings appear in Penalties tab (no duplicate UI required)","Medium","Backlog","","2026-03-05","","Frontend, Meetings",""

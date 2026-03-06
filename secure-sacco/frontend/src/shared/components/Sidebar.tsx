@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/SettingsContext';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle,
+    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -60,6 +60,7 @@ export const Sidebar = () => {
                 { label: 'Members', path: '/members', icon: UserCircle, module: 'members', requiredPermission: 'MEMBERS_READ' },
                 { label: 'Loans', path: '/loans', icon: Coins, module: 'loans' },
                 { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings' },
+                { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
             ],
         },
         {
@@ -99,6 +100,7 @@ export const Sidebar = () => {
                 { label: 'Savings Vault', path: '/savings', icon: PiggyBank, module: 'savings' },
                 { label: 'My Loans', path: '/my-loans', icon: Coins, module: 'loans' },
                 { label: 'Penalties', path: '/my-penalties', icon: AlertCircle },
+                { label: 'My Meetings', path: '/my-meetings', icon: CalendarDays },
             ],
         },
         {

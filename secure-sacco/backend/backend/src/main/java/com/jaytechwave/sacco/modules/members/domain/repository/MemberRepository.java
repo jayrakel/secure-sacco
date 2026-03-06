@@ -29,4 +29,7 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     Page<Member> searchMembers(@Param("q") String q, @Param("status") MemberStatus status, Pageable pageable);
 
     Optional<Member> findByMemberNumber(String memberNumber);
+
+    @Query("SELECT m FROM Member m WHERE m.user.id = :userId")
+    Optional<Member> findByUserId(@Param("userId") UUID userId);
 }

@@ -27,6 +27,8 @@ import { DailyCollectionsPage } from './features/reports/pages/DailyCollectionsP
 import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
 import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
+import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
+import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -125,6 +127,20 @@ function App() {
                             <Route path="my-penalties" element={
                                 <ProtectedRoute>
                                     <MemberPenaltiesPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* --- MEETINGS (STAFF) ROUTE --- */}
+                            <Route path="meetings" element={
+                                <ProtectedRoute requiredPermissions={['MEETINGS_READ']}>
+                                    <MeetingsManagementPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* --- MY MEETINGS (MEMBER) ROUTE --- */}
+                            <Route path="my-meetings" element={
+                                <ProtectedRoute>
+                                    <MyMeetingsPage />
                                 </ProtectedRoute>
                             } />
 
