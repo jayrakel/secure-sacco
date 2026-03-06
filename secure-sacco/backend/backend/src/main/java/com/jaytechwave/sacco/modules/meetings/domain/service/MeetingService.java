@@ -178,6 +178,64 @@ public class MeetingService {
         return toSummary(meeting);
     }
 
+    @Transactional
+    public AttendanceRecordResponse memberCheckIn(UUID meetingId, UUID memberId) {
+        Meeting meeting = findOrThrow(meetingId);
+
+        if (meeting.getStatus() != MeetingStatus.SCHEDULED) {
+            throw new IllegalStateException("This meeting is no longer active.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(meeting.getStartAt())) {
+            throw new IllegalStateException("Meeting has not started yet.");
+        }
+
+        // Idempotency: if already PRESENT or LATE, return existing record
+        MeetingAttendance existing = attendanceRepository
+                .findByMeetingIdAndMemberId(meetingId, memberId)
+                .orElse(null);
+
+        if (existing != null &&
+                (existing.getStatus() == AttendanceStatus.PRESENT || existing.getStatus() == AttendanceStatus.LATE)) {
+            Member m = memberRepository.findById(memberId).orElse(null);
+            String name = m != null ? m.getFirstName() + " " + m.getLastName() : "Unknown";
+            String number = m != null ? m.getMemberNumber() : "-";
+            return new AttendanceRecordResponse(
+                    existing.getId(), meetingId, memberId, name, number,
+                    existing.getStatus(), existing.getRecordedAt()
+            );
+        }
+
+        // Determine PRESENT or LATE based on timing
+        LocalDateTime lateThreshold = meeting.getStartAt()
+                .plusMinutes(meeting.getLateAfterMinutes());
+        AttendanceStatus status = now.isAfter(lateThreshold)
+                ? AttendanceStatus.LATE
+                : AttendanceStatus.PRESENT;
+
+        MeetingAttendance attendance = existing != null ? existing :
+                MeetingAttendance.builder()
+                        .meeting(meeting)
+                        .memberId(memberId)
+                        .build();
+
+        attendance.setStatus(status);
+        attendance.setRecordedByUserId(memberId); // self-recorded
+        attendanceRepository.save(attendance);
+
+        Member m = memberRepository.findById(memberId).orElse(null);
+        String name = m != null ? m.getFirstName() + " " + m.getLastName() : "Unknown";
+        String number = m != null ? m.getMemberNumber() : "-";
+
+        log.info("Member {} checked in to meeting {} as {}", memberId, meetingId, status);
+
+        return new AttendanceRecordResponse(
+                attendance.getId(), meetingId, memberId, name, number,
+                status, attendance.getRecordedAt()
+        );
+    }
+
     private void generateMeetingPenalties(Meeting meeting) {
         PenaltyRule lateRule   = penaltyRuleRepository.findByCode("MEETING_LATE")
                 .filter(PenaltyRule::getIsActive).orElse(null);

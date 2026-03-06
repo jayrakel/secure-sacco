@@ -98,4 +98,15 @@ public class MeetingController {
                 .orElseThrow(() -> new IllegalStateException("No member profile linked to this user."));
         return ResponseEntity.ok(meetingService.getMyMeetings(member.getId()));
     }
+
+    @PostMapping("/{id}/checkin")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AttendanceRecordResponse> checkIn(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails principal) {
+        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        Member member = memberRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("No member profile linked to this user."));
+        return ResponseEntity.ok(meetingService.memberCheckIn(id, member.getId()));
+    }
 }
