@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.config;
 
+import com.jaytechwave.sacco.modules.core.security.SecurityHeadersFilter;
 import com.jaytechwave.sacco.modules.core.security.CsrfCookieFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,11 +27,29 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${sacco.security.cors.allowed-origins}")
+    @Value("#{'${sacco.security.cors.allowed-origins}'.split(',')}")
     private List<String> allowedOrigins;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter) throws Exception {
+
+            // --- 1. Custom Security Headers & Request Tracing ---
+            http.addFilterBefore(securityHeadersFilter, org.springframework.security.web.session.SessionManagementFilter.class);
+
+            // --- 2. Advanced HTTP Security Headers (CSP, HSTS, Clickjacking) ---
+            http.headers(headers -> headers
+                    .frameOptions(frame -> frame.deny())                          // Prevent Clickjacking
+                    .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults()) // MIME sniffing
+                    .httpStrictTransportSecurity(hsts -> hsts                     // Enforce HTTPS
+                            .includeSubDomains(true)
+                            .maxAgeInSeconds(31536000))
+                    .contentSecurityPolicy(csp -> csp                             // Prevent XSS
+                            .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none'"))
+                    .referrerPolicy(ref -> ref                                    // Privacy
+                            .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                    .permissionsPolicy(policy -> policy                           // Device access
+                            .policy("geolocation=(), microphone=(), camera=()"))
+            );
 
         // Define the standard CSRF request handler for SPAs
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
