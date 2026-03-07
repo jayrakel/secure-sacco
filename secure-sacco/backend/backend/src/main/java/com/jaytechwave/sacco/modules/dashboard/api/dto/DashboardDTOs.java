@@ -31,4 +31,30 @@ public class DashboardDTOs {
         private Integer upcomingMeetings = 0;
         private Integer meetingsThisMonth = 0;
     }
+
+    @Data
+    public static class MemberDashboardDTO implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private String memberName;
+        private String memberNumber;
+        private String memberStatus;
+        private String registrationStatus;
+
+        private BigDecimal savingsBalance = BigDecimal.ZERO;
+        private BigDecimal totalDeposited = BigDecimal.ZERO;
+        private BigDecimal totalWithdrawn = BigDecimal.ZERO;
+
+        private Integer activeLoans = 0;
+        private BigDecimal totalLoanOutstanding = BigDecimal.ZERO;
+
+        private BigDecimal nextInstallmentAmount;
+        private String nextInstallmentDueDate;
+
+        private Integer openPenalties = 0;
+        private BigDecimal totalPenaltiesOutstanding = BigDecimal.ZERO;
+
+        private Integer upcomingMeetings = 0;
+        private Integer attendanceRate = 0;
+    }
 }
