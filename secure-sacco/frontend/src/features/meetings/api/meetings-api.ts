@@ -1,6 +1,6 @@
-import axios from 'axios';
+import apiClient from '../../../shared/api/api-client';
 
-const API = '/api/v1/meetings';
+const API = '/meetings';
 
 export type MeetingStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELED';
 export type MeetingType = 'GENERAL' | 'AGM' | 'SPECIAL' | 'EMERGENCY';
@@ -38,35 +38,35 @@ export interface MyMeetingSummary {
 
 export const meetingsApi = {
     list: (): Promise<Meeting[]> =>
-        axios.get(API).then(r => r.data),
+        apiClient.get(API).then(r => r.data),
 
     get: (id: string): Promise<Meeting> =>
-        axios.get(`${API}/${id}`).then(r => r.data),
+        apiClient.get(`${API}/${id}`).then(r => r.data),
 
     create: (data: Partial<Meeting>): Promise<Meeting> =>
-        axios.post(API, data).then(r => r.data),
+        apiClient.post(API, data).then(r => r.data),
 
     update: (id: string, data: Partial<Meeting>): Promise<Meeting> =>
-        axios.put(`${API}/${id}`, data).then(r => r.data),
+        apiClient.put(`${API}/${id}`, data).then(r => r.data),
 
     cancel: (id: string): Promise<Meeting> =>
-        axios.post(`${API}/${id}/cancel`).then(r => r.data),
+        apiClient.post(`${API}/${id}/cancel`).then(r => r.data),
 
     complete: (id: string): Promise<Meeting> =>
-        axios.post(`${API}/${id}/complete`).then(r => r.data),
+        apiClient.post(`${API}/${id}/complete`).then(r => r.data),
 
     getAttendance: (id: string): Promise<AttendanceRecord[]> =>
-        axios.get(`${API}/${id}/attendance`).then(r => r.data),
+        apiClient.get(`${API}/${id}/attendance`).then(r => r.data),
 
     recordAttendance: (
         id: string,
         records: { memberId: string; status: AttendanceStatus }[]
     ): Promise<AttendanceRecord[]> =>
-        axios.put(`${API}/${id}/attendance`, { records }).then(r => r.data),
+        apiClient.put(`${API}/${id}/attendance`, { records }).then(r => r.data),
 
     getMyMeetings: (): Promise<MyMeetingSummary[]> =>
-        axios.get(`${API}/my`).then(r => r.data),
+        apiClient.get(`${API}/my`).then(r => r.data),
 
     checkIn: (id: string): Promise<AttendanceRecord> =>
-        axios.post(`${API}/${id}/checkin`).then(r => r.data),
+        apiClient.post(`${API}/${id}/checkin`).then(r => r.data),
 };

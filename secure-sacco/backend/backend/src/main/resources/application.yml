@@ -50,15 +50,6 @@ spring:
   jackson:
     time-zone: UTC
 
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics,loggers,env
-    endpoint:
-      health:
-        show-details: always
-
 logging:
   level:
     root: INFO

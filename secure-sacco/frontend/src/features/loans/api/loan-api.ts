@@ -3,14 +3,13 @@ import apiClient from '../../../shared/api/api-client';
 export interface LoanProduct {
     id: string;
     name: string;
-    minAmount: number;
-    maxAmount: number;
-    termWeeks: number;
-    interestRate: number;
-    interestModel: string;
+    description: string;
     repaymentFrequency: string;
-    gracePeriodDays: number;
+    termWeeks: number;
+    interestModel: string;
+    interestRate: number;
     applicationFee: number;
+    gracePeriodDays: number;
     isActive: boolean;
 }
 

@@ -1,0 +1,33 @@
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: true
+        same-site: Strict
+
+spring:
+  flyway:
+    repair-on-migrate: false   # Never auto-repair in production
+
+sacco:
+  security:
+    cors:
+      allowed-origins:
+        - "${FRONTEND_URL}"
+
+  safaricom:
+    daraja:
+      env: production
+      consumer-key: ${MPESA_CONSUMER_KEY}
+      consumer-secret: ${MPESA_CONSUMER_SECRET}
+      passkey: ${MPESA_PASSKEY}
+      shortcode: ${MPESA_SHORTCODE}
+      callback-base-url: ${MPESA_CALLBACK_BASE_URL}
+
+logging:
+  level:
+    root: WARN
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.flywaydb: WARN

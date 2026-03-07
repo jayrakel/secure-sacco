@@ -78,11 +78,9 @@ public class MeetingService {
         return meetingRepository.findAllByOrderByStartAtDesc().stream()
                 .map(m -> {
                     MeetingAttendance rec = byMeeting.get(m.getId());
-                    // Only show recorded attendance if meeting is COMPLETED
-                    // For SCHEDULED/CANCELED meetings show null status
-                    AttendanceStatus status = (rec != null && m.getStatus() == MeetingStatus.COMPLETED)
-                            ? rec.getStatus()
-                            : null;
+                    // Return actual status if a record exists (covers self check-in on SCHEDULED meetings)
+                    // Return null if no record (frontend shows Upcoming / Check In button)
+                    AttendanceStatus status = rec != null ? rec.getStatus() : null;
                     return new MeetingAttendanceSummaryResponse(
                             m.getId(), m.getTitle(), m.getStartAt(), status, m.getStatus()
                     );

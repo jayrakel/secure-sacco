@@ -2,11 +2,11 @@ import React from 'react';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 
 interface HasPermissionProps {
-    permission?: string;        // Check a single permission (e.g., 'USER_CREATE')
-    permissions?: string[];     // Check multiple permissions
-    requireAll?: boolean;       // If true, user needs ALL permissions in the array
-    children: React.ReactNode;  // What to render if authorized
-    fallback?: React.ReactNode; // Optional: What to render if unauthorized (e.g., a disabled button)
+    permission?: string;
+    permissions?: string[];
+    requireAll?: boolean;
+    children: React.ReactNode;
+    fallback?: React.ReactNode;
 }
 
 export default function HasPermission({
@@ -18,19 +18,18 @@ export default function HasPermission({
                                       }: HasPermissionProps) {
     const { user } = useAuth();
 
-    // 1. No user or no permissions array = Deny
-    if (!user || !user.permissions) return <>{fallback}</>;
+    if (!user) return <>{fallback}</>;
 
-    // 2. System Admin Implicit Grant (Optional safety net)
-    if (user.permissions.includes('ROLE_SYSTEM_ADMIN')) {
+    // FIX: Check roles[] for ROLE_SYSTEM_ADMIN, NOT permissions[]
+    if (user.roles?.includes('ROLE_SYSTEM_ADMIN')) {
         return <>{children}</>;
     }
 
-    // 3. Determine which permissions we are checking
+    if (!user.permissions) return <>{fallback}</>;
+
     const permsToCheck = permissions || (permission ? [permission] : []);
     if (permsToCheck.length === 0) return <>{children}</>;
 
-    // 4. Evaluate access
     const hasAccess = requireAll
         ? permsToCheck.every(p => user.permissions.includes(p))
         : permsToCheck.some(p => user.permissions.includes(p));
