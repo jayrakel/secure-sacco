@@ -10,51 +10,68 @@ public class DashboardDTOs {
     public static class StaffDashboardDTO implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private Integer totalMembers = 0;
-        private Integer activeMembers = 0;
-        private Integer pendingActivations = 0;
+        // Members
+        private Integer totalMembers          = 0;
+        private Integer activeMembers         = 0;
+        private Integer pendingActivations    = 0;
 
-        private BigDecimal totalSavingsBalance = BigDecimal.ZERO;
+        // Savings — frontend reads: data.totalSavings
+        private BigDecimal totalSavings       = BigDecimal.ZERO;
 
-        private Integer activeLoans = 0;
-        private BigDecimal totalLoanPortfolio = BigDecimal.ZERO;
-        private Integer loansInArrears = 0;
+        // Loans — frontend reads: data.loanPortfolio, data.loansInArrears, data.pendingLoanApplications
+        private Integer activeLoans           = 0;
+        private BigDecimal loanPortfolio      = BigDecimal.ZERO;
+        private Integer loansInArrears        = 0;
         private BigDecimal totalArrearsAmount = BigDecimal.ZERO;
         private Integer pendingLoanApplications = 0;
 
-        private Integer openPenalties = 0;
-        private BigDecimal totalOutstandingPenalties = BigDecimal.ZERO;
+        // Penalties — frontend reads: data.openPenalties, data.outstandingPenalties
+        private Integer openPenalties         = 0;
+        private BigDecimal outstandingPenalties = BigDecimal.ZERO;
 
-        private BigDecimal collectionsTodayMpesa = BigDecimal.ZERO;
-        private BigDecimal collectionsTodayManual = BigDecimal.ZERO;
+        // Collections — frontend reads: data.todaysCollections (MPESA + manual combined)
+        private BigDecimal todaysCollections  = BigDecimal.ZERO;
 
-        private Integer upcomingMeetings = 0;
-        private Integer meetingsThisMonth = 0;
+        // Meetings
+        private Integer upcomingMeetings      = 0;
+        private Integer meetingsThisMonth     = 0;
     }
 
     @Data
     public static class MemberDashboardDTO implements Serializable {
         private static final long serialVersionUID = 1L;
 
+        // Identity
         private String memberName;
         private String memberNumber;
         private String memberStatus;
         private String registrationStatus;
 
-        private BigDecimal savingsBalance = BigDecimal.ZERO;
-        private BigDecimal totalDeposited = BigDecimal.ZERO;
-        private BigDecimal totalWithdrawn = BigDecimal.ZERO;
+        // Savings
+        private BigDecimal savingsBalance     = BigDecimal.ZERO;
+        private BigDecimal totalDeposited     = BigDecimal.ZERO;
+        private BigDecimal totalWithdrawn     = BigDecimal.ZERO;
 
-        private Integer activeLoans = 0;
-        private BigDecimal totalLoanOutstanding = BigDecimal.ZERO;
+        // Loans — frontend reads: data.loanOutstanding
+        private Integer activeLoans           = 0;
+        private BigDecimal loanOutstanding    = BigDecimal.ZERO;
 
+        // Next installment
         private BigDecimal nextInstallmentAmount;
-        private String nextInstallmentDueDate;
+        private String     nextInstallmentDueDate;
 
-        private Integer openPenalties = 0;
-        private BigDecimal totalPenaltiesOutstanding = BigDecimal.ZERO;
+        // Penalties — frontend reads: data.openPenaltiesCount, data.openPenaltiesAmount
+        private Integer    openPenaltiesCount  = 0;
+        private BigDecimal openPenaltiesAmount = BigDecimal.ZERO;
 
-        private Integer upcomingMeetings = 0;
+        // Meeting — frontend reads all four fields
+        private Integer upcomingMeetings        = 0;
+        private String  upcomingMeetingId;
+        private String  upcomingMeetingTitle;
+        private String  upcomingMeetingStartAt;
+        private String  upcomingMeetingStatus;
+
+        // Attendance
         private Integer attendanceRate = 0;
     }
 }
