@@ -23,7 +23,7 @@ public class PenaltyDTOs {
             String baseAmountType,
 
             @NotNull(message = "Base amount value is required")
-            @DecimalMin(value = "0.0", message = "Base amount value must be 0 or greater")
+            @DecimalMin(value = "1.0", message = "Base amount value must be 1 or greater")
             BigDecimal baseAmountValue,
 
             @NotNull(message = "Grace period days is required")

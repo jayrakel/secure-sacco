@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.savings.api.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ public class SavingsDTOs {
 
             @NotNull(message = "Amount is required")
             @DecimalMin(value = "1.0", message = "Amount must be at least 1.0")
+            @Digits(integer = 10, fraction = 2, message = "Amount format is invalid")
             BigDecimal amount,
 
             String referenceNotes
@@ -26,6 +28,7 @@ public class SavingsDTOs {
 
             @NotNull(message = "Amount is required")
             @DecimalMin(value = "1.0", message = "Amount must be at least 1.0")
+            @Digits(integer = 10, fraction = 2, message = "Amount format is invalid")
             BigDecimal amount,
 
             String referenceNotes
@@ -48,6 +51,7 @@ public class SavingsDTOs {
 
             @NotNull(message = "Amount is required")
             @DecimalMin(value = "1.0", message = "Amount must be at least 1.0")
+            @Digits(integer = 10, fraction = 2, message = "Amount format is invalid")
             BigDecimal amount
     ) {}
 

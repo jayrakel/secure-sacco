@@ -5,6 +5,8 @@ import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,11 +19,17 @@ public class MemberDTOs {
     @Data
     public static class CreateMemberRequest {
         @NotBlank(message = "First name is required")
+        @Size(max = 100, message = "First name cannot exceed 100 characters")
         private String firstName;
         private String middleName;
+
         @NotBlank(message = "Last name is required")
+        @Size(max = 100, message = "Last name cannot exceed 100 characters")
         private String lastName;
         private String nationalId;
+
+        @NotBlank(message = "Phone number is required")
+        @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number format")
         private String phoneNumber;
 
         @NotBlank(message = "Email address is required for portal access")
