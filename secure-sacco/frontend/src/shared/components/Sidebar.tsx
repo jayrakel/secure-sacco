@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/SettingsContext';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays,
+    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -71,8 +71,9 @@ export const Sidebar = () => {
                     icon: Calculator,
                     adminOnly: true,
                     subItems: [
-                        { label: 'Chart of Accounts', path: '/accounting/accounts', icon: BookOpen, adminOnly: true },
-                        { label: 'Journal Entries', path: '/accounting/journals', icon: FileText, adminOnly: true },
+                        { label: 'Chart of Accounts', path: '/accounting/accounts',       icon: BookOpen,  adminOnly: true },
+                        { label: 'Journal Entries',   path: '/accounting/journals',       icon: FileText,  adminOnly: true },
+                        { label: 'Trial Balance',     path: '/accounting/trial-balance',  icon: Scale,     requiredPermission: 'GL_TRIAL_BALANCE' },
                     ],
                 },
                 { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
@@ -81,6 +82,7 @@ export const Sidebar = () => {
         {
             sectionLabel: 'System',
             items: [
+                { label: 'Audit Log', path: '/audit/logs', icon: Shield, adminOnly: true },
                 { label: 'Security', path: '/security', icon: Shield },
                 { label: 'Settings', path: '/settings', icon: Settings, adminOnly: true },
             ],

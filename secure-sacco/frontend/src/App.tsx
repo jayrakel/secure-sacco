@@ -18,6 +18,7 @@ import DashboardRouter from "./features/dashboard/pages/DashboardRouter";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
+import TrialBalancePage from './features/accounting/pages/TrialBalancePage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
 import LoanManagementPage from './features/loans/pages/LoanManagementPage';
 import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
@@ -29,6 +30,7 @@ import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
+import AuditLogPage from './features/audit/pages/AuditLogPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -110,6 +112,20 @@ function App() {
                             <Route path="/accounting/journals" element={
                                 <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
                                     <JournalEntriesPage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* SAC-151: GL Trial Balance — Treasurer + Admin */}
+                            <Route path="/accounting/trial-balance" element={
+                                <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
+                                    <TrialBalancePage />
+                                </ProtectedRoute>
+                            } />
+
+                            {/* SAC-150: Security Audit Log — Admin only */}
+                            <Route path="/audit/logs" element={
+                                <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <AuditLogPage />
                                 </ProtectedRoute>
                             } />
 

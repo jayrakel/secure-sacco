@@ -22,9 +22,11 @@ const PAGE_LABELS: Record<string, string> = {
     '/reports/arrears':        'Loan Arrears',
     '/reports/collections':    'Daily Collections',
     '/reports/income':         'Income Report',
-    '/accounting/accounts':    'Chart of Accounts',
-    '/accounting/journals':    'Journal Entries',
-    '/security':               'Security Settings',
+    '/accounting/accounts':        'Chart of Accounts',
+    '/accounting/journals':        'Journal Entries',
+    '/accounting/trial-balance':   'GL Trial Balance',
+    '/audit/logs':                 'Security Audit Log',
+    '/security':                   'Security Settings',
     '/settings':               'Platform Settings',
 };
 
