@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.penalties.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
@@ -31,6 +32,7 @@ public class PenaltyRepaymentService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final JournalEntryService journalEntryService;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional(readOnly = true)
     public List<PenaltySummaryResponse> getMemberOpenPenalties(String email) {
@@ -41,7 +43,7 @@ public class PenaltyRepaymentService {
                 .stream().map(p -> new PenaltySummaryResponse(
                         p.getId(), p.getPenaltyRule().getCode(), p.getPenaltyRule().getName(),
                         p.getOriginalAmount(), p.getOutstandingAmount(), p.getPrincipalPaid(),
-                        p.getInterestPaid(), p.getAmountWaived(), p.getStatus().name(), p.getCreatedAt() // <--- Added amountWaived
+                        p.getInterestPaid(), p.getAmountWaived(), p.getStatus().name(), p.getCreatedAt()
                 )).collect(Collectors.toList());
     }
 
@@ -66,7 +68,7 @@ public class PenaltyRepaymentService {
     @Transactional
     public void processCompletedRepayment(UUID repaymentId, String receiptNumber) {
         PenaltyRepayment repayment = penaltyRepaymentRepository.findById(repaymentId).orElseThrow();
-        if (repayment.getStatus() == PenaltyRepaymentStatus.COMPLETED) return; // Idempotency check
+        if (repayment.getStatus() == PenaltyRepaymentStatus.COMPLETED) return;
 
         BigDecimal remainingAmount = repayment.getAmount();
         BigDecimal totalInterestAllocated = BigDecimal.ZERO;
@@ -79,11 +81,13 @@ public class PenaltyRepaymentService {
         for (Penalty penalty : targetPenalties) {
             if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) break;
 
-            // Calculate totals strictly from immutable accruals ledger
-            BigDecimal totalPrincipalOwed = penalty.getAccruals().stream().filter(a -> a.getAccrualKind() == AccrualKind.PRINCIPAL).map(PenaltyAccrual::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal totalInterestOwed = penalty.getAccruals().stream().filter(a -> a.getAccrualKind() == AccrualKind.INTEREST).map(PenaltyAccrual::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalPrincipalOwed = penalty.getAccruals().stream()
+                    .filter(a -> a.getAccrualKind() == AccrualKind.PRINCIPAL)
+                    .map(PenaltyAccrual::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalInterestOwed = penalty.getAccruals().stream()
+                    .filter(a -> a.getAccrualKind() == AccrualKind.INTEREST)
+                    .map(PenaltyAccrual::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // PASS 1: Pay Interest First
             BigDecimal unpaidInterest = totalInterestOwed.subtract(penalty.getInterestPaid());
             if (unpaidInterest.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal toPay = unpaidInterest.min(remainingAmount);
@@ -92,7 +96,6 @@ public class PenaltyRepaymentService {
                 remainingAmount = remainingAmount.subtract(toPay);
             }
 
-            // PASS 2: Pay Principal Second
             BigDecimal unpaidPrincipal = totalPrincipalOwed.subtract(penalty.getPrincipalPaid());
             if (unpaidPrincipal.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal toPay = unpaidPrincipal.min(remainingAmount);
@@ -101,7 +104,6 @@ public class PenaltyRepaymentService {
                 remainingAmount = remainingAmount.subtract(toPay);
             }
 
-            // Update Header status
             BigDecimal newOutstanding = totalPrincipalOwed.add(totalInterestOwed)
                     .subtract(penalty.getPrincipalPaid())
                     .subtract(penalty.getInterestPaid())
@@ -118,13 +120,23 @@ public class PenaltyRepaymentService {
         repayment.setReceiptNumber(receiptNumber);
         penaltyRepaymentRepository.save(repayment);
 
-        // GL Posting - Note: We strictly record what was ALOOCATED. Overpayments are ignored in this strict allocation run.
         BigDecimal totalAllocated = totalInterestAllocated.add(totalPrincipalAllocated);
         if (totalAllocated.compareTo(BigDecimal.ZERO) > 0) {
-            journalEntryService.postPenaltyRepayment(repayment.getMemberId(), totalAllocated, totalInterestAllocated, totalPrincipalAllocated, receiptNumber);
+            journalEntryService.postPenaltyRepayment(
+                    repayment.getMemberId(), totalAllocated,
+                    totalInterestAllocated, totalPrincipalAllocated, receiptNumber
+            );
         }
 
-        log.info("Allocated Mpesa Penalty Repayment {}. Int: {}, Prin: {}", receiptNumber, totalInterestAllocated, totalPrincipalAllocated);
+        securityAuditService.logEvent(
+                "PENALTY_PAYMENT_POSTED",
+                repayment.getMemberId().toString(),
+                "KES " + repayment.getAmount() + " penalty payment posted. Receipt: " + receiptNumber
+                        + ". Principal: " + totalPrincipalAllocated + ", Interest: " + totalInterestAllocated
+        );
+
+        log.info("Allocated Mpesa Penalty Repayment {}. Int: {}, Prin: {}",
+                receiptNumber, totalInterestAllocated, totalPrincipalAllocated);
     }
 
     @Transactional

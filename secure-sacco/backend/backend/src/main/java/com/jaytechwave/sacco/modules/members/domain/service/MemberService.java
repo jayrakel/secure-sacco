@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.members.domain.service;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.members.api.dto.MemberDTOs.*;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
@@ -28,19 +29,16 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final MemberNumberGeneratorService numberGeneratorService;
-
-    // Injections for User Auto-Provisioning
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserActivationService activationService;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public MemberResponse createMember(CreateMemberRequest request) {
-        // Pass null for currentMember since this is a new registration
         validateUniqueConstraints(request.getNationalId(), request.getEmail(), request.getPhoneNumber(), null);
 
-        // 1. Create the Member Profile
         String generatedMemberNumber = numberGeneratorService.generateNextMemberNumber();
         Member member = Member.builder()
                 .memberNumber(generatedMemberNumber)
@@ -58,13 +56,11 @@ public class MemberService {
 
         Member savedMember = memberRepository.save(member);
 
-        // 2. Auto-Provision the Member Portal User Account
         Role memberRole = roleRepository.findByName("MEMBER")
                 .orElseThrow(() -> new IllegalStateException("System 'MEMBER' role not found. Please ensure DB is seeded."));
 
         User portalUser = User.builder()
                 .email(request.getEmail())
-                // Set a highly secure random dummy password; they will set their real one during activation
                 .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString() + UUID.randomUUID().toString()))
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -76,10 +72,15 @@ public class MemberService {
 
         userRepository.save(portalUser);
 
-        // 3. Link the User back to the Member (Forward FK update)
         savedMember.setUser(portalUser);
         memberRepository.save(savedMember);
         activationService.initiateActivation(portalUser);
+
+        securityAuditService.logEvent(
+                "MEMBER_CREATED",
+                savedMember.getMemberNumber(),
+                "New member registered: " + savedMember.getFirstName() + " " + savedMember.getLastName()
+        );
 
         return MemberResponse.fromEntity(savedMember);
     }
@@ -96,6 +97,13 @@ public class MemberService {
 
         member.setStatus(MemberStatus.ACTIVE);
         memberRepository.save(member);
+
+        securityAuditService.logEvent(
+                "MEMBER_ACTIVATED",
+                member.getMemberNumber(),
+                "Member activated after registration fee payment"
+        );
+
         log.info("Member {} has been activated successfully after fee payment.", member.getMemberNumber());
     }
 
@@ -111,7 +119,6 @@ public class MemberService {
     public MemberResponse updateMember(UUID id, UpdateMemberRequest request) {
         Member member = findMemberEntity(id);
 
-        // Pass the existing member object to skip checks on fields that haven't changed
         validateUniqueConstraints(request.getNationalId(), request.getEmail(), request.getPhoneNumber(), member);
 
         member.setFirstName(request.getFirstName());
@@ -123,14 +130,32 @@ public class MemberService {
         member.setDateOfBirth(request.getDateOfBirth());
         member.setGender(request.getGender());
 
-        return MemberResponse.fromEntity(memberRepository.save(member));
+        MemberResponse response = MemberResponse.fromEntity(memberRepository.save(member));
+
+        securityAuditService.logEvent(
+                "MEMBER_UPDATED",
+                member.getMemberNumber(),
+                "Member profile updated"
+        );
+
+        return response;
     }
 
     @Transactional
     public MemberResponse updateStatus(UUID id, MemberStatus newStatus) {
         Member member = findMemberEntity(id);
+        MemberStatus previousStatus = member.getStatus();
         member.setStatus(newStatus);
-        return MemberResponse.fromEntity(memberRepository.save(member));
+        MemberResponse response = MemberResponse.fromEntity(memberRepository.save(member));
+
+        String action = newStatus == MemberStatus.ACTIVE ? "MEMBER_ACTIVATED" : "MEMBER_DEACTIVATED";
+        securityAuditService.logEvent(
+                action,
+                member.getMemberNumber(),
+                "Status changed from " + previousStatus + " to " + newStatus
+        );
+
+        return response;
     }
 
     @Transactional
@@ -138,6 +163,12 @@ public class MemberService {
         Member member = findMemberEntity(id);
         member.setDeleted(true);
         memberRepository.save(member);
+
+        securityAuditService.logEvent(
+                "MEMBER_DELETED",
+                member.getMemberNumber(),
+                "Member soft-deleted"
+        );
     }
 
     private Member findMemberEntity(UUID id) {
@@ -159,7 +190,6 @@ public class MemberService {
                 if (memberRepository.existsByEmail(email)) {
                     throw new IllegalArgumentException("Email address is already registered to another member.");
                 }
-                // Also ensure the email isn't taken by an admin/staff user
                 if (userRepository.existsByEmail(email)) {
                     throw new IllegalArgumentException("Email address is already registered as a system user.");
                 }

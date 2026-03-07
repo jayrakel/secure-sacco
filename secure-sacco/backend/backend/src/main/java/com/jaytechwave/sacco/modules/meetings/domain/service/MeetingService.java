@@ -78,8 +78,6 @@ public class MeetingService {
         return meetingRepository.findAllByOrderByStartAtDesc().stream()
                 .map(m -> {
                     MeetingAttendance rec = byMeeting.get(m.getId());
-                    // Return actual status if a record exists (covers self check-in on SCHEDULED meetings)
-                    // Return null if no record (frontend shows Upcoming / Check In button)
                     AttendanceStatus status = rec != null ? rec.getStatus() : null;
                     return new MeetingAttendanceSummaryResponse(
                             m.getId(), m.getTitle(), m.getStartAt(), status, m.getStatus()
@@ -101,7 +99,15 @@ public class MeetingService {
                 .status(MeetingStatus.SCHEDULED)
                 .createdByUserId(creator.getId())
                 .build();
+
         Meeting saved = meetingRepository.save(meeting);
+
+        securityAuditService.logEvent(
+                "MEETING_CREATED",
+                "MEETING-" + saved.getId(),
+                "Meeting scheduled: '" + saved.getTitle() + "' on " + saved.getStartAt()
+        );
+
         log.info("Meeting created [{}] by {}", saved.getId(), creatorEmail);
         return toSummary(saved);
     }
@@ -118,7 +124,16 @@ public class MeetingService {
         if (req.startAt() != null)          meeting.setStartAt(req.startAt());
         if (req.endAt() != null)            meeting.setEndAt(req.endAt());
         if (req.lateAfterMinutes() != null) meeting.setLateAfterMinutes(req.lateAfterMinutes());
-        return toSummary(meetingRepository.save(meeting));
+
+        MeetingSummaryResponse response = toSummary(meetingRepository.save(meeting));
+
+        securityAuditService.logEvent(
+                "MEETING_UPDATED",
+                "MEETING-" + id,
+                "Meeting details updated: '" + meeting.getTitle() + "'"
+        );
+
+        return response;
     }
 
     @Transactional
@@ -155,6 +170,13 @@ public class MeetingService {
             attendance.setRecordedByUserId(recorder.getId());
             attendanceRepository.save(attendance);
         }
+
+        securityAuditService.logEvent(
+                "ATTENDANCE_RECORDED",
+                "MEETING-" + meetingId,
+                "Attendance recorded for " + req.records().size() + " members by " + recorderEmail
+        );
+
         return getAttendance(meetingId);
     }
 
@@ -189,7 +211,6 @@ public class MeetingService {
             throw new IllegalStateException("Meeting has not started yet.");
         }
 
-        // Idempotency: if already PRESENT or LATE, return existing record
         MeetingAttendance existing = attendanceRepository
                 .findByMeetingIdAndMemberId(meetingId, memberId)
                 .orElse(null);
@@ -205,9 +226,7 @@ public class MeetingService {
             );
         }
 
-        // Determine PRESENT or LATE based on timing
-        LocalDateTime lateThreshold = meeting.getStartAt()
-                .plusMinutes(meeting.getLateAfterMinutes());
+        LocalDateTime lateThreshold = meeting.getStartAt().plusMinutes(meeting.getLateAfterMinutes());
         AttendanceStatus status = now.isAfter(lateThreshold)
                 ? AttendanceStatus.LATE
                 : AttendanceStatus.PRESENT;
@@ -219,7 +238,7 @@ public class MeetingService {
                         .build();
 
         attendance.setStatus(status);
-        attendance.setRecordedByUserId(memberId); // self-recorded
+        attendance.setRecordedByUserId(memberId);
         attendanceRepository.save(attendance);
 
         Member m = memberRepository.findById(memberId).orElse(null);
@@ -285,6 +304,13 @@ public class MeetingService {
         penaltyRepository.save(penalty);
 
         journalEntryService.postPenaltyCreation(memberId, amount, accrualId.toString());
+
+        securityAuditService.logEvent(
+                "PENALTY_CREATED",
+                "PENALTY-" + penalty.getId(),
+                ruleCode + " penalty of KES " + amount + " raised for member " + memberId
+                        + " from meeting '" + meeting.getTitle() + "'"
+        );
 
         log.info("Generated {} penalty of {} KES for member {}", ruleCode, amount, memberId);
     }

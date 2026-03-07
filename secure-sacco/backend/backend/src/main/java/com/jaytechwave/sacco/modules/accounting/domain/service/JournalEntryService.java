@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntryLine;
 import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntryStatus;
 import com.jaytechwave.sacco.modules.accounting.domain.repository.AccountRepository;
 import com.jaytechwave.sacco.modules.accounting.domain.repository.JournalEntryRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,9 +28,14 @@ public class JournalEntryService {
 
     private final JournalEntryRepository journalEntryRepository;
     private final AccountRepository accountRepository;
+    private final SecurityAuditService securityAuditService;
 
     /**
      * THE GATEKEEPER: Processes all journal entries and enforces double-entry rules.
+     * Audit log is only written here when called directly (manual journal entries).
+     * Internal template calls (postLoanDisbursement, postSavingsTransaction etc.) are
+     * NOT logged here — their callers (LoanApplicationService, SavingsService etc.)
+     * already emit the appropriate business-level audit event.
      */
     @Transactional
     public JournalEntryResponse postEntry(CreateJournalEntryRequest request) {
@@ -37,10 +43,8 @@ public class JournalEntryService {
             throw new IllegalArgumentException("Journal Entry with reference " + request.referenceNumber() + " already exists.");
         }
 
-        // 1. Math Validation
         validateDoubleEntry(request.lines());
 
-        // 2. Build Header
         JournalEntry entry = JournalEntry.builder()
                 .transactionDate(request.transactionDate())
                 .referenceNumber(request.referenceNumber())
@@ -48,7 +52,6 @@ public class JournalEntryService {
                 .status(JournalEntryStatus.POSTED)
                 .build();
 
-        // 3. Build Lines
         for (JournalEntryLineRequest lineReq : request.lines()) {
             Account account = accountRepository.findByAccountCode(lineReq.accountCode())
                     .orElseThrow(() -> new IllegalArgumentException("Account not found: " + lineReq.accountCode()));
@@ -70,6 +73,14 @@ public class JournalEntryService {
 
         JournalEntry savedEntry = journalEntryRepository.save(entry);
         log.info("Posted Journal Entry: {} with {} lines", savedEntry.getReferenceNumber(), savedEntry.getLines().size());
+
+        // Audit: only for manually created journal entries (called from controller, not from templates)
+        securityAuditService.logEvent(
+                "JOURNAL_ENTRY_POSTED",
+                savedEntry.getReferenceNumber(),
+                "Manual journal entry posted: " + savedEntry.getDescription()
+                        + " (" + savedEntry.getLines().size() + " lines)"
+        );
 
         return mapToResponse(savedEntry);
     }
@@ -112,51 +123,262 @@ public class JournalEntryService {
     }
 
     // =========================================================================
-    // TEMPLATES (Wrappers that utilize the Gatekeeper for standardized events)
+    // TEMPLATES — internal use only, no audit here (callers log business events)
     // =========================================================================
 
-    /**
-     * Use when M-Pesa confirms a member has paid their Registration Fee.
-     * DEBIT: 1120 (M-Pesa Clearing)
-     * CREDIT: 4210 (Registration Fees Income)
-     */
     @Transactional
     public JournalEntryResponse postRegistrationFeeTemplate(UUID memberId, BigDecimal amount, String receiptNumber) {
         List<JournalEntryLineRequest> lines = List.of(
                 new JournalEntryLineRequest("1120", memberId, amount, BigDecimal.ZERO, "M-Pesa Receipt: " + receiptNumber),
                 new JournalEntryLineRequest("4210", memberId, BigDecimal.ZERO, amount, "New Member Registration Fee")
         );
-
         CreateJournalEntryRequest request = new CreateJournalEntryRequest(
-                LocalDate.now(),
-                "REG-" + receiptNumber,
-                "Registration Fee via M-Pesa",
-                lines
+                LocalDate.now(), "REG-" + receiptNumber, "Registration Fee via M-Pesa", lines
         );
-
-        return postEntry(request);
+        // Call the raw save path (no audit — the payment handler logs PAYMENT_RECEIVED)
+        return postEntryInternal(request);
     }
 
-    /**
-     * Use when M-Pesa confirms a standard BOSA Savings Deposit.
-     * DEBIT: 1120 (M-Pesa Clearing)
-     * CREDIT: 2210 (Member BOSA Savings)
-     */
     @Transactional
     public JournalEntryResponse postBosaSavingsDepositTemplate(UUID memberId, BigDecimal amount, String receiptNumber) {
         List<JournalEntryLineRequest> lines = List.of(
                 new JournalEntryLineRequest("1120", memberId, amount, BigDecimal.ZERO, "M-Pesa Receipt: " + receiptNumber),
                 new JournalEntryLineRequest("2210", memberId, BigDecimal.ZERO, amount, "BOSA Savings Contribution")
         );
-
         CreateJournalEntryRequest request = new CreateJournalEntryRequest(
-                LocalDate.now(),
-                "DEP-" + receiptNumber,
-                "BOSA Savings Deposit via M-Pesa",
-                lines
+                LocalDate.now(), "DEP-" + receiptNumber, "BOSA Savings Deposit via M-Pesa", lines
         );
+        return postEntryInternal(request);
+    }
 
-        return postEntry(request);
+    @Transactional
+    public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference) {
+        String journalRef = "SAV-" + reference;
+        Optional<JournalEntry> existingEntry = journalEntryRepository.findByReferenceNumber(journalRef);
+        if (existingEntry.isPresent()) {
+            log.info("Idempotency triggered: Journal entry for savings transaction {} already exists. Skipping.", journalRef);
+            return mapToResponse(existingEntry.get());
+        }
+
+        String debitAccountCode;
+        String creditAccountCode;
+
+        if ("DEPOSIT".equalsIgnoreCase(type)) {
+            creditAccountCode = "2100";
+            debitAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000";
+        } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
+            debitAccountCode = "2100";
+            creditAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000";
+        } else {
+            throw new IllegalArgumentException("Unsupported savings transaction type: " + type);
+        }
+
+        Account debitAccount = accountRepository.findByAccountCode(debitAccountCode)
+                .orElseThrow(() -> new IllegalStateException("System Account " + debitAccountCode + " not found"));
+        Account creditAccount = accountRepository.findByAccountCode(creditAccountCode)
+                .orElseThrow(() -> new IllegalStateException("System Account " + creditAccountCode + " not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .transactionDate(java.time.LocalDate.now())
+                .referenceNumber(journalRef)
+                .description("Savings " + type + " via " + channel + " for Member: " + memberId)
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.setLines(java.util.List.of(
+                JournalEntryLine.builder().journalEntry(entry).account(debitAccount).memberId(memberId)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Savings " + type + " Debit").build(),
+                JournalEntryLine.builder().journalEntry(entry).account(creditAccount).memberId(memberId)
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Savings " + type + " Credit").build()
+        ));
+
+        JournalEntry savedEntry = journalEntryRepository.save(entry);
+        log.info("Posted Savings Journal Entry: {} with amount {}", journalRef, amount);
+        return mapToResponse(savedEntry);
+    }
+
+    @Transactional
+    public void postLoanApplicationFee(UUID memberId, BigDecimal amount, String reference) {
+        Account mpesaClearing = accountRepository.findByAccountCode("1001")
+                .orElseThrow(() -> new IllegalStateException("M-Pesa Clearing account (1001) not found"));
+        Account feeIncome = accountRepository.findByAccountCode("4100")
+                .orElseThrow(() -> new IllegalStateException("Loan Fee Income account (4100) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("FEE-" + reference).description("Loan application fee payment")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId)
+                .debitAmount(amount).creditAmount(BigDecimal.ZERO)
+                .description("Loan application fee received via M-Pesa").build());
+        entry.addLine(JournalEntryLine.builder().account(feeIncome).memberId(memberId)
+                .debitAmount(BigDecimal.ZERO).creditAmount(amount)
+                .description("Loan application fee income").build());
+
+        journalEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void postLoanDisbursement(UUID memberId, BigDecimal principalAmount, String reference) {
+        Account bankAccount = accountRepository.findByAccountCode("1002")
+                .orElseThrow(() -> new IllegalStateException("Bank account (1002) not found"));
+        Account loansReceivable = accountRepository.findByAccountCode("1200")
+                .orElseThrow(() -> new IllegalStateException("Loans Receivable account (1200) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("LNDIS-" + reference).description("Loan disbursement")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(loansReceivable).memberId(memberId)
+                .debitAmount(principalAmount).creditAmount(BigDecimal.ZERO)
+                .description("Loan principle receivable").build());
+        entry.addLine(JournalEntryLine.builder().account(bankAccount).memberId(memberId)
+                .debitAmount(BigDecimal.ZERO).creditAmount(principalAmount)
+                .description("Loan disbursement payout").build());
+
+        journalEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void postLoanRepayment(UUID memberId, BigDecimal totalAmount, BigDecimal interestAmount, String reference) {
+        Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
+        Account loanReceivable = accountRepository.findByAccountCode("1200").orElseThrow();
+        Account interestIncome = accountRepository.findByAccountCode("4110").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("LNREP-" + reference).description("Loan repayment via M-Pesa")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId)
+                .debitAmount(totalAmount).creditAmount(BigDecimal.ZERO)
+                .description("Loan Repayment Received").build());
+
+        if (interestAmount.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(interestIncome).memberId(memberId)
+                    .debitAmount(BigDecimal.ZERO).creditAmount(interestAmount)
+                    .description("Loan Interest Income").build());
+        }
+
+        BigDecimal principalPortion = totalAmount.subtract(interestAmount);
+        if (principalPortion.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(loanReceivable).memberId(memberId)
+                    .debitAmount(BigDecimal.ZERO).creditAmount(principalPortion)
+                    .description("Loan Principal Repayment").build());
+        }
+
+        journalEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void postPenaltyCreation(UUID memberId, BigDecimal amount, String reference) {
+        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
+        Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENC-" + reference).description("Penalty levied against member")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId)
+                .debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Receivable").build());
+        entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId)
+                .debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Income Accrued").build());
+
+        journalEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void postPenaltyInterestAccrual(UUID memberId, BigDecimal amount, String reference) {
+        Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
+        Account interestIncome = accountRepository.findByAccountCode("4130").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENI-" + reference).description("Penalty interest accrual")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(interestReceivable).memberId(memberId)
+                .debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Interest Receivable").build());
+        entry.addLine(JournalEntryLine.builder().account(interestIncome).memberId(memberId)
+                .debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Interest Income Accrued").build());
+
+        journalEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void postPenaltyRepayment(UUID memberId, BigDecimal totalAllocated, BigDecimal interestAllocated,
+                                     BigDecimal principalAllocated, String reference) {
+        Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
+        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
+        Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENREP-" + reference).description("Penalty repayment via M-Pesa")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId)
+                .debitAmount(totalAllocated).creditAmount(BigDecimal.ZERO).description("Penalty Repayment Received").build());
+
+        if (interestAllocated.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(interestReceivable).memberId(memberId)
+                    .debitAmount(BigDecimal.ZERO).creditAmount(interestAllocated).description("Penalty Interest Cleared").build());
+        }
+
+        if (principalAllocated.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId)
+                    .debitAmount(BigDecimal.ZERO).creditAmount(principalAllocated).description("Penalty Principal Cleared").build());
+        }
+
+        journalEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void postPenaltyWaiver(UUID memberId, BigDecimal amount, String reference) {
+        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
+        Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("PENW-" + reference).description("Penalty waiver/adjustment")
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId)
+                .debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Waiver - Income Reversal").build());
+        entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId)
+                .debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Waiver - Receivable Reduction").build());
+
+        journalEntryRepository.save(entry);
+    }
+
+    // =========================================================================
+    // INTERNAL — saves without triggering the audit log (used by templates)
+    // =========================================================================
+
+    private JournalEntryResponse postEntryInternal(CreateJournalEntryRequest request) {
+        if (journalEntryRepository.existsByReferenceNumber(request.referenceNumber())) {
+            throw new IllegalArgumentException("Journal Entry with reference " + request.referenceNumber() + " already exists.");
+        }
+        validateDoubleEntry(request.lines());
+
+        JournalEntry entry = JournalEntry.builder()
+                .transactionDate(request.transactionDate())
+                .referenceNumber(request.referenceNumber())
+                .description(request.description())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        for (JournalEntryLineRequest lineReq : request.lines()) {
+            Account account = accountRepository.findByAccountCode(lineReq.accountCode())
+                    .orElseThrow(() -> new IllegalArgumentException("Account not found: " + lineReq.accountCode()));
+            if (!account.isActive()) {
+                throw new IllegalStateException("Cannot post to inactive account: " + lineReq.accountCode());
+            }
+            entry.addLine(JournalEntryLine.builder()
+                    .account(account).memberId(lineReq.memberId())
+                    .debitAmount(lineReq.debitAmount()).creditAmount(lineReq.creditAmount())
+                    .description(lineReq.description()).build());
+        }
+
+        JournalEntry savedEntry = journalEntryRepository.save(entry);
+        log.info("Posted Journal Entry: {} with {} lines", savedEntry.getReferenceNumber(), savedEntry.getLines().size());
+        return mapToResponse(savedEntry);
     }
 
     // =========================================================================
@@ -176,276 +398,8 @@ public class JournalEntryService {
                 )).collect(Collectors.toList());
 
         return new JournalEntryResponse(
-                entry.getId(),
-                entry.getTransactionDate(),
-                entry.getReferenceNumber(),
-                entry.getDescription(),
-                entry.getStatus().name(),
-                lineResponses
+                entry.getId(), entry.getTransactionDate(), entry.getReferenceNumber(),
+                entry.getDescription(), entry.getStatus().name(), lineResponses
         );
-    }
-
-    @Transactional
-    public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference) {
-
-        // 1. Idempotency Check
-        String journalRef = "SAV-" + reference;
-        Optional<JournalEntry> existingEntry = journalEntryRepository.findByReferenceNumber(journalRef);
-        if (existingEntry.isPresent()) {
-            log.info("Idempotency triggered: Journal entry for savings transaction {} already exists. Skipping.", journalRef);
-            return mapToResponse(existingEntry.get());
-        }
-
-        String debitAccountCode;
-        String creditAccountCode;
-
-        // 2. Routing Logic (The Templates)
-        if ("DEPOSIT".equalsIgnoreCase(type)) {
-            creditAccountCode = "2100"; // Increase Savings Liability
-            debitAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000"; // Increase Asset
-        } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
-            debitAccountCode = "2100"; // Decrease Savings Liability
-            creditAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000"; // Decrease Asset
-        } else {
-            throw new IllegalArgumentException("Unsupported savings transaction type: " + type);
-        }
-
-        // 3. Fetch Accounts
-        Account debitAccount = accountRepository.findByAccountCode(debitAccountCode)
-                .orElseThrow(() -> new IllegalStateException("System Account " + debitAccountCode + " not found"));
-        Account creditAccount = accountRepository.findByAccountCode(creditAccountCode)
-                .orElseThrow(() -> new IllegalStateException("System Account " + creditAccountCode + " not found"));
-
-        // 4. Build and Post Journal
-        JournalEntry entry = JournalEntry.builder()
-                .transactionDate(java.time.LocalDate.now())
-                .referenceNumber(journalRef)
-                .description("Savings " + type + " via " + channel + " for Member: " + memberId)
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        JournalEntryLine debitLine = JournalEntryLine.builder()
-                .journalEntry(entry)
-                .account(debitAccount)
-                .memberId(memberId)
-                .debitAmount(amount)
-                .creditAmount(BigDecimal.ZERO)
-                .description("Savings " + type + " Debit")
-                .build();
-
-        JournalEntryLine creditLine = JournalEntryLine.builder()
-                .journalEntry(entry)
-                .account(creditAccount)
-                .memberId(memberId)
-                .debitAmount(BigDecimal.ZERO)
-                .creditAmount(amount)
-                .description("Savings " + type + " Credit")
-                .build();
-
-        entry.setLines(java.util.List.of(debitLine, creditLine));
-        JournalEntry savedEntry = journalEntryRepository.save(entry);
-
-        log.info("Posted Savings Journal Entry: {} with amount {}", journalRef, amount);
-
-        return mapToResponse(savedEntry);
-    }
-
-    @Transactional
-    public void postLoanApplicationFee(UUID memberId, BigDecimal amount, String reference) {
-        Account mpesaClearing = accountRepository.findByAccountCode("1001")
-                .orElseThrow(() -> new IllegalStateException("M-Pesa Clearing account (1001) not found"));
-
-        Account feeIncome = accountRepository.findByAccountCode("4100")
-                .orElseThrow(() -> new IllegalStateException("Loan Fee Income account (4100) not found"));
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("FEE-" + reference)
-                .description("Loan application fee payment")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        // Debit M-Pesa Clearing (Asset increases)
-        JournalEntryLine debitLine = JournalEntryLine.builder()
-                .account(mpesaClearing)
-                .memberId(memberId) // Tracks which member paid!
-                .debitAmount(amount)
-                .creditAmount(BigDecimal.ZERO)
-                .description("Loan application fee received via M-Pesa")
-                .build();
-
-        // Credit Fee Income (Revenue increases)
-        JournalEntryLine creditLine = JournalEntryLine.builder()
-                .account(feeIncome)
-                .memberId(memberId) // Tracks which member paid!
-                .debitAmount(BigDecimal.ZERO)
-                .creditAmount(amount)
-                .description("Loan application fee income")
-                .build();
-
-        // Attach the lines to the main entry
-        entry.addLine(debitLine);
-        entry.addLine(creditLine);
-
-        // Save the entry ONCE (CascadeType.ALL will automatically save the lines!)
-        journalEntryRepository.save(entry);
-    }
-
-    @Transactional
-    public void postLoanDisbursement(UUID memberId, BigDecimal principalAmount, String reference) {
-        Account bankAccount = accountRepository.findByAccountCode("1002") // Equity Bank Account
-                .orElseThrow(() -> new IllegalStateException("Bank account (1002) not found"));
-
-        Account loansReceivable = accountRepository.findByAccountCode("1200") // Member Loans Receivable
-                .orElseThrow(() -> new IllegalStateException("Loans Receivable account (1200) not found"));
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("LNDIS-" + reference)
-                .description("Loan disbursement")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        // Debit Loans Receivable (Asset increases - members owe us more)
-        JournalEntryLine debitLine = JournalEntryLine.builder()
-                .account(loansReceivable)
-                .memberId(memberId)
-                .debitAmount(principalAmount)
-                .creditAmount(BigDecimal.ZERO)
-                .description("Loan principle receivable")
-                .build();
-
-        // Credit Bank (Asset decreases - cash leaves the Sacco bank)
-        JournalEntryLine creditLine = JournalEntryLine.builder()
-                .account(bankAccount)
-                .memberId(memberId)
-                .debitAmount(BigDecimal.ZERO)
-                .creditAmount(principalAmount)
-                .description("Loan disbursement payout")
-                .build();
-
-        entry.addLine(debitLine);
-        entry.addLine(creditLine);
-
-        journalEntryRepository.save(entry);
-    }
-
-    @Transactional
-    public void postLoanRepayment(UUID memberId, BigDecimal totalAmount, BigDecimal interestAmount, String reference) {
-        Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
-        Account loanReceivable = accountRepository.findByAccountCode("1200").orElseThrow();
-        Account interestIncome = accountRepository.findByAccountCode("4110").orElseThrow();
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("LNREP-" + reference)
-                .description("Loan repayment via M-Pesa")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        // 1. DEBIT: Cash/Mpesa Clearing (Asset increases)
-        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId).debitAmount(totalAmount).creditAmount(BigDecimal.ZERO).description("Loan Repayment Received").build());
-
-        // 2. CREDIT: Interest Income (Revenue increases)
-        if (interestAmount.compareTo(BigDecimal.ZERO) > 0) {
-            entry.addLine(JournalEntryLine.builder().account(interestIncome).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(interestAmount).description("Loan Interest Income").build());
-        }
-
-        // 3. CREDIT: Loan Receivable (Asset decreases - member owes less)
-        BigDecimal principalPortion = totalAmount.subtract(interestAmount);
-        if (principalPortion.compareTo(BigDecimal.ZERO) > 0) {
-            entry.addLine(JournalEntryLine.builder().account(loanReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(principalPortion).description("Loan Principal Repayment").build());
-        }
-
-        journalEntryRepository.save(entry);
-    }
-
-    @Transactional
-    public void postPenaltyCreation(UUID memberId, BigDecimal amount, String reference) {
-        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
-        Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("PENC-" + reference)
-                .description("Penalty levied against member")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId).debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Receivable").build());
-        entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Income Accrued").build());
-
-        journalEntryRepository.save(entry);
-    }
-
-    @Transactional
-    public void postPenaltyInterestAccrual(UUID memberId, BigDecimal amount, String reference) {
-        Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
-        Account interestIncome = accountRepository.findByAccountCode("4130").orElseThrow();
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("PENI-" + reference) // PENalty Interest
-                .description("Penalty interest accrual")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        // 1. DEBIT: Penalty Interest Receivable (Asset increases)
-        entry.addLine(JournalEntryLine.builder().account(interestReceivable).memberId(memberId).debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Interest Receivable").build());
-
-        // 2. CREDIT: Penalty Interest Income (Revenue increases)
-        entry.addLine(JournalEntryLine.builder().account(interestIncome).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Interest Income Accrued").build());
-
-        journalEntryRepository.save(entry);
-    }
-
-    @Transactional
-    public void postPenaltyRepayment(UUID memberId, BigDecimal totalAllocated, BigDecimal interestAllocated, BigDecimal principalAllocated, String reference) {
-        Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
-        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
-        Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("PENREP-" + reference)
-                .description("Penalty repayment via M-Pesa")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        // 1. DEBIT: M-Pesa Clearing (Asset increases)
-        entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId).debitAmount(totalAllocated).creditAmount(BigDecimal.ZERO).description("Penalty Repayment Received").build());
-
-        // 2. CREDIT: Penalty Interest Receivable (Asset decreases)
-        if (interestAllocated.compareTo(BigDecimal.ZERO) > 0) {
-            entry.addLine(JournalEntryLine.builder().account(interestReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(interestAllocated).description("Penalty Interest Cleared").build());
-        }
-
-        // 3. CREDIT: Penalty Principal Receivable (Asset decreases)
-        if (principalAllocated.compareTo(BigDecimal.ZERO) > 0) {
-            entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(principalAllocated).description("Penalty Principal Cleared").build());
-        }
-
-        journalEntryRepository.save(entry);
-    }
-
-    @Transactional
-    public void postPenaltyWaiver(UUID memberId, BigDecimal amount, String reference) {
-        Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
-        Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
-
-        JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("PENW-" + reference)
-                .description("Penalty waiver/adjustment")
-                .transactionDate(LocalDate.now())
-                .status(JournalEntryStatus.POSTED)
-                .build();
-
-        // 1. DEBIT: Penalty Income (Reversing the Revenue we previously claimed)
-        entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId).debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Waiver - Income Reversal").build());
-
-        // 2. CREDIT: Penalty Receivable (Reducing the Asset the member owes us)
-        entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId).debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Waiver - Receivable Reduction").build());
-
-        journalEntryRepository.save(entry);
     }
 }

@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.savings.domain.service;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
@@ -34,10 +35,10 @@ public class SavingsService {
     private final JournalEntryService journalEntryService;
     private final PaymentService paymentService;
     private final UserRepository userRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public SavingsTransactionResponse processManualDeposit(ManualDepositRequest request) {
-        // 1. Validate Member is ACTIVE
         Member member = memberRepository.findById(request.memberId())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
@@ -45,7 +46,6 @@ public class SavingsService {
             throw new IllegalStateException("Deposits can only be made for ACTIVE members.");
         }
 
-        // 2. Get or Auto-Create Savings Account
         SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
                 .orElseGet(() -> {
                     log.info("Auto-creating savings account for member {}", member.getId());
@@ -60,7 +60,6 @@ public class SavingsService {
             throw new IllegalStateException("Savings account is frozen. Cannot accept deposits.");
         }
 
-        // 3. Create the Transaction Record
         String reference = request.referenceNotes() != null && !request.referenceNotes().isBlank()
                 ? request.referenceNotes()
                 : "CASH-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -68,7 +67,7 @@ public class SavingsService {
         SavingsTransaction transaction = SavingsTransaction.builder()
                 .savingsAccountId(account.getId())
                 .type(TransactionType.DEPOSIT)
-                .channel(TransactionChannel.CASH) // Manual deposit implies over-the-counter cash
+                .channel(TransactionChannel.CASH)
                 .amount(request.amount())
                 .reference(reference)
                 .status(TransactionStatus.POSTED)
@@ -77,32 +76,28 @@ public class SavingsService {
 
         transaction = savingsTransactionRepository.save(transaction);
 
-        // 4. Post to Accounting Ledger!
         journalEntryService.postSavingsTransaction(
-                member.getId(),
-                request.amount(),
-                "DEPOSIT",
-                "CASH",
-                reference
+                member.getId(), request.amount(), "DEPOSIT", "CASH", reference
+        );
+
+        securityAuditService.logEvent(
+                "SAVINGS_DEPOSIT_POSTED",
+                member.getMemberNumber(),
+                "Manual cash deposit of KES " + request.amount() + ". Ref: " + reference
         );
 
         log.info("Processed manual CASH deposit of {} for member {}", request.amount(), member.getMemberNumber());
 
         return new SavingsTransactionResponse(
-                transaction.getId(),
-                transaction.getSavingsAccountId(),
-                transaction.getType().name(),
-                transaction.getChannel().name(),
-                transaction.getAmount(),
-                transaction.getReference(),
-                transaction.getStatus().name(),
-                transaction.getPostedAt()
+                transaction.getId(), transaction.getSavingsAccountId(),
+                transaction.getType().name(), transaction.getChannel().name(),
+                transaction.getAmount(), transaction.getReference(),
+                transaction.getStatus().name(), transaction.getPostedAt()
         );
     }
 
     @Transactional
     public SavingsTransactionResponse processManualWithdrawal(ManualWithdrawalRequest request) {
-        // 1. Validate Member
         Member member = memberRepository.findById(request.memberId())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
@@ -110,7 +105,6 @@ public class SavingsService {
             throw new IllegalStateException("Withdrawals can only be made by ACTIVE members.");
         }
 
-        // 2. Fetch Account & Verify Status
         SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
                 .orElseThrow(() -> new IllegalStateException("Savings account not found. Cannot withdraw."));
 
@@ -118,13 +112,12 @@ public class SavingsService {
             throw new IllegalStateException("Savings account is frozen. Cannot process withdrawal.");
         }
 
-        // 3. ENFORCE BALANCE RULE
         BigDecimal currentBalance = savingsTransactionRepository.calculateBalance(account.getId());
         if (currentBalance.compareTo(request.amount()) < 0) {
-            throw new IllegalStateException(String.format("Insufficient funds. Requested: %s, Available: %s", request.amount(), currentBalance));
+            throw new IllegalStateException(String.format(
+                    "Insufficient funds. Requested: %s, Available: %s", request.amount(), currentBalance));
         }
 
-        // 4. Create the Transaction Record
         String reference = request.referenceNotes() != null && !request.referenceNotes().isBlank()
                 ? request.referenceNotes()
                 : "WDL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -132,7 +125,7 @@ public class SavingsService {
         SavingsTransaction transaction = SavingsTransaction.builder()
                 .savingsAccountId(account.getId())
                 .type(TransactionType.WITHDRAWAL)
-                .channel(TransactionChannel.CASH) // Manual withdrawal implies over-the-counter cash payout
+                .channel(TransactionChannel.CASH)
                 .amount(request.amount())
                 .reference(reference)
                 .status(TransactionStatus.POSTED)
@@ -141,32 +134,28 @@ public class SavingsService {
 
         transaction = savingsTransactionRepository.save(transaction);
 
-        // 5. Post to Accounting Ledger (Dr Savings Liability / Cr Cash on Hand)
         journalEntryService.postSavingsTransaction(
-                member.getId(),
-                request.amount(),
-                "WITHDRAWAL",
-                "CASH",
-                reference
+                member.getId(), request.amount(), "WITHDRAWAL", "CASH", reference
+        );
+
+        securityAuditService.logEvent(
+                "SAVINGS_WITHDRAWAL_POSTED",
+                member.getMemberNumber(),
+                "Manual cash withdrawal of KES " + request.amount() + ". Ref: " + reference
         );
 
         log.info("Processed manual CASH withdrawal of {} for member {}", request.amount(), member.getMemberNumber());
 
         return new SavingsTransactionResponse(
-                transaction.getId(),
-                transaction.getSavingsAccountId(),
-                transaction.getType().name(),
-                transaction.getChannel().name(),
-                transaction.getAmount(),
-                transaction.getReference(),
-                transaction.getStatus().name(),
-                transaction.getPostedAt()
+                transaction.getId(), transaction.getSavingsAccountId(),
+                transaction.getType().name(), transaction.getChannel().name(),
+                transaction.getAmount(), transaction.getReference(),
+                transaction.getStatus().name(), transaction.getPostedAt()
         );
     }
 
     @Transactional
     public InitiateMpesaResponse initiateMpesaDeposit(MpesaDepositRequest request, String email) {
-        // 1. Fetch User strictly from Authentication Context to prevent spoofing
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -176,7 +165,6 @@ public class SavingsService {
 
         Member member = user.getMember();
 
-        // 2. Get or Auto-create Account
         SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
                 .orElseGet(() -> savingsAccountRepository.save(SavingsAccount.builder()
                         .memberId(member.getId())
@@ -187,7 +175,6 @@ public class SavingsService {
             throw new IllegalStateException("Savings account is frozen. Cannot accept deposits.");
         }
 
-        // 3. Create a PENDING Savings Transaction with "DEP-" prefix
         String ref = "DEP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
         SavingsTransaction transaction = SavingsTransaction.builder()
@@ -201,10 +188,15 @@ public class SavingsService {
 
         savingsTransactionRepository.save(transaction);
 
-        // 4. Call Payment Service for Daraja STK Push
         InitiateStkResponse paymentResponse = paymentService.initiateMpesaStkPush(
                 new InitiateStkRequest(request.phoneNumber(), request.amount(), ref),
                 member.getId()
+        );
+
+        securityAuditService.logEvent(
+                "STK_PUSH_INITIATED",
+                member.getMemberNumber(),
+                "M-Pesa STK push of KES " + request.amount() + " initiated. Ref: " + ref
         );
 
         return new InitiateMpesaResponse(
@@ -228,7 +220,6 @@ public class SavingsService {
                         savingsTransactionRepository.calculateBalance(account.getId()),
                         account.getStatus().name()
                 ))
-                // Return gracefully with zero balance if they haven't deposited yet
                 .orElseGet(() -> new SavingsBalanceResponse(BigDecimal.ZERO, SavingsAccountStatus.ACTIVE.name()));
     }
 
@@ -236,10 +227,9 @@ public class SavingsService {
     public List<StatementTransactionResponse> getMemberStatement(UUID memberId, LocalDate from, LocalDate to) {
         Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(memberId);
         if (accountOpt.isEmpty()) {
-            return Collections.emptyList(); // No account yet = empty statement
+            return Collections.emptyList();
         }
 
-        // Pull all records chronologically to calculate the running balance accurately
         List<SavingsTransaction> allTxs = savingsTransactionRepository
                 .findBySavingsAccountIdOrderByCreatedAtAsc(accountOpt.get().getId());
 
@@ -247,7 +237,6 @@ public class SavingsService {
         List<StatementTransactionResponse> statement = new ArrayList<>();
 
         for (SavingsTransaction tx : allTxs) {
-            // Update running balance only for posted transactions
             if (tx.getStatus() == TransactionStatus.POSTED) {
                 if (tx.getType() == TransactionType.DEPOSIT) {
                     runningBalance = runningBalance.add(tx.getAmount());
@@ -258,26 +247,19 @@ public class SavingsService {
 
             LocalDateTime txDate = tx.getPostedAt() != null ? tx.getPostedAt() : tx.getCreatedAt();
 
-            // Check date bounds (inclusive)
             boolean inRange = true;
             if (from != null && txDate.toLocalDate().isBefore(from)) inRange = false;
             if (to != null && txDate.toLocalDate().isAfter(to)) inRange = false;
 
             if (inRange) {
                 statement.add(new StatementTransactionResponse(
-                        tx.getId(),
-                        tx.getType().name(),
-                        tx.getChannel().name(),
-                        tx.getAmount(),
-                        tx.getReference(),
-                        tx.getStatus().name(),
-                        txDate,
-                        runningBalance
+                        tx.getId(), tx.getType().name(), tx.getChannel().name(),
+                        tx.getAmount(), tx.getReference(), tx.getStatus().name(),
+                        txDate, runningBalance
                 ));
             }
         }
 
-        // Reverse to show newest transactions first
         Collections.reverse(statement);
         return statement;
     }

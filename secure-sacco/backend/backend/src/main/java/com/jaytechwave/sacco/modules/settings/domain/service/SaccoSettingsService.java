@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.settings.domain.service;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.repository.SaccoSettingsRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import java.util.Map;
 public class SaccoSettingsService {
 
     private final SaccoSettingsRepository settingsRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional(readOnly = true)
     public SaccoSettings getSettings() {
@@ -33,7 +35,6 @@ public class SaccoSettingsService {
             throw new IllegalStateException("SACCO settings are already initialized. Use update instead.");
         }
 
-        // Default feature flags as requested
         Map<String, Boolean> initialModules = Map.of(
                 "members", true,
                 "loans", false,
@@ -45,11 +46,19 @@ public class SaccoSettingsService {
                 .saccoName(saccoName)
                 .memberNumberPrefix(prefix.toUpperCase())
                 .memberNumberPadLength(padLength)
-                .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00")) // Handle default
+                .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00"))
                 .enabledModules(initialModules)
                 .build();
 
-        return settingsRepository.save(settings);
+        SaccoSettings saved = settingsRepository.save(settings);
+
+        securityAuditService.logEvent(
+                "SETTINGS_INITIALIZED",
+                "SACCO_SETTINGS",
+                "SACCO initialized with name: " + saccoName + ", prefix: " + prefix
+        );
+
+        return saved;
     }
 
     @Transactional
@@ -74,13 +83,30 @@ public class SaccoSettingsService {
             settings.setRegistrationFee(registrationFee);
         }
 
-        return settingsRepository.save(settings);
+        SaccoSettings saved = settingsRepository.save(settings);
+
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED",
+                "SACCO_SETTINGS",
+                "Core settings updated — name: " + saccoName + ", prefix: " + prefix
+                        + ", padLength: " + padLength + ", regFee: " + registrationFee
+        );
+
+        return saved;
     }
 
     @Transactional
     public SaccoSettings updateFeatureFlags(Map<String, Boolean> enabledModules) {
         SaccoSettings settings = getSettings();
         settings.setEnabledModules(enabledModules);
-        return settingsRepository.save(settings);
+        SaccoSettings saved = settingsRepository.save(settings);
+
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED",
+                "SACCO_SETTINGS",
+                "Feature flags updated: " + enabledModules
+        );
+
+        return saved;
     }
 }

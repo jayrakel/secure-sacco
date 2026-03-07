@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.payments.domain.service;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkCallbackResponse;
 import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.StkPushSyncResponse;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
@@ -23,9 +24,8 @@ public class PaymentService {
 
     private final DarajaApiService darajaApiService;
     private final PaymentRepository paymentRepository;
-
-    // Decoupled Event Publisher replaces direct service injections
     private final ApplicationEventPublisher eventPublisher;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public InitiateStkResponse initiateMpesaStkPush(InitiateStkRequest request, UUID memberId) {
@@ -38,19 +38,14 @@ public class PaymentService {
         }
         String formattedAmount = String.valueOf(request.amount().intValue());
 
-        // 1. Send Request to Daraja
         StkPushSyncResponse darajaResponse = darajaApiService.initiateStkPush(
-                formattedPhone,
-                formattedAmount,
-                request.accountReference(),
-                "SACCO Deposit"
+                formattedPhone, formattedAmount, request.accountReference(), "SACCO Deposit"
         );
 
         if (!"0".equals(darajaResponse.getResponseCode())) {
             throw new RuntimeException("Failed to initiate STK push: " + darajaResponse.getResponseDescription());
         }
 
-        // 2. Save Pending Payment in DB
         Payment payment = Payment.builder()
                 .memberId(memberId)
                 .internalRef(darajaResponse.getCheckoutRequestID())
@@ -63,6 +58,12 @@ public class PaymentService {
                 .build();
 
         paymentRepository.save(payment);
+
+        securityAuditService.logEvent(
+                "STK_PUSH_INITIATED",
+                memberId.toString(),
+                "STK push of KES " + request.amount() + " initiated for ref: " + request.accountReference()
+        );
 
         return new InitiateStkResponse(
                 "STK Push initiated successfully.",
@@ -79,16 +80,13 @@ public class PaymentService {
         Payment payment = paymentRepository.findByInternalRef(checkoutRequestID)
                 .orElseThrow(() -> new RuntimeException("Payment not found for CheckoutRequestID: " + checkoutRequestID));
 
-        // Save exact payload for auditing purposes
         payment.setProviderMetadata(rawJson);
 
-        // ResultCode 0 means the user entered their PIN successfully and had funds
         if (stkCallback.getResultCode() == 0) {
             payment.setStatus(PaymentStatus.COMPLETED);
 
             String receiptNumber = null;
 
-            // Extract the Mpesa Receipt Number (e.g., NLJ7RT61SV)
             if (stkCallback.getCallbackMetadata() != null && stkCallback.getCallbackMetadata().getItem() != null) {
                 for (StkCallbackResponse.Item item : stkCallback.getCallbackMetadata().getItem()) {
                     if ("MpesaReceiptNumber".equals(item.getName())) {
@@ -98,38 +96,34 @@ public class PaymentService {
                 }
             }
 
-            // Save the payment state BEFORE publishing events, so listeners see it as COMPLETED
             paymentRepository.save(payment);
             log.info("Payment SUCCESS. Receipt: {}", receiptNumber);
 
-            // ==========================================
-            // BROADCAST THE EVENT TO ALL OTHER DOMAINS
-            // ==========================================
+            securityAuditService.logEvent(
+                    "PAYMENT_RECEIVED",
+                    payment.getMemberId() != null ? payment.getMemberId().toString() : "UNKNOWN",
+                    "M-Pesa payment of KES " + payment.getAmount() + " confirmed. Receipt: " + receiptNumber
+                            + ". Ref: " + payment.getAccountReference()
+            );
+
             if (payment.getMemberId() != null) {
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
-                        payment.getId(),
-                        payment.getMemberId(),
-                        payment.getAmount(),
+                        payment.getId(), payment.getMemberId(), payment.getAmount(),
                         payment.getAccountReference(),
                         receiptNumber != null ? receiptNumber : checkoutRequestID
                 ));
             }
 
         } else {
-            // ResultCode != 0 means failure (e.g. user canceled prompt, wrong PIN, insufficient funds)
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason(stkCallback.getResultDesc());
             paymentRepository.save(payment);
             log.warn("Payment FAILED. Reason: {}", stkCallback.getResultDesc());
 
-            // --- ADD THIS TO BROADCAST THE FAILURE ---
             if (payment.getMemberId() != null) {
                 eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent(
-                        payment.getId(),
-                        payment.getMemberId(),
-                        payment.getAmount(),
-                        payment.getAccountReference(),
-                        stkCallback.getResultDesc()
+                        payment.getId(), payment.getMemberId(), payment.getAmount(),
+                        payment.getAccountReference(), stkCallback.getResultDesc()
                 ));
             }
         }

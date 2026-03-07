@@ -1,8 +1,9 @@
 package com.jaytechwave.sacco.modules.users.domain.service;
 
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.service.PasswordValidator;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
-import com.jaytechwave.sacco.modules.users.api.dto.UserDTOs.*; // FIXED: Added wildcard to import inner DTO classes
+import com.jaytechwave.sacco.modules.users.api.dto.UserDTOs.*;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
@@ -12,10 +13,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet; // FIXED: Imported HashSet
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;     // FIXED: Imported Set
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
@@ -67,7 +69,15 @@ public class UserService {
                 .roles(roles)
                 .build();
 
-        return mapToResponse(userRepository.save(user));
+        UserResponse response = mapToResponse(userRepository.save(user));
+
+        securityAuditService.logEvent(
+                "USER_CREATED",
+                normalizedEmail,
+                "Staff user created with roles: " + roles.stream().map(Role::getName).collect(Collectors.joining(", "))
+        );
+
+        return response;
     }
 
     @Transactional
@@ -76,14 +86,29 @@ public class UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setPhoneNumber(normalizePhone(request.getPhoneNumber()));
-        return mapToResponse(userRepository.save(user));
+        UserResponse response = mapToResponse(userRepository.save(user));
+
+        securityAuditService.logEvent(
+                "USER_UPDATED",
+                user.getEmail(),
+                "User profile updated"
+        );
+
+        return response;
     }
 
     @Transactional
     public void updateUserStatus(UUID id, UserStatus newStatus) {
         User user = getUserEntityById(id);
+        UserStatus previous = user.getStatus();
         user.setStatus(newStatus);
         userRepository.save(user);
+
+        securityAuditService.logEvent(
+                "USER_STATUS_UPDATED",
+                user.getEmail(),
+                "Status changed from " + previous + " to " + newStatus
+        );
     }
 
     @Transactional
@@ -95,6 +120,12 @@ public class UserService {
         }
         user.setRoles(roles);
         userRepository.save(user);
+
+        securityAuditService.logEvent(
+                "USER_ROLES_UPDATED",
+                user.getEmail(),
+                "Roles updated to: " + roles.stream().map(Role::getName).collect(Collectors.joining(", "))
+        );
     }
 
     @Transactional
@@ -103,6 +134,12 @@ public class UserService {
         user.setDeleted(true);
         user.setStatus(UserStatus.DISABLED);
         userRepository.save(user);
+
+        securityAuditService.logEvent(
+                "USER_DELETED",
+                user.getEmail(),
+                "User account soft-deleted"
+        );
     }
 
     // --- HELPER METHODS ---
@@ -137,12 +174,8 @@ public class UserService {
 
     @Transactional
     public User createBootstrapSystemAdmin(
-            String firstName,
-            String lastName,
-            String loginEmail,
-            String officialEmail,
-            String phoneNumber,
-            String rawPassword
+            String firstName, String lastName, String loginEmail,
+            String officialEmail, String phoneNumber, String rawPassword
     ) {
         validatePasswordPolicy(rawPassword);
 

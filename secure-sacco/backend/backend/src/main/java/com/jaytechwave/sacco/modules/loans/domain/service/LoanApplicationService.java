@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.loans.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
@@ -33,8 +34,7 @@ public class LoanApplicationService {
     private final PaymentService paymentService;
     private final JournalEntryService journalEntryService;
     private final LoanScheduleService loanScheduleService;
-
-    // --- APPLICATION CREATION & FEES ---
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
@@ -74,8 +74,6 @@ public class LoanApplicationService {
         );
     }
 
-    // --- GUARANTOR CAPTURE ---
-
     @Transactional
     public GuarantorResponse addGuarantor(UUID applicationId, AddGuarantorRequest request, String email) {
         User user = userRepository.findByEmail(email).orElseThrow();
@@ -91,7 +89,6 @@ public class LoanApplicationService {
             throw new IllegalStateException("You cannot guarantee your own loan.");
         }
 
-        // Duplicate Check
         boolean exists = loanGuarantorRepository.findByLoanApplicationId(applicationId).stream()
                 .anyMatch(g -> g.getGuarantorMemberId().equals(guarantorMember.getId()));
         if (exists) throw new IllegalStateException("This member is already a guarantor.");
@@ -146,9 +143,14 @@ public class LoanApplicationService {
             throw new IllegalStateException("You must add at least one guarantor before submitting.");
         }
 
-        // Advance to Tier 1 Verification (Loans Officer Queue)
         app.setStatus(LoanStatus.PENDING_VERIFICATION);
         loanApplicationRepository.save(app);
+
+        securityAuditService.logEvent(
+                "LOAN_APPLICATION_SUBMITTED",
+                app.getId().toString(),
+                "Loan application submitted for KES " + app.getPrincipalAmount() + " — product: " + app.getLoanProduct().getName()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -184,13 +186,20 @@ public class LoanApplicationService {
             throw new IllegalStateException("Application is not in the Verification queue.");
         }
 
-        // Advance to Tier 2 (Committee Review)
         app.setStatus(LoanStatus.PENDING_APPROVAL);
         app.setVerifiedBy(officer.getId());
         app.setVerifiedAt(java.time.LocalDateTime.now());
         app.setVerificationNotes(request.notes());
 
-        return mapToResponse(loanApplicationRepository.save(app));
+        LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
+
+        securityAuditService.logEvent(
+                "LOAN_VERIFIED",
+                app.getId().toString(),
+                "Loan of KES " + app.getPrincipalAmount() + " verified by " + email
+        );
+
+        return response;
     }
 
     @Transactional
@@ -203,13 +212,20 @@ public class LoanApplicationService {
             throw new IllegalStateException("Application is not in the Committee Approval queue.");
         }
 
-        // Advance to APPROVED (Ready for Treasurer to Disburse)
         app.setStatus(LoanStatus.APPROVED);
         app.setCommitteeApprovedBy(committeeMember.getId());
         app.setCommitteeApprovedAt(java.time.LocalDateTime.now());
         app.setCommitteeNotes(request.notes());
 
-        return mapToResponse(loanApplicationRepository.save(app));
+        LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
+
+        securityAuditService.logEvent(
+                "LOAN_COMMITTEE_APPROVED",
+                app.getId().toString(),
+                "Loan of KES " + app.getPrincipalAmount() + " committee-approved by " + email
+        );
+
+        return response;
     }
 
     @Transactional
@@ -231,7 +247,15 @@ public class LoanApplicationService {
         }
 
         app.setStatus(LoanStatus.REJECTED);
-        return mapToResponse(loanApplicationRepository.save(app));
+        LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
+
+        securityAuditService.logEvent(
+                "LOAN_REJECTED",
+                app.getId().toString(),
+                "Loan of KES " + app.getPrincipalAmount() + " rejected by " + email + ". Notes: " + request.notes()
+        );
+
+        return response;
     }
 
     @Transactional
@@ -244,14 +268,12 @@ public class LoanApplicationService {
             throw new IllegalStateException("Application must be strictly APPROVED by the Committee before disbursement.");
         }
 
-        // 1. Post the Immutable GL Journal
         journalEntryService.postLoanDisbursement(
                 app.getMemberId(),
                 app.getPrincipalAmount(),
                 app.getId().toString()
         );
 
-        // 2. Advance Status & Audit Timestamps
         if (app.getLoanProduct().getGracePeriodDays() > 0) {
             app.setStatus(LoanStatus.IN_GRACE);
         } else {
@@ -263,7 +285,15 @@ public class LoanApplicationService {
 
         loanScheduleService.generateWeeklySchedule(app);
 
-        return mapToResponse(loanApplicationRepository.save(app));
+        LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
+
+        securityAuditService.logEvent(
+                "LOAN_DISBURSED",
+                app.getId().toString(),
+                "KES " + app.getPrincipalAmount() + " disbursed by " + email + " to member " + app.getMemberId()
+        );
+
+        return response;
     }
 
     // --- MAPPERS ---

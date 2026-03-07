@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.loans.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.RepayLoanRequest;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
@@ -30,6 +31,7 @@ public class LoanRepaymentService {
     private final PaymentService paymentService;
     private final UserRepository userRepository;
     private final JournalEntryService journalEntryService;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public InitiateStkResponse initiateRepayment(UUID applicationId, RepayLoanRequest request, String email) {
@@ -59,15 +61,12 @@ public class LoanRepaymentService {
 
         LoanApplication app = repayment.getLoanApplication();
 
-        // 1. Temporarily dump the entire M-Pesa payment into Prepayment Credit
         app.setPrepaymentBalance(app.getPrepaymentBalance().add(repayment.getAmount()));
 
-        // 2. Run the Waterfall Engine to consume the credit for ONLY active Due/Overdue items
         BigDecimal[] allocations = executeWaterfallAllocation(app);
         BigDecimal interestAllocated = allocations[0];
         BigDecimal principalAllocated = allocations[1];
 
-        // 3. What is left over is the true un-utilized prepayment
         BigDecimal prepaymentAllocated = repayment.getAmount().subtract(interestAllocated).subtract(principalAllocated);
 
         repayment.setPrincipalAllocated(principalAllocated);
@@ -78,10 +77,17 @@ public class LoanRepaymentService {
         loanRepaymentRepository.save(repayment);
 
         journalEntryService.postLoanRepayment(app.getMemberId(), repayment.getAmount(), interestAllocated, receiptNumber);
-        log.info("Allocated Mpesa Repayment {}. Int: {}, Prin: {}, Excess Credit: {}", receiptNumber, interestAllocated, principalAllocated, prepaymentAllocated);
-    }
 
-    // --- THE WATERFALL ENGINE ---
+        securityAuditService.logEvent(
+                "LOAN_REPAYMENT_POSTED",
+                app.getId().toString(),
+                "KES " + repayment.getAmount() + " repayment posted. Receipt: " + receiptNumber
+                        + ". Principal: " + principalAllocated + ", Interest: " + interestAllocated
+        );
+
+        log.info("Allocated Mpesa Repayment {}. Int: {}, Prin: {}, Excess Credit: {}",
+                receiptNumber, interestAllocated, principalAllocated, prepaymentAllocated);
+    }
 
     @Transactional
     public void autoConsumeAllPrepayments() {
@@ -105,7 +111,6 @@ public class LoanRepaymentService {
         List<LoanScheduleItem> targetItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId())
                 .stream().filter(i -> i.getStatus() == LoanScheduleStatus.DUE || i.getStatus() == LoanScheduleStatus.OVERDUE).toList();
 
-        // PASS 1: Pay Interest (Oldest first)
         for (LoanScheduleItem item : targetItems) {
             if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
             BigDecimal unpaidInterest = item.getInterestDue().subtract(item.getInterestPaid());
@@ -117,7 +122,6 @@ public class LoanRepaymentService {
             }
         }
 
-        // PASS 2: Pay Principal (Oldest first)
         for (LoanScheduleItem item : targetItems) {
             if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
             BigDecimal unpaidPrincipal = item.getPrincipalDue().subtract(item.getPrincipalPaid());
@@ -129,7 +133,6 @@ public class LoanRepaymentService {
             }
         }
 
-        // STATUS UPDATES
         for (LoanScheduleItem item : targetItems) {
             if (item.getPrincipalPaid().add(item.getInterestPaid()).compareTo(item.getTotalDue()) >= 0) {
                 item.setStatus(LoanScheduleStatus.PAID);
@@ -137,12 +140,17 @@ public class LoanRepaymentService {
         }
         scheduleItemRepository.saveAll(targetItems);
 
-        // Save true remainder back to Prepayment Balance
         app.setPrepaymentBalance(remainingCredit);
 
         List<LoanScheduleItem> allItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId());
         if (allItems.stream().allMatch(i -> i.getStatus() == LoanScheduleStatus.PAID)) {
             app.setStatus(LoanStatus.CLOSED);
+
+            securityAuditService.logEvent(
+                    "LOAN_CLOSED",
+                    app.getId().toString(),
+                    "Loan fully repaid and closed"
+            );
         }
         loanApplicationRepository.save(app);
 
