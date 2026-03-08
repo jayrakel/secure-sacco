@@ -10,6 +10,19 @@ spring:
   flyway:
     repair-on-migrate: false   # Never auto-repair in production
 
+  datasource:
+    hikari:
+      # Production pool sizing: tune based on your Postgres max_connections setting.
+      # Rule of thumb: (num_cores * 2) + disk spindle count. Adjust after load testing.
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: SaccoHikariPool-Prod
+      leak-detection-threshold: 60000   # Warn if connection held >60s — catches connection leaks
+
+
 sacco:
   security:
     cors:
@@ -39,3 +52,13 @@ app:
     email: ${APP_DEFAULT_ADMIN_EMAIL}
     password: ${APP_DEFAULT_ADMIN_PASSWORD}
     phone: ${APP_DEFAULT_ADMIN_PHONE}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # In prod, expose only health (for load balancer) and prometheus (for metrics scraper)
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized

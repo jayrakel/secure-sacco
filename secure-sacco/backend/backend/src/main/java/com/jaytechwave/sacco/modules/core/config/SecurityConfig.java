@@ -82,6 +82,7 @@ public class SecurityConfig {
                         .maximumSessions(5)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // --- Public auth endpoints ---
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/login/mfa",
@@ -89,10 +90,19 @@ public class SecurityConfig {
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/activation/**",
                                 "/api/v1/auth/reset-password",
-                                "/api/v1/payments/mpesa/**",
                                 "/error"
-                                )
-                        .permitAll()
+                        ).permitAll()
+
+                        // --- M-Pesa callbacks (unauthenticated — Safaricom calls these) ---
+                        .requestMatchers("/api/v1/payments/mpesa/**").permitAll()
+
+                        // --- Actuator: health is public (load balancer probes) ---
+                        .requestMatchers("/actuator/health").permitAll()
+
+                        // --- Actuator: metrics and prometheus require SYSTEM_ADMIN ---
+                        .requestMatchers("/actuator/**").hasAuthority("ROLE_SYSTEM_ADMIN")
+
+                        // --- Everything else requires authentication ---
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

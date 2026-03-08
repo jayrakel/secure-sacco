@@ -22,6 +22,16 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Sensible defaults for the base profile; override in application-prod.yml
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000      # 30 seconds
+      idle-timeout: 600000           # 10 minutes
+      max-lifetime: 1800000          # 30 minutes
+      pool-name: SaccoHikariPool
+      # Validate connections before use (avoids stale connection errors after DB restart)
+      connection-test-query: SELECT 1
 
   session:
     store-type: redis
@@ -106,3 +116,24 @@ sacco:
         c2b-confirmation: /api/v1/payments/mpesa/c2b-confirm
         b2c-result: /api/v1/payments/mpesa/b2c-result
         b2c-queue-timeout: /api/v1/payments/mpesa/b2c-queue-timeout
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized   # Full details for authenticated SYSTEM_ADMIN only
+      show-components: when-authorized
+  health:
+    redis:
+      enabled: true
+    db:
+      enabled: true
+    diskspace:
+      enabled: true
+  # Tag all metrics with the application name for Prometheus/Grafana dashboards
+  metrics:
+    tags:
+      application: ${spring.application.name}
