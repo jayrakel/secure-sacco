@@ -31,6 +31,16 @@ export interface JournalEntry {
     lines: JournalEntryLine[];
 }
 
+export interface PagedResponse<T> {
+    content: T[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    first: boolean;
+    last: boolean;
+}
+
 // ─── Trial Balance ────────────────────────────────────────────────────────────
 
 export interface TrialBalanceLine {
@@ -56,8 +66,10 @@ export const accountingApi = {
         return response.data;
     },
 
-    getJournalEntries: async (): Promise<JournalEntry[]> => {
-        const response = await apiClient.get<JournalEntry[]>('/accounting/journals');
+    getJournalEntries: async (page = 0, size = 20): Promise<PagedResponse<JournalEntry>> => {
+        const response = await apiClient.get<PagedResponse<JournalEntry>>(
+            `/accounting/journals?page=${page}&size=${size}&sort=transactionDate,desc`
+        );
         return response.data;
     },
 

@@ -11,7 +11,7 @@ sacco:
       consumer-secret: ${MPESA_CONSUMER_SECRET:your_sandbox_consumer_secret_here}
       passkey: ${MPESA_PASSKEY:bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919}
       shortcode: ${MPESA_SHORTCODE:174379}
-      callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://5bc9-102-0-25-80.ngrok-free.app}
+      callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://9d34-102-0-25-80.ngrok-free.app}
 
 # PII encryption keys — DEV FALLBACKS ONLY. NOT for production.
 # Set APP_FIELD_ENCRYPTION_KEY and APP_PII_HMAC_KEY env vars in prod/staging.

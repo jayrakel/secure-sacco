@@ -69,6 +69,8 @@ public class MemberService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .status(UserStatus.PENDING_ACTIVATION)
+                .phoneNumber(request.getPhoneNumber())
+                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(request.getPhoneNumber()))
                 .mfaEnabled(false)
                 .member(savedMember)
                 .roles(Set.of(memberRole))

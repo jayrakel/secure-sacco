@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../../shared/api/api-client';
+
+// Pages that are publicly accessible — AuthProvider must NOT redirect away from these
+const PUBLIC_PATHS = ['/login', '/activate', '/reset-password'];
 
 interface User {
     id: string;
@@ -39,26 +43,25 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const fetchCurrentUser = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Directly fetch current user session (Browser will automatically send the SACCO_SESSION cookie)
             const response = await apiClient.get('/auth/me');
 
             if (response.data) {
                 setUser(response.data);
-                // Redirect immediately if backend says password must change
-                if (response.data.mustChangePassword && window.location.pathname !== '/change-password') {
-                    window.location.replace('/change-password');
+                // Redirect to change-password only if on a protected page (not public pages)
+                const isPublic = PUBLIC_PATHS.some(p => location.pathname.startsWith(p));
+                if (response.data.mustChangePassword && !isPublic && location.pathname !== '/change-password') {
+                    navigate('/change-password', { replace: true });
                 }
             } else {
                 setUser(null);
             }
-        } catch (error: any) {
-            // If we get a 401/403, the session cookie is missing or expired — just clear local state.
-            // Do NOT call /auth/logout here; there is no valid session to invalidate and it would
-            // generate an extra 401 in the console.
+        } catch {
             setUser(null);
         } finally {
             setIsLoading(false);
@@ -100,20 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 refreshUser: fetchCurrentUser
             }}
         >
-            {/* This loading check is the "Gatekeeper".
-               While isLoading is true, the children (App routes) are not rendered.
-               This prevents ProtectedRoute from seeing user=null and redirecting to /login.
-            */}
-            {isLoading ? (
-                <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-600 font-medium">Resuming session...</p>
-                    </div>
-                </div>
-            ) : (
-                children
-            )}
+            {children}
         </AuthContext.Provider>
     );
 };

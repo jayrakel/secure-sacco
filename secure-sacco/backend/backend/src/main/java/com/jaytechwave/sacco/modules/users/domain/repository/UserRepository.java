@@ -13,17 +13,23 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
     boolean existsByPhoneNumberHash(String phoneNumberHash);
-    Optional<User> findByPhoneNumberHash(String phoneNumberHash);
     boolean existsByEmailAndMustChangePasswordTrue(String email);
 
     Optional<User> findByEmail(String email);
-    Optional<User> findByPhoneNumber(String phoneNumber);
+    Optional<User> findByPhoneNumberHash(String phoneNumberHash);
 
     @EntityGraph(attributePaths = {"member"})
     Optional<User> findWithMemberByEmail(String email);
 
-    @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.phoneNumberHash = :hashedIdentifier")
-    Optional<User> findByEmailOrPhoneNumber(@Param("identifier") String identifier, @Param("hashedIdentifier") String hashedIdentifier);
+    /**
+     * Looks up a user by email (plaintext) OR by phone number hash (HMAC-SHA256).
+     * The phone_number column is AES-GCM encrypted with a per-write random IV,
+     * so direct equality matching is impossible — we match on the deterministic hash instead.
+     *
+     * Callers must pre-compute the phone hash via PiiSearchHashConverter before passing it here.
+     */
+    @Query("SELECT u FROM User u WHERE u.email = :email OR u.phoneNumberHash = :phoneHash")
+    Optional<User> findByEmailOrPhoneNumberHash(@Param("email") String email, @Param("phoneHash") String phoneHash);
 
     List<User> findAllByIsDeletedFalse();
 

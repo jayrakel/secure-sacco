@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,14 +28,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PiiSearchHashConverter piiSearchHashConverter;
 
-        @Override
-        @Transactional(readOnly = true)
-        public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-            // Hash the identifier for phone number lookup
-            String hashedIdentifier = piiSearchHashConverter.convertToDatabaseColumn(identifier);
 
-            User user = userRepository.findByEmailOrPhoneNumber(identifier, hashedIdentifier)
-                    .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        // 1. Fetch user by email or phone
+        // Phone numbers are AES-GCM encrypted (random IV per write) — direct equality
+        // matching is broken. Compute the deterministic HMAC hash and match on that instead.
+        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(identifier);
+        User user = userRepository.findByEmailOrPhoneNumberHash(identifier, phoneHash)
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
 
         Set<GrantedAuthority> authorities = new HashSet<>();
 

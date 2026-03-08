@@ -50,9 +50,9 @@ const SavingsRouteWrapper = () => {
 
 function App() {
     return (
-        <AuthProvider>
-            <SettingsProvider>
-                <BrowserRouter>
+        <BrowserRouter>
+            <AuthProvider>
+                <SettingsProvider>
                     <Routes>
                         {/* Wrap Login in GuestRoute */}
                         <Route path="/login" element={
@@ -67,12 +67,11 @@ function App() {
                             </GuestRoute>
                         } />
 
-                        {/* Activation Route */}
-                        <Route path="/activate" element={
-                            <GuestRoute>
-                                <ActivationPage />
-                            </GuestRoute>
-                        } />
+                        {/* Activation Route — must NOT be inside GuestRoute.
+                            An admin may be logged in when they generate the link, or may
+                            share it with a new user. GuestRoute would redirect authenticated
+                            users to /dashboard, breaking activation. */}
+                        <Route path="/activate" element={<ActivationPage />} />
 
                         {/* Force password change — authenticated but restricted */}
                         <Route path="/change-password" element={<ChangePasswordPage />} />
@@ -238,9 +237,9 @@ function App() {
                         {/* Fallback route */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
-                </BrowserRouter>
-            </SettingsProvider>
-        </AuthProvider>
+                </SettingsProvider>
+            </AuthProvider>
+        </BrowserRouter>
     );
 }
 

@@ -1,10 +1,10 @@
 package com.jaytechwave.sacco.modules.core.service;
 
-import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.users.domain.entity.PasswordResetToken;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.PasswordResetTokenRepository;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,15 +23,14 @@ public class PasswordResetService {
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
+    private final PiiSearchHashConverter piiSearchHashConverter;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
-    private final PiiSearchHashConverter piiSearchHashConverter;
 
     @Transactional
     public void generatePasswordResetToken(String email) {
-        String hashedIdentifier = piiSearchHashConverter.convertToDatabaseColumn(email);
-        Optional<User> userOpt = userRepository.findByEmailOrPhoneNumber(email, hashedIdentifier);
-
+        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(email);
+        Optional<User> userOpt = userRepository.findByEmailOrPhoneNumberHash(email, phoneHash);
         if (userOpt.isEmpty()) {
             // Silently return to prevent user enumeration attacks
             log.info("Password reset requested for non-existent account: {}", email);

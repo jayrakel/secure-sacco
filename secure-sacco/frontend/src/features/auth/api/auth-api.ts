@@ -11,5 +11,15 @@ export const authApi = {
     completeActivation: async (data: { token: string; otp: string; newPassword: string }) => {
         const response = await apiClient.post('/auth/activation/complete', data);
         return response.data;
+    },
+
+    resendActivationEmail: async (email: string) => {
+        const response = await apiClient.post('/auth/activation/email/send', { email });
+        return response.data;
+    },
+
+    resendOtp: async (email: string) => {
+        const response = await apiClient.post('/auth/activation/otp/send', { email });
+        return response.data;
     }
 };

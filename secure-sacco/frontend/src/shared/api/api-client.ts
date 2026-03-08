@@ -13,10 +13,13 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        // FIX: On 401, redirect to login so expired sessions don't silently hang
+        // FIX: On 401, redirect to login so expired sessions don't silently hang.
+        // BUT skip the redirect on public pages that are intentionally unauthenticated,
+        // otherwise AuthProvider's /auth/me 401 would boot the user away from those pages.
+        const PUBLIC_PATHS = ['/login', '/activate', '/reset-password'];
         if (error.response?.status === 401) {
-            // Avoid redirect loop if already on login page
-            if (!window.location.pathname.startsWith('/login')) {
+            const isPublicPage = PUBLIC_PATHS.some(p => window.location.pathname.startsWith(p));
+            if (!isPublicPage) {
                 window.location.href = '/login';
             }
             return Promise.reject(error);
