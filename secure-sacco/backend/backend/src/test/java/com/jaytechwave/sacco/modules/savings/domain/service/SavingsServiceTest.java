@@ -230,8 +230,8 @@ class SavingsServiceTest {
 
         SavingsBalanceResponse result = service.getMyBalance("john@sacco.com");
 
-        assertThat(result.balance()).isEqualByComparingTo(new BigDecimal("7500.00"));
-        assertThat(result.status()).isEqualTo("ACTIVE");
+        assertThat(result.availableBalance()).isEqualByComparingTo(new BigDecimal("7500.00"));
+        assertThat(result.accountStatus()).isEqualTo("ACTIVE");
     }
 
     @Test
@@ -248,6 +248,6 @@ class SavingsServiceTest {
 
         SavingsBalanceResponse result = service.getMyBalance("new@sacco.com");
 
-        assertThat(result.balance()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(result.availableBalance()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

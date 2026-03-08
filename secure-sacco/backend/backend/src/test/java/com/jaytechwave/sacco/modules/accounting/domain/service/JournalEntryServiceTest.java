@@ -45,14 +45,14 @@ class JournalEntryServiceTest {
                 .id(UUID.randomUUID())
                 .accountCode("1000")
                 .accountName("Cash on Hand")
-                .active(true)
+                .isActive(true)
                 .build();
 
         creditAccount = Account.builder()
                 .id(UUID.randomUUID())
                 .accountCode("2100")
                 .accountName("Member Savings")
-                .active(true)
+                .isActive(true)
                 .build();
 
         when(journalEntryRepository.existsByReferenceNumber(anyString())).thenReturn(false);
@@ -224,7 +224,7 @@ class JournalEntryServiceTest {
     void postEntry_compoundEntry_succeeds() {
         Account secondDebit = Account.builder()
                 .id(UUID.randomUUID()).accountCode("1200")
-                .accountName("Loans Receivable").active(true).build();
+                .accountName("Loans Receivable").isActive(true).build();
 
         when(accountRepository.findByAccountCode("1200")).thenReturn(Optional.of(secondDebit));
 
