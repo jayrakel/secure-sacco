@@ -1,48 +1,52 @@
 package com.jaytechwave.sacco.modules.core.service;
 
+import com.jaytechwave.sacco.modules.core.security.EncryptedStringConverter;
 import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
-import com.jaytechwave.sacco.modules.members.domain.entity.Member;
-import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
-import com.jaytechwave.sacco.modules.users.domain.entity.User;
-import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * One-time data migration runner that backfills PII hash columns for existing rows.
+ * One-time data migration runner that encrypts plaintext PII columns and
+ * backfills the corresponding HMAC search-hash columns for existing rows.
  *
- * <h3>When does it run?</h3>
- * Automatically on startup, immediately after the application is fully initialised
- * ({@link ApplicationReadyEvent}).  It is a no-op once all rows have been
- * backfilled (i.e. {@code national_id_hash IS NOT NULL} for every member).
+ * <h3>Why JDBC instead of JPA?</h3>
+ * The JPA entities now carry {@code @Convert(EncryptedStringConverter)} on the
+ * PII columns.  Loading rows that still contain <em>plaintext</em> values through
+ * JPA would cause the converter's {@code convertToEntityAttribute()} to fail
+ * immediately (no IV separator found).  Raw JDBC reads the column bytes directly,
+ * letting us detect and handle the plaintext-vs-encrypted distinction safely.
  *
- * <h3>Pre-conditions</h3>
- * <ul>
- *   <li>Flyway migration V40 must have already been applied so the hash columns
- *       exist in the database.</li>
- *   <li>{@code APP_FIELD_ENCRYPTION_KEY} and {@code APP_PII_HMAC_KEY} environment
- *       variables must be set so the converters can initialise.</li>
- * </ul>
- *
- * <h3>Safety</h3>
- * The runner only touches rows where {@code national_id_hash IS NULL} (members) or
- * {@code phone_number_hash IS NULL} (users), so it is idempotent and safe to
- * restart multiple times.
+ * <h3>Idempotency</h3>
+ * Only rows where {@code national_id_hash IS NULL} (members) or
+ * {@code phone_number_hash IS NULL} (users) are processed, so the runner is safe
+ * to re-run after a partial failure.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PiiMigrationRunner {
 
-    private final MemberRepository memberRepository;
-    private final UserRepository userRepository;
+    private final JdbcTemplate jdbc;
+    private final EncryptedStringConverter encryptedStringConverter;
     private final PiiSearchHashConverter piiSearchHashConverter;
+
+    /** Format stored by {@link EncryptedStringConverter}: {@code Base64(iv):Base64(ciphertext)} */
+    private static boolean isAlreadyEncrypted(String value) {
+        if (value == null) return false;
+        // A valid ciphertext always contains exactly one ':' separating the IV from the body.
+        // Plaintext national IDs / phone numbers never contain ':' in practice, but even if
+        // they did, the Base64 segments must be ≥ 16 chars each — so a short prefix means plaintext.
+        int idx = value.indexOf(':');
+        return idx > 10 && idx < value.length() - 10;
+    }
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
@@ -51,57 +55,95 @@ public class PiiMigrationRunner {
         backfillUserHashes();
     }
 
-    private void backfillMemberHashes() {
-        List<Member> pending = memberRepository.findAll()
-                .stream()
-                .filter(m -> m.getNationalIdHash() == null)
-                .toList();
+    // ── members ───────────────────────────────────────────────────────────────
 
-        if (pending.isEmpty()) {
-            log.debug("PiiMigrationRunner: no member rows require PII hash backfill.");
+    private void backfillMemberHashes() {
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT id, national_id, phone_number FROM members WHERE national_id_hash IS NULL");
+
+        if (rows.isEmpty()) {
+            log.debug("PiiMigrationRunner: no member rows require PII migration.");
             return;
         }
 
-        log.info("PiiMigrationRunner: backfilling PII hashes for {} member(s).", pending.size());
+        log.info("PiiMigrationRunner: migrating PII for {} member(s).", rows.size());
+        int count = 0;
 
-        for (Member member : pending) {
-            // At this point data is still plaintext (pre-encryption migration).
-            // EncryptedStringConverter.convertToDatabaseColumn() will encrypt on save;
-            // we only need to set the hash fields explicitly here.
-            if (member.getNationalId() != null) {
-                member.setNationalIdHash(
-                        piiSearchHashConverter.convertToDatabaseColumn(member.getNationalId()));
-            }
-            if (member.getPhoneNumber() != null) {
-                member.setPhoneNumberHash(
-                        piiSearchHashConverter.convertToDatabaseColumn(member.getPhoneNumber()));
-            }
-            memberRepository.save(member);
+        for (Map<String, Object> row : rows) {
+            String id          = row.get("id").toString();
+            String nationalId  = (String) row.get("national_id");
+            String phoneNumber = (String) row.get("phone_number");
+
+            // Resolve plaintext: if the value is already encrypted, decrypt it first.
+            String plainNationalId  = resolvePlaintext(nationalId,  "national_id",  id);
+            String plainPhoneNumber = resolvePlaintext(phoneNumber, "phone_number", id);
+
+            // Encrypt (converter will produce a fresh IV:ciphertext string)
+            String encNationalId  = encryptedStringConverter.convertToDatabaseColumn(plainNationalId);
+            String encPhoneNumber = encryptedStringConverter.convertToDatabaseColumn(plainPhoneNumber);
+
+            // Compute HMAC hashes
+            String hashNationalId  = piiSearchHashConverter.convertToDatabaseColumn(plainNationalId);
+            String hashPhoneNumber = piiSearchHashConverter.convertToDatabaseColumn(plainPhoneNumber);
+
+            jdbc.update(
+                    "UPDATE members SET national_id = ?, national_id_hash = ?, phone_number = ?, phone_number_hash = ? WHERE id = ?::uuid",
+                    encNationalId, hashNationalId, encPhoneNumber, hashPhoneNumber, id);
+            count++;
         }
 
-        log.info("PiiMigrationRunner: member PII hash backfill complete ({} rows updated).", pending.size());
+        log.info("PiiMigrationRunner: member PII migration complete ({} rows updated).", count);
     }
+
+    // ── users ─────────────────────────────────────────────────────────────────
 
     private void backfillUserHashes() {
-        List<User> pending = userRepository.findAll()
-                .stream()
-                .filter(u -> u.getPhoneNumberHash() == null && u.getPhoneNumber() != null)
-                .toList();
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT id, phone_number FROM users WHERE phone_number_hash IS NULL AND phone_number IS NOT NULL");
 
-        if (pending.isEmpty()) {
-            log.debug("PiiMigrationRunner: no user rows require PII hash backfill.");
+        if (rows.isEmpty()) {
+            log.debug("PiiMigrationRunner: no user rows require PII migration.");
             return;
         }
 
-        log.info("PiiMigrationRunner: backfilling PII hashes for {} user(s).", pending.size());
+        log.info("PiiMigrationRunner: migrating PII for {} user(s).", rows.size());
+        int count = 0;
 
-        for (User user : pending) {
-            user.setPhoneNumberHash(
-                    piiSearchHashConverter.convertToDatabaseColumn(user.getPhoneNumber()));
-            userRepository.save(user);
+        for (Map<String, Object> row : rows) {
+            String id          = row.get("id").toString();
+            String phoneNumber = (String) row.get("phone_number");
+
+            String plainPhone    = resolvePlaintext(phoneNumber, "phone_number", id);
+            String encPhone      = encryptedStringConverter.convertToDatabaseColumn(plainPhone);
+            String hashPhone     = piiSearchHashConverter.convertToDatabaseColumn(plainPhone);
+
+            jdbc.update(
+                    "UPDATE users SET phone_number = ?, phone_number_hash = ? WHERE id = ?::uuid",
+                    encPhone, hashPhone, id);
+            count++;
         }
 
-        log.info("PiiMigrationRunner: user PII hash backfill complete ({} rows updated).", pending.size());
+        log.info("PiiMigrationRunner: user PII migration complete ({} rows updated).", count);
+    }
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the plaintext value.
+     * <ul>
+     *   <li>If {@code raw} looks like a plaintext value, returns it as-is.</li>
+     *   <li>If {@code raw} is already in the encrypted {@code IV:ciphertext} format
+     *       (e.g. a previous partial run), decrypts it first so we re-encrypt with
+     *       a fresh IV and still produce the correct hash.</li>
+     *   <li>If {@code raw} is {@code null}, returns {@code null}.</li>
+     * </ul>
+     */
+    private String resolvePlaintext(String raw, String column, String id) {
+        if (raw == null) return null;
+        if (isAlreadyEncrypted(raw)) {
+            log.debug("PiiMigrationRunner: row {} column {} is already encrypted — decrypting for re-hash.", id, column);
+            return encryptedStringConverter.convertToEntityAttribute(raw);
+        }
+        return raw;
     }
 }
-
