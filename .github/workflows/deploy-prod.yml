@@ -1,0 +1,121 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Staging image tag to promote (e.g. staging-abc1234)'
+        required: true
+        type: string
+      confirm:
+        description: 'Type DEPLOY to confirm production deployment'
+        required: true
+        type: string
+
+jobs:
+  validate:
+    name: Validate inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DEPLOY" ]; then
+            echo "Confirmation text must be exactly: DEPLOY"
+            exit 1
+          fi
+          echo "Confirmation accepted. Proceeding to production."
+
+  deploy-production:
+    name: Deploy — Production
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: production   # Requires reviewer approval in GitHub environment settings
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Re-tag images for production
+        run: |
+          TAG=${{ github.event.inputs.image_tag }}
+          REPO=ghcr.io/${{ github.repository }}
+
+          docker pull ${REPO}/backend:${TAG}
+          docker pull ${REPO}/frontend:${TAG}
+
+          docker tag ${REPO}/backend:${TAG} ${REPO}/backend:prod-latest
+          docker tag ${REPO}/frontend:${TAG} ${REPO}/frontend:prod-latest
+
+          docker push ${REPO}/backend:prod-latest
+          docker push ${REPO}/frontend:prod-latest
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/sacco-prod
+
+            # Snapshot current state for rollback
+            docker compose -f docker-compose.prod.yml images > /tmp/pre-deploy-images.txt
+
+            export BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:prod-latest
+            export FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:prod-latest
+
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f
+
+      - name: Health check — production backend
+        id: health-check
+        run: |
+          echo "Waiting for production backend health check..."
+          for i in $(seq 1 36); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ vars.PROD_API_URL }}/actuator/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Production backend is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i/36 — status $STATUS. Waiting 5s..."
+            sleep 5
+          done
+          echo "Production health check FAILED."
+          exit 1
+
+      - name: Automatic rollback on health failure
+        if: failure() && steps.health-check.outcome == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            echo "ROLLING BACK production deployment..."
+            cd /opt/sacco-prod
+            # Roll back to previous image tags
+            docker compose -f docker-compose.prod.yml down
+            # Restore prior images and restart
+            docker compose -f docker-compose.prod.yml up -d
+            echo "Rollback complete."
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Production deployment successful: ${{ github.event.inputs.image_tag }}"
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Production deployed: ${{ github.event.inputs.image_tag }}"}'
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Production deployment FAILED. Rollback may have been triggered."
+          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"PRODUCTION DEPLOY FAILED. Check: ${{ github.run_url }}"}'

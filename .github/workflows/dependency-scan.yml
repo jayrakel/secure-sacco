@@ -1,0 +1,88 @@
+name: Dependency Security Scan
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # Every Monday at 3am UTC
+  workflow_dispatch:
+
+jobs:
+  backend-owasp:
+    name: Backend — OWASP NVD Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run OWASP Dependency Check
+        working-directory: secure-sacco/backend/backend
+        run: |
+          mvn --batch-mode org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -Dformat=HTML
+        continue-on-error: true
+
+      - name: Upload OWASP HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-report-${{ github.run_id }}
+          path: secure-sacco/backend/backend/target/dependency-check-report.html
+          retention-days: 30
+
+  frontend-audit:
+    name: Frontend — npm audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: secure-sacco/frontend/package-lock.json
+
+      - name: Install deps
+        working-directory: secure-sacco/frontend
+        run: npm ci
+
+      - name: npm audit (high and critical only)
+        working-directory: secure-sacco/frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  trivy-scan:
+    name: Container — Trivy vulnerability scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Trivy on backend Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'secure-sacco/backend/backend'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy on frontend Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'secure-sacco/frontend'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'

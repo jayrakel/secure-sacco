@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────
+  # BACKEND
+  # ─────────────────────────────────────────────
+  backend:
+    name: Backend — Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: sacco_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and test
+        working-directory: secure-sacco/backend/backend
+        run: mvn --batch-mode verify
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          DB_URL: jdbc:postgresql://localhost:5432/sacco_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          MPESA_CONSUMER_KEY: test_key
+          MPESA_CONSUMER_SECRET: test_secret
+          MPESA_PASSKEY: test_passkey
+          MPESA_SHORTCODE: "174379"
+          MPESA_CALLBACK_BASE_URL: "http://localhost:8080"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: secure-sacco/backend/backend/target/surefire-reports/
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: secure-sacco/backend/backend/target/site/jacoco/
+
+  # ─────────────────────────────────────────────
+  # BACKEND — OWASP Dependency Check
+  # ─────────────────────────────────────────────
+  backend-security-scan:
+    name: Backend — OWASP Dependency Scan
+    runs-on: ubuntu-latest
+    # Run on PRs and main; non-blocking (continue-on-error) until baseline is clean
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run OWASP Dependency Check
+        working-directory: secure-sacco/backend/backend
+        run: |
+          mvn --batch-mode org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=9 \
+            -DsuppressionFile=../../../.github/owasp-suppressions.xml \
+            -Dformat=HTML
+        continue-on-error: true
+
+      - name: Upload OWASP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-report
+          path: secure-sacco/backend/backend/target/dependency-check-report.html
+
+  # ─────────────────────────────────────────────
+  # FRONTEND
+  # ─────────────────────────────────────────────
+  frontend:
+    name: Frontend — Build, Lint & Type-Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: secure-sacco/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: secure-sacco/frontend
+        run: npm ci
+
+      - name: Type-check
+        working-directory: secure-sacco/frontend
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: secure-sacco/frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: secure-sacco/frontend
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: http://localhost:8080
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: secure-sacco/frontend/dist/
+          retention-days: 1
