@@ -3,6 +3,8 @@ package com.jaytechwave.sacco.modules.core.config;
 import com.jaytechwave.sacco.modules.core.security.SecurityHeadersFilter;
 import com.jaytechwave.sacco.modules.core.security.CsrfCookieFilter;
 import com.jaytechwave.sacco.modules.core.security.MustChangePasswordFilter;
+import com.jaytechwave.sacco.modules.payments.infrastructure.filter.MpesaIpWhitelistFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +34,7 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter, MustChangePasswordFilter mustChangePasswordFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter, MustChangePasswordFilter mustChangePasswordFilter, MpesaIpWhitelistFilter mpesaIpWhitelistFilter) throws Exception {
 
             // --- 1. Custom Security Headers & Request Tracing ---
             http.addFilterBefore(securityHeadersFilter, org.springframework.security.web.session.SessionManagementFilter.class);
@@ -77,6 +79,7 @@ public class SecurityConfig {
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .addFilterAfter(mustChangePasswordFilter, CsrfCookieFilter.class)
+                .addFilterBefore(mpesaIpWhitelistFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
                         .sessionFixation().migrateSession()
                         .maximumSessions(5)
