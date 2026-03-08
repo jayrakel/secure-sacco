@@ -2,13 +2,16 @@ package com.jaytechwave.sacco.modules.accounting.api.controller;
 
 import com.jaytechwave.sacco.modules.accounting.api.dto.JournalEntryDTOs.*;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
+import com.jaytechwave.sacco.modules.core.api.PageSizeValidator;
+import com.jaytechwave.sacco.modules.core.api.dto.PagedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/accounting/journals")
@@ -24,8 +27,11 @@ public class JournalEntryController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<List<JournalEntryResponse>> getAllJournalEntries() {
-        return ResponseEntity.ok(journalEntryService.getAllJournalEntries());
+    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'ROLE_TREASURER')")
+    public ResponseEntity<PagedResponse<JournalEntryResponse>> getAllJournalEntries(
+            @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
+        PageSizeValidator.validated(pageable);
+        return ResponseEntity.ok(PagedResponse.from(
+                journalEntryService.getAllJournalEntries(pageable)));
     }
 }

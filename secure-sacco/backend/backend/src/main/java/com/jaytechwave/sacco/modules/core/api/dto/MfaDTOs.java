@@ -1,4 +1,4 @@
-package com.jaytechwave.sacco.modules.core.dto;
+package com.jaytechwave.sacco.modules.core.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

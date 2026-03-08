@@ -6,10 +6,15 @@ import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.core.api.PageSizeValidator;
+import com.jaytechwave.sacco.modules.core.api.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,9 +36,11 @@ public class MeetingController {
 
     @Operation(summary = "List all meetings", description = "Returns all meetings. Requires MEETINGS_READ.")
     @GetMapping
-    @PreAuthorize("hasAuthority('MEETINGS_READ')")
-    public ResponseEntity<List<MeetingSummaryResponse>> listMeetings() {
-        return ResponseEntity.ok(meetingService.listAllMeetings());
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PagedResponse<MeetingSummaryResponse>> listMeetings(
+            @PageableDefault(size = 20, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PageSizeValidator.validated(pageable);
+        return ResponseEntity.ok(PagedResponse.from(meetingService.listAllMeetings(pageable)));
     }
 
     @Operation(summary = "Get meeting by ID")

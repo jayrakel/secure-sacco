@@ -10,6 +10,8 @@ import com.jaytechwave.sacco.modules.accounting.domain.repository.JournalEntryRe
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,10 +88,9 @@ public class JournalEntryService {
     }
 
     @Transactional(readOnly = true)
-    public List<JournalEntryResponse> getAllJournalEntries() {
-        return journalEntryRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<JournalEntryResponse> getAllJournalEntries(Pageable pageable) {
+        return journalEntryRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     private void validateDoubleEntry(List<JournalEntryLineRequest> lines) {

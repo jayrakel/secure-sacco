@@ -14,6 +14,8 @@ import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -154,17 +156,15 @@ public class LoanApplicationService {
     }
 
     @Transactional(readOnly = true)
-    public List<LoanApplicationResponse> getAllApplications() {
-        return loanApplicationRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<LoanApplicationResponse> getAllApplications(Pageable pageable) {
+        return loanApplicationRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
-    public List<LoanApplicationResponse> getApplicationsByStatus(LoanStatus status) {
-        return loanApplicationRepository.findByStatus(status).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<LoanApplicationResponse> getApplicationsByStatus(LoanStatus status, Pageable pageable) {
+        return loanApplicationRepository.findByStatus(status, pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)

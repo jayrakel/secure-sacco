@@ -1,7 +1,7 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
-import com.jaytechwave.sacco.modules.core.dto.SessionDTOs.SessionResponse;
+import com.jaytechwave.sacco.modules.core.api.dto.SessionDTOs.SessionResponse;
 import com.jaytechwave.sacco.modules.core.service.SessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

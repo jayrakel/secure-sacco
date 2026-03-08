@@ -1,11 +1,11 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
-import com.jaytechwave.sacco.modules.core.dto.LoginRequest;
+import com.jaytechwave.sacco.modules.core.api.dto.LoginRequest;
 import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService;
 import com.jaytechwave.sacco.modules.core.service.LoginAttemptService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
-import com.jaytechwave.sacco.modules.core.dto.ForgotPasswordRequest;
-import com.jaytechwave.sacco.modules.core.dto.ResetPasswordRequest;
+import com.jaytechwave.sacco.modules.core.api.dto.ForgotPasswordRequest;
+import com.jaytechwave.sacco.modules.core.api.dto.ResetPasswordRequest;
 import com.jaytechwave.sacco.modules.core.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,7 +25,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
-import com.jaytechwave.sacco.modules.core.dto.MfaDTOs.*;
 import com.jaytechwave.sacco.modules.core.service.MfaService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;

@@ -16,6 +16,8 @@ import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,9 +42,9 @@ public class MeetingService {
     private final SecurityAuditService securityAuditService;
 
     @Transactional(readOnly = true)
-    public List<MeetingSummaryResponse> listAllMeetings() {
-        return meetingRepository.findAllByOrderByStartAtDesc()
-                .stream().map(this::toSummary).collect(Collectors.toList());
+    public Page<MeetingSummaryResponse> listAllMeetings(Pageable pageable) {
+        return meetingRepository.findAll(pageable)
+                .map(this::toSummary);
     }
 
     @Transactional(readOnly = true)

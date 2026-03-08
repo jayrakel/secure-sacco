@@ -4,12 +4,17 @@ import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanApplicationService;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService;
+import com.jaytechwave.sacco.modules.core.api.PageSizeValidator;
+import com.jaytechwave.sacco.modules.core.api.dto.PagedResponse;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -92,16 +97,23 @@ public class LoanApplicationController {
 
     @Operation(summary = "Get all loan applications", description = "Returns all applications. Requires loan officer or approver permission.")
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE') or hasAuthority('LOANS_DISBURSE')")
-    public ResponseEntity<List<LoanApplicationResponse>> getAllApplications() {
-        return ResponseEntity.ok(loanApplicationService.getAllApplications());
+    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'ROLE_LOANS_OFFICER', 'ROLE_TREASURER')")
+    public ResponseEntity<PagedResponse<LoanApplicationResponse>> getAllApplications(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PageSizeValidator.validated(pageable);
+        return ResponseEntity.ok(PagedResponse.from(
+                loanApplicationService.getAllApplications(pageable)));
     }
 
     @Operation(summary = "Get applications queue by status", description = "Returns applications filtered by status (e.g. PENDING_APPROVAL, VERIFIED).")
     @GetMapping("/queue/{status}")
-    @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
-    public ResponseEntity<List<LoanApplicationResponse>> getApplicationsQueue(@PathVariable String status) {
-        return ResponseEntity.ok(loanApplicationService.getApplicationsByStatus(LoanStatus.valueOf(status.toUpperCase())));
+    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'ROLE_LOANS_OFFICER', 'ROLE_TREASURER')")
+    public ResponseEntity<PagedResponse<LoanApplicationResponse>> getApplicationsByStatus(
+            @PathVariable LoanStatus status,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        PageSizeValidator.validated(pageable);
+        return ResponseEntity.ok(PagedResponse.from(
+                loanApplicationService.getApplicationsByStatus(status, pageable)));
     }
 
     @Operation(summary = "Verify application", description = "Loans Officer first-level review. Transitions to VERIFIED or REJECTED.")

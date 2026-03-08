@@ -1,4 +1,4 @@
-package com.jaytechwave.sacco.modules.core.dto;
+package com.jaytechwave.sacco.modules.core.api.dto;
 
 import lombok.Builder;
 import lombok.Data;

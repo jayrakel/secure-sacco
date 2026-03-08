@@ -1,6 +1,6 @@
 package com.jaytechwave.sacco.modules.core.service;
 
-import com.jaytechwave.sacco.modules.core.dto.SessionDTOs.SessionResponse;
+import com.jaytechwave.sacco.modules.core.api.dto.SessionDTOs.SessionResponse;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
