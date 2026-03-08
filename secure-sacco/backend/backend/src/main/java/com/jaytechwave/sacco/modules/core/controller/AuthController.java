@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.*;
 import com.jaytechwave.sacco.modules.core.service.MfaService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.users.domain.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import dev.samstevens.totp.exceptions.QrGenerationException;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -50,6 +52,8 @@ public class AuthController {
     private final MfaService mfaService;
     private final CustomUserDetailsService customUserDetailsService;
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager,
                           LoginAttemptService loginAttemptService,
@@ -57,7 +61,9 @@ public class AuthController {
                           PasswordResetService passwordResetService,
                           MfaService mfaService,
                           CustomUserDetailsService customUserDetailsService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          UserService userService,
+                          PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.loginAttemptService = loginAttemptService;
         this.securityAuditService = securityAuditService;
@@ -65,6 +71,8 @@ public class AuthController {
         this.mfaService = mfaService;
         this.customUserDetailsService = customUserDetailsService;
         this.userRepository = userRepository;
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
@@ -287,6 +295,7 @@ public class AuthController {
         responseBody.put("permissions", permissions);
         responseBody.put("roles", userDetails.getRoles());
         responseBody.put("mfaEnabled", userDetails.isMfaEnabled());
+        responseBody.put("mustChangePassword", user.isMustChangePassword());
 
         if (user.getMember() != null) {
             responseBody.put("memberNumber", user.getMember().getMemberNumber());
@@ -295,6 +304,56 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(responseBody);
+    }
+
+    record ChangePasswordRequest(
+            @jakarta.validation.constraints.NotBlank String currentPassword,
+            @jakarta.validation.constraints.NotBlank String newPassword) {}
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Authentication authentication,
+            HttpServletRequest httpRequest) {
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized", "message", "Not authenticated"));
+        }
+
+        String email = authentication.getName();
+        com.jaytechwave.sacco.modules.users.domain.entity.User user =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            securityAuditService.logEvent("PASSWORD_CHANGE_FAILED", email,
+                    "Incorrect current password. IP: " + httpRequest.getRemoteAddr());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Invalid", "message", "Current password is incorrect."));
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Invalid",
+                            "message", "New password must be different from your current password."));
+        }
+
+        try {
+            userService.changePassword(user, request.newPassword());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Invalid", "message", e.getMessage()));
+        }
+
+        user.setMustChangePassword(false);
+        userRepository.save(user);
+
+        securityAuditService.logEvent("PASSWORD_CHANGED", email,
+                "Password changed successfully. IP: " + httpRequest.getRemoteAddr());
+
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
     }
 
     @Operation(summary = "Request password reset", description = "Sends a password reset link to the user's email. Always returns 200 to prevent user enumeration.")
@@ -309,8 +368,8 @@ public class AuthController {
     }
 
     @Operation(summary = "Reset password", description = "Set a new password using a valid reset token received by email.",
-        responses = { @ApiResponse(responseCode = "200", description = "Password reset successfully"),
-                      @ApiResponse(responseCode = "400", description = "Invalid or expired token") })
+            responses = { @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid or expired token") })
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
         try {

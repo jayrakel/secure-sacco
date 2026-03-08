@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.service;
 
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.users.domain.entity.PasswordResetToken;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.PasswordResetTokenRepository;
@@ -24,10 +25,13 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
+    private final PiiSearchHashConverter piiSearchHashConverter;
 
     @Transactional
     public void generatePasswordResetToken(String email) {
-        Optional<User> userOpt = userRepository.findByEmailOrPhoneNumber(email);
+        String hashedIdentifier = piiSearchHashConverter.convertToDatabaseColumn(email);
+        Optional<User> userOpt = userRepository.findByEmailOrPhoneNumber(email, hashedIdentifier);
+
         if (userOpt.isEmpty()) {
             // Silently return to prevent user enumeration attacks
             log.info("Password reset requested for non-existent account: {}", email);

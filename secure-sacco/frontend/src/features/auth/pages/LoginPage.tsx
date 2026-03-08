@@ -51,8 +51,10 @@ export default function LoginPage() {
                 return; // Stop here and wait for the user to enter the code
             }
 
-            // 3. Normal Login Success Flow
+            // 3. Normal Login Success Flow — refreshUser triggers redirect if mustChangePassword
             await refreshUser();
+            // AuthProvider handles the /change-password redirect when flag is true.
+            // If we reach here, navigate normally.
             navigate('/dashboard');
 
         } catch (err: any) {

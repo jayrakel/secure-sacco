@@ -12,7 +12,8 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
-    boolean existsByPhoneNumber(String phoneNumber);
+    boolean existsByPhoneNumberHash(String phoneNumberHash);
+    Optional<User> findByPhoneNumberHash(String phoneNumberHash);
     boolean existsByEmailAndMustChangePasswordTrue(String email);
 
     Optional<User> findByEmail(String email);
@@ -21,8 +22,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @EntityGraph(attributePaths = {"member"})
     Optional<User> findWithMemberByEmail(String email);
 
-    @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.phoneNumber = :identifier")
-    Optional<User> findByEmailOrPhoneNumber(@Param("identifier") String identifier);
+    @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.phoneNumberHash = :hashedIdentifier")
+    Optional<User> findByEmailOrPhoneNumber(@Param("identifier") String identifier, @Param("hashedIdentifier") String hashedIdentifier);
 
     List<User> findAllByIsDeletedFalse();
 

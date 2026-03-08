@@ -31,6 +31,7 @@ import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalRe
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import ChangePasswordPage from './features/auth/pages/ChangePasswordPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -72,6 +73,9 @@ function App() {
                                 <ActivationPage />
                             </GuestRoute>
                         } />
+
+                        {/* Force password change — authenticated but restricted */}
+                        <Route path="/change-password" element={<ChangePasswordPage />} />
 
                         {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                         <Route element={<DashboardLayout />}>

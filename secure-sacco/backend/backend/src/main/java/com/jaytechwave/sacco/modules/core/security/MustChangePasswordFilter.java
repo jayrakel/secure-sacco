@@ -35,6 +35,9 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
      * Paths that are always allowed even when must_change_password is true.
      */
     private static final Set<String> ALLOWED_PATHS = Set.of(
+            "/api/v1/auth/me",               // must be allowed: frontend reads user state here
+            "/api/v1/auth/login",            // must be allowed: re-auth after session expiry
+            "/api/v1/auth/login/mfa",
             "/api/v1/auth/change-password",
             "/api/v1/auth/logout",
             "/api/v1/auth/csrf",

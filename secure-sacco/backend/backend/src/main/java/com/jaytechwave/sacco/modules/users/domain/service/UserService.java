@@ -214,6 +214,12 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void changePassword(User user, String newRawPassword) {
+        validatePasswordPolicy(newRawPassword);
+        user.setPasswordHash(passwordEncoder.encode(newRawPassword));
+        userRepository.save(user);
+    }
+
     private void validatePasswordPolicy(String rawPassword) {
         if (!passwordValidator.isValid(rawPassword)) {
             throw new IllegalArgumentException(passwordValidator.getRequirementsMessage());

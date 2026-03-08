@@ -25,14 +25,16 @@ import java.util.stream.Collectors;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final PiiSearchHashConverter piiSearchHashConverter;
 
+        @Override
+        @Transactional(readOnly = true)
+        public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+            // Hash the identifier for phone number lookup
+            String hashedIdentifier = piiSearchHashConverter.convertToDatabaseColumn(identifier);
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-        // 1. Fetch user by email or phone
-        User user = userRepository.findByEmailOrPhoneNumber(identifier)
-                .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
+            User user = userRepository.findByEmailOrPhoneNumber(identifier, hashedIdentifier)
+                    .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
 
         Set<GrantedAuthority> authorities = new HashSet<>();
 

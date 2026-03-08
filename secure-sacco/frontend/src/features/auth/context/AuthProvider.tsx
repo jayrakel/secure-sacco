@@ -10,6 +10,7 @@ interface User {
     permissions: string[];
     roles: string[];
     mfaEnabled?: boolean;
+    mustChangePassword?: boolean;
     memberNumber?: string;
     memberStatus?: string;
     memberId?: string;
@@ -47,6 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (response.data) {
                 setUser(response.data);
+                // Redirect immediately if backend says password must change
+                if (response.data.mustChangePassword && window.location.pathname !== '/change-password') {
+                    window.location.replace('/change-password');
+                }
             } else {
                 setUser(null);
             }
