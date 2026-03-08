@@ -13,6 +13,9 @@ jobs:
     name: Build & Deploy — Staging
     runs-on: ubuntu-latest
     environment: staging
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout
