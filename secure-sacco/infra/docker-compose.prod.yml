@@ -1,0 +1,135 @@
+services:
+
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: sacco_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-sacco_db}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - sacco_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME:-sacco_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - sacco-internal
+    # Postgres must NOT be exposed to the public internet
+    expose:
+      - "5432"
+
+  # ─── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.4-alpine
+    container_name: sacco_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --save 60 1 --loglevel warning
+    volumes:
+      - sacco_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - sacco-internal
+    expose:
+      - "6379"
+
+  # ─── Backend (Spring Boot) ───────────────────────────────────────────────────
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/backend:prod-latest}
+    container_name: sacco_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+
+      # Database
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-sacco_db}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # App config
+      APP_NAME: ${APP_NAME:-Secure SACCO}
+      APP_OFFICIAL_EMAIL_DOMAIN: ${APP_OFFICIAL_EMAIL_DOMAIN}
+      APP_DEFAULT_ADMIN_EMAIL: ${APP_DEFAULT_ADMIN_EMAIL}
+      APP_DEFAULT_ADMIN_PASSWORD: ${APP_DEFAULT_ADMIN_PASSWORD}
+      APP_DEFAULT_ADMIN_PHONE: ${APP_DEFAULT_ADMIN_PHONE}
+
+      # Argon2
+      APP_ARGON2_SALT_LENGTH: ${APP_ARGON2_SALT_LENGTH:-16}
+      APP_ARGON2_HASH_LENGTH: ${APP_ARGON2_HASH_LENGTH:-32}
+      APP_ARGON2_PARALLELISM: ${APP_ARGON2_PARALLELISM:-1}
+      APP_ARGON2_MEMORY: ${APP_ARGON2_MEMORY:-65536}
+      APP_ARGON2_ITERATIONS: ${APP_ARGON2_ITERATIONS:-3}
+
+      # M-Pesa / Daraja
+      MPESA_ENV: production
+      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY}
+      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET}
+      MPESA_PASSKEY: ${MPESA_PASSKEY}
+      MPESA_SHORTCODE: ${MPESA_SHORTCODE}
+      MPESA_B2C_SHORTCODE: ${MPESA_B2C_SHORTCODE:-}
+      MPESA_CALLBACK_BASE_URL: ${MPESA_CALLBACK_BASE_URL}
+      MPESA_ALLOWED_CALLBACK_IPS: ${MPESA_ALLOWED_CALLBACK_IPS:-196.201.214.200,196.201.214.206,196.201.213.114,196.201.214.207,196.201.214.208,196.201.214.209}
+
+      # CORS
+      FRONTEND_URL: ${FRONTEND_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - sacco-internal
+    expose:
+      - "8080"
+
+  # ─── Frontend (Nginx) ────────────────────────────────────────────────────────
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/frontend:prod-latest}
+    container_name: sacco_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      # Expose only frontend to the host; reverse proxy (Caddy/Nginx) handles TLS
+      - "127.0.0.1:3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80 > /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - sacco-internal
+
+volumes:
+  sacco_pg_data:
+    driver: local
+  sacco_redis_data:
+    driver: local
+
+networks:
+  sacco-internal:
+    driver: bridge
+    # Isolate all SACCO containers from other Docker workloads on the host
+    internal: false
