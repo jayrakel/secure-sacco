@@ -32,8 +32,9 @@ public class PenaltyRuleController {
     @Operation(summary = "List penalty rules")
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PenaltyRuleResponse>> listRules() {
-        return ResponseEntity.ok(penaltyRuleService.getAllRules());
+    public ResponseEntity<List<PenaltyRuleResponse>> listRules(
+            @RequestParam(defaultValue = "false") boolean activeOnly) {
+        return ResponseEntity.ok(penaltyRuleService.getAllRules(activeOnly));
     }
 
     @Operation(summary = "Update penalty rule")

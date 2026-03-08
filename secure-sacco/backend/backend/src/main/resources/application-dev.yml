@@ -13,6 +13,12 @@ sacco:
       shortcode: ${MPESA_SHORTCODE:174379}
       callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://5bc9-102-0-25-80.ngrok-free.app}
 
+# PII encryption keys — DEV FALLBACKS ONLY. NOT for production.
+# Set APP_FIELD_ENCRYPTION_KEY and APP_PII_HMAC_KEY env vars in prod/staging.
+app:
+  field-encryption-key: ${APP_FIELD_ENCRYPTION_KEY:dGVzdGVuY3J5cHRpb25rZXlfZm9yX2Rldl9vbmx5X18=}
+  pii-hmac-key: ${APP_PII_HMAC_KEY:dGVzdGhtYWNrZXlfZm9yX2Rldl9vbmx5XzMyYnl0ZXM=}
+
 server:
   servlet:
     session:

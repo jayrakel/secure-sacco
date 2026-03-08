@@ -36,6 +36,6 @@ sacco:
       callback-base-url: "http://localhost:8080"
 
 app:
-  field-encryption-key: dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXQ=  # 32-byte test key (NOT for prod)
-  pii-hmac-key: dGVzdGhtYWN0ZXN0aG1hY3Rlc3RobWFjdGVzdGhtYQ==       # 32-byte test HMAC (NOT for prod)
+  field-encryption-key: dGVzdGVuY3J5cHRpb25rZXlfZm9yX2Rldl9vbmx5X18=  # 32-byte test key (NOT for prod)
+  pii-hmac-key: dGVzdGhtYWNrZXlfZm9yX2Rldl9vbmx5XzMyYnl0ZXM=       # 32-byte test HMAC (NOT for prod)
 
