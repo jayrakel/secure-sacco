@@ -72,12 +72,24 @@ jobs:
 
       - name: Deploy to staging server
         uses: appleboy/ssh-action@v1
+        env:
+          APP_FIELD_ENCRYPTION_KEY: ${{ secrets.APP_FIELD_ENCRYPTION_KEY }}
+          APP_PII_HMAC_KEY: ${{ secrets.APP_PII_HMAC_KEY }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
+          envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD
           script: |
             cd /opt/sacco-staging
+            
+            echo "APP_FIELD_ENCRYPTION_KEY=$APP_FIELD_ENCRYPTION_KEY" > .env
+            echo "APP_PII_HMAC_KEY=$APP_PII_HMAC_KEY" >> .env
+            echo "REDIS_HOST=redis" >> .env
+            echo "REDIS_PORT=6379" >> .env
+            echo "REDIS_PASSWORD=$REDIS_PASSWORD" >> .env
+
             export BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:staging-latest
             export FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:staging-latest
             docker compose -f docker-compose.prod.yml pull
