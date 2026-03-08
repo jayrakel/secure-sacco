@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAuth } from '../../auth/context/AuthProvider';
 import { savingsApi, type StatementTransactionResponse } from '../../savings/api/savings-api';
 import { loanApi, type LoanApplication, type LoanSummary } from '../../loans/api/loan-api';
 import { penaltyApi, type PenaltySummary } from '../../penalties/api/penalty-api';
@@ -59,7 +58,6 @@ const exportSavingsCSV = (rows: StatementTransactionResponse[]) => {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const MemberPersonalReportsPage: React.FC = () => {
-    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('savings');
 
     // ── Savings state ──────────────────────────────────────────────────────────

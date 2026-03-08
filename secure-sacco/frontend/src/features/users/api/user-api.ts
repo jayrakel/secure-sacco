@@ -38,5 +38,10 @@ export const userApi = {
     deleteUser: async (id: string) => {
         const response = await apiClient.delete(`/users/${id}`);
         return response.data;
+    },
+
+    updateUserRoles: async (id: string, roleIds: string[]) => {
+        const response = await apiClient.put(`/users/${id}/roles`, { roleIds });
+        return response.data;
     }
 };
