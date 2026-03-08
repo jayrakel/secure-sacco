@@ -44,18 +44,16 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
-#    repair-on-migrate: true
-#    out-of-order: true
 
   jackson:
     time-zone: UTC
 
+# LOGGING: Base profile logs only at INFO/WARN.
+# DEBUG-level security and web logging is in application-dev.yml ONLY.
+# This prevents accidental sensitive log leakage if the prod profile is not activated.
 logging:
   level:
     root: INFO
-    org.springframework.security: DEBUG
-    org.springframework.web.cors: DEBUG
-    org.springframework.web: DEBUG
     org.flywaydb: INFO
 
 app:
@@ -96,8 +94,10 @@ sacco:
       b2c-shortcode: ${MPESA_B2C_SHORTCODE:}
 
       # Webhooks / Callbacks
-      # Base URL for Daraja to send asynchronous responses back to your server
       callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://api.securesacco.com}
+
+      # Callback IP allowlist (Safaricom production IP ranges)
+      allowed-callback-ips: ${MPESA_ALLOWED_CALLBACK_IPS:196.201.214.200,196.201.214.206,196.201.213.114,196.201.214.207,196.201.214.208,196.201.214.209}
 
       # Specific API Endpoints Callbacks (Relative paths)
       endpoints:
@@ -106,4 +106,3 @@ sacco:
         c2b-confirmation: /api/v1/payments/mpesa/c2b-confirm
         b2c-result: /api/v1/payments/mpesa/b2c-result
         b2c-queue-timeout: /api/v1/payments/mpesa/b2c-queue-timeout
-

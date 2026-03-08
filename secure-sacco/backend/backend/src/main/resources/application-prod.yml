@@ -31,3 +31,11 @@ logging:
     org.springframework.security: WARN
     org.springframework.web: WARN
     org.flywaydb: WARN
+
+# Production: admin credentials MUST be set via environment variables.
+# No fallback values — application will fail to start if these are missing.
+app:
+  default-admin:
+    email: ${APP_DEFAULT_ADMIN_EMAIL}
+    password: ${APP_DEFAULT_ADMIN_PASSWORD}
+    phone: ${APP_DEFAULT_ADMIN_PHONE}

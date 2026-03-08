@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class DataInitializer {
 
+    private static final String KNOWN_DEFAULT_PASSWORD = "Admin@12345678";
+
     private final UserService userService;
 
     @Value("${app.default-admin.email}")
@@ -32,25 +34,38 @@ public class DataInitializer {
     @Transactional
     public CommandLineRunner seedSystemAdmin() {
         return args -> {
-            log.info("🚀 Running startup seed: SYSTEM_ADMIN");
-
+            log.info("Running startup seed: SYSTEM_ADMIN");
+            warnIfDefaultCredentials();
             initializeAdminUser();
-
-            log.info("✅ Startup seed complete.");
+            log.info("Startup seed complete.");
         };
+    }
+
+    /**
+     * Emits a loud WARN at startup if the admin password matches the well-known
+     * default. This catches deployments that forgot to override the env variable.
+     */
+    private void warnIfDefaultCredentials() {
+        if (KNOWN_DEFAULT_PASSWORD.equals(adminPassword)) {
+            log.warn("======================================================================");
+            log.warn("  SECURITY WARNING: APP_DEFAULT_ADMIN_PASSWORD is set to the default  ");
+            log.warn("  value. Override it immediately via the APP_DEFAULT_ADMIN_PASSWORD    ");
+            log.warn("  environment variable before going to production.                     ");
+            log.warn("======================================================================");
+        }
     }
 
     private void initializeAdminUser() {
         boolean adminExists = userService.existsByEmail(adminEmail);
 
         if (adminExists) {
-            log.info("ℹ️ SYSTEM_ADMIN user already exists: {}", adminEmail);
+            log.info("SYSTEM_ADMIN user already exists: {}", adminEmail);
             return;
         }
 
         String officialEmail = "admin@" + officialEmailDomain;
 
-        log.info("👤 Creating bootstrap SYSTEM_ADMIN user...");
+        log.info("Creating bootstrap SYSTEM_ADMIN user: {}", adminEmail);
 
         userService.createBootstrapSystemAdmin(
                 "System",
@@ -58,9 +73,10 @@ public class DataInitializer {
                 adminEmail,
                 officialEmail,
                 adminPhone,
-                adminPassword
+                adminPassword,
+                true  // mustChangePassword = true — force password change on first login
         );
 
-        log.info("✅ Bootstrap SYSTEM_ADMIN user created: {}", adminEmail);
+        log.info("Bootstrap SYSTEM_ADMIN created. The user MUST change their password on first login.");
     }
 }

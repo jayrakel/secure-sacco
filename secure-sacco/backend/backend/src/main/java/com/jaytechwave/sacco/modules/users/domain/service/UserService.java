@@ -175,7 +175,8 @@ public class UserService {
     @Transactional
     public User createBootstrapSystemAdmin(
             String firstName, String lastName, String loginEmail,
-            String officialEmail, String phoneNumber, String rawPassword
+            String officialEmail, String phoneNumber, String rawPassword,
+            boolean mustChangePassword
     ) {
         validatePasswordPolicy(rawPassword);
 
@@ -199,6 +200,7 @@ public class UserService {
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .status(UserStatus.ACTIVE)
                 .isDeleted(false)
+                .mustChangePassword(mustChangePassword)
                 .build();
 
         user.getRoles().add(systemAdminRole);

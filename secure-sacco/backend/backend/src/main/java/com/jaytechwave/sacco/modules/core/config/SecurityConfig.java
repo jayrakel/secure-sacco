@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.core.config;
 
 import com.jaytechwave.sacco.modules.core.security.SecurityHeadersFilter;
 import com.jaytechwave.sacco.modules.core.security.CsrfCookieFilter;
+import com.jaytechwave.sacco.modules.core.security.MustChangePasswordFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,7 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter, MustChangePasswordFilter mustChangePasswordFilter) throws Exception {
 
             // --- 1. Custom Security Headers & Request Tracing ---
             http.addFilterBefore(securityHeadersFilter, org.springframework.security.web.session.SessionManagementFilter.class);
@@ -75,6 +76,7 @@ public class SecurityConfig {
                         )
                 )
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+                .addFilterAfter(mustChangePasswordFilter, CsrfCookieFilter.class)
                 .sessionManagement(session -> session
                         .sessionFixation().migrateSession()
                         .maximumSessions(5)

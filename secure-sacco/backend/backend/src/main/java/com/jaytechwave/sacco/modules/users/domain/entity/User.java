@@ -68,6 +68,10 @@ public class User {
     @Column(name = "mfa_secret")
     private String mfaSecret;
 
+    @Column(name = "must_change_password", nullable = false)
+    @Builder.Default
+    private boolean mustChangePassword = false;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private com.jaytechwave.sacco.modules.members.domain.entity.Member member;
