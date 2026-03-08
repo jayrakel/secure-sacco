@@ -86,7 +86,7 @@ public class LoanReportingService {
     }
 
     @Transactional(readOnly = true)
-    public List<ArrearsSummaryResponse> getStaffArrearsReport() {
+    public List<ArrearsSummaryResponse> getArrearsReport() {
         // Find all strictly overdue schedule items system-wide
         List<LoanScheduleItem> overdueItems = scheduleItemRepository.findByStatus(LoanScheduleStatus.OVERDUE);
 

@@ -62,3 +62,8 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+springdoc:
+  swagger-ui:
+    enabled: false   # UI disabled in prod; /api-docs JSON still available for SYSTEM_ADMIN
+

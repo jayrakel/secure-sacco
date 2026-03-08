@@ -3,6 +3,8 @@ package com.jaytechwave.sacco.modules.audit.api.controller;
 import com.jaytechwave.sacco.modules.audit.api.dto.AuditLogDTO;
 import com.jaytechwave.sacco.modules.audit.domain.entity.SecurityAuditLog;
 import com.jaytechwave.sacco.modules.audit.domain.repository.SecurityAuditLogRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,10 +26,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/audit")
 @RequiredArgsConstructor
+@Tag(name = "Audit", description = "Security and operation audit log viewer")
 public class AuditController {
 
     private final SecurityAuditLogRepository auditLogRepository;
 
+    @Operation(summary = "Get audit logs", description = "Paginated, filterable audit log. Restricted to SYSTEM_ADMIN.")
     @GetMapping("/logs")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<Map<String, Object>> getLogs(

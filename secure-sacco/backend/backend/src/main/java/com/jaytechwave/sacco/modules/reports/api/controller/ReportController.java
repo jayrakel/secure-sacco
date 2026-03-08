@@ -8,6 +8,8 @@ import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.PaymentLineDTO;
 import com.jaytechwave.sacco.modules.reports.domain.service.ReportService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,11 +24,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
+@Tag(name = "Reports", description = "Financial reports, member statements, arrears and collection summaries")
 public class ReportController {
 
     private final ReportService reportService;
     private final UserRepository userRepository;
 
+    @Operation(summary = "Financial overview", description = "Returns financial summary for all members. Requires REPORTS_READ.")
     @GetMapping("/financial-overview")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<List<FinancialOverviewDTO>> getFinancialOverview() {
@@ -34,6 +38,7 @@ public class ReportController {
     }
 
     // --- NEW: MINI SUMMARY WIDGET ENDPOINT ---
+    @Operation(summary = "My financial summary", description = "Returns a mini summary widget for the authenticated member.")
     @GetMapping("/me/summary")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<MemberMiniSummaryDTO> getMySummary() {
@@ -48,6 +53,7 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getMySummary(user.getMember().getId()));
     }
 
+    @Operation(summary = "Member transaction statement", description = "Returns a member's statement. Staff (REPORTS_READ) can view any member; members can only view their own.")
     @GetMapping("/members/{memberId}/statement")
     public ResponseEntity<List<StatementItemDTO>> getMemberStatement(
             @PathVariable UUID memberId,
@@ -71,6 +77,7 @@ public class ReportController {
     }
 
     // --- NEW: LOAN ARREARS AGING REPORT ---
+    @Operation(summary = "Loan arrears aging report", description = "Returns loans in arrears grouped by aging bucket. Requires REPORTS_READ.")
     @GetMapping("/loans/arrears")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<List<LoanArrearsDTO>> getLoanArrearsReport(
@@ -78,6 +85,7 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getLoanArrearsReport(bucket));
     }
 
+    @Operation(summary = "Daily collections summary", description = "Returns total collections for a given date. Requires REPORTS_READ.")
     @GetMapping("/collections/daily")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.DailyCollectionDTO> getDailyCollections(
@@ -86,6 +94,7 @@ public class ReportController {
     }
 
     // --- DRILLDOWN: Individual rows for the Daily Collections page ---
+    @Operation(summary = "Daily collections line items", description = "Returns individual payment rows for a given date. Requires REPORTS_READ.")
     @GetMapping("/collections/daily/lines")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<List<PaymentLineDTO>> getDailyCollectionLines(
@@ -93,6 +102,7 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getDailyCollectionLines(date));
     }
 
+    @Operation(summary = "Income report", description = "Returns interest and fee income for a date range. Requires REPORTS_READ.")
     @GetMapping("/income")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.IncomeReportDTO> getIncomeReport(

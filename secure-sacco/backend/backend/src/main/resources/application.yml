@@ -137,3 +137,15 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    tags-sorter: alpha
+    operations-sorter: method
+    display-request-duration: true
+  packages-to-scan: com.jaytechwave.sacco.modules
+  paths-to-exclude: /actuator/**
+

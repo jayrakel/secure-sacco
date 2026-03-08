@@ -7,6 +7,8 @@ import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRes
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,12 +24,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
+@Tag(name = "Payments", description = "M-Pesa STK push and callback handling")
 public class PaymentController {
 
     private final PaymentService paymentService;
     private final ObjectMapper objectMapper;
     private final UserRepository UserRepository;
 
+    @Operation(summary = "Initiate STK push", description = "Sends an M-Pesa STK push prompt to the member's phone.")
     @PostMapping("/stk-push")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<InitiateStkResponse> initiateStkPush
@@ -43,7 +47,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.initiateMpesaStkPush(request, memberId));
     }
 
-    // --- NEW WEBHOOK ENDPOINT ---
+    @Operation(summary = "M-Pesa STK callback", description = "Webhook called by Safaricom after payment confirmation. Protected by IP whitelist.")
     @PostMapping("/mpesa/stk-callback")
     // Note: No @PreAuthorize here because Safaricom calls this, not an authenticated user
     public ResponseEntity<Map<String, String>> handleStkCallback(@RequestBody String rawJsonBody) {

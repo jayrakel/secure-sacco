@@ -2,6 +2,8 @@ package com.jaytechwave.sacco.modules.roles.api.controller;
 
 import com.jaytechwave.sacco.modules.roles.api.dto.RoleDTOs.PermissionResponse;
 import com.jaytechwave.sacco.modules.roles.service.RoleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,11 +16,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/permissions")
 @RequiredArgsConstructor
+@Tag(name = "Roles", description = "Role and permission management")
 public class PermissionController {
 
     private final RoleService roleService;
 
-    // Both ROLE_READ and ROLE_CREATE require seeing the list of available permissions to assign them
+    @Operation(summary = "List all permissions", description = "Returns the full permission catalogue for use in role assignment.")
     @PreAuthorize("hasAnyAuthority('ROLE_READ', 'ROLE_CREATE')")
     @GetMapping
     public ResponseEntity<List<PermissionResponse>> getAllPermissions() {

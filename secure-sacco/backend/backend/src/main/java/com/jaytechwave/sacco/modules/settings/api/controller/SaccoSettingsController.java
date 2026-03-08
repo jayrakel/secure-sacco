@@ -5,6 +5,8 @@ import com.jaytechwave.sacco.modules.settings.api.dto.SaccoSettingsDTOs.*;
 import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.service.PrefixGeneratorService;
 import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +20,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/settings/sacco")
 @RequiredArgsConstructor
+@Tag(name = "Settings", description = "SACCO configuration and feature flags")
 public class SaccoSettingsController {
 
     private final SaccoSettingsService settingsService;
     private final SecurityAuditService auditService;
     private final PrefixGeneratorService prefixGeneratorService; // Injected generator
 
+    @Operation(summary = "Get SACCO settings")
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getSettings() {
@@ -42,6 +46,7 @@ public class SaccoSettingsController {
     }
 
     // --- NEW: Generate Prefix Preview ---
+    @Operation(summary = "Preview member number prefix")
     @GetMapping("/generate-prefix")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> generatePrefixPreview(@RequestParam String name) {
@@ -49,6 +54,7 @@ public class SaccoSettingsController {
         return ResponseEntity.ok(Map.of("prefix", generatedPrefix));
     }
 
+    @Operation(summary = "Initialize SACCO settings", description = "One-time setup of core SACCO configuration. Requires SYSTEM_ADMIN.")
     @PostMapping("/initialize")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> initializeSettings(@Valid @RequestBody InitializeRequest request, Authentication auth, HttpServletRequest httpRequest) {
@@ -69,6 +75,7 @@ public class SaccoSettingsController {
         }
     }
 
+    @Operation(summary = "Update core settings")
     @PutMapping
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> updateCoreSettings(@Valid @RequestBody UpdateCoreRequest request, Authentication auth, HttpServletRequest httpRequest) {
@@ -85,6 +92,7 @@ public class SaccoSettingsController {
         return ResponseEntity.ok(Map.of("message", "Settings updated successfully", "settings", settings));
     }
 
+    @Operation(summary = "Update feature flags", description = "Enable or disable SACCO modules.")
     @PutMapping("/flags")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> updateFeatureFlags(@Valid @RequestBody UpdateFlagsRequest request, Authentication auth, HttpServletRequest httpRequest) {

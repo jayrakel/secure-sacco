@@ -5,6 +5,9 @@ import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanApplicationService;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +21,16 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/loans/applications")
 @RequiredArgsConstructor
+@Tag(name = "Loans", description = "Loan applications, approval workflow, disbursement")
 public class LoanApplicationController {
 
     private final LoanApplicationService loanApplicationService;
     private final LoanRepaymentService loanRepaymentService;
 
+    @Operation(summary = "Submit loan application", description = "Creates a new loan application for the authenticated member. Starts in DRAFT status.",
+        responses = { @ApiResponse(responseCode = "200", description = "Application created"),
+                      @ApiResponse(responseCode = "400", description = "Validation error"),
+                      @ApiResponse(responseCode = "403", description = "Not an active member") })
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<LoanApplicationResponse> createApplication(
@@ -65,6 +73,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.getGuarantors(id));
     }
 
+    @Operation(summary = "Submit application for review", description = "Transitions application from DRAFT to PENDING_APPROVAL.")
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<Void> submitApplication(
@@ -74,24 +83,28 @@ public class LoanApplicationController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Get my loan applications", description = "Returns all loan applications for the authenticated member.")
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<List<LoanApplicationResponse>> getMyApplications(Authentication authentication) {
         return ResponseEntity.ok(loanApplicationService.getMyApplications(authentication.getName()));
     }
 
+    @Operation(summary = "Get all loan applications", description = "Returns all applications. Requires loan officer or approver permission.")
     @GetMapping("/all")
     @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE') or hasAuthority('LOANS_DISBURSE')")
     public ResponseEntity<List<LoanApplicationResponse>> getAllApplications() {
         return ResponseEntity.ok(loanApplicationService.getAllApplications());
     }
 
+    @Operation(summary = "Get applications queue by status", description = "Returns applications filtered by status (e.g. PENDING_APPROVAL, VERIFIED).")
     @GetMapping("/queue/{status}")
     @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
     public ResponseEntity<List<LoanApplicationResponse>> getApplicationsQueue(@PathVariable String status) {
         return ResponseEntity.ok(loanApplicationService.getApplicationsByStatus(LoanStatus.valueOf(status.toUpperCase())));
     }
 
+    @Operation(summary = "Verify application", description = "Loans Officer first-level review. Transitions to VERIFIED or REJECTED.")
     @PostMapping("/{id}/verify")
     @PreAuthorize("hasAuthority('LOANS_APPROVE')")
     public ResponseEntity<LoanApplicationResponse> verifyApplication(
@@ -101,6 +114,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.verifyApplication(id, request, authentication.getName()));
     }
 
+    @Operation(summary = "Approve application", description = "Loans Committee final approval. Transitions to APPROVED.")
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('LOANS_COMMITTEE_APPROVE')")
     public ResponseEntity<LoanApplicationResponse> approveApplication(
@@ -110,6 +124,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.approveApplication(id, request, authentication.getName()));
     }
 
+    @Operation(summary = "Reject application", description = "Reject an application at any review stage.")
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('LOANS_APPROVE') or hasAuthority('LOANS_COMMITTEE_APPROVE')")
     public ResponseEntity<LoanApplicationResponse> rejectApplication(
@@ -119,6 +134,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.rejectApplication(id, request, authentication.getName()));
     }
 
+    @Operation(summary = "Disburse loan", description = "Mark an APPROVED loan as ACTIVE and trigger disbursement. Requires LOANS_DISBURSE.")
     @PostMapping("/{id}/disburse")
     @PreAuthorize("hasAuthority('LOANS_DISBURSE')")
     public ResponseEntity<LoanApplicationResponse> disburseApplication(
@@ -127,6 +143,7 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.disburseApplication(id, authentication.getName()));
     }
 
+    @Operation(summary = "Initiate loan repayment", description = "Triggers an M-Pesa STK push for a loan repayment instalment.")
     @PostMapping("/{id}/repay")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<InitiateStkResponse> initiateRepayment(

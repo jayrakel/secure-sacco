@@ -96,13 +96,16 @@ public class SecurityConfig {
                                 "/api/v1/auth/activation/**",
                                 "/api/v1/auth/reset-password",
                                 "/error"
-                        ).permitAll()
+                                ).permitAll()
 
                         // --- M-Pesa callbacks (unauthenticated — Safaricom calls these) ---
                         .requestMatchers("/api/v1/payments/mpesa/**").permitAll()
 
                         // --- Actuator: health is public (load balancer probes) ---
                         .requestMatchers("/actuator/health").permitAll()
+
+                        // --- OpenAPI / Swagger UI (dev only; disabled in prod via application-prod.yml) ---
+                        .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         // --- Actuator: metrics and prometheus require SYSTEM_ADMIN ---
                         .requestMatchers("/actuator/**").hasAuthority("ROLE_SYSTEM_ADMIN")

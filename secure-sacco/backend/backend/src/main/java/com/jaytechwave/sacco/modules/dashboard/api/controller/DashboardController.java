@@ -3,6 +3,8 @@ package com.jaytechwave.sacco.modules.dashboard.api.controller;
 import com.jaytechwave.sacco.modules.dashboard.api.dto.DashboardDTOs;
 import com.jaytechwave.sacco.modules.dashboard.api.dto.DashboardDTOs.StaffDashboardDTO;
 import com.jaytechwave.sacco.modules.dashboard.domain.service.DashboardService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,17 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
+@Tag(name = "Dashboard", description = "Aggregated SACCO metrics for staff and member dashboards")
 public class DashboardController {
 
     private final DashboardService dashboardService;
 
     // Secure it purely on REPORTS_READ because V32 proved SYSTEM_ADMIN holds this!
+    @Operation(summary = "Staff dashboard metrics", description = "Returns 15 aggregated KPIs for the staff dashboard. Cached in Redis for 5 minutes. Requires REPORTS_READ.")
     @GetMapping("/staff")
     @PreAuthorize("hasAuthority('REPORTS_READ')")
     public ResponseEntity<StaffDashboardDTO> getStaffDashboard() {
         return ResponseEntity.ok(dashboardService.getStaffDashboardMetrics());
     }
 
+    @Operation(summary = "Member dashboard metrics", description = "Returns personalised KPIs for the authenticated member. Requires ROLE_MEMBER.")
     @GetMapping("/member")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<DashboardDTOs.MemberDashboardDTO> getMemberDashboard(Authentication authentication) {

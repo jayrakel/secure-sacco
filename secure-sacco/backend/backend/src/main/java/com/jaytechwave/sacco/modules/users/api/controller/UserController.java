@@ -2,6 +2,8 @@ package com.jaytechwave.sacco.modules.users.api.controller;
 
 import com.jaytechwave.sacco.modules.users.api.dto.UserDTOs.*;
 import com.jaytechwave.sacco.modules.users.domain.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,35 +18,40 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "User account management, roles, permissions")
 public class UserController {
 
     private final UserService userService;
 
+    @Operation(summary = "List all users")
     @PreAuthorize("hasAuthority('USER_READ')")
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    @Operation(summary = "Get user by ID")
     @PreAuthorize("hasAuthority('USER_READ')")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    @Operation(summary = "Create user", description = "Create a new user account and assign roles. Requires USER_CREATE.")
     @PreAuthorize("hasAuthority('USER_CREATE')")
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
 
+    @Operation(summary = "Update user")
     @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 
-    // PATCH for suspending or activating accounts
+    @Operation(summary = "Change user status", description = "Suspend or reactivate a user account.")
     @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateUserStatus(@PathVariable UUID id, @Valid @RequestBody UpdateUserStatusRequest request) {

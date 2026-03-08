@@ -7,6 +7,8 @@ import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.dto.ForgotPasswordRequest;
 import com.jaytechwave.sacco.modules.core.dto.ResetPasswordRequest;
 import com.jaytechwave.sacco.modules.core.service.PasswordResetService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -232,6 +234,7 @@ public class AuthController {
         request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
     }
 
+    @Operation(summary = "Logout", description = "Invalidates the server-side session and clears the session and CSRF cookies.")
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         // 1. Invalidate Spring Session server-side
@@ -260,6 +263,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
+    @Operation(summary = "Get current user", description = "Returns the authenticated user's profile, permissions, roles, and linked member details.")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
@@ -292,6 +296,7 @@ public class AuthController {
         return ResponseEntity.ok(responseBody);
     }
 
+    @Operation(summary = "Request password reset", description = "Sends a password reset link to the user's email. Always returns 200 to prevent user enumeration.")
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
         passwordResetService.generatePasswordResetToken(request.getEmail());
@@ -302,6 +307,9 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "If an account with that email exists, a password reset link has been sent."));
     }
 
+    @Operation(summary = "Reset password", description = "Set a new password using a valid reset token received by email.",
+        responses = { @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+                      @ApiResponse(responseCode = "400", description = "Invalid or expired token") })
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
         try {

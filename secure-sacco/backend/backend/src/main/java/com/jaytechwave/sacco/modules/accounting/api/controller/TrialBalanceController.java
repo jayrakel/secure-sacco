@@ -2,6 +2,8 @@ package com.jaytechwave.sacco.modules.accounting.api.controller;
 
 import com.jaytechwave.sacco.modules.accounting.api.dto.TrialBalanceDTOs.AccountLineDTO;
 import com.jaytechwave.sacco.modules.accounting.api.dto.TrialBalanceDTOs.TrialBalanceResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +21,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/accounting/trial-balance")
 @RequiredArgsConstructor
+@Tag(name = "Accounting", description = "General ledger journal entries and trial balance")
 public class TrialBalanceController {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Operation(summary = "Get trial balance", description = "Returns the GL trial balance as of a given date. Requires GL_TRIAL_BALANCE permission.")
     @GetMapping
     @PreAuthorize("hasAuthority('GL_TRIAL_BALANCE')")
     public ResponseEntity<TrialBalanceResponse> getTrialBalance(
