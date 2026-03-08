@@ -34,3 +34,8 @@ sacco:
       passkey: test_passkey
       shortcode: "174379"
       callback-base-url: "http://localhost:8080"
+
+app:
+  field-encryption-key: dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXQ=  # 32-byte test key (NOT for prod)
+  pii-hmac-key: dGVzdGhtYWN0ZXN0aG1hY3Rlc3RobWFjdGVzdGhtYQ==       # 32-byte test HMAC (NOT for prod)
+

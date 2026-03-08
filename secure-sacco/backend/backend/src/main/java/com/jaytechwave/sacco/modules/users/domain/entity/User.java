@@ -1,5 +1,7 @@
 package com.jaytechwave.sacco.modules.users.domain.entity;
 
+import com.jaytechwave.sacco.modules.core.security.EncryptedStringConverter;
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,8 +33,13 @@ public class User {
     @Column(name = "official_email")
     private String officialEmail;
 
-    @Column(name = "phone_number")
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "phone_number", length = 512)
     private String phoneNumber;
+
+    @Convert(converter = PiiSearchHashConverter.class)
+    @Column(name = "phone_number_hash", length = 88)
+    private String phoneNumberHash;
 
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;

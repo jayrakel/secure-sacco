@@ -67,6 +67,9 @@ logging:
     org.flywaydb: INFO
 
 app:
+  field-encryption-key: ${APP_FIELD_ENCRYPTION_KEY}   # Base64-encoded 32-byte AES key
+  pii-hmac-key: ${APP_PII_HMAC_KEY}                   # Base64-encoded 32-byte HMAC key
+
   official-email-domain: ${APP_OFFICIAL_EMAIL_DOMAIN:jaytechwave.org}
 
   default-admin:

@@ -1,5 +1,7 @@
 package com.jaytechwave.sacco.modules.members.domain.entity;
 
+import com.jaytechwave.sacco.modules.core.security.EncryptedStringConverter;
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,11 +44,21 @@ public class Member {
     @Column(name = "last_name", nullable = false, length = 80)
     private String lastName;
 
-    @Column(name = "national_id", unique = true, length = 50)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "national_id", length = 512)
     private String nationalId;
 
-    @Column(name = "phone_number", length = 30)
+    @Convert(converter = PiiSearchHashConverter.class)
+    @Column(name = "national_id_hash", length = 88)
+    private String nationalIdHash;
+
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "phone_number", length = 512)
     private String phoneNumber;
+
+    @Convert(converter = PiiSearchHashConverter.class)
+    @Column(name = "phone_number_hash", length = 88)
+    private String phoneNumberHash;
 
     @Column(name = "email", length = 120)
     private String email;
