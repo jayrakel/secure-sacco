@@ -1,5 +1,7 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
+import com.jaytechwave.sacco.modules.core.api.dto.MfaDTOs.MfaLoginRequest;
+import com.jaytechwave.sacco.modules.core.api.dto.MfaDTOs.VerifyMfaRequest;
 import com.jaytechwave.sacco.modules.core.api.dto.LoginRequest;
 import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService;
 import com.jaytechwave.sacco.modules.core.service.LoginAttemptService;

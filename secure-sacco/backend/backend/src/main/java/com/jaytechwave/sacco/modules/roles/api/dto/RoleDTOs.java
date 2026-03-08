@@ -41,4 +41,13 @@ public class RoleDTOs {
         private String code;
         private String description;
     }
+
+    @Data
+    public static class UpdateRoleRequest {
+        @NotBlank(message = "Role name is required")
+        private String name;
+        private String description;
+    }
+
+
 }

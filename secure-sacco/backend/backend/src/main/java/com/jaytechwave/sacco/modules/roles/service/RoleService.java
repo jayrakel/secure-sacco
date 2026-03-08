@@ -71,6 +71,49 @@ public class RoleService {
     }
 
     @Transactional
+    public RoleResponse updateRole(UUID id, UpdateRoleRequest request) {
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+
+        // Prevent renaming SYSTEM_ADMIN
+        if ("SYSTEM_ADMIN".equals(role.getName())) {
+            throw new IllegalStateException("Cannot modify the SYSTEM_ADMIN role");
+        }
+
+        role.setName(request.getName().trim().toUpperCase());
+        role.setDescription(request.getDescription());
+
+        Role savedRole = roleRepository.save(role);
+
+        securityAuditService.logEvent(
+                "ROLE_UPDATED",
+                "Role: " + savedRole.getName(),
+                "Updated role name/description"
+        );
+
+        return mapToRoleResponse(savedRole);
+    }
+
+    @Transactional
+    public void deleteRole(UUID id) {
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+
+        // Prevent deletion of SYSTEM_ADMIN to avoid lockouts
+        if ("SYSTEM_ADMIN".equals(role.getName())) {
+            throw new IllegalStateException("Cannot delete the SYSTEM_ADMIN role");
+        }
+
+        roleRepository.delete(role);
+
+        securityAuditService.logEvent(
+                "ROLE_DELETED",
+                "Role: " + role.getName(),
+                "Deleted role: " + role.getName()
+        );
+    }
+
+    @Transactional
     public void updateRolePermissions(UUID roleId, Set<UUID> permissionIds) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found"));
