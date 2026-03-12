@@ -38,7 +38,7 @@ export interface MyMeetingSummary {
 
 export const meetingsApi = {
     list: (): Promise<Meeting[]> =>
-        apiClient.get(API).then(r => r.data),
+        apiClient.get(API).then(r => r.data?.content ?? r.data),
 
     get: (id: string): Promise<Meeting> =>
         apiClient.get(`${API}/${id}`).then(r => r.data),

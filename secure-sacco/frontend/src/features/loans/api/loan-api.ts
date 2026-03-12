@@ -11,8 +11,6 @@ export interface LoanProduct {
     applicationFee: number;
     gracePeriodDays: number;
     isActive: boolean;
-    minAmount: number;
-    maxAmount: number;
 }
 
 export interface LoanGuarantor {
@@ -78,7 +76,7 @@ export const loanApi = {
 
     // --- STAFF ENDPOINTS ---
     getAllApplications: () =>
-        apiClient.get<LoanApplication[]>('/loans/applications/all').then(res => res.data),
+        apiClient.get('/loans/applications/all').then(res => res.data?.content ?? res.data),
 
     verifyApplication: (id: string, data: { notes: string }) =>
         apiClient.post<LoanApplication>(`/loans/applications/${id}/verify`, data).then(res => res.data),
