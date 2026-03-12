@@ -1,0 +1,155 @@
+package com.jaytechwave.sacco.modules.obligations.domain.service;
+
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.obligations.api.dto.ObligationDTOs.*;
+import com.jaytechwave.sacco.modules.obligations.domain.entity.*;
+import com.jaytechwave.sacco.modules.obligations.domain.repository.SavingsObligationPeriodRepository;
+import com.jaytechwave.sacco.modules.obligations.domain.repository.SavingsObligationRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.DayOfWeek;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ObligationService {
+
+    private final SavingsObligationRepository       obligationRepository;
+    private final SavingsObligationPeriodRepository periodRepository;
+    private final MemberRepository                  memberRepository;
+    private final ObligationPeriodService           periodService;
+
+    // ── Staff: create obligation ───────────────────────────────────────────────
+
+    @Transactional
+    public ObligationResponse createObligation(CreateObligationRequest request) {
+        memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("Member not found: " + request.getMemberId()));
+
+        SavingsObligation obligation = SavingsObligation.builder()
+                .memberId(request.getMemberId())
+                .frequency(request.getFrequency())
+                .amountDue(request.getAmountDue())
+                .startDate(request.getStartDate())
+                .graceDays(request.getGraceDays())
+                .status(ObligationStatus.ACTIVE)
+                .build();
+
+        SavingsObligation saved = obligationRepository.save(obligation);
+        log.info("Created savings obligation {} for member {} ({} @ {})",
+                saved.getId(), saved.getMemberId(), saved.getFrequency(), saved.getAmountDue());
+        return ObligationResponse.from(saved);
+    }
+
+    // ── Staff: update status ───────────────────────────────────────────────────
+
+    @Transactional
+    public ObligationResponse updateStatus(UUID obligationId, UpdateObligationStatusRequest request) {
+        SavingsObligation obligation = obligationRepository.findById(obligationId)
+                .orElseThrow(() -> new IllegalArgumentException("Obligation not found: " + obligationId));
+        obligation.setStatus(request.getStatus());
+        return ObligationResponse.from(obligationRepository.save(obligation));
+    }
+
+    // ── Staff: compliance report ──────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Page<ObligationComplianceEntry> getComplianceReport(Pageable pageable) {
+        // Get all obligations with at least one overdue period
+        List<Object[]> overdueSummary = periodRepository.findOverdueSummaryPerMember();
+
+        // Build member ID → summary map
+        Map<UUID, Object[]> summaryMap = overdueSummary.stream()
+                .collect(Collectors.toMap(row -> (UUID) row[0], row -> row));
+
+        // Fetch all active obligations and map to compliance entries
+        List<SavingsObligation> allActive = obligationRepository.findByStatus(ObligationStatus.ACTIVE);
+
+        List<ObligationComplianceEntry> entries = new ArrayList<>();
+        for (SavingsObligation obligation : allActive) {
+            Object[] summary = summaryMap.get(obligation.getMemberId());
+            long overdueCount    = summary != null ? ((Number) summary[1]).longValue() : 0L;
+            BigDecimal shortfall = summary != null ? (BigDecimal) summary[2] : BigDecimal.ZERO;
+
+            Member member = memberRepository.findById(obligation.getMemberId()).orElse(null);
+            String memberNumber = member != null ? member.getMemberNumber() : "Unknown";
+            String memberName   = member != null ? member.getFirstName() + " " + member.getLastName() : "Unknown";
+
+            entries.add(ObligationComplianceEntry.builder()
+                    .memberId(obligation.getMemberId())
+                    .memberNumber(memberNumber)
+                    .memberName(memberName)
+                    .frequency(obligation.getFrequency())
+                    .amountDue(obligation.getAmountDue())
+                    .totalOverduePeriods(overdueCount)
+                    .totalShortfall(shortfall != null ? shortfall : BigDecimal.ZERO)
+                    .worstStatus(overdueCount > 0 ? PeriodStatus.OVERDUE : PeriodStatus.DUE)
+                    .build());
+        }
+
+        // Manual pagination
+        int start = (int) pageable.getOffset();
+        int end   = Math.min(start + pageable.getPageSize(), entries.size());
+        List<ObligationComplianceEntry> page = start < entries.size() ? entries.subList(start, end) : List.of();
+        return new PageImpl<>(page, pageable, entries.size());
+    }
+
+    // ── Member: my obligations ────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<ObligationResponse> getMyObligations(UUID memberId) {
+        List<SavingsObligation> obligations = obligationRepository.findByMemberIdAndStatus(memberId, ObligationStatus.ACTIVE);
+        List<ObligationResponse> responses  = new ArrayList<>();
+
+        for (SavingsObligation obligation : obligations) {
+            ObligationResponse response = ObligationResponse.from(obligation);
+
+            // Attach current period
+            LocalDate periodStart = currentPeriodStart(obligation);
+            periodRepository.findByObligationIdAndPeriodStart(obligation.getId(), periodStart)
+                    .ifPresent(p -> response.setCurrentPeriod(ObligationPeriodResponse.from(p)));
+
+            responses.add(response);
+        }
+        return responses;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ObligationPeriodResponse> getMyHistory(UUID memberId, Pageable pageable) {
+        List<SavingsObligation> obligations = obligationRepository.findByMemberId(memberId);
+        List<ObligationPeriodResponse> all  = obligations.stream()
+                .flatMap(o -> periodRepository.findByObligationId(o.getId()).stream())
+                .sorted((a, b) -> b.getPeriodStart().compareTo(a.getPeriodStart()))
+                .map(ObligationPeriodResponse::from)
+                .collect(Collectors.toList());
+
+        int start = (int) pageable.getOffset();
+        int end   = Math.min(start + pageable.getPageSize(), all.size());
+        return new PageImpl<>(start < all.size() ? all.subList(start, end) : List.of(), pageable, all.size());
+    }
+
+    // ── helpers ───────────────────────────────────────────────────────────────
+
+    private LocalDate currentPeriodStart(SavingsObligation obligation) {
+        LocalDate today = LocalDate.now();
+        if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
+            return today.withDayOfMonth(1);
+        }
+        LocalDate monday = today.with(DayOfWeek.MONDAY);
+        return monday.isBefore(obligation.getStartDate()) ? obligation.getStartDate() : monday;
+    }
+}

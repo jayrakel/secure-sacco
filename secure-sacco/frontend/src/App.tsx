@@ -32,6 +32,7 @@ import MeetingsManagementPage from './features/meetings/pages/MeetingsManagement
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
 import ChangePasswordPage from './features/auth/pages/ChangePasswordPage';
+import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -134,6 +135,13 @@ function App() {
 
                             {/* --- SAVINGS ROUTE --- */}
                             <Route path="savings" element={<SavingsRouteWrapper />} />
+
+                            {/* --- SAVINGS OBLIGATIONS COMPLIANCE (Staff) --- */}
+                            <Route path="savings/obligations" element={
+                                <ProtectedRoute requiredPermissions={['SAVINGS_OBLIGATIONS_MANAGE']}>
+                                    <ObligationsCompliancePage />
+                                </ProtectedRoute>
+                            } />
 
                             {/* --- MEMBER LOANS ROUTE --- */}
                             <Route path="my-loans" element={

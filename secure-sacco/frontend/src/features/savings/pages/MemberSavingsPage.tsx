@@ -4,6 +4,7 @@ import { MpesaDepositModal } from '../components/MpesaDepositModal';
 import { PiggyBank, Smartphone, Clock, RefreshCw, AlertCircle, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../../auth/context/AuthProvider';
+import { MemberObligationsSection } from '../../obligations/components/MemberObligationsSection';
 
 const MemberSavingsPage: React.FC = () => {
     const { user } = useAuth();
@@ -145,6 +146,11 @@ const MemberSavingsPage: React.FC = () => {
                         )}
                     </div>
                 </div>
+            </div>
+
+            {/* ── Savings Obligations ─────────────────────────── */}
+            <div className="mt-2">
+                <MemberObligationsSection />
             </div>
 
             <MpesaDepositModal

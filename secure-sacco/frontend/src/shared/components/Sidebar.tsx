@@ -60,6 +60,7 @@ export const Sidebar = () => {
                 { label: 'Members', path: '/members', icon: UserCircle, module: 'members', requiredPermission: 'MEMBERS_READ' },
                 { label: 'Loans', path: '/loans', icon: Coins, module: 'loans' },
                 { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings' },
+                { label: 'Savings Compliance', path: '/savings/obligations', icon: ShieldCheck, module: 'savings', requiredPermission: 'SAVINGS_OBLIGATIONS_MANAGE' },
                 { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
             ],
         },
