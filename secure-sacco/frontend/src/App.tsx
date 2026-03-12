@@ -4,6 +4,7 @@ import MemberSavingsPage from './features/savings/pages/MemberSavingsPage';
 import { AuthProvider, useAuth } from "./features/auth/context/AuthProvider";
 import LoginPage from "./features/auth/pages/LoginPage";
 import ResetPasswordPage from './features/auth/pages/ResetPasswordPage';
+import ChangePasswordPage from './features/auth/pages/ChangePasswordPage';
 import ActivationPage from './features/auth/pages/ActivationPage';
 import { DashboardLayout } from "./shared/layouts/DashboardLayout";
 import UserListPage from "./features/users/pages/UserListPage";
@@ -18,7 +19,6 @@ import DashboardRouter from "./features/dashboard/pages/DashboardRouter";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
-import TrialBalancePage from './features/accounting/pages/TrialBalancePage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
 import LoanManagementPage from './features/loans/pages/LoanManagementPage';
 import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
@@ -30,9 +30,6 @@ import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
-import AuditLogPage from './features/audit/pages/AuditLogPage';
-import ChangePasswordPage from './features/auth/pages/ChangePasswordPage';
-import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -52,8 +49,9 @@ const SavingsRouteWrapper = () => {
 function App() {
     return (
         <BrowserRouter>
-            <AuthProvider>
-                <SettingsProvider>
+        <AuthProvider>
+            <SettingsProvider>
+
                     <Routes>
                         {/* Wrap Login in GuestRoute */}
                         <Route path="/login" element={
@@ -68,14 +66,23 @@ function App() {
                             </GuestRoute>
                         } />
 
-                        {/* Activation Route — must NOT be inside GuestRoute.
-                            An admin may be logged in when they generate the link, or may
-                            share it with a new user. GuestRoute would redirect authenticated
-                            users to /dashboard, breaking activation. */}
-                        <Route path="/activate" element={<ActivationPage />} />
+                        {/* Activation Route */}
+                        <Route path="/activate" element={
+                            <GuestRoute>
+                                <ActivationPage />
+                            </GuestRoute>
+                        } />
 
-                        {/* Force password change — authenticated but restricted */}
-                        <Route path="/change-password" element={<ChangePasswordPage />} />
+                        {/*
+                          Change Password — accessible to authenticated users with must_change_password=true.
+                          Lives OUTSIDE DashboardLayout so it shows as a full-page form with no sidebar.
+                          The api-client intercepts 403 PASSWORD_CHANGE_REQUIRED and redirects here.
+                        */}
+                        <Route path="/change-password" element={
+                            <ProtectedRoute>
+                                <ChangePasswordPage />
+                            </ProtectedRoute>
+                        } />
 
                         {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                         <Route element={<DashboardLayout />}>
@@ -119,29 +126,8 @@ function App() {
                                 </ProtectedRoute>
                             } />
 
-                            {/* SAC-151: GL Trial Balance — Treasurer + Admin */}
-                            <Route path="/accounting/trial-balance" element={
-                                <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
-                                    <TrialBalancePage />
-                                </ProtectedRoute>
-                            } />
-
-                            {/* SAC-150: Security Audit Log — Admin only */}
-                            <Route path="/audit/logs" element={
-                                <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
-                                    <AuditLogPage />
-                                </ProtectedRoute>
-                            } />
-
                             {/* --- SAVINGS ROUTE --- */}
                             <Route path="savings" element={<SavingsRouteWrapper />} />
-
-                            {/* --- SAVINGS OBLIGATIONS COMPLIANCE (Staff) --- */}
-                            <Route path="savings/obligations" element={
-                                <ProtectedRoute requiredPermissions={['SAVINGS_OBLIGATIONS_MANAGE']}>
-                                    <ObligationsCompliancePage />
-                                </ProtectedRoute>
-                            } />
 
                             {/* --- MEMBER LOANS ROUTE --- */}
                             <Route path="my-loans" element={
@@ -245,8 +231,9 @@ function App() {
                         {/* Fallback route */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
-                </SettingsProvider>
-            </AuthProvider>
+
+            </SettingsProvider>
+        </AuthProvider>
         </BrowserRouter>
     );
 }

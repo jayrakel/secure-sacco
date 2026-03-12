@@ -13,20 +13,30 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        // FIX: On 401, redirect to login so expired sessions don't silently hang.
-        // BUT skip the redirect on public pages that are intentionally unauthenticated,
-        // otherwise AuthProvider's /auth/me 401 would boot the user away from those pages.
-        const PUBLIC_PATHS = ['/login', '/activate', '/reset-password'];
-        if (error.response?.status === 401) {
-            const isPublicPage = PUBLIC_PATHS.some(p => window.location.pathname.startsWith(p));
-            if (!isPublicPage) {
+        const status = error.response?.status;
+        const errorCode = error.response?.data?.error;
+
+        // ── Must-change-password guard ────────────────────────────────────────
+        // The backend returns 403 PASSWORD_CHANGE_REQUIRED when the user has an
+        // active session but must change their password before doing anything else.
+        // Redirect to the dedicated change-password page immediately.
+        if (status === 403 && errorCode === 'PASSWORD_CHANGE_REQUIRED') {
+            if (!window.location.pathname.startsWith('/change-password')) {
+                window.location.href = '/change-password';
+            }
+            return Promise.reject(error);
+        }
+
+        // ── Expired / unauthenticated session ─────────────────────────────────
+        if (status === 401) {
+            if (!window.location.pathname.startsWith('/login')) {
                 window.location.href = '/login';
             }
             return Promise.reject(error);
         }
 
         const detailedError = error.response?.data?.message || error.message;
-        const errorType = error.response?.data?.error || 'Unknown Error';
+        const errorType = errorCode || 'Unknown Error';
         console.error(`[Backend Error] ${errorType}: ${detailedError}`);
         return Promise.reject(error);
     }
