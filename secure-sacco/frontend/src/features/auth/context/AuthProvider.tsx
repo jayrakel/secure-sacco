@@ -15,6 +15,8 @@ interface User {
     roles: string[];
     mfaEnabled?: boolean;
     mustChangePassword?: boolean;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
     memberNumber?: string;
     memberStatus?: string;
     memberId?: string;

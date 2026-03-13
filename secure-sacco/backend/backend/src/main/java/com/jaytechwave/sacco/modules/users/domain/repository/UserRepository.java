@@ -34,4 +34,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     List<User> findAllByIsDeletedFalse();
 
     Optional<User> findByIdAndIsDeletedFalse(UUID id);
+
+    /**
+     * Returns true if ANY non-deleted user currently holds the given role name.
+     * Used by DataInitializer and SetupService for role-based existence checks.
+     */
+    boolean existsByRolesName(String roleName);
+
+    /**
+     * Returns the first user who holds the given role name.
+     * Used for system-admin lookup (there should only ever be one).
+     */
+    Optional<User> findFirstByRolesName(String roleName);
 }

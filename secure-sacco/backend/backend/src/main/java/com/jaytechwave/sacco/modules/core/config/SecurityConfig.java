@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.core.config;
 import com.jaytechwave.sacco.modules.core.security.SecurityHeadersFilter;
 import com.jaytechwave.sacco.modules.core.security.CsrfCookieFilter;
 import com.jaytechwave.sacco.modules.core.security.MustChangePasswordFilter;
+import com.jaytechwave.sacco.modules.core.security.ContactVerificationFilter;
 import com.jaytechwave.sacco.modules.core.security.ApiRateLimitFilter;
 import com.jaytechwave.sacco.modules.payments.infrastructure.filter.MpesaIpWhitelistFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -35,25 +36,25 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter, MustChangePasswordFilter mustChangePasswordFilter, MpesaIpWhitelistFilter mpesaIpWhitelistFilter, ApiRateLimitFilter apiRateLimitFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter, MustChangePasswordFilter mustChangePasswordFilter, ContactVerificationFilter contactVerificationFilter, MpesaIpWhitelistFilter mpesaIpWhitelistFilter, ApiRateLimitFilter apiRateLimitFilter) throws Exception {
 
-            // --- 1. Custom Security Headers & Request Tracing ---
-            http.addFilterBefore(securityHeadersFilter, org.springframework.security.web.session.SessionManagementFilter.class);
+        // --- 1. Custom Security Headers & Request Tracing ---
+        http.addFilterBefore(securityHeadersFilter, org.springframework.security.web.session.SessionManagementFilter.class);
 
-            // --- 2. Advanced HTTP Security Headers (CSP, HSTS, Clickjacking) ---
-            http.headers(headers -> headers
-                    .frameOptions(frame -> frame.deny())                          // Prevent Clickjacking
-                    .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults()) // MIME sniffing
-                    .httpStrictTransportSecurity(hsts -> hsts                     // Enforce HTTPS
-                            .includeSubDomains(true)
-                            .maxAgeInSeconds(31536000))
-                    .contentSecurityPolicy(csp -> csp                             // Prevent XSS
-                            .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none'"))
-                    .referrerPolicy(ref -> ref                                    // Privacy
-                            .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                    .permissionsPolicy(policy -> policy                           // Device access
-                            .policy("geolocation=(), microphone=(), camera=()"))
-            );
+        // --- 2. Advanced HTTP Security Headers (CSP, HSTS, Clickjacking) ---
+        http.headers(headers -> headers
+                .frameOptions(frame -> frame.deny())                          // Prevent Clickjacking
+                .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults()) // MIME sniffing
+                .httpStrictTransportSecurity(hsts -> hsts                     // Enforce HTTPS
+                        .includeSubDomains(true)
+                        .maxAgeInSeconds(31536000))
+                .contentSecurityPolicy(csp -> csp                             // Prevent XSS
+                        .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none'"))
+                .referrerPolicy(ref -> ref                                    // Privacy
+                        .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .permissionsPolicy(policy -> policy                           // Device access
+                        .policy("geolocation=(), microphone=(), camera=()"))
+        );
 
         // Define the standard CSRF request handler for SPAs
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
@@ -81,6 +82,7 @@ public class SecurityConfig {
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
                 .addFilterAfter(apiRateLimitFilter, CsrfCookieFilter.class)
                 .addFilterAfter(mustChangePasswordFilter, CsrfCookieFilter.class)
+                .addFilterAfter(contactVerificationFilter, MustChangePasswordFilter.class)
                 .addFilterBefore(mpesaIpWhitelistFilter, UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
                         .sessionFixation().migrateSession()
@@ -96,10 +98,13 @@ public class SecurityConfig {
                                 "/api/v1/auth/activation/**",
                                 "/api/v1/auth/reset-password",
                                 "/error"
-                                ).permitAll()
+                        ).permitAll()
 
                         // --- M-Pesa callbacks (unauthenticated — Safaricom calls these) ---
                         .requestMatchers("/api/v1/payments/mpesa/**").permitAll()
+
+                        // --- Setup wizard status — public so the frontend can check before login ---
+                        .requestMatchers("/api/v1/setup/**").permitAll()
 
                         // --- Actuator: health is public (load balancer probes) ---
                         .requestMatchers("/actuator/health").permitAll()

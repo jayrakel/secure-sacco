@@ -27,6 +27,17 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
+        // ── Contact verification guard ────────────────────────────────────────
+        // The backend returns 403 CONTACT_VERIFICATION_REQUIRED when the
+        // SYSTEM_ADMIN's email or phone has not yet been verified during setup.
+        if (status === 403 && errorCode === 'CONTACT_VERIFICATION_REQUIRED') {
+            if (!window.location.pathname.startsWith('/setup') &&
+                !window.location.pathname.startsWith('/verify-contact')) {
+                window.location.href = '/setup';
+            }
+            return Promise.reject(error);
+        }
+
         // ── Expired / unauthenticated session ─────────────────────────────────
         if (status === 401) {
             if (!window.location.pathname.startsWith('/login')) {

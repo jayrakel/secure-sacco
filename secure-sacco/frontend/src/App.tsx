@@ -10,7 +10,7 @@ import { DashboardLayout } from "./shared/layouts/DashboardLayout";
 import UserListPage from "./features/users/pages/UserListPage";
 import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 import ProtectedRoute from "./shared/components/ProtectedRoute";
-// import SetupGuard from "./shared/components/SetupGuard";
+import SetupGuard from "./shared/components/SetupGuard";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
@@ -18,8 +18,8 @@ import HasPermission from "./shared/components/HasPermission";
 import MemberListPage from "./features/members/pages/MemberListPage";
 import DashboardRouter from "./features/dashboard/pages/DashboardRouter";
 import { SettingsProvider } from "./features/settings/context/SettingsContext";
-// import { SetupProvider } from "./features/setup/context/SetupContext";
-// import SetupWizardPage from "./features/setup/pages/SetupWizardPage";
+import { SetupProvider } from "./features/setup/context/SetupContext";
+import SetupWizardPage from "./features/setup/pages/SetupWizardPage";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
@@ -54,6 +54,7 @@ function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
+                <SetupProvider>
                     <SettingsProvider>
 
                         <Routes>
@@ -93,11 +94,17 @@ function App() {
                           Lives OUTSIDE DashboardLayout (no sidebar during setup).
                           SetupGuard redirects SYSTEM_ADMIN here automatically when setup is incomplete.
                         */}
-
+                            <Route path="/setup" element={
+                                <ProtectedRoute>
+                                    <SetupWizardPage />
+                                </ProtectedRoute>
+                            } />
 
                             {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                             <Route element={
+                                <SetupGuard>
                                     <DashboardLayout />
+                                </SetupGuard>
                             }>
 
                                 <Route path="/dashboard" element={
@@ -253,6 +260,7 @@ function App() {
                         </Routes>
 
                     </SettingsProvider>
+                </SetupProvider>
             </AuthProvider>
         </BrowserRouter>
     );

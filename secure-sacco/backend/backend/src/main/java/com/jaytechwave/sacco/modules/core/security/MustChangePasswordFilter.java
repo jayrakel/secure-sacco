@@ -41,6 +41,7 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
             "/api/v1/auth/change-password",
             "/api/v1/auth/logout",
             "/api/v1/auth/csrf",
+            "/api/v1/setup/",                // setup status — public, needed before/during wizard
             "/actuator/health"
     );
 
