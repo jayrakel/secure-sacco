@@ -81,13 +81,27 @@ public class MigrationService {
         user.setMustChangePassword(false);
         userRepository.save(user);
 
+        // ── Step 3.5: Fix Member Number Year and Status ───────────────────────────
+        // Fetch the actual Member entity so we can modify and save it
+        com.jaytechwave.sacco.modules.members.domain.entity.Member member = memberRepository.findById(memberResponse.getId())
+                .orElseThrow(() -> new IllegalStateException("Member not found"));
+
+        String historicalYear = String.valueOf(request.registrationDate().getYear()); // e.g., "2022"
+        String currentYear = String.valueOf(java.time.Year.now().getValue());         // e.g., "2026"
+        String correctedMemberNumber = member.getMemberNumber().replace(currentYear, historicalYear);
+
+        member.setMemberNumber(correctedMemberNumber);
+        member.setStatus(com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus.ACTIVE);
+        memberRepository.save(member);
+
         // ── Step 4: back-date created_at / joined_date via raw JDBC ──────────────
         Timestamp historicalTs = Timestamp.valueOf(request.registrationDate().atStartOfDay());
 
         jdbcTemplate.update("UPDATE users   SET created_at = ? WHERE id = ?",
                 historicalTs, user.getId());
-        jdbcTemplate.update("UPDATE members SET joined_date = ?, created_at = ? WHERE id = ?",
-                request.registrationDate(), historicalTs, memberResponse.getId());
+        // ✅ Fixed — only back-date created_at, which is the actual column that exists
+        jdbcTemplate.update("UPDATE members SET created_at = ? WHERE id = ?",
+                historicalTs, memberResponse.getId());
 
         log.info("✅ Migrated member {} — number: {}", request.email(), memberResponse.getMemberNumber());
 

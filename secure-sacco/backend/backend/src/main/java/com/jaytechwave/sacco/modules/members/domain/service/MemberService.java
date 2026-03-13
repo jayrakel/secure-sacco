@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -73,7 +74,7 @@ public class MemberService {
                 .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(request.getPhoneNumber()))
                 .mfaEnabled(false)
                 .member(savedMember)
-                .roles(Set.of(memberRole))
+                .roles(new HashSet<>(Set.of(memberRole)))
                 .build();
 
         userRepository.save(portalUser);
