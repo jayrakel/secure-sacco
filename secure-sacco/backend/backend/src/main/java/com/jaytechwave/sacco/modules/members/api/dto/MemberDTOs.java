@@ -18,6 +18,8 @@ public class MemberDTOs {
 
     @Data
     public static class CreateMemberRequest {
+        private UUID userId;
+
         @NotBlank(message = "First name is required")
         @Size(max = 100, message = "First name cannot exceed 100 characters")
         private String firstName;
