@@ -61,7 +61,7 @@ public class UserService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(normalizedEmail)
-                .officialEmail(normalizeEmail(request.getOfficialEmail()))
+                .officialEmail(normalizeOptionalEmail(request.getOfficialEmail()))
                 .phoneNumber(normalizePhone(request.getPhoneNumber()))
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .status(UserStatus.ACTIVE)
@@ -228,6 +228,12 @@ public class UserService {
 
     private String normalizeEmail(String email) {
         if (email == null || email.isBlank()) throw new IllegalArgumentException("Email is required");
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /** Same as normalizeEmail but returns null instead of throwing — for optional email fields. */
+    private String normalizeOptionalEmail(String email) {
+        if (email == null || email.isBlank()) return null;
         return email.trim().toLowerCase(Locale.ROOT);
     }
 

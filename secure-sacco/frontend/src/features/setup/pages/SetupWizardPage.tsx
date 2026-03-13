@@ -402,16 +402,20 @@ const ConfigurePlatformStep: React.FC<{ onDone: () => void }> = ({ onDone }) => 
         }
         setLoading(true); setError('');
         try {
+            // Step 1: initialise core settings (field names match SaccoSettingsDTOs.InitializeRequest)
             await apiClient.post('/settings/sacco/initialize', {
-                saccoName: saccoName.trim(),
-                memberNumberPrefix: prefix.toUpperCase().slice(0, 3),
-                memberNumberPadLength: padLen,
+                saccoName:      saccoName.trim(),
+                prefix:         prefix.toUpperCase().slice(0, 3),
+                padLength:      padLen,
                 registrationFee: parseFloat(regFee) || 1000,
-                enabledModules: modules,
             });
+
+            // Step 2: save enabled modules via the separate flags endpoint
+            await apiClient.put('/settings/sacco/flags', { flags: modules });
+
             onDone();
         } catch (e: any) {
-            setError(e.response?.data?.message || 'Failed to save settings.');
+            setError(e.response?.data?.message || e.response?.data?.fields?.[0]?.message || 'Failed to save settings.');
         } finally { setLoading(false); }
     };
 
