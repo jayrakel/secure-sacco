@@ -1,10 +1,16 @@
 package com.jaytechwave.sacco.modules.core.service;
 
 import com.jaytechwave.sacco.modules.core.dto.HistoricalMemberRequest;
+import com.jaytechwave.sacco.modules.core.dto.HistoricalSavingsRequest;
 import com.jaytechwave.sacco.modules.members.api.dto.MemberDTOs.CreateMemberRequest;
 import com.jaytechwave.sacco.modules.members.api.dto.MemberDTOs.MemberResponse;
 import com.jaytechwave.sacco.modules.members.domain.entity.Gender;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs;
+import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
+import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccountStatus;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -14,6 +20,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.sql.Timestamp;
 
@@ -40,7 +49,12 @@ import java.sql.Timestamp;
 @Slf4j
 public class MigrationService {
 
+    @PersistenceContext
+    private EntityManager entityManager;
     private final com.jaytechwave.sacco.modules.members.domain.service.MemberService memberService;
+    private final com.jaytechwave.sacco.modules.savings.domain.service.SavingsService savingsService;
+    private final com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository savingsAccountRepository;
+    private final com.jaytechwave.sacco.modules.accounting.domain.repository.JournalEntryRepository journalEntryRepository;
     private final UserRepository    userRepository;
     private final MemberRepository  memberRepository;
     private final PasswordEncoder   passwordEncoder;
@@ -83,7 +97,7 @@ public class MigrationService {
 
         // ── Step 3.5: Fix Member Number Year and Status ───────────────────────────
         // Fetch the actual Member entity so we can modify and save it
-        com.jaytechwave.sacco.modules.members.domain.entity.Member member = memberRepository.findById(memberResponse.getId())
+        Member member = memberRepository.findById(memberResponse.getId())
                 .orElseThrow(() -> new IllegalStateException("Member not found"));
 
         String historicalYear = String.valueOf(request.registrationDate().getYear()); // e.g., "2022"
@@ -91,7 +105,7 @@ public class MigrationService {
         String correctedMemberNumber = member.getMemberNumber().replace(currentYear, historicalYear);
 
         member.setMemberNumber(correctedMemberNumber);
-        member.setStatus(com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus.ACTIVE);
+        member.setStatus(MemberStatus.ACTIVE);
         memberRepository.save(member);
 
         // ── Step 4: back-date created_at / joined_date via raw JDBC ──────────────
@@ -106,5 +120,64 @@ public class MigrationService {
         log.info("✅ Migrated member {} — number: {}", request.email(), memberResponse.getMemberNumber());
 
         return memberResponse.getMemberNumber();
+    }
+
+    @Transactional
+    public String seedHistoricalSavings(HistoricalSavingsRequest request) {
+        log.info("💰 Migrating historical savings for {} - Amount: {} (Date: {})",
+                request.memberNumber(), request.amount(), request.transactionDate());
+
+        // 1. Find the member's savings account
+        Member member = memberRepository.findByMemberNumber(request.memberNumber())
+                .orElseThrow(() -> new IllegalStateException("Member not found: " + request.memberNumber()));
+
+        // 1. Find the member's savings account, or CREATE IT if it doesn't exist
+        SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
+                .orElseGet(() -> {
+                    log.info("Creating missing savings account for member: {}", member.getMemberNumber());
+                    SavingsAccount newAccount =
+                            new SavingsAccount();
+
+                    newAccount.setMemberId(member.getId());
+                    newAccount.setStatus(SavingsAccountStatus.ACTIVE);
+
+                    return savingsAccountRepository.save(newAccount);
+                });
+        // 2. Build the manual deposit request
+        SavingsDTOs.ManualDepositRequest depositReq =
+                new SavingsDTOs.ManualDepositRequest(
+                        member.getId(),
+                        request.amount(),
+                        request.referenceNumber()
+                );
+
+        // 3. Post the deposit using the real service
+        SavingsDTOs.SavingsTransactionResponse response =
+                savingsService.processManualDeposit(depositReq);
+
+        // 3.5 FORCE HIBERNATE TO SAVE AND FORGET
+        // This forces Hibernate to write "today's" data to the DB right now,
+        // and then clears the cache so it doesn't overwrite our JDBC Time Machine at the end of the method!
+        entityManager.flush();
+        entityManager.clear();
+
+        // 4. TIME MACHINE: Backdate the Savings Transaction and Accounting Entries
+        java.time.LocalDate historicalDate = request.transactionDate();
+        Timestamp historicalTs = Timestamp.valueOf(historicalDate.atStartOfDay());
+
+        // Backdate the savings transaction (including updated_at so the UI sorts it properly)
+        jdbcTemplate.update("UPDATE savings_transactions SET posted_at = ?, created_at = ?, updated_at = ? WHERE id = ?",
+                historicalTs, historicalTs, historicalTs, response.transactionId());
+
+        // Backdate the General Ledger Journal Entries (transaction_date is a DATE column, not a TIMESTAMP)
+        jdbcTemplate.update("UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
+                historicalDate, historicalTs, historicalTs, response.reference());
+
+        // Backdate the Journal Entry Lines
+        jdbcTemplate.update("UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
+                historicalTs, historicalTs, response.reference());
+
+        log.info("✅ Successfully migrated savings for Account ID: {} - Amount Deposited: {}", account.getId(), request.amount());
+        return response.reference();
     }
 }

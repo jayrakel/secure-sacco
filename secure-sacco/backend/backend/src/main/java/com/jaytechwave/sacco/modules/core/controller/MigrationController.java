@@ -29,4 +29,14 @@ public class MigrationController {
                 "memberNumber", generatedMemberNumber
         ));
     }
+
+    @PostMapping("/savings")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<java.util.Map<String, String>> seedHistoricalSavings(@Valid @RequestBody com.jaytechwave.sacco.modules.core.dto.HistoricalSavingsRequest request) {
+        String reference = migrationService.seedHistoricalSavings(request);
+        return ResponseEntity.ok(java.util.Map.of(
+                "message", "Historical savings migrated successfully",
+                "transactionReference", reference
+        ));
+    }
 }
