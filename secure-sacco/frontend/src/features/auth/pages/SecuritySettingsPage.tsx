@@ -30,8 +30,8 @@ export default function SecuritySettingsPage() {
             try {
                 const data = await sessionApi.getUserSessions(user.id);
                 setSessions(data.sort((a, b) => new Date(b.lastAccessedTime).getTime() - new Date(a.lastAccessedTime).getTime()));
-            } catch (err: any) {
-                setSessionsError(err.response?.data?.message || 'Failed to load your sessions.');
+            } catch (err: unknown) {
+                setSessionsError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to load your sessions.');
             } finally {
                 setIsSessionsLoading(false);
             }
@@ -54,7 +54,7 @@ export default function SecuritySettingsPage() {
             setQrCode(response.data.qrCode);
             setSecret(response.data.secret);
             setMfaStatus('idle');
-        } catch (err: any) {
+        } catch {
             setMfaStatus('error');
             setMfaErrorMsg('Failed to load MFA setup. Please try again later.');
         }
@@ -71,9 +71,9 @@ export default function SecuritySettingsPage() {
             await refreshUser();
             setMfaStatus('success');
             setMfaCode('');
-        } catch (err: any) {
+        } catch (err: unknown) {
             setMfaStatus('error');
-            setMfaErrorMsg(err.response?.data?.message || 'Invalid authenticator code. Please try again.');
+            setMfaErrorMsg((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Invalid authenticator code. Please try again.');
         }
     };
 
@@ -86,7 +86,7 @@ export default function SecuritySettingsPage() {
             await refreshUser(); // Refreshes context so mfaEnabled becomes false
             setMfaStatus('idle'); // Reset the UI to show the setup process again
             fetchMfaSetup(); // Grab a fresh QR code
-        } catch (err: any) {
+        } catch {
             alert("Failed to disable MFA. Please try again.");
         } finally {
             setIsDisabling(false);
@@ -98,7 +98,7 @@ export default function SecuritySettingsPage() {
         try {
             await sessionApi.revokeSpecificSession(sessionId);
             setSessions(sessions.filter(s => s.sessionId !== sessionId));
-        } catch (err) {
+        } catch {
             alert("Failed to terminate session.");
         }
     };
@@ -108,7 +108,7 @@ export default function SecuritySettingsPage() {
         try {
             await sessionApi.revokeAllUserSessions(user!.id);
             window.location.href = '/login';
-        } catch (err) {
+        } catch {
             alert("Failed to terminate sessions.");
         }
     };
@@ -192,7 +192,7 @@ export default function SecuritySettingsPage() {
                                     Open your preferred authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator) and scan the QR code below.
                                 </p>
 
-                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex justify-center mb-4 min-h-[250px] items-center">
+                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex justify-center mb-4 min-h-62.5 items-center">
                                     {mfaStatus === 'loading_qr' ? (
                                         <Loader2 className="animate-spin text-slate-400" size={32} />
                                     ) : qrCode ? (

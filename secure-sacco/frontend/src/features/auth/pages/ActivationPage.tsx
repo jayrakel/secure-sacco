@@ -49,8 +49,8 @@ const ActivationPage: React.FC = () => {
             try {
                 await authApi.verifyActivationEmail(token);
                 setStep('OTP_ENTRY');
-            } catch (err: any) {
-                const msg: string = err.response?.data?.message || 'Token is invalid or has expired.';
+            } catch (err: unknown) {
+                const msg: string = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Token is invalid or has expired.';
                 setStep('ERROR');
                 // Detect expiry vs other errors to show resend form
                 const expired = msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('new one');
@@ -73,8 +73,8 @@ const ActivationPage: React.FC = () => {
         try {
             await authApi.completeActivation({ token: token!, otp, newPassword: password });
             setStep('SUCCESS');
-        } catch (err: any) {
-            const msg: string = err.response?.data?.message || 'Failed to activate account. Please check your OTP.';
+        } catch (err: unknown) {
+            const msg: string = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to activate account. Please check your OTP.';
             setErrorMsg(msg);
             // If OTP itself expired, prompt to resend
             if (msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('new one')) {
@@ -94,8 +94,8 @@ const ActivationPage: React.FC = () => {
         try {
             await authApi.resendActivationEmail(resendEmail);
             setResendMsg('A new activation link has been sent to your email. Please check your inbox.');
-        } catch (err: any) {
-            setResendError(err.response?.data?.message || 'Failed to send activation email. Please try again.');
+        } catch (err: unknown) {
+            setResendError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to send activation email. Please try again.');
         } finally {
             setIsResending(false);
         }
@@ -111,8 +111,8 @@ const ActivationPage: React.FC = () => {
             setOtpCooldown(60); // 60-second cooldown
             setOtp('');
             setErrorMsg('');
-        } catch (err: any) {
-            setOtpResendMsg(err.response?.data?.message || 'Failed to resend OTP. Please try again.');
+        } catch (err: unknown) {
+            setOtpResendMsg((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to resend OTP. Please try again.');
         } finally {
             setIsResendingOtp(false);
         }
@@ -320,4 +320,3 @@ const ActivationPage: React.FC = () => {
 };
 
 export default ActivationPage;
-

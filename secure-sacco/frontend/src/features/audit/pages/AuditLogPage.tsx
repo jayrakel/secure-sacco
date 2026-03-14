@@ -19,7 +19,7 @@ const fmtDate = (iso: string) => {
 const eventStyle = (action: string): string => {
     const a = action.toUpperCase();
     if (a.includes('FAIL') || a.includes('KILL') || a.includes('WAIVE')) return 'bg-red-100 text-red-800';
-    if (a.includes('LOGIN') || a.includes('DISBURS') || a.includes('COMPLET')) return 'bg-emerald-100 text-emerald-800';
+    if (a.includes('LOGIN') || a.includes('DISBURSE') || a.includes('COMPLETE')) return 'bg-emerald-100 text-emerald-800';
     return 'bg-slate-100 text-slate-600';
 };
 
@@ -82,7 +82,7 @@ const AuditLogPage: React.FC = () => {
         }
     }, [actorEmail, eventType, from, to]);
 
-    useEffect(() => { fetchLogs(0); }, []);  // initial load
+    useEffect(() => { fetchLogs(0); }, [fetchLogs]);  // initial load
 
     const handleSearch = () => fetchLogs(0);
     const handleReset = () => {
@@ -216,7 +216,7 @@ const AuditLogPage: React.FC = () => {
                                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">
                                         {fmtDate(log.createdAt)}
                                     </td>
-                                    <td className="px-4 py-3 text-slate-800 font-medium max-w-[180px] truncate">
+                                    <td className="px-4 py-3 text-slate-800 font-medium max-w-45 truncate">
                                         {log.actor}
                                     </td>
                                     <td className="px-4 py-3">
@@ -224,13 +224,13 @@ const AuditLogPage: React.FC = () => {
                                                 {log.action}
                                             </span>
                                     </td>
-                                    <td className="px-4 py-3 text-slate-600 max-w-[160px] truncate">
+                                    <td className="px-4 py-3 text-slate-600 max-w-40 truncate">
                                         {log.target ?? <span className="text-slate-300">—</span>}
                                     </td>
                                     <td className="px-4 py-3 text-slate-500 font-mono text-xs">
                                         {log.ipAddress ?? '—'}
                                     </td>
-                                    <td className="px-4 py-3 text-slate-500 max-w-[220px] truncate" title={log.details ?? ''}>
+                                    <td className="px-4 py-3 text-slate-500 max-w-55 truncate" title={log.details ?? ''}>
                                         {log.details ?? <span className="text-slate-300">—</span>}
                                     </td>
                                 </tr>

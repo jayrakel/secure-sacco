@@ -57,12 +57,12 @@ export default function LoginPage() {
             // If we reach here, navigate normally.
             navigate('/dashboard');
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Login Error:", err);
-            if (err.response?.status === 401 || err.response?.status === 403) {
+            if ((err as {response?: {status?: number}})?.response?.status === 401 || (err as {response?: {status?: number}})?.response?.status === 403) {
                 setError('Invalid email/phone or password.');
             } else {
-                const msg = err.response?.data?.message || "Connection failed. Please try again.";
+                const msg = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || "Connection failed. Please try again.";
                 setError(msg);
                 if (msg.includes("verify your email")) setShowResend(true);
             }
@@ -86,8 +86,8 @@ export default function LoginPage() {
             // Successfully validated MFA, fetch user and redirect
             await refreshUser();
             navigate('/dashboard');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Invalid authenticator code. Please try again.');
+        } catch (err: unknown) {
+            setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Invalid authenticator code. Please try again.');
         } finally {
             setLocalLoading(false);
         }
@@ -112,10 +112,10 @@ export default function LoginPage() {
                 message: response.data.message || 'If an account exists, a reset link has been sent.'
             });
             setForgotEmail('');
-        } catch (err: any) {
+        } catch (err: unknown) {
             setForgotStatus({
                 type: 'error',
-                message: err.response?.data?.message || 'Failed to request password reset. Please try again.'
+                message: (err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to request password reset. Please try again.'
             });
         }
     };
@@ -128,7 +128,7 @@ export default function LoginPage() {
                 setResendStatus('Sent! Check your inbox.');
                 setShowResend(false);
             }, 1000);
-        } catch (err) {
+        } catch {
             setResendStatus('Failed to send.');
         }
     };

@@ -47,8 +47,8 @@ export default function ChangePasswordPage() {
             setSuccess(true);
             await refreshUser(); // clears mustChangePassword flag from state
             setTimeout(() => navigate('/dashboard'), 1500);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to change password. Please try again.');
+        } catch (err: unknown) {
+            setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to change password. Please try again.');
         } finally {
             setLoading(false);
         }

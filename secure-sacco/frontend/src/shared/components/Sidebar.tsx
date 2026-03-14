@@ -29,15 +29,23 @@ export const Sidebar = () => {
     const { settings } = useSettings();
     const location = useLocation();
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ 'Accounting': false });
+    // Initialise Accounting menu open when the user lands on an accounting route.
+    // Using a lazy initialiser avoids a synchronous setState-in-effect antipattern.
+    const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => ({
+        Accounting: location.pathname.startsWith('/accounting'),
+    }));
+
+    // Keep the Accounting submenu open as the user navigates within /accounting,
+    // but only set state when the derived value actually changes to avoid re-renders.
+    useEffect(() => {
+        const shouldBeOpen = location.pathname.startsWith('/accounting') && !isCollapsed;
+        setExpandedMenus(prev => {
+            if (prev['Accounting'] === shouldBeOpen) return prev;
+            return { ...prev, Accounting: shouldBeOpen };
+        });
+    }, [location.pathname, isCollapsed]);
 
     const isStaff = user?.roles?.some(role => role !== 'ROLE_MEMBER');
-
-    useEffect(() => {
-        if (location.pathname.startsWith('/accounting') && !isCollapsed) {
-            setExpandedMenus(prev => ({ ...prev, 'Accounting': true }));
-        }
-    }, [location.pathname, isCollapsed]);
 
     // ── Section-grouped nav ──────────────────────────────────────────────────
     const staffSections: NavSection[] = [
@@ -142,12 +150,12 @@ export const Sidebar = () => {
     };
 
     return (
-        <aside className={`${isCollapsed ? 'w-[68px]' : 'w-60'} bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col relative shrink-0 z-20`}>
+        <aside className={`${isCollapsed ? 'w-17' : 'w-60'} bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col relative shrink-0 z-20`}>
 
             {/* Collapse toggle */}
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute -right-3 top-[52px] bg-emerald-600 rounded-full p-0.5 hover:bg-emerald-500 border-2 border-slate-900 z-50 transition-colors"
+                className="absolute -right-3 top-13 bg-emerald-600 rounded-full p-0.5 hover:bg-emerald-500 border-2 border-slate-900 z-50 transition-colors"
             >
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>

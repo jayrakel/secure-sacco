@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { accountingApi, type TrialBalanceLine, type TrialBalanceResponse } from '../api/accounting-api';
 import { Scale, Download, AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 
@@ -43,7 +43,7 @@ const downloadCsv = (data: TrialBalanceResponse) => {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const TrialBalancePage: React.FC = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
     const [asOfDate, setAsOfDate]   = useState(today);
     const [data, setData]           = useState<TrialBalanceResponse | null>(null);
     const [loading, setLoading]     = useState(true);
@@ -62,7 +62,7 @@ const TrialBalancePage: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchData(today); }, []);
+    useEffect(() => { fetchData(today); }, [today]);
 
     const groups = data ? groupByType(data.lines) : {};
 

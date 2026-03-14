@@ -34,7 +34,10 @@ interface AuthContextType {
 // 1. Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 2. Define the Hook (Moved inside the same file but kept clean for Vite)
+// 2. Define the Hook — eslint-disable is intentional: context files that co-locate a
+//    hook with its provider are a well-established pattern. Splitting into separate
+//    files would break the encapsulation of the context implementation.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth must be used within an AuthProvider');
@@ -48,21 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Fetches /auth/me and updates user state. Intentionally has no routing concerns
+    // so the callback is stable (empty deps). Redirect logic lives in a separate effect below.
     const fetchCurrentUser = useCallback(async () => {
         setIsLoading(true);
         try {
             const response = await apiClient.get('/auth/me');
-
-            if (response.data) {
-                setUser(response.data);
-                // Redirect to change-password only if on a protected page (not public pages)
-                const isPublic = PUBLIC_PATHS.some(p => location.pathname.startsWith(p));
-                if (response.data.mustChangePassword && !isPublic && location.pathname !== '/change-password') {
-                    navigate('/change-password', { replace: true });
-                }
-            } else {
-                setUser(null);
-            }
+            setUser(response.data || null);
         } catch {
             setUser(null);
         } finally {
@@ -74,22 +69,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchCurrentUser();
     }, [fetchCurrentUser]);
 
+    // Separate effect that handles mustChangePassword redirect. Fires whenever the user
+    // object or the current path changes, keeping fetchCurrentUser free of routing deps.
+    useEffect(() => {
+        if (!user) return;
+        const isPublic = PUBLIC_PATHS.some(p => location.pathname.startsWith(p));
+        if (user.mustChangePassword && !isPublic && location.pathname !== '/change-password') {
+            navigate('/change-password', { replace: true });
+        }
+    }, [user, location.pathname, navigate]);
+
     const login = useCallback((userData: User) => {
         setUser(userData);
     }, []);
 
     const logout = useCallback(async () => {
         try {
-            // Hit the backend endpoint to invalidate Redis/DB session and clear cookies
             await apiClient.post('/auth/logout');
         } catch (error) {
             console.error('Server logout failed, clearing local state anyway', error);
         } finally {
-            // 1. Clear the React Context state immediately
             setUser(null);
-
-            // 2. Use a hard redirect.
-            // This completely flushes any caches in browser memory!
             window.location.href = '/login';
         }
     }, []);

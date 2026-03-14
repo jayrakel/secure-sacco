@@ -1,3 +1,7 @@
+// This file intentionally exports both utility functions (fmtKES, fmtCount, greeting)
+// and React components from the same module. They are tightly coupled dashboard
+// utilities and splitting them would create unnecessary indirection.
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -85,7 +89,7 @@ export interface QuickLinkProps {
     label:     string;
     to:        string;
     icon:      React.ElementType;
-    color:     string; // tailwind bg class
+    color:     string;
     textColor: string;
 }
 

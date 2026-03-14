@@ -36,9 +36,9 @@ const ResetPasswordPage: React.FC = () => {
             });
             setStatus('success');
             setMessage('Your password has been successfully reset!');
-        } catch (err: any) {
+        } catch (err: unknown) {
             setStatus('error');
-            setMessage(err.response?.data?.message || 'Failed to reset password. The token may be expired.');
+            setMessage((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Failed to reset password. The token may be expired.');
         }
     };
 
