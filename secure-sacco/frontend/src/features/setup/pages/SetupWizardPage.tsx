@@ -8,7 +8,7 @@ import {
 import apiClient from '../../../shared/api/api-client';
 import { setupApi } from '../api/setup-api';
 import type { SetupPhase } from '../api/setup-api';
-import { useSetup } from '../context/SetupContext';
+import { useSetup } from '../context/useSetup';
 import { useAuth } from '../../auth/context/AuthProvider';
 import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthProvider';
-import { useSetup } from '../../features/setup/context/SetupContext';
+import { useSetup } from '../../features/setup/context/useSetup';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 
 /**

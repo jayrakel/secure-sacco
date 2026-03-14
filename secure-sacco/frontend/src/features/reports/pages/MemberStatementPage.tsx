@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { useSettings } from '../../settings/context/SettingsContext';
+import { useSettings } from '../../settings/context/useSettings';
 import { reportApi, type StatementItemDTO } from '../api/report-api';
 import { memberApi, type Member } from '../../members/api/member-api';
 import {

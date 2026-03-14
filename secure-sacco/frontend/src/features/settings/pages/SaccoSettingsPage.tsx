@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { settingsApi } from '../api/settings-api';
 import type { SaccoSettings } from '../api/settings-api';
-import { useSettings } from '../context/SettingsContext';
+import { useSettings } from '../context/useSettings';
 import { Settings, Loader2, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 // ─── Reusable form field ──────────────────────────────────────────────────────
 const Field: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
@@ -79,8 +80,8 @@ const SaccoSettingsPage: React.FC = () => {
             }
             setSuccess('Core settings saved successfully.');
             await refreshSettings();
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to save settings.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to save settings.'));
         } finally { setIsSavingCore(false); }
     };
 
@@ -91,8 +92,8 @@ const SaccoSettingsPage: React.FC = () => {
             await settingsApi.updateFeatureFlags({ flags: enabledModules });
             setSuccess('Module configuration saved.');
             await refreshSettings();
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update modules.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to update modules.'));
         } finally { setIsSavingFlags(false); }
     };
 

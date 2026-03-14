@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { useSettings } from '../../settings/context/SettingsContext';
+import { useSettings } from '../../settings/context/useSettings';
 import { dashboardApi, type MemberDashboardDTO } from '../api/dashboard-api';
 import { meetingsApi } from '../../meetings/api/meetings-api';
 import { PaymentModal } from '../../payments/components/PaymentModal';

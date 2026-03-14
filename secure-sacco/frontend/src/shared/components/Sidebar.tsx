@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthProvider';
-import { useSettings } from '../../features/settings/context/SettingsContext';
+import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
