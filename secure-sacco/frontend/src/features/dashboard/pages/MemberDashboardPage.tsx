@@ -49,6 +49,9 @@ const MemberDashboardPage: React.FC = () => {
     const registrationFee = settings?.registrationFee ?? 1000;
 
     const fetchData = useCallback(async () => {
+        // Defer execution to the microtask queue to prevent synchronous setState inside useEffect
+        await Promise.resolve();
+
         if (!isActive) {
             setLoading(false);
             return;

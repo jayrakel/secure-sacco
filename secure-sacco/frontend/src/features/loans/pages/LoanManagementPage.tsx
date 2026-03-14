@@ -33,15 +33,20 @@ export default function LoanManagementPage() {
     const [committeeApp,setCommitteeApp]= useState<LoanApplication | null>(null);
     const [disburseApp, setDisburseApp] = useState<LoanApplication | null>(null);
 
-    const fetchApplications = () => {
-        setError('');
+    const fetchApplications = (isRefresh = false) => {
+        if (isRefresh) {
+            setError('');
+            setLoading(true);
+        }
         loanApi.getAllApplications()
             .then(setApplications)
             .catch(() => setError('Failed to load loan applications. Please try again.'))
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchApplications(); }, []);
+    useEffect(() => {
+        fetchApplications(false);
+    }, []);
 
     const filtered = useMemo(() => {
         let rows = applications;
@@ -80,7 +85,7 @@ export default function LoanManagementPage() {
                     </p>
                 </div>
                 <button
-                    onClick={() => { setLoading(true); fetchApplications(); }}
+                    onClick={() => fetchApplications(true)}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors"
                 >
                     <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
@@ -238,9 +243,9 @@ export default function LoanManagementPage() {
                 </div>
             </div>
 
-            {verifyApp    && <VerifyLoanModal     application={verifyApp}    onClose={() => setVerifyApp(null)}    onSuccess={() => { setVerifyApp(null);    setLoading(true); fetchApplications(); }} />}
-            {committeeApp && <CommitteeApproveModal application={committeeApp} onClose={() => setCommitteeApp(null)} onSuccess={() => { setCommitteeApp(null); setLoading(true); fetchApplications(); }} />}
-            {disburseApp  && <DisburseLoanModal    application={disburseApp}  onClose={() => setDisburseApp(null)}  onSuccess={() => { setDisburseApp(null);  setLoading(true); fetchApplications(); }} />}
+            {verifyApp    && <VerifyLoanModal     application={verifyApp}    onClose={() => setVerifyApp(null)}    onSuccess={() => { setVerifyApp(null);    fetchApplications(true); }} />}
+            {committeeApp && <CommitteeApproveModal application={committeeApp} onClose={() => setCommitteeApp(null)} onSuccess={() => { setCommitteeApp(null); fetchApplications(true); }} />}
+            {disburseApp  && <DisburseLoanModal    application={disburseApp}  onClose={() => setDisburseApp(null)}  onSuccess={() => { setDisburseApp(null);  fetchApplications(true); }} />}
         </div>
     );
 }
