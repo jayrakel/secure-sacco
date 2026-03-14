@@ -53,8 +53,8 @@ const MemberDashboardPage: React.FC = () => {
 
         try {
             setLoading(true);
-            const result = await dashboardApi.getMemberDashboard();
-            setData(result);
+            const dashboardData = await dashboardApi.getMemberDashboard();
+            setData(dashboardData);
         } catch (error: unknown) {
             console.error(error);
         } finally {
@@ -68,11 +68,15 @@ const MemberDashboardPage: React.FC = () => {
 
         let cancelled = false;
 
-        const loadInitialData = async () => {
+        const loadDashboard = async () => {
+            await Promise.resolve();
+            if (cancelled) return;
+
             try {
-                const result = await dashboardApi.getMemberDashboard();
+                setLoading(true);
+                const dashboardData = await dashboardApi.getMemberDashboard();
                 if (!cancelled) {
-                    setData(result);
+                    setData(dashboardData);
                 }
             } catch (error: unknown) {
                 if (!cancelled) {
@@ -86,7 +90,7 @@ const MemberDashboardPage: React.FC = () => {
             }
         };
 
-        void loadInitialData();
+        void loadDashboard();
 
         return () => {
             cancelled = true;
