@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { useSettings } from '../../settings/context/SettingsContext';
+import { useSettings } from '../../settings/context/useSettings';
 import { reportApi, type MemberMiniSummaryDTO } from '../../reports/api/report-api';
 import {
     PiggyBank, Coins, AlertCircle, CalendarCheck,
@@ -58,11 +58,26 @@ const MemberDashboardPage: React.FC = () => {
 
     useEffect(() => {
         if (!isActive) return;
-        setSummaryLoading(true);
-        reportApi.getMySummary()
-            .then(setSummary)
-            .catch(() => setSummary(null))
-            .finally(() => setSummaryLoading(false));
+
+        let cancelled = false;
+
+        const loadSummary = async () => {
+            setSummaryLoading(true);
+            try {
+                const result = await reportApi.getMySummary();
+                if (!cancelled) setSummary(result);
+            } catch {
+                if (!cancelled) setSummary(null);
+            } finally {
+                if (!cancelled) setSummaryLoading(false);
+            }
+        };
+
+        void loadSummary();
+
+        return () => {
+            cancelled = true;
+        };
     }, [isActive]);
 
     const loanStyle = LOAN_STATUS_STYLE[summary?.activeLoanStatus ?? 'NONE'] ?? LOAN_STATUS_STYLE.NONE;
