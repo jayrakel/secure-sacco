@@ -33,10 +33,19 @@ const fmt = (n: number) =>
 const totalFor = (rows: LoanArrearsDTO[]) =>
     rows.reduce((s, r) => s + r.amountOverdue, 0);
 
+// ── Sort icon (module-level component, not created inside render) ─────────────
+interface SortIconProps { col: SortKey; sortKey: SortKey; sortDir: SortDir; }
+const SortIcon: React.FC<SortIconProps> = ({ col, sortKey, sortDir }) => {
+    if (sortKey !== col) return <ChevronUp size={13} className="text-slate-300 ml-1" />;
+    return sortDir === 'asc'
+        ? <ChevronUp   size={13} className="text-emerald-500 ml-1" />
+        : <ChevronDown size={13} className="text-emerald-500 ml-1" />;
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export const LoanArrearsPage: React.FC = () => {
     const [allRows, setAllRows]       = useState<LoanArrearsDTO[]>([]);
-    const [loading, setLoading]       = useState(true);
+    const [loading, setLoading]       = useState(true);   // starts true; no synchronous setState in effect
     const [error, setError]           = useState('');
 
     const [activeBucket, setActiveBucket] = useState<ArrearsBucket | 'All'>('All');
@@ -45,8 +54,8 @@ export const LoanArrearsPage: React.FC = () => {
     const [sortDir, setSortDir]           = useState<SortDir>('desc');
 
     // ── Fetch ─────────────────────────────────────────────────────────────────
+    // loading initialises as true above; no synchronous setState call needed here
     useEffect(() => {
-        setLoading(true);
         reportApi.getLoanArrears()
             .then(setAllRows)
             .catch(() => setError('Failed to load arrears data. Please try again.'))
@@ -104,14 +113,6 @@ export const LoanArrearsPage: React.FC = () => {
         a.download = `Loan_Arrears_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         URL.revokeObjectURL(url);
-    };
-
-    // ── Sort icon ─────────────────────────────────────────────────────────────
-    const SortIcon = ({ col }: { col: SortKey }) => {
-        if (sortKey !== col) return <ChevronUp size={13} className="text-slate-300 ml-1" />;
-        return sortDir === 'asc'
-            ? <ChevronUp   size={13} className="text-emerald-500 ml-1" />
-            : <ChevronDown size={13} className="text-emerald-500 ml-1" />;
     };
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -254,7 +255,7 @@ export const LoanArrearsPage: React.FC = () => {
                                 className="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-800 select-none"
                                 onClick={() => handleSort('memberNumber')}
                             >
-                                <div className="flex items-center">Member # <SortIcon col="memberNumber" /></div>
+                                <div className="flex items-center">Member # <SortIcon col="memberNumber" sortKey={sortKey} sortDir={sortDir} /></div>
                             </th>
 
                             {/* Member Name */}
@@ -262,7 +263,7 @@ export const LoanArrearsPage: React.FC = () => {
                                 className="px-5 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-800 select-none"
                                 onClick={() => handleSort('memberName')}
                             >
-                                <div className="flex items-center">Name <SortIcon col="memberName" /></div>
+                                <div className="flex items-center">Name <SortIcon col="memberName" sortKey={sortKey} sortDir={sortDir} /></div>
                             </th>
 
                             {/* Product */}
@@ -276,7 +277,7 @@ export const LoanArrearsPage: React.FC = () => {
                                 onClick={() => handleSort('daysOverdue')}
                             >
                                 <div className="flex items-center justify-center">
-                                    <Clock size={12} className="mr-1" /> Days <SortIcon col="daysOverdue" />
+                                    <Clock size={12} className="mr-1" /> Days <SortIcon col="daysOverdue" sortKey={sortKey} sortDir={sortDir} />
                                 </div>
                             </th>
 
@@ -291,7 +292,7 @@ export const LoanArrearsPage: React.FC = () => {
                                 onClick={() => handleSort('amountOverdue')}
                             >
                                 <div className="flex items-center justify-end">
-                                    <TrendingUp size={12} className="mr-1" /> Amount Overdue <SortIcon col="amountOverdue" />
+                                    <TrendingUp size={12} className="mr-1" /> Amount Overdue <SortIcon col="amountOverdue" sortKey={sortKey} sortDir={sortDir} />
                                 </div>
                             </th>
 

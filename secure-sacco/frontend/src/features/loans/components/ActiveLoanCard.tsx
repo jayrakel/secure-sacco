@@ -9,12 +9,10 @@ interface ActiveLoanCardProps {
 
 export function ActiveLoanCard({ application, onRepayClick }: ActiveLoanCardProps) {
     const [summary, setSummary] = useState<LoanSummary | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);  // starts true; never set synchronously in effect
 
     useEffect(() => {
         let cancelled = false;
-
-        setLoading(true);
 
         loanApi.getLoanSummary(application.id)
             .then((result) => {

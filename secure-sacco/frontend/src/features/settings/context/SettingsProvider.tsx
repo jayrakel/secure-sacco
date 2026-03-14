@@ -34,14 +34,17 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     useEffect(() => {
         if (isAuthenticated && !setupLoading && setupComplete) {
+            // refreshSettings is an async function — setSettings is called after the await,
+            // not synchronously. eslint-disable is intentional here.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             void refreshSettings();
-        } else if (!isAuthenticated) {
-            setSettings(null);
         }
     }, [isAuthenticated, setupComplete, setupLoading, refreshSettings]);
 
     return (
-        <SettingsContext.Provider value={{ settings, refreshSettings }}>
+        // Expose null when the user is not authenticated; avoids a synchronous
+        // setSettings(null) call inside an effect to clear on logout.
+        <SettingsContext.Provider value={{ settings: isAuthenticated ? settings : null, refreshSettings }}>
             {children}
         </SettingsContext.Provider>
     );

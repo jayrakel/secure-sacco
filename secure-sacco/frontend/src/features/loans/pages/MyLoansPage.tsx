@@ -17,7 +17,6 @@ export default function MyLoansPage() {
     const [repayApp, setRepayApp] = useState<LoanApplication | null>(null); // <--- NEW
 
     const fetchApplications = () => {
-        setLoading(true);
         loanApi.getMyApplications()
             .then(setApplications)
             .catch(() => setError('Failed to load your loan applications.'))
@@ -141,10 +140,10 @@ export default function MyLoansPage() {
             )}
 
             {/* --- ALL MODALS --- */}
-            {showApplyModal && <ApplyLoanModal onClose={() => setShowApplyModal(false)} onSuccess={() => { setShowApplyModal(false); fetchApplications(); }} />}
-            {payFeeApp && <PayLoanFeeModal applicationId={payFeeApp.id} feeAmount={payFeeApp.applicationFee} onClose={() => setPayFeeApp(null)} onSuccess={() => { setPayFeeApp(null); fetchApplications(); }} />}
-            {addGuarantorApp && <AddGuarantorModal applicationId={addGuarantorApp.id} onClose={() => setAddGuarantorApp(null)} onSuccess={() => { setAddGuarantorApp(null); fetchApplications(); }} />}
-            {repayApp && <RepayLoanModal applicationId={repayApp.id} onClose={() => setRepayApp(null)} onSuccess={() => { setRepayApp(null); fetchApplications(); }} />}
+            {showApplyModal && <ApplyLoanModal onClose={() => setShowApplyModal(false)} onSuccess={() => { setShowApplyModal(false); setLoading(true); fetchApplications(); }} />}
+            {payFeeApp && <PayLoanFeeModal applicationId={payFeeApp.id} feeAmount={payFeeApp.applicationFee} onClose={() => setPayFeeApp(null)} onSuccess={() => { setPayFeeApp(null); setLoading(true); fetchApplications(); }} />}
+            {addGuarantorApp && <AddGuarantorModal applicationId={addGuarantorApp.id} onClose={() => setAddGuarantorApp(null)} onSuccess={() => { setAddGuarantorApp(null); setLoading(true); fetchApplications(); }} />}
+            {repayApp && <RepayLoanModal applicationId={repayApp.id} onClose={() => setRepayApp(null)} onSuccess={() => { setRepayApp(null); setLoading(true); fetchApplications(); }} />}
         </div>
     );
 }

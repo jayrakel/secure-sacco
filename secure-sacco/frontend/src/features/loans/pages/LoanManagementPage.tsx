@@ -34,7 +34,6 @@ export default function LoanManagementPage() {
     const [disburseApp, setDisburseApp] = useState<LoanApplication | null>(null);
 
     const fetchApplications = () => {
-        setLoading(true);
         setError('');
         loanApi.getAllApplications()
             .then(setApplications)
@@ -81,7 +80,7 @@ export default function LoanManagementPage() {
                     </p>
                 </div>
                 <button
-                    onClick={fetchApplications}
+                    onClick={() => { setLoading(true); fetchApplications(); }}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors"
                 >
                     <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
@@ -239,9 +238,9 @@ export default function LoanManagementPage() {
                 </div>
             </div>
 
-            {verifyApp    && <VerifyLoanModal     application={verifyApp}    onClose={() => setVerifyApp(null)}    onSuccess={() => { setVerifyApp(null);    fetchApplications(); }} />}
-            {committeeApp && <CommitteeApproveModal application={committeeApp} onClose={() => setCommitteeApp(null)} onSuccess={() => { setCommitteeApp(null); fetchApplications(); }} />}
-            {disburseApp  && <DisburseLoanModal    application={disburseApp}  onClose={() => setDisburseApp(null)}  onSuccess={() => { setDisburseApp(null);  fetchApplications(); }} />}
+            {verifyApp    && <VerifyLoanModal     application={verifyApp}    onClose={() => setVerifyApp(null)}    onSuccess={() => { setVerifyApp(null);    setLoading(true); fetchApplications(); }} />}
+            {committeeApp && <CommitteeApproveModal application={committeeApp} onClose={() => setCommitteeApp(null)} onSuccess={() => { setCommitteeApp(null); setLoading(true); fetchApplications(); }} />}
+            {disburseApp  && <DisburseLoanModal    application={disburseApp}  onClose={() => setDisburseApp(null)}  onSuccess={() => { setDisburseApp(null);  setLoading(true); fetchApplications(); }} />}
         </div>
     );
 }

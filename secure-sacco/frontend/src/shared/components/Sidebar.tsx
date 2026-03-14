@@ -6,7 +6,7 @@ import {
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
     ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 interface NavItem {
     label: string;
@@ -29,21 +29,19 @@ export const Sidebar = () => {
     const { settings } = useSettings();
     const location = useLocation();
     const [isCollapsed, setIsCollapsed] = useState(false);
-    // Initialise Accounting menu open when the user lands on an accounting route.
-    // Using a lazy initialiser avoids a synchronous setState-in-effect antipattern.
-    const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => ({
-        Accounting: location.pathname.startsWith('/accounting'),
-    }));
+    // User-controlled overrides set via toggleMenu. When an override is absent
+    // for a given label, path-based logic applies (see expandedMenus below).
+    const [menuOverrides, setMenuOverrides] = useState<Record<string, boolean>>({});
 
-    // Keep the Accounting submenu open as the user navigates within /accounting,
-    // but only set state when the derived value actually changes to avoid re-renders.
-    useEffect(() => {
-        const shouldBeOpen = location.pathname.startsWith('/accounting') && !isCollapsed;
-        setExpandedMenus(prev => {
-            if (prev['Accounting'] === shouldBeOpen) return prev;
-            return { ...prev, Accounting: shouldBeOpen };
-        });
-    }, [location.pathname, isCollapsed]);
+    // Derive expanded state at render time — no useEffect or synchronous
+    // setState-in-effect needed. Accounting auto-expands on /accounting routes;
+    // user can override via the toggle button.
+    const expandedMenus = useMemo<Record<string, boolean>>(() => ({
+        ...menuOverrides,
+        Accounting: 'Accounting' in menuOverrides
+            ? menuOverrides['Accounting']
+            : location.pathname.startsWith('/accounting') && !isCollapsed,
+    }), [menuOverrides, location.pathname, isCollapsed]);
 
     const isStaff = user?.roles?.some(role => role !== 'ROLE_MEMBER');
 
@@ -146,7 +144,7 @@ export const Sidebar = () => {
 
     const toggleMenu = (label: string) => {
         if (isCollapsed) setIsCollapsed(false);
-        setExpandedMenus(prev => ({ ...prev, [label]: !prev[label] }));
+        setMenuOverrides(prev => ({ ...prev, [label]: !expandedMenus[label] }));
     };
 
     return (
