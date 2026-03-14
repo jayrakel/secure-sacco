@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle2, Clock, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { ObligationPeriodResponse, PagedResponse, PeriodStatus } from '../api/obligations-api';
+import type { ObligationPeriodResponse, PagedResponse, PeriodStatus } from '../api/obligation-api';
 
 interface Props {
     data: PagedResponse<ObligationPeriodResponse> | null;
@@ -57,7 +57,7 @@ export const ObligationHistoryTable: React.FC<Props> = ({ data, loading, page, o
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                    {data.content.map(period => {
+                    {data.content.map((period: ObligationPeriodResponse) => {
                         const shortfall = Math.max(0, period.requiredAmount - period.paidAmount);
                         return (
                             <tr key={period.id} className="hover:bg-slate-50 transition-colors">

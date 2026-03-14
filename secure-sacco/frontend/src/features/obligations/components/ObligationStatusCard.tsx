@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Calendar, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
-import type { ObligationResponse, PeriodStatus } from '../api/obligations-api';
+import type { ObligationResponse, PeriodStatus } from '../api/obligation-api';
 
 interface Props {
     obligation: ObligationResponse;

@@ -11,6 +11,9 @@ export interface LoanProduct {
     applicationFee: number;
     gracePeriodDays: number;
     isActive: boolean;
+    // optional limits — some products expose min/max amounts
+    minAmount?: number;
+    maxAmount?: number;
 }
 
 export interface LoanGuarantor {
