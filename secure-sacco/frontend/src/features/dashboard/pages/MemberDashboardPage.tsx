@@ -1,384 +1,270 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { useSettings } from '../../settings/context/useSettings';
-import { dashboardApi, type MemberDashboardDTO } from '../api/dashboard-api';
-import { meetingsApi } from '../../meetings/api/meetings-api';
-import { PaymentModal } from '../../payments/components/PaymentModal';
-import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
+import { useSettings } from '../../settings/context/SettingsContext';
+import { reportApi, type MemberMiniSummaryDTO } from '../../reports/api/report-api';
 import {
-    PiggyBank, Coins, AlertCircle, BarChart3,
-    CalendarClock, CreditCard, ChevronRight, CheckCircle2, Clock,
-    ArrowUpRight, TrendingUp, RefreshCw, ShieldCheck,
-    ArrowDownCircle, UserCheck, FileText, ShieldAlert,
+    PiggyBank, Coins, AlertCircle, CalendarCheck,
+    CreditCard, ChevronRight, CheckCircle2, Clock,
+    TrendingUp, ArrowUpRight, Loader2,
 } from 'lucide-react';
+import { PaymentModal } from '../../payments/components/PaymentModal';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmt = (n: number | null | undefined) =>
-    (n ?? 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (n: number) =>
+    n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const greeting = () => {
-    const h = new Date().getHours();
-    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+const LOAN_STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+    ACTIVE:             { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Active'        },
+    PENDING_APPROVAL:   { bg: 'bg-blue-50',    text: 'text-blue-700',    label: 'Pending'       },
+    APPROVED:           { bg: 'bg-violet-50',  text: 'text-violet-700',  label: 'Approved'      },
+    REJECTED:           { bg: 'bg-red-50',     text: 'text-red-700',     label: 'Rejected'      },
+    CLOSED:             { bg: 'bg-slate-100',  text: 'text-slate-600',   label: 'Closed'        },
+    NONE:               { bg: 'bg-slate-100',  text: 'text-slate-500',   label: 'No Active Loan'},
 };
 
-const isOverdue = (dateStr: string | null | undefined): boolean => {
-    if (!dateStr) return false;
-    return new Date(dateStr) < new Date();
-};
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-const Skeleton = ({ className }: { className?: string }) => (
-    <div className={`bg-slate-100 rounded-lg animate-pulse ${className}`} />
+// ─── Stat card ────────────────────────────────────────────────────────────────
+const StatCard: React.FC<{
+    label: string;
+    value: string;
+    sub?: string;
+    icon: React.ElementType;
+    iconBg: string;
+    iconColor: string;
+    accent?: string;
+}> = ({ label, value, sub, icon: Icon, iconBg, iconColor, accent }) => (
+    <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex items-start justify-between gap-4 ${accent ?? ''}`}>
+        <div className="min-w-0">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
+            <p className="text-2xl font-bold text-slate-800 mt-1 leading-none">{value}</p>
+            {sub && <p className="text-xs text-slate-400 mt-1.5">{sub}</p>}
+        </div>
+        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+            <Icon className={`w-5 h-5 ${iconColor}`} />
+        </div>
+    </div>
 );
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const MemberDashboardPage: React.FC = () => {
     const { user } = useAuth();
     const { settings } = useSettings();
+    const [summary, setSummary] = useState<MemberMiniSummaryDTO | null>(null);
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-    const [data, setData] = useState<MemberDashboardDTO | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [refreshedAt, setRefreshedAt] = useState(new Date());
-    const [payModalOpen, setPayModalOpen] = useState(false);
-    const [checkingIn, setCheckingIn] = useState(false);
-    const [checkedIn, setCheckedIn] = useState(false);
-
+    const registrationFee = settings?.registrationFee || 1000;
+    const isActive  = user?.memberStatus === 'ACTIVE';
     const isPending = user?.memberStatus === 'PENDING';
-    const isActive = user?.memberStatus === 'ACTIVE';
-    const registrationFee = settings?.registrationFee ?? 1000;
-
-    const fetchData = useCallback(async () => {
-        // Defer execution to the microtask queue to prevent synchronous setState inside useEffect
-        await Promise.resolve();
-
-        if (!isActive) {
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const result = await dashboardApi.getMemberDashboard();
-            setData(result);
-        } catch (error: unknown) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-            setRefreshedAt(new Date());
-        }
-    }, [isActive]);
 
     useEffect(() => {
-        void fetchData();
-    }, [fetchData]);
+        if (!isActive) return;
 
-    const handleCheckIn = async () => {
-        if (!data?.upcomingMeetingId) return;
+        let cancelled = false;
 
-        setCheckingIn(true);
-        try {
-            await meetingsApi.checkIn(data.upcomingMeetingId);
-            setCheckedIn(true);
-        } catch (error: unknown) {
-            console.error(getApiErrorMessage(error, 'Check-in failed.'));
-        } finally {
-            setCheckingIn(false);
-        }
-    };
+        const loadSummary = async () => {
+            await Promise.resolve();
+            if (cancelled) return;
 
-    const nextOverdue = isOverdue(data?.nextInstallmentDueDate);
-    const hasOpenPenalties = (data?.openPenaltiesCount ?? 0) > 0;
+            setSummaryLoading(true);
+            try {
+                const data = await reportApi.getMySummary();
+                if (!cancelled) {
+                    setSummary(data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setSummary(null);
+                }
+            } finally {
+                if (!cancelled) {
+                    setSummaryLoading(false);
+                }
+            }
+        };
 
-    // Mirror the backend rule exactly:
-    // Button only appears when the meeting's start_at datetime has been reached.
-    // Normalize the string from the backend (space-separated, no tz) → ISO with Z (UTC).
-    const parseMeetingStart = (raw: string | null | undefined): Date | null => {
-        if (!raw) return null;
-        const iso = raw.replace(' ', 'T');
-        return new Date(iso.endsWith('Z') ? iso : iso + 'Z');
-    };
-    const meetingStartDate = parseMeetingStart(data?.upcomingMeetingStartAt);
-    const meetingHasStarted = meetingStartDate ? new Date() >= meetingStartDate : false;
-    const meetingIsCheckable = (data?.upcomingMeetingStatus === 'SCHEDULED') && meetingHasStarted;
+        void loadSummary();
 
-    // ── Pending activation screen ─────────────────────────────────────────────
-    if (isPending) {
-        return (
-            <div className="max-w-2xl mx-auto mt-12 space-y-6 pb-12 px-4">
-                <div className="text-center">
-                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Clock className="w-8 h-8 text-amber-600" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-slate-900">Complete Your Registration</h1>
-                    <p className="text-slate-500 text-sm mt-2">
-                        Pay the one-time registration fee to activate your account and unlock savings, loans and all member benefits.
-                    </p>
-                </div>
+        return () => {
+            cancelled = true;
+        };
+    }, [isActive]);
 
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-5">
-                    <div className="flex items-center gap-4 pb-5 border-b border-slate-100">
-                        <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg uppercase">
-                            {user?.firstName?.[0]}{user?.lastName?.[0]}
-                        </div>
-                        <div>
-                            <p className="font-bold text-slate-800">{user?.firstName} {user?.lastName}</p>
-                            <p className="text-xs text-slate-400">{user?.email}</p>
-                        </div>
-                    </div>
+    const loanStyle = LOAN_STATUS_STYLE[summary?.activeLoanStatus ?? 'NONE'] ?? LOAN_STATUS_STYLE.NONE;
 
-                    <div className="space-y-3">
-                        {[
-                            { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50', label: 'Account created', done: true },
-                            { icon: CreditCard, color: 'text-amber-600 bg-amber-50', label: `Pay registration fee — KES ${registrationFee.toLocaleString()}`, done: false },
-                            { icon: ShieldCheck, color: 'text-slate-400 bg-slate-100', label: 'Account activated & member number assigned', done: false },
-                        ].map((step, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${step.color}`}>
-                                    <step.icon size={16} />
-                                </div>
-                                <p className={`text-sm ${step.done ? 'text-slate-800 font-semibold' : 'text-slate-600'}`}>{step.label}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    <button
-                        onClick={() => setPayModalOpen(true)}
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors text-sm shadow-sm"
-                    >
-                        <CreditCard size={16} />
-                        Pay KES {registrationFee.toLocaleString()} via M-Pesa
-                        <ChevronRight size={16} />
-                    </button>
-                    <p className="text-center text-xs text-slate-400">
-                        After paying on your phone, refresh the page. Contact support if you experience issues.
-                    </p>
-                </div>
-
-                <PaymentModal
-                    isOpen={payModalOpen}
-                    onClose={() => setPayModalOpen(false)}
-                    amount={registrationFee}
-                    accountReference={`REG-${user?.id?.substring(0, 8).toUpperCase() ?? 'FEE'}`}
-                    title="Pay Registration Fee"
-                    description="Enter your M-Pesa phone number. A payment prompt will be sent to your phone."
-                />
-            </div>
-        );
-    }
-
-    // ── Active member dashboard ───────────────────────────────────────────────
     return (
-        <div className="space-y-6 max-w-6xl mx-auto pb-12">
+        <div className="max-w-5xl mx-auto space-y-6 pb-10">
+
+            {/* ── Welcome header ── */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">{greeting()}, {user?.firstName}</h1>
-                    <p className="text-sm text-slate-400 mt-0.5">
-                        Member <span className="font-mono font-semibold text-emerald-600">{user?.memberNumber}</span>
-                        &nbsp;·&nbsp;
-                        {new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    <h1 className="text-2xl font-bold text-slate-900">
+                        Welcome back, {user?.firstName}
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                        Member #{user?.memberNumber ?? 'Pending'} &nbsp;·&nbsp; {new Date().toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                 </div>
-                <button
-                    onClick={fetchData}
-                    disabled={loading}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
-                >
-                    <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-                    {loading ? 'Refreshing…' : refreshedAt.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
-                </button>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link to="/savings" className="bg-linear-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-md hover:shadow-lg transition-shadow group col-span-2 lg:col-span-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                            <PiggyBank size={18} />
-                        </div>
-                        <ArrowUpRight size={14} className="opacity-60 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    {loading ? <Skeleton className="h-8 w-32 bg-white/20 mb-1" /> : (
-                        <p className="text-3xl font-bold leading-none">
-                            KES {fmt(data?.savingsBalance)}
-                        </p>
-                    )}
-                    <p className="text-xs text-white/70 mt-2">Savings Balance</p>
-                </Link>
-
-                <Link to="/my-loans" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-shadow group flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                        <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center">
-                            <Coins size={18} className="text-violet-600" />
-                        </div>
-                        <ArrowUpRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
-                    </div>
-                    {loading ? <Skeleton className="h-7 w-28 mb-1" /> : (
-                        <div>
-                            <p className="text-2xl font-bold text-slate-800 leading-none">
-                                {(data?.loanOutstanding ?? 0) > 0 ? `KES ${fmt(data?.loanOutstanding)}` : '—'}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1.5">
-                                {(data?.loanOutstanding ?? 0) > 0 ? 'Outstanding balance' : 'No active loan'}
-                            </p>
-                        </div>
-                    )}
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-auto">Loan Outstanding</p>
-                </Link>
-
-                <Link to="/my-penalties" className={`rounded-2xl border shadow-sm p-5 hover:shadow-md transition-shadow group flex flex-col gap-3 ${hasOpenPenalties ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${hasOpenPenalties ? 'bg-rose-100' : 'bg-slate-100'}`}>
-                            <AlertCircle size={18} className={hasOpenPenalties ? 'text-rose-600' : 'text-slate-400'} />
-                        </div>
-                        <ArrowUpRight size={14} className={hasOpenPenalties ? 'text-rose-300 group-hover:text-rose-500' : 'text-slate-300 group-hover:text-slate-500'} />
-                    </div>
-                    {loading ? <Skeleton className="h-7 w-24 mb-1" /> : (
-                        <div>
-                            <p className={`text-2xl font-bold leading-none ${hasOpenPenalties ? 'text-rose-700' : 'text-slate-800'}`}>
-                                {hasOpenPenalties ? `KES ${fmt(data?.openPenaltiesAmount)}` : 'Clear'}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1.5">
-                                {hasOpenPenalties
-                                    ? `${data!.openPenaltiesCount} open penalty item${data!.openPenaltiesCount !== 1 ? 's' : ''}`
-                                    : 'No outstanding penalties'}
-                            </p>
-                        </div>
-                    )}
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-auto">Penalties</p>
-                </Link>
-
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
-                    <div className="w-9 h-9 bg-sky-50 rounded-xl flex items-center justify-center">
-                        <BarChart3 size={18} className="text-sky-600" />
-                    </div>
-                    {loading ? <Skeleton className="h-7 w-20 mb-1" /> : (
-                        <div>
-                            <p className="text-2xl font-bold text-slate-800 leading-none">
-                                {data?.attendanceRate != null ? `${Math.round(data.attendanceRate)}%` : '—'}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-1.5">Meeting attendance</p>
-                        </div>
-                    )}
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-auto">Attendance Rate</p>
+                <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }`}>
+                    {isActive ? <CheckCircle2 size={13} /> : <Clock size={13} />}
+                    {isActive ? 'Active Member' : 'Pending Activation'}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className={`rounded-2xl border shadow-sm overflow-hidden flex flex-col ${nextOverdue ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
-                    <div className={`px-5 py-4 border-b flex items-center justify-between shrink-0 ${nextOverdue ? 'border-rose-100' : 'border-slate-100'}`}>
+            {/* ── Pending activation banner ── */}
+            {isPending && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                            <Clock className="w-5 h-5 text-amber-600" />
+                        </div>
                         <div>
-                            <h2 className="text-sm font-bold text-slate-800">Next Loan Installment</h2>
-                            <p className={`text-xs mt-0.5 ${nextOverdue ? 'text-rose-500 font-semibold' : 'text-slate-400'}`}>
-                                {nextOverdue ? '⚠ Payment overdue' : 'Upcoming repayment'}
+                            <p className="font-semibold text-amber-900">Account Activation Required</p>
+                            <p className="text-sm text-amber-700 mt-0.5">
+                                Pay the KES {registrationFee.toLocaleString()} registration fee via M-Pesa to unlock your full member benefits.
                             </p>
                         </div>
-                        <Link to="/my-loans" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-                            My Loans <ChevronRight size={13} />
-                        </Link>
                     </div>
-
-                    {loading ? (
-                        <div className="flex items-center justify-center py-12"><div className="space-y-3 w-full px-5"><Skeleton className="h-10 w-48" /><Skeleton className="h-4 w-32" /></div></div>
-                    ) : data?.nextInstallmentAmount != null ? (
-                        <div className="p-5">
-                            <div className={`rounded-xl p-4 text-white ${nextOverdue ? 'bg-linear-to-br from-rose-500 to-rose-600' : 'bg-linear-to-br from-indigo-600 to-indigo-700'}`}>
-                                <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Amount Due</p>
-                                <p className="text-3xl font-bold mt-1">KES {fmt(data.nextInstallmentAmount)}</p>
-                                <p className="text-xs opacity-70 mt-1">
-                                    Due: {data.nextInstallmentDueDate
-                                    ? new Date(data.nextInstallmentDueDate).toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
-                                    : '—'}
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2">
-                            <TrendingUp size={28} className="text-emerald-300" />
-                            <p className="text-sm font-medium text-slate-500">No upcoming installment</p>
-                        </div>
-                    )}
-                </div>
-
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-                        <div>
-                            <h2 className="text-sm font-bold text-slate-800">Upcoming Meeting</h2>
-                            <p className="text-xs text-slate-400 mt-0.5">Your next scheduled session</p>
-                        </div>
-                        <Link to="/my-meetings" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
-                            View all <ChevronRight size={13} />
-                        </Link>
-                    </div>
-
-                    {loading ? (
-                        <div className="flex items-center justify-center py-12"><div className="space-y-3 w-full px-5"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-1/2" /></div></div>
-                    ) : data?.upcomingMeetingTitle ? (
-                        <div className="p-5 space-y-4 flex-1">
-                            <div className="bg-linear-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
-                                <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Next Meeting</p>
-                                <p className="text-lg font-bold mt-1 leading-snug">{data.upcomingMeetingTitle}</p>
-                                {data.upcomingMeetingTitle && data.upcomingMeetingStartAt && (
-                                    <p className="text-xs opacity-75 mt-1">
-                                        {new Date(data.upcomingMeetingStartAt as string).toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
-                                        {' · '}
-                                        {new Date(data.upcomingMeetingStartAt as string).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                )}
-                            </div>
-
-                            {meetingIsCheckable && (
-                                checkedIn ? (
-                                    <div className="inline-flex items-center gap-2 text-emerald-600 text-sm font-semibold">
-                                        <CheckCircle2 size={16} />
-                                        Checked in successfully
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={handleCheckIn}
-                                        disabled={checkingIn}
-                                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-60"
-                                    >
-                                        <UserCheck size={15} />
-                                        {checkingIn ? 'Checking in…' : 'Check In'}
-                                    </button>
-                                )
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2">
-                            <CalendarClock size={28} className="text-slate-200" />
-                            <p className="text-sm font-medium text-slate-500">No upcoming meetings</p>
-                            <Link to="/my-meetings" className="text-xs text-emerald-600 hover:underline font-semibold">View meeting history →</Link>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                {[
-                    { to: '/savings', icon: ArrowDownCircle, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderHover: 'hover:border-emerald-300', label: 'Top Up Savings', sub: 'Deposit via M-Pesa' },
-                    { to: '/my-loans', icon: TrendingUp, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', borderHover: 'hover:border-violet-300', label: 'Pay Loan', sub: 'Repay outstanding balance' },
-                    { to: '/my-penalties', icon: ShieldAlert, iconBg: 'bg-rose-50', iconColor: 'text-rose-500', borderHover: 'hover:border-rose-200', label: 'Pay Penalty', sub: `${data?.openPenaltiesCount ?? 0} open item${(data?.openPenaltiesCount ?? 0) !== 1 ? 's' : ''}` },
-                    { to: '/my-reports', icon: FileText, iconBg: 'bg-sky-50', iconColor: 'text-sky-600', borderHover: 'hover:border-sky-200', label: 'My Statement', sub: 'View transactions & reports' },
-                ].map(action => (
-                    <Link
-                        key={action.to}
-                        to={action.to}
-                        className={`group bg-white border border-slate-200 ${action.borderHover} rounded-2xl shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-all`}
+                    <button
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-sm transition-colors shrink-0 shadow-sm"
                     >
-                        <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-xl ${action.iconBg} flex items-center justify-center`}>
-                                <action.icon size={18} className={action.iconColor} />
-                            </div>
-                            <div>
-                                <p className="text-sm font-semibold text-slate-800">{action.label}</p>
-                                <p className="text-xs text-slate-400">{action.sub}</p>
-                            </div>
+                        <CreditCard size={16} /> Pay Now
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
+
+            {/* ── KPI stat cards (only for active members) ── */}
+            {isActive && (
+                <>
+                    {summaryLoading ? (
+                        <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
+                            <Loader2 className="animate-spin text-emerald-600" size={28} />
+                            <span className="text-sm">Loading your account summary…</span>
                         </div>
-                        <ArrowUpRight size={15} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
-                    </Link>
-                ))}
+                    ) : summary ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <StatCard
+                                label="Savings Balance"
+                                value={`KES ${fmt(summary.savingsBalance)}`}
+                                sub="Total deposited savings"
+                                icon={PiggyBank}
+                                iconBg="bg-emerald-50"
+                                iconColor="text-emerald-600"
+                            />
+                            <StatCard
+                                label="Loan Arrears"
+                                value={summary.loanArrears > 0 ? `KES ${fmt(summary.loanArrears)}` : 'Clear'}
+                                sub={summary.loanArrears > 0 ? 'Overdue repayment balance' : 'No outstanding arrears'}
+                                icon={Coins}
+                                iconBg={summary.loanArrears > 0 ? 'bg-rose-50' : 'bg-emerald-50'}
+                                iconColor={summary.loanArrears > 0 ? 'text-rose-600' : 'text-emerald-600'}
+                            />
+                            <StatCard
+                                label="Penalties"
+                                value={summary.penaltyOutstanding > 0 ? `KES ${fmt(summary.penaltyOutstanding)}` : 'Clear'}
+                                sub={summary.penaltyOutstanding > 0 ? 'Outstanding penalty balance' : 'No penalties outstanding'}
+                                icon={AlertCircle}
+                                iconBg={summary.penaltyOutstanding > 0 ? 'bg-amber-50' : 'bg-emerald-50'}
+                                iconColor={summary.penaltyOutstanding > 0 ? 'text-amber-600' : 'text-emerald-600'}
+                            />
+                            <StatCard
+                                label="Next Due Date"
+                                value={summary.nextDueDate
+                                    ? new Date(summary.nextDueDate).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
+                                    : '—'
+                                }
+                                sub={summary.nextDueDate ? 'Next loan repayment' : 'No upcoming payments'}
+                                icon={CalendarCheck}
+                                iconBg="bg-sky-50"
+                                iconColor="text-sky-600"
+                            />
+                        </div>
+                    ) : null}
+
+                    {/* ── Active loan status pill ── */}
+                    {summary && (
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+                                    <TrendingUp className="w-5 h-5 text-sky-600" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Loan Status</p>
+                                    <p className="text-sm font-semibold text-slate-800 mt-0.5">{loanStyle.label}</p>
+                                </div>
+                            </div>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${loanStyle.bg} ${loanStyle.text}`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+                                {loanStyle.label}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* ── Quick actions ── */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a href="/savings" className="group bg-white border border-slate-200 hover:border-emerald-300 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                                    <PiggyBank className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">View Savings</p>
+                                    <p className="text-xs text-slate-400">Statement & deposits</p>
+                                </div>
+                            </div>
+                            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                        </a>
+                        <a href="/my-loans" className="group bg-white border border-slate-200 hover:border-sky-300 rounded-2xl shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-sky-50 rounded-xl flex items-center justify-center">
+                                    <Coins className="w-5 h-5 text-sky-600" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">My Loans</p>
+                                    <p className="text-xs text-slate-400">Applications & repayments</p>
+                                </div>
+                            </div>
+                            <ArrowUpRight size={16} className="text-slate-300 group-hover:text-slate-600 transition-colors" />
+                        </a>
+                    </div>
+                </>
+            )}
+
+            {/* ── Profile card (always visible) ── */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Account Details</h2>
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xl font-bold border border-emerald-200 uppercase shrink-0">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-1 flex-1">
+                        <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Full Name</p>
+                            <p className="text-sm font-semibold text-slate-800">{user?.firstName} {user?.lastName}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Email</p>
+                            <p className="text-sm text-slate-600 truncate">{user?.email}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Member Number</p>
+                            <p className="text-sm font-mono font-bold text-emerald-700">{user?.memberNumber || '—'}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                amount={registrationFee}
+                accountReference={`REG-${user?.id?.substring(0, 8).toUpperCase() || 'FEE'}`}
+                title="Pay Registration Fee"
+                description="We'll send a secure M-Pesa prompt to your phone to authorize the transaction."
+            />
         </div>
     );
 };

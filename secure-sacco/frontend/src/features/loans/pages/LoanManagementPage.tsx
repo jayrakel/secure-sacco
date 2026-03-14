@@ -45,7 +45,30 @@ export default function LoanManagementPage() {
     };
 
     useEffect(() => {
-        fetchApplications(false);
+        let cancelled = false;
+
+        const loadApplications = async () => {
+            try {
+                const data = await loanApi.getAllApplications();
+                if (!cancelled) {
+                    setApplications(data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setError('Failed to load loan applications. Please try again.');
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        void loadApplications();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const filtered = useMemo(() => {
