@@ -64,34 +64,20 @@ const MemberDashboardPage: React.FC = () => {
     }, [isActive]);
 
     useEffect(() => {
-        if (!isActive) return;
-
-        let cancelled = false;
-
-        const loadInitialData = async () => {
-            try {
-                const result = await dashboardApi.getMemberDashboard();
-                if (!cancelled) {
-                    setData(result);
-                }
-            } catch (error: unknown) {
-                if (!cancelled) {
-                    console.error(error);
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                    setRefreshedAt(new Date());
-                }
-            }
-        };
-
-        void loadInitialData();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [isActive]);
+    if (!isActive) return;
+    setSummaryLoading(true);
+    const fetchSummary = async () => {
+        try {
+            const data = await reportApi.getMySummary();
+            setSummary(data);
+        } catch {
+            setSummary(null);
+        } finally {
+            setSummaryLoading(false);
+        }
+    };
+    fetchSummary();
+}, [isActive]);
 
     const handleCheckIn = async () => {
         if (!data?.upcomingMeetingId) return;
