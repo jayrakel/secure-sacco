@@ -22,6 +22,8 @@ import { SetupProvider } from "./features/setup/context/SetupContext";
 import SetupWizardPage from "./features/setup/pages/SetupWizardPage";
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
+import TrialBalancePage from './features/accounting/pages/TrialBalancePage';
+import ManualGlPostingPage from './features/accounting/pages/ManualGlPostingPage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
 import LoanManagementPage from './features/loans/pages/LoanManagementPage';
 import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
@@ -143,6 +145,18 @@ function App() {
                                 <Route path="/accounting/journals" element={
                                     <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
                                         <JournalEntriesPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/accounting/trial-balance" element={
+                                    <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
+                                        <TrialBalancePage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/accounting/gl-posting" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <ManualGlPostingPage />
                                     </ProtectedRoute>
                                 } />
 

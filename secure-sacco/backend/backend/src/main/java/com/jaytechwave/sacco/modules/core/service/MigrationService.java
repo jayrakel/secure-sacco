@@ -161,23 +161,44 @@ public class MigrationService {
         entityManager.flush();
         entityManager.clear();
 
-        // 4. TIME MACHINE: Backdate the Savings Transaction and Accounting Entries
+        // 4. TIME MACHINE: Backdate the Savings Transaction (This one is synchronous, so it works instantly)
         java.time.LocalDate historicalDate = request.transactionDate();
-        Timestamp historicalTs = Timestamp.valueOf(historicalDate.atStartOfDay());
+        java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(historicalDate.atStartOfDay());
 
-        // Backdate the savings transaction (including updated_at so the UI sorts it properly)
         jdbcTemplate.update("UPDATE savings_transactions SET posted_at = ?, created_at = ?, updated_at = ? WHERE id = ?",
                 historicalTs, historicalTs, historicalTs, response.transactionId());
 
-        // Backdate the General Ledger Journal Entries (transaction_date is a DATE column, not a TIMESTAMP)
-        jdbcTemplate.update("UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
-                historicalDate, historicalTs, historicalTs, response.reference());
+        // 5. ASYNC TIME MACHINE: Wait for Accounting Thread to finish, then Backdate!
+        String jeReference = "SAV-" + response.reference();
+        int rowsUpdated = 0;
+        int maxAttempts = 50; // Try for up to 5 seconds
 
-        // Backdate the Journal Entry Lines
-        jdbcTemplate.update("UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
-                historicalTs, historicalTs, response.reference());
+        while (rowsUpdated == 0 && maxAttempts > 0) {
+            try {
+                Thread.sleep(100); // Wait 100 milliseconds
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
 
-        log.info("✅ Successfully migrated savings for Account ID: {} - Amount Deposited: {}", account.getId(), request.amount());
+            // Try to update the Journal Entry. If it returns > 0, it means the async thread finished!
+            rowsUpdated = jdbcTemplate.update(
+                    "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
+                    historicalDate, historicalTs, historicalTs, jeReference
+            );
+            maxAttempts--;
+        }
+
+        if (rowsUpdated > 0) {
+            // Once the main entry is found and updated, instantly update its child lines!
+            jdbcTemplate.update(
+                    "UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
+                    historicalTs, historicalTs, jeReference
+            );
+            log.info("✅ Successfully migrated & time-traveled Savings + Accounting for: {}", request.memberNumber());
+        } else {
+            log.warn("⚠️ Savings migrated, but Accounting Time Machine timed out for {} (Async thread took too long)", jeReference);
+        }
+
         return response.reference();
     }
 }

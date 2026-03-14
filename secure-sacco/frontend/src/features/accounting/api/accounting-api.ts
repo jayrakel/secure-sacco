@@ -60,6 +60,22 @@ export interface TrialBalanceResponse {
     balanced: boolean;
 }
 
+// ─── Manual GL Posting ────────────────────────────────────────────────────────
+
+export interface ManualJournalLineRequest {
+    accountCode: string;
+    debitAmount: number;
+    creditAmount: number;
+    description: string;
+}
+
+export interface CreateManualJournalRequest {
+    transactionDate: string;         // YYYY-MM-DD
+    referenceNumber: string;
+    description: string;
+    lines: ManualJournalLineRequest[];
+}
+
 export const accountingApi = {
     getAccounts: async (): Promise<Account[]> => {
         const response = await apiClient.get<Account[]>('/accounting/accounts');
@@ -76,6 +92,11 @@ export const accountingApi = {
     getTrialBalance: async (asOfDate?: string): Promise<TrialBalanceResponse> => {
         const qs = asOfDate ? `?asOfDate=${asOfDate}` : '';
         const response = await apiClient.get<TrialBalanceResponse>(`/accounting/trial-balance${qs}`);
+        return response.data;
+    },
+
+    postManualJournalEntry: async (request: CreateManualJournalRequest): Promise<JournalEntry> => {
+        const response = await apiClient.post<JournalEntry>('/accounting/journals', request);
         return response.data;
     },
 };
