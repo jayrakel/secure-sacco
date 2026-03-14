@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { savingsApi } from '../api/savings-api';
 import { X, Smartphone, Loader2, CheckCircle2 } from 'lucide-react';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 interface Props {
     isOpen: boolean;
@@ -31,8 +32,8 @@ export const MpesaDepositModal: React.FC<Props> = ({ isOpen, onClose, onSuccess 
             setMessage(response.customerMessage || 'Please check your phone for the M-Pesa PIN prompt.');
             setStep('SUCCESS');
             onSuccess(); // Refresh statement in background
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to initiate M-Pesa push');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to initiate M-Pesa push'));
         } finally {
             setIsLoading(false);
         }

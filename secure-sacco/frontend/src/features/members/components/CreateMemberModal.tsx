@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { memberApi } from '../api/member-api';
 import type { CreateMemberRequest } from '../api/member-api';
+import axios from 'axios';
 
 interface CreateMemberModalProps {
     isOpen: boolean;
@@ -45,8 +46,19 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, onClose, 
             await memberApi.createMember(payload);
             onSuccess();
             onClose();
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to create member');
+        } catch (error: unknown) {
+            if (axios.isAxiosError<{ message?: string; error?: string }>(error)) {
+                setError(
+                    error.response?.data?.message ??
+                    error.response?.data?.error ??
+                    error.message ??
+                    'Failed to create member'
+                );
+            } else if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Failed to create member');
+            }
         } finally {
             setIsSubmitting(false);
         }

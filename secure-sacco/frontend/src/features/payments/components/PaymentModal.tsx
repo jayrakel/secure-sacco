@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { paymentApi } from '../api/payment-api';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 interface PaymentModalProps {
     isOpen: boolean;
@@ -38,8 +39,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 accountReference
             });
             setSuccessMessage(response.customerMessage || 'Please check your phone to complete the payment.');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to initiate payment. Please try again.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to initiate payment. Please try again.'));
         } finally {
             setIsLoading(false);
         }

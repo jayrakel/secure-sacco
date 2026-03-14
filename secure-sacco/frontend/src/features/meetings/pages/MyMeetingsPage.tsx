@@ -3,6 +3,7 @@ import { meetingsApi } from '../api/meetings-api';
 import type { MyMeetingSummary, AttendanceStatus } from '../api/meetings-api';
 import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle, LogIn } from 'lucide-react';
 import { format } from 'date-fns';
+import axios from "axios";
 
 const parseUtc = (dateStr: string) =>
     new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
@@ -37,10 +38,15 @@ export default function MyMeetingsPage() {
         try {
             await meetingsApi.checkIn(meetingId);
             load(); // refresh to get updated status
-        } catch (e: any) {
-            setCheckInErrors(prev => ({
+        } catch (error: unknown) {
+            setCheckInErrors((prev) => ({
                 ...prev,
-                [meetingId]: e.response?.data?.message || 'Check-in failed. Please try again.',
+                [meetingId]:
+                    axios.isAxiosError<{ message?: string }>(error)
+                        ? (error.response?.data?.message ?? error.message ?? 'Check-in failed. Please try again.')
+                        : error instanceof Error
+                            ? error.message
+                            : 'Check-in failed. Please try again.',
             }));
         } finally {
             setCheckingIn(null);

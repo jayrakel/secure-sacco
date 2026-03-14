@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { roleApi, type Role, type Permission } from '../api/role-api';
 import { Shield, Plus, Loader2, Save, AlertTriangle, ShieldCheck, X } from 'lucide-react';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 export default function RolesPermissionsPage() {
     const [roles, setRoles] = useState<Role[]>([]);
@@ -30,8 +31,8 @@ export default function RolesPermissionsPage() {
             if (rolesData.length > 0) {
                 handleSelectRole(rolesData[0]);
             }
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load roles and permissions.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to load roles and permissions.'));
         } finally {
             setIsLoading(false);
         }
@@ -69,8 +70,8 @@ export default function RolesPermissionsPage() {
             setRoles(roles.map(r => r.id === selectedRole.id ? updatedRole : r));
             setSelectedRole(updatedRole);
             alert("Permissions updated successfully!");
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to update permissions.");
+        } catch (error: unknown) {
+            alert(getApiErrorMessage(error, "Failed to update permissions."));
         } finally {
             setIsSaving(false);
         }
@@ -92,8 +93,8 @@ export default function RolesPermissionsPage() {
             setNewRoleName('');
             setNewRoleDesc('');
             handleSelectRole(newRole);
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to create role.");
+        } catch (error: unknown) {
+            alert(getApiErrorMessage(error,"Failed to create role."));
         } finally {
             setIsCreating(false);
         }

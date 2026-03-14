@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { dashboardApi, type StaffDashboardDTO } from '../api/dashboard-api';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { StatCard, QuickLink, DashboardHeader, Skeleton, fmtKES, fmtCount } from '../components/DashboardWidgets';
+import { StatCard, QuickLink, DashboardHeader, fmtKES, fmtCount } from '../components/DashboardWidgets';
 
 /**
  * Dashboard for CHAIRPERSON and DEPUTY_CHAIRPERSON.

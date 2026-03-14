@@ -27,8 +27,13 @@ export function RepayLoanModal({ applicationId, onClose, onSuccess }: RepayLoanM
             });
             setSuccessMsg('M-Pesa prompt sent to your phone! Please enter your PIN. Your balance will update automatically once Safaricom processes the payment.');
             setTimeout(() => onSuccess(), 4000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to initiate repayment.');
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Failed to initiate Repayment.');
+            }
+        } finally {
             setLoading(false);
         }
     };

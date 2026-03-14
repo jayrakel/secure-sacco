@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { savingsApi } from '../api/savings-api';
 import { X, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 interface Props {
     isOpen: boolean;
@@ -25,7 +26,7 @@ export const ManualTransactionModal: React.FC<Props> = ({ isOpen, onClose, membe
         setError('');
 
         try {
-            const payload = { memberId, amount: Number(amount), referenceNotes };
+            const payload = {memberId, amount: Number(amount), referenceNotes};
 
             if (type === 'DEPOSIT') {
                 await savingsApi.manualDeposit(payload);
@@ -36,8 +37,8 @@ export const ManualTransactionModal: React.FC<Props> = ({ isOpen, onClose, membe
             onClose();
             setAmount('');
             setReferenceNotes('');
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.response?.data?.error || 'Transaction failed');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error) || 'Transaction failed');
         } finally {
             setIsLoading(false);
         }

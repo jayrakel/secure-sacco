@@ -48,17 +48,26 @@ const MemberDashboardPage: React.FC = () => {
     const registrationFee = settings?.registrationFee ?? 1000;
 
     const fetchData = useCallback(async () => {
-        if (!isActive) { setLoading(false); return; }
-        setLoading(true);
+        if (!isActive) {
+            setLoading(false);
+            return;
+        }
+
         try {
+            setLoading(true);
             const result = await dashboardApi.getMemberDashboard();
             setData(result);
-        } catch {}
-        setLoading(false);
-        setRefreshedAt(new Date());
+        } catch (error: unknown) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+            setRefreshedAt(new Date());
+        }
     }, [isActive]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => {
+        void fetchData();
+    }, [fetchData]);
 
     const handleCheckIn = async () => {
         if (!data?.upcomingMeetingId) return;
@@ -75,7 +84,7 @@ const MemberDashboardPage: React.FC = () => {
 
     // Mirror the backend rule exactly:
     // Button only appears when the meeting's start_at datetime has been reached.
-    // Normalise the string from the backend (space-separated, no tz) → ISO with Z (UTC).
+    // Normalize the string from the backend (space-separated, no tz) → ISO with Z (UTC).
     const parseMeetingStart = (raw: string | null | undefined): Date | null => {
         if (!raw) return null;
         const iso = raw.replace(' ', 'T');
@@ -180,7 +189,7 @@ const MemberDashboardPage: React.FC = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
                 {/* Savings Balance */}
-                <Link to="/savings" className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-md hover:shadow-lg transition-shadow group col-span-2 lg:col-span-1">
+                <Link to="/savings" className="bg-linear-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-md hover:shadow-lg transition-shadow group col-span-2 lg:col-span-1">
                     <div className="flex items-center justify-between mb-4">
                         <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
                             <PiggyBank size={18} />
@@ -277,7 +286,7 @@ const MemberDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-center py-12"><div className="space-y-3 w-full px-5"><Skeleton className="h-10 w-48" /><Skeleton className="h-4 w-32" /></div></div>
                     ) : data?.nextInstallmentAmount != null ? (
                         <div className="p-5">
-                            <div className={`rounded-xl p-4 text-white ${nextOverdue ? 'bg-gradient-to-br from-rose-500 to-rose-600' : 'bg-gradient-to-br from-indigo-600 to-indigo-700'}`}>
+                            <div className={`rounded-xl p-4 text-white ${nextOverdue ? 'bg-linear-to-br from-rose-500 to-rose-600' : 'bg-linear-to-br from-indigo-600 to-indigo-700'}`}>
                                 <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Amount Due</p>
                                 <p className="text-3xl font-bold mt-1">KES {fmt(data.nextInstallmentAmount)}</p>
                                 <p className="text-xs opacity-70 mt-1">
@@ -311,7 +320,7 @@ const MemberDashboardPage: React.FC = () => {
                         <div className="flex items-center justify-center py-12"><div className="space-y-3 w-full px-5"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-1/2" /></div></div>
                     ) : data?.upcomingMeetingTitle ? (
                         <div className="p-5 space-y-4 flex-1">
-                            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
+                            <div className="bg-linear-to-br from-amber-500 to-amber-600 rounded-xl p-4 text-white">
                                 <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Next Meeting</p>
                                 <p className="text-lg font-bold mt-1 leading-snug">{data.upcomingMeetingTitle}</p>
                                 {data.upcomingMeetingTitle && data.upcomingMeetingStartAt && (

@@ -4,6 +4,7 @@ import { roleApi, type Role } from '../api/role-api';
 import UserSessionsModal from '../../sessions/components/UserSessionsModal';
 import HasPermission from '../../../shared/components/HasPermission';
 import {Plus, Edit2, Trash2, Shield, Search, Loader2, ShieldAlert, X, Save, MonitorSmartphone} from 'lucide-react';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 export default function UserListPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -31,8 +32,8 @@ export default function UserListPage() {
             ]);
             setUsers(usersData);
             setAvailableRoles(rolesData);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load system data');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to load system data'));
         } finally {
             setIsLoading(false);
         }
@@ -107,8 +108,8 @@ export default function UserListPage() {
             ));
 
             setIsRoleModalOpen(false);
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to update roles");
+        } catch (error: unknown) {
+            alert(getApiErrorMessage(error, "Failed to update roles"));
         } finally {
             setIsSavingRoles(false);
         }

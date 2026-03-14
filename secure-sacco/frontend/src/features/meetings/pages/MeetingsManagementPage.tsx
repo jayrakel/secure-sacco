@@ -3,6 +3,7 @@ import { meetingsApi } from '../api/meetings-api';
 import type { Meeting, MeetingType, AttendanceStatus, AttendanceRecord } from '../api/meetings-api';
 import { Calendar, Clock, Plus, CheckCircle, XCircle, Users, ChevronRight, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import axios from "axios";
 
 const STATUS_COLOR: Record<string, string> = {
     SCHEDULED: 'bg-blue-100 text-blue-700',
@@ -87,8 +88,14 @@ export default function MeetingsManagementPage() {
             setActionMsg('Meeting completed. Penalties generated automatically.');
             load();
             setSelected(prev => prev ? { ...prev, status: 'COMPLETED' } : null);
-        } catch (e: any) {
-            setActionMsg(e.response?.data?.message || 'Failed to complete meeting.');
+        } catch (error: unknown) {
+            if (axios.isAxiosError<{ message?: string }>(error)) {
+                setActionMsg(error.response?.data?.message ?? error.message ?? 'Failed to complete meeting.');
+            } else if (error instanceof Error) {
+                setActionMsg(error.message);
+            } else {
+                setActionMsg('Failed to complete meeting.');
+            }
         } finally {
             setSaving(false);
         }
@@ -102,8 +109,14 @@ export default function MeetingsManagementPage() {
             setActionMsg('Meeting canceled.');
             load();
             setSelected(prev => prev ? { ...prev, status: 'CANCELED' } : null);
-        } catch (e: any) {
-            setActionMsg(e.response?.data?.message || 'Failed to cancel meeting.');
+        } catch (error: unknown) {
+            if (axios.isAxiosError<{ message?: string }>(error)) {
+                setActionMsg(error.response?.data?.message ?? error.message ?? 'Failed to cancel meeting.');
+            } else if (error instanceof Error) {
+                setActionMsg(error.message);
+            } else {
+                setActionMsg('Failed to cancel meeting.');
+            }
         } finally {
             setSaving(false);
         }
@@ -120,10 +133,16 @@ export default function MeetingsManagementPage() {
             setShowCreate(false);
             setForm({ title: '', description: '', meetingType: 'GENERAL', startAt: '', endAt: '', lateAfterMinutes: 15 });
             load();
-        } catch (e: any) {
-            alert(e.response?.data?.message || 'Failed to create meeting.');
+        } catch (error: unknown) {
+            if (axios.isAxiosError<{ message?: string }>(error)) {
+                setActionMsg(error.response?.data?.message ?? error.message ?? 'Failed to create meeting.');
+            } else if (error instanceof Error) {
+                setActionMsg(error.message);
+            } else {
+                setActionMsg('Failed to create meeting.');
+            }
         } finally {
-            setFormSaving(false);
+            setSaving(false);
         }
     };
 
@@ -183,7 +202,7 @@ export default function MeetingsManagementPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <ChevronRight size={16} className="text-slate-300 mt-1 flex-shrink-0" />
+                                <ChevronRight size={16} className="text-slate-300 mt-1 shrink-0" />
                             </div>
                         </button>
                     ))}

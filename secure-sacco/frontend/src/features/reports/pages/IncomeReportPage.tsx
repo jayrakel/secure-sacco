@@ -5,6 +5,7 @@ import {
     Loader2, AlertCircle, ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { reportApi, type IncomeCategoryDTO, type IncomeReportDTO } from '../api/report-api';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 const todayStr = () => new Date().toISOString().split('T')[0];
 const monthStartStr = () => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0]; };
@@ -43,9 +44,10 @@ export const IncomeReportPage: React.FC = () => {
         setLoading(true); setError(''); setData(null);
         try {
             const result = await reportApi.getIncomeReport(from, to);
-            setData(result); setRan(true);
-        } catch (e: any) {
-            setError(e?.response?.data?.message ?? 'Failed to load income report. Please try again.');
+            setData(result);
+            setRan(true);
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to load income report. Please try again.'));
         } finally {
             setLoading(false);
         }

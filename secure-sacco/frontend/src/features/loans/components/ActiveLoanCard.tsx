@@ -11,13 +11,33 @@ export function ActiveLoanCard({ application, onRepayClick }: ActiveLoanCardProp
     const [summary, setSummary] = useState<LoanSummary | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchSummary = () => {
-        loanApi.getLoanSummary(application.id)
-            .then(setSummary)
-            .finally(() => setLoading(false));
-    };
+    useEffect(() => {
+        let cancelled = false;
 
-    useEffect(() => { fetchSummary(); }, [application.id]);
+        setLoading(true);
+
+        loanApi.getLoanSummary(application.id)
+            .then((result) => {
+                if (!cancelled) {
+                    setSummary(result);
+                }
+            })
+            .catch((error: unknown) => {
+                console.error(error);
+                if (!cancelled) {
+                    setSummary(null);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [application.id]);
 
     if (loading) return <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200 animate-pulse h-64"></div>;
     if (!summary) return null;
@@ -29,12 +49,11 @@ export function ActiveLoanCard({ application, onRepayClick }: ActiveLoanCardProp
             <div className={`p-4 flex justify-between items-center border-b ${isDefaulted ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'}`}>
                 <h3 className="font-bold text-slate-800">{summary.productName}</h3>
                 <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${isDefaulted ? 'bg-red-200 text-red-800' : 'bg-emerald-200 text-emerald-800'}`}>
-          {isDefaulted ? 'IN ARREARS' : summary.status.replace('_', ' ')}
-        </span>
+                    {isDefaulted ? 'IN ARREARS' : summary.status.replace('_', ' ')}
+                </span>
             </div>
 
             <div className="p-5 flex-1 flex flex-col gap-4">
-                {/* Main Balances */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                         <p className="text-xs text-slate-500 font-medium uppercase mb-1 flex items-center gap-1"><TrendingDown size={14}/> Outstanding</p>
@@ -51,7 +70,6 @@ export function ActiveLoanCard({ application, onRepayClick }: ActiveLoanCardProp
                     </div>
                 </div>
 
-                {/* Schedule & Credit Details */}
                 <div className="space-y-3 mt-2">
                     {summary.prepaymentCredit > 0 && (
                         <div className="flex justify-between items-center text-sm p-2 bg-blue-50 text-blue-800 rounded border border-blue-100">
@@ -63,8 +81,8 @@ export function ActiveLoanCard({ application, onRepayClick }: ActiveLoanCardProp
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-slate-500 flex items-center gap-2"><Calendar size={16}/> Next Due Date</span>
                         <span className="font-medium text-slate-800">
-              {summary.nextDueDate ? new Date(summary.nextDueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-            </span>
+                            {summary.nextDueDate ? new Date(summary.nextDueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                        </span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">

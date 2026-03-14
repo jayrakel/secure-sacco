@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Search, Loader2 } from 'lucide-react';
 import { obligationsApi, type ObligationFrequency, type ObligationResponse } from '../api/obligation-api';
 import { memberApi, type Member } from '../../members/api/member-api';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 interface Props {
     isOpen: boolean;
@@ -81,7 +82,7 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
         setSubmitting(true);
         try {
             const result = await obligationsApi.createObligation({
-                memberId:  selectedMember.id,
+                memberId: selectedMember.id,
                 frequency: form.frequency,
                 amountDue: parseFloat(form.amountDue),
                 startDate: form.startDate,
@@ -89,8 +90,11 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
             });
             onSuccess(result);
             onClose();
-        } catch (err: any) {
-            setErrors({ submit: err?.response?.data?.message ?? 'Failed to create obligation. Please try again.' });
+        } catch (error: unknown) {
+            setErrors((prev) => ({
+                ...prev,
+                form: getApiErrorMessage(error, 'Failed to create obligation.'),
+            }));
         } finally {
             setSubmitting(false);
         }

@@ -6,7 +6,7 @@ import { reportApi, type StatementItemDTO } from '../api/report-api';
 import { memberApi, type Member } from '../../members/api/member-api';
 import {
     ArrowLeft, FileText, Download, Printer, Search,
-    Loader2, X, Minus, CalendarDays, ChevronDown,
+    Loader2, X, Minus, CalendarDays,
     PiggyBank, Coins, AlertTriangle, TrendingUp, TrendingDown,
     Building2, BadgeCheck,
 } from 'lucide-react';
@@ -523,7 +523,7 @@ export const MemberStatementPage: React.FC = () => {
                                         </thead>
                                         <tbody>
                                         {/* Opening balance row */}
-                                        <tr className="bg-slate-900/[0.03] border-b border-slate-100">
+                                        <tr className="bg-slate-900/3 border-b border-slate-100">
                                             <td colSpan={5} className="px-5 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wide">
                                                 Opening Balance
                                                 {fromDate && <span className="ml-2 font-normal text-slate-400">{fmtDate(fromDate + 'T00:00:00')}</span>}
@@ -549,7 +549,7 @@ export const MemberStatementPage: React.FC = () => {
 
                                                     {/* Reference */}
                                                     <td className="px-5 py-3">
-                                                        <div className="text-xs font-mono text-slate-500 truncate max-w-[130px]" title={row.reference}>
+                                                        <div className="text-xs font-mono text-slate-500 truncate max-w-32.5" title={row.reference}>
                                                             {row.reference || '—'}
                                                         </div>
                                                     </td>

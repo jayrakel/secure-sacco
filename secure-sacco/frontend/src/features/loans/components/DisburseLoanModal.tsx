@@ -30,8 +30,13 @@ export function DisburseLoanModal({ application, onClose, onSuccess }: DisburseL
         try {
             await loanApi.disburseLoan(application.id);
             onSuccess();
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to disburse loan funds.');
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Failed to Disburse Loan Funds.');
+            }
+        } finally {
             setLoading(false);
         }
     };

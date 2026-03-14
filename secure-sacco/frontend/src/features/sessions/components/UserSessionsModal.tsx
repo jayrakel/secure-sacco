@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { sessionApi, type SessionResponse } from '../api/session-api';
 import { X, Trash2, MonitorSmartphone, Loader2, Clock, ShieldAlert } from 'lucide-react';
 import HasPermission from '../../../shared/components/HasPermission';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 interface Props {
     userId: string;
@@ -20,8 +21,8 @@ export default function UserSessionsModal({ userId, userName, onClose }: Props) 
             const data = await sessionApi.getUserSessions(userId);
             // Sort to show newest active sessions first
             setSessions(data.sort((a, b) => new Date(b.lastAccessedTime).getTime() - new Date(a.lastAccessedTime).getTime()));
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load sessions.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to load sessions.'));
         } finally {
             setIsLoading(false);
         }

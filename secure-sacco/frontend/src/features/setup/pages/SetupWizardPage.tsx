@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    ShieldCheck, CheckCircle2, Circle, Lock, Mail, Phone,
-    Users, Settings, ArrowRight, Loader2, Eye, EyeOff,
-    AlertTriangle, RefreshCw, Plus, Trash2, ChevronRight
+    ShieldCheck, CheckCircle2, Mail, Phone,
+    Users, Settings, ArrowRight, Loader2,
+    AlertTriangle, RefreshCw, Plus, Trash2,
 } from 'lucide-react';
 import apiClient from '../../../shared/api/api-client';
 import { setupApi } from '../api/setup-api';
 import type { SetupPhase } from '../api/setup-api';
 import { useSetup } from '../context/SetupContext';
 import { useAuth } from '../../auth/context/AuthProvider';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,8 +39,6 @@ const OFFICER_ROLES = [
     'CASHIER', 'DEPUTY_CASHIER',
     'LOAN_OFFICER', 'DEPUTY_LOAN_OFFICER',
 ];
-
-const REQUIRED_ROLES = ['CHAIRPERSON', 'SECRETARY', 'TREASURER', 'LOAN_OFFICER'];
 
 const fmtRole = (n: string) =>
     n.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -109,8 +108,9 @@ const VerifyContactStep: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 
     const act = async (fn: () => Promise<void>) => {
         setLoading(true); setError(''); setSuccessMsg('');
-        try { await fn(); } catch (e: any) {
-            setError(e.response?.data?.message || e.message || 'Something went wrong.');
+        try { await fn();
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, ('Something went wrong.')));
         } finally { setLoading(false); }
     };
 
@@ -239,7 +239,7 @@ const CreateOfficersStep: React.FC<{ missingRoles: string[]; onDone: () => void 
     const [officers, setOfficers] = useState<OfficerForm[]>([
         { id: '1', firstName: '', lastName: '', email: '', phone: '', roleId: '' },
     ]);
-    const [loading,  setLoading]  = useState(false);
+    // const [loading,  setLoading]  = useState(false);
     const [saving,   setSaving]   = useState<string | null>(null);
     const [saved,    setSaved]    = useState<Set<string>>(new Set());
     const [error,    setError]    = useState('');
@@ -272,8 +272,8 @@ const CreateOfficersStep: React.FC<{ missingRoles: string[]; onDone: () => void 
                 roleIds:   [officer.roleId],
             });
             setSaved(prev => new Set([...prev, officer.id]));
-        } catch (e: any) {
-            setError(e.response?.data?.message || 'Failed to create officer. Email may already be in use.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to create officer. Email may already be in use.'));
         } finally { setSaving(null); }
     };
 
@@ -402,7 +402,7 @@ const ConfigurePlatformStep: React.FC<{ onDone: () => void }> = ({ onDone }) => 
         }
         setLoading(true); setError('');
         try {
-            // Step 1: initialise core settings (field names match SaccoSettingsDTOs.InitializeRequest)
+            // Step 1: initialize core settings (field names match SaccoSettingsDTOs.InitializeRequest)
             await apiClient.post('/settings/sacco/initialize', {
                 saccoName:      saccoName.trim(),
                 prefix:         prefix.toUpperCase().slice(0, 3),
@@ -414,8 +414,8 @@ const ConfigurePlatformStep: React.FC<{ onDone: () => void }> = ({ onDone }) => 
             await apiClient.put('/settings/sacco/flags', { flags: modules });
 
             onDone();
-        } catch (e: any) {
-            setError(e.response?.data?.message || e.response?.data?.fields?.[0]?.message || 'Failed to save settings.');
+        } catch (error: unknown) {
+            setError(getApiErrorMessage(error, 'Failed to save settings.'));
         } finally { setLoading(false); }
     };
 
@@ -538,7 +538,7 @@ const SetupWizardPage: React.FC = () => {
 
     if (displayPhase === 'COMPLETE') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-linear-to-br from-emerald-50 via-white to-slate-50 flex items-center justify-center p-4">
                 <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
                     <DoneScreen onGo={() => navigate('/dashboard', { replace: true })} />
                 </div>
@@ -547,7 +547,7 @@ const SetupWizardPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-linear-to-br from-emerald-50 via-white to-slate-50 flex items-center justify-center p-4">
             <div className="max-w-2xl w-full">
                 {/* Header */}
                 <div className="text-center mb-8">

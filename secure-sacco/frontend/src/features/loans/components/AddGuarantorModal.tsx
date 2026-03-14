@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { loanApi } from '../api/loan-api';
 
 interface AddGuarantorModalProps {
@@ -16,16 +17,24 @@ export function AddGuarantorModal({ applicationId, onClose, onSuccess }: AddGuar
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!memberNumber || !amount) return;
+
         setLoading(true);
         setError('');
+
         try {
             await loanApi.addGuarantor(applicationId, {
-                memberNumber: memberNumber,
+                memberNumber,
                 guaranteedAmount: parseFloat(amount),
             });
             onSuccess();
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to add guarantor.');
+        } catch (error: unknown) {
+            if (axios.isAxiosError<{ message?: string }>(error)) {
+                setError(error.response?.data?.message ?? error.message ?? 'Failed to add guarantor.');
+            } else if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Failed to add guarantor.');
+            }
         } finally {
             setLoading(false);
         }
@@ -49,6 +58,7 @@ export function AddGuarantorModal({ applicationId, onClose, onSuccess }: AddGuar
                             required
                         />
                     </div>
+
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Amount Pledged (KES)</label>
                         <input
@@ -60,6 +70,7 @@ export function AddGuarantorModal({ applicationId, onClose, onSuccess }: AddGuar
                             required
                         />
                     </div>
+
                     <div className="flex justify-end gap-3">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded" disabled={loading}>
                             Cancel

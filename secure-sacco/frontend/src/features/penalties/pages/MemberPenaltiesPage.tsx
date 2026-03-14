@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { penaltyApi, type PenaltySummary } from '../api/penalty-api';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
 
 export default function MemberPenaltiesPage() {
     const [penalties, setPenalties] = useState<PenaltySummary[]>([]);
@@ -56,8 +57,8 @@ export default function MemberPenaltiesPage() {
                 setSuccessMsg('');
                 fetchPenalties();
             }, 5000);
-        } catch (err: any) {
-            setPayError(err.response?.data?.message || 'Failed to initiate payment.');
+        } catch (error: unknown) {
+            setPayError(getApiErrorMessage(error, 'Failed to initiate payment.'));
         } finally {
             setPayLoading(false);
         }

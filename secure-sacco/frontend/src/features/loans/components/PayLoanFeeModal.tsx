@@ -20,11 +20,16 @@ export function PayLoanFeeModal({ applicationId, feeAmount, onClose, onSuccess }
         setLoading(true);
         setError('');
         try {
-            await loanApi.payFee(applicationId, { phoneNumber });
+            await loanApi.payFee(applicationId, {phoneNumber});
             setSuccessMsg('M-Pesa prompt sent to your phone! Please enter your PIN.');
             setTimeout(() => onSuccess(), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to initiate payment.');
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Failed to initiate payment.');
+            }
+        } finally {
             setLoading(false);
         }
     };

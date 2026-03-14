@@ -25,8 +25,12 @@ export function VerifyLoanModal({ application, onClose, onSuccess }: VerifyLoanM
                 await loanApi.rejectApplication(application.id, { notes });
             }
             onSuccess();
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to verify application.');
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError('Failed to Verify Application.');
+            }
         } finally {
             setLoading(false);
         }
