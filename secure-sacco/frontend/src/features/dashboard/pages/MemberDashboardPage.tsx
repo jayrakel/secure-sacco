@@ -65,18 +65,35 @@ const MemberDashboardPage: React.FC = () => {
 
     useEffect(() => {
     if (!isActive) return;
-    setSummaryLoading(true);
-    const fetchSummary = async () => {
+
+    let cancelled = false;
+
+    const loadSummary = async () => {
+        await Promise.resolve();
+        if (cancelled) return;
+
+        setSummaryLoading(true);
         try {
             const data = await reportApi.getMySummary();
-            setSummary(data);
+            if (!cancelled) {
+                setSummary(data);
+            }
         } catch {
-            setSummary(null);
+            if (!cancelled) {
+                setSummary(null);
+            }
         } finally {
-            setSummaryLoading(false);
+            if (!cancelled) {
+                setSummaryLoading(false);
+            }
         }
     };
-    fetchSummary();
+
+    void loadSummary();
+
+    return () => {
+        cancelled = true;
+    };
 }, [isActive]);
 
     const handleCheckIn = async () => {
