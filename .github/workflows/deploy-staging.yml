@@ -1,8 +1,14 @@
 name: Deploy to Staging
 
+# ─── Trigger ──────────────────────────────────────────────────────────────────
+# Run ONLY after the CI workflow completes successfully on main.
+# Previously this triggered on push directly, which meant staging could deploy
+# even when CI was failing. Now it waits for the CI workflow to finish first.
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
 
 concurrency:
   group: deploy-staging
@@ -13,6 +19,9 @@ jobs:
     name: Build & Deploy — Staging
     runs-on: ubuntu-latest
     environment: staging
+    # Guard: only proceed when the triggering CI run actually passed.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     permissions:
       contents: read
       packages: write
@@ -20,6 +29,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # workflow_run events provide the SHA of the completed run, not HEAD.
+          # Using ref from the workflow_run ensures we build the same commit CI tested.
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -73,25 +86,56 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to staging server
-        uses: appleboy/ssh-action@v1
-        env:
-          APP_FIELD_ENCRYPTION_KEY: ${{ secrets.APP_FIELD_ENCRYPTION_KEY }}
-          APP_PII_HMAC_KEY: ${{ secrets.APP_PII_HMAC_KEY }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+      # ── Copy docker-compose.prod.yml to the staging server ──────────────────
+      # The file lives at secure-sacco/infra/docker-compose.prod.yml in the repo.
+      # The SSH deploy step expects it at /opt/sacco-staging/docker-compose.prod.yml.
+      # Previously the file was never copied, so docker compose pull would fail.
+      - name: Copy docker-compose to staging server
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
-          envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD
+          source: secure-sacco/infra/docker-compose.prod.yml
+          target: /opt/sacco-staging/
+          strip_components: 3   # removes secure-sacco/infra/ prefix, leaves docker-compose.prod.yml
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1
+        env:
+          # Secrets passed through to the remote script via appleboy's envs mechanism
+          APP_FIELD_ENCRYPTION_KEY: ${{ secrets.APP_FIELD_ENCRYPTION_KEY }}
+          APP_PII_HMAC_KEY: ${{ secrets.APP_PII_HMAC_KEY }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          DB_USERNAME: ${{ secrets.STAGING_DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          STAGING_GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,STAGING_GHCR_TOKEN,GITHUB_ACTOR
           script: |
             cd /opt/sacco-staging
-            
-            echo "APP_FIELD_ENCRYPTION_KEY=$APP_FIELD_ENCRYPTION_KEY" > .env
-            echo "APP_PII_HMAC_KEY=$APP_PII_HMAC_KEY" >> .env
-            echo "REDIS_HOST=redis" >> .env
-            echo "REDIS_PORT=6379" >> .env
-            echo "REDIS_PASSWORD=$REDIS_PASSWORD" >> .env
+
+            # Authenticate with GHCR so docker compose pull can fetch the images.
+            # STAGING_GHCR_TOKEN is the GITHUB_TOKEN from the workflow — it has
+            # read:packages permission which is sufficient for pulling.
+            echo "$STAGING_GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+            # Write the full .env file the docker-compose expects.
+            # All secrets are injected via appleboy's `envs` — nothing is hardcoded here.
+            cat > .env <<EOF
+            APP_FIELD_ENCRYPTION_KEY=$APP_FIELD_ENCRYPTION_KEY
+            APP_PII_HMAC_KEY=$APP_PII_HMAC_KEY
+            REDIS_HOST=redis
+            REDIS_PORT=6379
+            REDIS_PASSWORD=$REDIS_PASSWORD
+            DB_USERNAME=$DB_USERNAME
+            DB_PASSWORD=$DB_PASSWORD
+            DB_NAME=sacco_staging
+            EOF
 
             export BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:staging-latest
             export FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:staging-latest

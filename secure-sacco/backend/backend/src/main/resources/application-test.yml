@@ -1,25 +1,34 @@
 spring:
+  # Use PostgreSQL in tests — H2 does not support the `jsonb` and `TIMESTAMPTZ`
+  # columnDefinition values used by several entities (Payment, SaccoSettings,
+  # SavingsObligation, etc.). The CI service block already spins up PostgreSQL
+  # on localhost:5432 and passes DB_URL / DB_USERNAME / DB_PASSWORD as env vars,
+  # so we just need to let those through instead of overriding with H2.
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/sacco_test}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    database-platform: org.hibernate.dialect.H2Dialect
+      ddl-auto: create-drop        # Let Hibernate manage the schema in tests
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: false
 
   flyway:
-    enabled: false   # Use ddl-auto in tests, not Flyway
+    enabled: false                 # Use ddl-auto in tests, not Flyway
 
   data:
     redis:
-      host: localhost
-      port: 6370   # Use a different port — point to embedded/test Redis
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}     # Was incorrectly 6370 — fixed to match CI service
+      password: ${REDIS_PASSWORD:}
 
   session:
-    store-type: none   # In-memory sessions for tests
+    store-type: none               # In-memory sessions for tests
 
 sacco:
   security:
@@ -29,13 +38,12 @@ sacco:
   safaricom:
     daraja:
       env: sandbox
-      consumer-key: test_key
-      consumer-secret: test_secret
-      passkey: test_passkey
-      shortcode: "174379"
-      callback-base-url: "http://localhost:8080"
+      consumer-key: ${MPESA_CONSUMER_KEY:test_key}
+      consumer-secret: ${MPESA_CONSUMER_SECRET:test_secret}
+      passkey: ${MPESA_PASSKEY:test_passkey}
+      shortcode: "${MPESA_SHORTCODE:174379}"
+      callback-base-url: "${MPESA_CALLBACK_BASE_URL:http://localhost:8080}"
 
 app:
   field-encryption-key: dGVzdGVuY3J5cHRpb25rZXlfZm9yX2Rldl9vbmx5X18=  # 32-byte test key (NOT for prod)
-  pii-hmac-key: dGVzdGhtYWNrZXlfZm9yX2Rldl9vbmx5XzMyYnl0ZXM=       # 32-byte test HMAC (NOT for prod)
-
+  pii-hmac-key: dGVzdGhtYWNrZXlfZm9yX2Rldl9vbmx5XzMyYnl0ZXM=           # 32-byte test HMAC (NOT for prod)
