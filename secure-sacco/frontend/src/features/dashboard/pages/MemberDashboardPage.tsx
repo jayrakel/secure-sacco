@@ -5,6 +5,7 @@ import { useSettings } from '../../settings/context/useSettings';
 import { dashboardApi, type MemberDashboardDTO } from '../api/dashboard-api';
 import { meetingsApi } from '../../meetings/api/meetings-api';
 import { PaymentModal } from '../../payments/components/PaymentModal';
+import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 import {
     PiggyBank, Coins, AlertCircle, BarChart3,
     CalendarClock, CreditCard, ChevronRight, CheckCircle2, Clock,
@@ -33,18 +34,18 @@ const Skeleton = ({ className }: { className?: string }) => (
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const MemberDashboardPage: React.FC = () => {
-    const { user }     = useAuth();
+    const { user } = useAuth();
     const { settings } = useSettings();
 
-    const [data,         setData]         = useState<MemberDashboardDTO | null>(null);
-    const [loading,      setLoading]      = useState(true);
-    const [refreshedAt,  setRefreshedAt]  = useState(new Date());
+    const [data, setData] = useState<MemberDashboardDTO | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshedAt, setRefreshedAt] = useState(new Date());
     const [payModalOpen, setPayModalOpen] = useState(false);
-    const [checkingIn,   setCheckingIn]   = useState(false);
-    const [checkedIn,    setCheckedIn]    = useState(false);
+    const [checkingIn, setCheckingIn] = useState(false);
+    const [checkedIn, setCheckedIn] = useState(false);
 
-    const isPending       = user?.memberStatus === 'PENDING';
-    const isActive        = user?.memberStatus === 'ACTIVE';
+    const isPending = user?.memberStatus === 'PENDING';
+    const isActive = user?.memberStatus === 'ACTIVE';
     const registrationFee = settings?.registrationFee ?? 1000;
 
     const fetchData = useCallback(async () => {
@@ -71,16 +72,20 @@ const MemberDashboardPage: React.FC = () => {
 
     const handleCheckIn = async () => {
         if (!data?.upcomingMeetingId) return;
+
         setCheckingIn(true);
         try {
             await meetingsApi.checkIn(data.upcomingMeetingId);
             setCheckedIn(true);
-        } catch {}
-        setCheckingIn(false);
+        } catch (error: unknown) {
+            console.error(getApiErrorMessage(error, 'Check-in failed.'));
+        } finally {
+            setCheckingIn(false);
+        }
     };
 
-    const nextOverdue        = isOverdue(data?.nextInstallmentDueDate);
-    const hasOpenPenalties   = (data?.openPenaltiesCount ?? 0) > 0;
+    const nextOverdue = isOverdue(data?.nextInstallmentDueDate);
+    const hasOpenPenalties = (data?.openPenaltiesCount ?? 0) > 0;
 
     // Mirror the backend rule exactly:
     // Button only appears when the meeting's start_at datetime has been reached.
@@ -90,8 +95,8 @@ const MemberDashboardPage: React.FC = () => {
         const iso = raw.replace(' ', 'T');
         return new Date(iso.endsWith('Z') ? iso : iso + 'Z');
     };
-    const meetingStartDate   = parseMeetingStart(data?.upcomingMeetingStartAt);
-    const meetingHasStarted  = meetingStartDate ? new Date() >= meetingStartDate : false;
+    const meetingStartDate = parseMeetingStart(data?.upcomingMeetingStartAt);
+    const meetingHasStarted = meetingStartDate ? new Date() >= meetingStartDate : false;
     const meetingIsCheckable = (data?.upcomingMeetingStatus === 'SCHEDULED') && meetingHasStarted;
 
     // ── Pending activation screen ─────────────────────────────────────────────
@@ -109,7 +114,6 @@ const MemberDashboardPage: React.FC = () => {
                 </div>
 
                 <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-5">
-                    {/* User info */}
                     <div className="flex items-center gap-4 pb-5 border-b border-slate-100">
                         <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-lg uppercase">
                             {user?.firstName?.[0]}{user?.lastName?.[0]}
@@ -120,12 +124,11 @@ const MemberDashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Steps */}
                     <div className="space-y-3">
                         {[
                             { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50', label: 'Account created', done: true },
-                            { icon: CreditCard,   color: 'text-amber-600 bg-amber-50',     label: `Pay registration fee — KES ${registrationFee.toLocaleString()}`, done: false },
-                            { icon: ShieldCheck,  color: 'text-slate-400 bg-slate-100',    label: 'Account activated & member number assigned', done: false },
+                            { icon: CreditCard, color: 'text-amber-600 bg-amber-50', label: `Pay registration fee — KES ${registrationFee.toLocaleString()}`, done: false },
+                            { icon: ShieldCheck, color: 'text-slate-400 bg-slate-100', label: 'Account activated & member number assigned', done: false },
                         ].map((step, i) => (
                             <div key={i} className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${step.color}`}>
@@ -164,8 +167,6 @@ const MemberDashboardPage: React.FC = () => {
     // ── Active member dashboard ───────────────────────────────────────────────
     return (
         <div className="space-y-6 max-w-6xl mx-auto pb-12">
-
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">{greeting()}, {user?.firstName}</h1>
@@ -185,10 +186,7 @@ const MemberDashboardPage: React.FC = () => {
                 </button>
             </div>
 
-            {/* ── Row 1: 4 KPI cards ── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-                {/* Savings Balance */}
                 <Link to="/savings" className="bg-linear-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-md hover:shadow-lg transition-shadow group col-span-2 lg:col-span-1">
                     <div className="flex items-center justify-between mb-4">
                         <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
@@ -204,7 +202,6 @@ const MemberDashboardPage: React.FC = () => {
                     <p className="text-xs text-white/70 mt-2">Savings Balance</p>
                 </Link>
 
-                {/* Loan Outstanding */}
                 <Link to="/my-loans" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 hover:shadow-md transition-shadow group flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                         <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center">
@@ -225,7 +222,6 @@ const MemberDashboardPage: React.FC = () => {
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-auto">Loan Outstanding</p>
                 </Link>
 
-                {/* Open Penalties — red highlight if count > 0 */}
                 <Link to="/my-penalties" className={`rounded-2xl border shadow-sm p-5 hover:shadow-md transition-shadow group flex flex-col gap-3 ${hasOpenPenalties ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
                     <div className="flex items-center justify-between">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${hasOpenPenalties ? 'bg-rose-100' : 'bg-slate-100'}`}>
@@ -248,7 +244,6 @@ const MemberDashboardPage: React.FC = () => {
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-auto">Penalties</p>
                 </Link>
 
-                {/* Attendance Rate */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
                     <div className="w-9 h-9 bg-sky-50 rounded-xl flex items-center justify-center">
                         <BarChart3 size={18} className="text-sky-600" />
@@ -265,10 +260,7 @@ const MemberDashboardPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Row 2: Next Installment + Upcoming Meeting ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-                {/* Next Loan Installment — red card if overdue */}
                 <div className={`rounded-2xl border shadow-sm overflow-hidden flex flex-col ${nextOverdue ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
                     <div className={`px-5 py-4 border-b flex items-center justify-between shrink-0 ${nextOverdue ? 'border-rose-100' : 'border-slate-100'}`}>
                         <div>
@@ -304,7 +296,6 @@ const MemberDashboardPage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Upcoming Meeting */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
                         <div>
@@ -360,13 +351,12 @@ const MemberDashboardPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Quick actions ── */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 {[
-                    { to: '/savings',      icon: ArrowDownCircle, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderHover: 'hover:border-emerald-300', label: 'Top Up Savings', sub: 'Deposit via M-Pesa'          },
-                    { to: '/my-loans',     icon: TrendingUp,      iconBg: 'bg-violet-50',  iconColor: 'text-violet-600',  borderHover: 'hover:border-violet-300',  label: 'Pay Loan',       sub: 'Repay outstanding balance'  },
-                    { to: '/my-penalties', icon: ShieldAlert,     iconBg: 'bg-rose-50',    iconColor: 'text-rose-500',    borderHover: 'hover:border-rose-200',    label: 'Pay Penalty',    sub: `${data?.openPenaltiesCount ?? 0} open item${(data?.openPenaltiesCount ?? 0) !== 1 ? 's' : ''}` },
-                    { to: '/my-reports',   icon: FileText,        iconBg: 'bg-sky-50',     iconColor: 'text-sky-600',     borderHover: 'hover:border-sky-200',     label: 'My Statement',  sub: 'View transactions & reports' },
+                    { to: '/savings', icon: ArrowDownCircle, iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderHover: 'hover:border-emerald-300', label: 'Top Up Savings', sub: 'Deposit via M-Pesa' },
+                    { to: '/my-loans', icon: TrendingUp, iconBg: 'bg-violet-50', iconColor: 'text-violet-600', borderHover: 'hover:border-violet-300', label: 'Pay Loan', sub: 'Repay outstanding balance' },
+                    { to: '/my-penalties', icon: ShieldAlert, iconBg: 'bg-rose-50', iconColor: 'text-rose-500', borderHover: 'hover:border-rose-200', label: 'Pay Penalty', sub: `${data?.openPenaltiesCount ?? 0} open item${(data?.openPenaltiesCount ?? 0) !== 1 ? 's' : ''}` },
+                    { to: '/my-reports', icon: FileText, iconBg: 'bg-sky-50', iconColor: 'text-sky-600', borderHover: 'hover:border-sky-200', label: 'My Statement', sub: 'View transactions & reports' },
                 ].map(action => (
                     <Link
                         key={action.to}
