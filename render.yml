@@ -1,0 +1,89 @@
+services:
+  # ─── Backend (Spring Boot Docker service) ─────────────────────────
+  - type: web
+    name: sacco-backend
+    runtime: docker
+    repo: https://github.com/jayrakel/secure-sacco
+    dockerfilePath: secure-sacco/backend/backend/Dockerfile
+    dockerContext: secure-sacco/backend/backend
+    branch: main
+    plan: standard
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_URL
+        fromDatabase:
+          name: sacco-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: sacco-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sacco-db
+          property: password
+      - key: REDIS_HOST
+        fromService:
+          name: sacco-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: sacco-redis
+          type: redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          name: sacco-redis
+          type: redis
+          property: password
+      - key: APP_DEFAULT_ADMIN_EMAIL
+        sync: false
+      - key: APP_DEFAULT_ADMIN_PASSWORD
+        sync: false
+      - key: APP_DEFAULT_ADMIN_PHONE
+        sync: false
+      - key: APP_OFFICIAL_EMAIL_DOMAIN
+        sync: false
+      - key: SACCO_SECURITY_CORS_ALLOWED_ORIGINS
+        fromService:
+          name: sacco-frontend
+          type: web
+          property: url
+      - key: MPESA_CONSUMER_KEY
+        sync: false
+      - key: MPESA_CONSUMER_SECRET
+        sync: false
+      - key: MPESA_PASSKEY
+        sync: false
+      - key: MPESA_SHORTCODE
+        sync: false
+      - key: MPESA_CALLBACK_BASE_URL
+        sync: false
+
+  # ─── Frontend (React/Vite static site) ───────────────────────────
+  - type: web
+    name: sacco-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    rootDir: secure-sacco/frontend
+    plan: free
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          name: sacco-backend
+          type: web
+          property: url
+
+  # ─── Redis ───────────────────────────────────────────────────────
+  - type: redis
+    name: sacco-redis
+    plan: free
+    ipAllowList: []
+
+# ─── PostgreSQL Database ──────────────────────────────────────────
+databases:
+  - name: sacco-db
+    plan: free

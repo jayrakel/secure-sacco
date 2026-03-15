@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApiRateLimitFilter")
@@ -32,7 +33,7 @@ class ApiRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        when(redis.opsForValue()).thenReturn(valueOps);
+        lenient().when(redis.opsForValue()).thenReturn(valueOps);
         filter = new ApiRateLimitFilter(redis);
 
         // Authenticate user in security context
@@ -87,7 +88,8 @@ class ApiRateLimitFilterTest {
     @DisplayName("STK push endpoint allows first 5 calls per hour")
     void stkAllowsFirstFiveCallsPerHour() throws Exception {
         when(valueOps.increment(anyString())).thenReturn(5L);
-        when(redis.expire(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        // expire is only called on first increment (count == 1), use lenient for this test
+        lenient().when(redis.expire(anyString(), anyLong(), any(TimeUnit.class))).thenReturn(true);
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/payments/mpesa/stk");
         MockHttpServletResponse response = new MockHttpServletResponse();

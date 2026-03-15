@@ -168,6 +168,19 @@ jobs:
             exit 1
           fi
 
+      - name: Automatic rollback on staging failure
+        if: failure()
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            echo "ROLLING BACK staging deployment..."
+            cd /opt/sacco-staging
+            docker compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml up -d
+
       - name: Notify on failure
         if: failure()
         run: |

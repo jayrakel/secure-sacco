@@ -24,6 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JournalEntryService — Double-Entry Validation")
@@ -55,10 +56,10 @@ class JournalEntryServiceTest {
                 .isActive(true)
                 .build();
 
-        when(journalEntryRepository.existsByReferenceNumber(anyString())).thenReturn(false);
-        when(journalEntryRepository.save(any(JournalEntry.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(accountRepository.findByAccountCode("1000")).thenReturn(Optional.of(debitAccount));
-        when(accountRepository.findByAccountCode("2100")).thenReturn(Optional.of(creditAccount));
+        lenient().when(journalEntryRepository.existsByReferenceNumber(anyString())).thenReturn(false);
+        lenient().when(journalEntryRepository.save(any(JournalEntry.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(accountRepository.findByAccountCode("1000")).thenReturn(Optional.of(debitAccount));
+        lenient().when(accountRepository.findByAccountCode("2100")).thenReturn(Optional.of(creditAccount));
     }
 
     // ─── Balanced entry ──────────────────────────────────────────────
