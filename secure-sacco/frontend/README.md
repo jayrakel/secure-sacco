@@ -1,73 +1,95 @@
-# React + TypeScript + Vite
+# Secure SACCO — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The React/TypeScript frontend for the **Secure SACCO Management System**, a full-featured cooperative society management platform.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+| Tool | Purpose |
+|------|---------|
+| [React 19](https://react.dev/) | UI library |
+| [TypeScript](https://www.typescriptlang.org/) | Type-safe JavaScript |
+| [Vite](https://vitejs.dev/) | Build tool & dev server |
+| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first styling |
+| [React Router v7](https://reactrouter.com/) | Client-side routing |
+| [Axios](https://axios-http.com/) | HTTP client |
+| [Vitest](https://vitest.dev/) | Unit & component testing |
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 20+
+- A running instance of the [backend API](../backend/) (default: `http://localhost:8080`)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Install dependencies
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Run the development server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+The app will be available at `http://localhost:5173`. API calls are proxied to `http://localhost:8080` automatically.
+
+## Build for Production
+
+```bash
+npm run build
+```
+
+The production-ready output is placed in the `dist/` directory.
+
+To preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## Running Tests
+
+```bash
+# Install test dependencies first (not yet in package.json — add them after merging)
+npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
+
+npm run test
+```
+
+## Environment Variables
+
+Create a `.env.local` file (or set these in your CI/deployment environment):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Base URL of the backend API | `http://localhost:8080` |
+
+> **Note:** Variables must be prefixed with `VITE_` to be exposed to the browser bundle.
+
+See the repo-root [`.env.example`](../../.env.example) for a full list of all required variables (backend + frontend).
+
+## Project Structure
+
+```
+src/
+├── features/          # Feature-based modules
+│   ├── auth/          # Login, password reset, account activation
+│   ├── accounting/    # Chart of accounts, journal entries, trial balance
+│   ├── audit/         # Audit log viewer (admin only)
+│   ├── loans/         # Loan applications and management
+│   ├── meetings/      # Meeting scheduling and minutes
+│   ├── members/       # Member management
+│   ├── penalties/     # Penalty tracking
+│   ├── reports/       # Financial and operational reports
+│   ├── savings/       # Savings accounts and transactions
+│   ├── settings/      # SACCO-wide and security settings
+│   └── users/         # User accounts, roles & permissions
+├── shared/            # Reusable components and utilities
+│   ├── components/    # Common UI components
+│   └── layouts/       # Page layout wrappers (DashboardLayout, etc.)
+├── App.tsx            # Root component with route definitions
+└── main.tsx           # Application entry point
+```
+
