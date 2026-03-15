@@ -80,6 +80,13 @@ public class PaymentService {
         Payment payment = paymentRepository.findByInternalRef(checkoutRequestID)
                 .orElseThrow(() -> new RuntimeException("Payment not found for CheckoutRequestID: " + checkoutRequestID));
 
+        // Idempotency check: skip processing if payment is already in a terminal state
+        if (payment.getStatus() == PaymentStatus.COMPLETED || payment.getStatus() == PaymentStatus.FAILED) {
+            log.info("Payment {} already in terminal state ({}). Skipping callback processing.",
+                    checkoutRequestID, payment.getStatus());
+            return;
+        }
+
         payment.setProviderMetadata(rawJson);
 
         if (stkCallback.getResultCode() == 0) {
