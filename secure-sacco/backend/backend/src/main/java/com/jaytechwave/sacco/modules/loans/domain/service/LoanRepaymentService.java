@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -111,8 +110,11 @@ public class LoanRepaymentService {
         List<LoanScheduleItem> targetItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId())
                 .stream().filter(i -> i.getStatus() == LoanScheduleStatus.DUE || i.getStatus() == LoanScheduleStatus.OVERDUE).toList();
 
+        // Waterfall: Process each item in order (oldest first), paying interest then principal for each item
         for (LoanScheduleItem item : targetItems) {
             if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
+
+            // Pay interest first for this item
             BigDecimal unpaidInterest = item.getInterestDue().subtract(item.getInterestPaid());
             if (unpaidInterest.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal toPay = unpaidInterest.min(remainingCredit);
@@ -120,24 +122,24 @@ public class LoanRepaymentService {
                 interestPaidThisRun = interestPaidThisRun.add(toPay);
                 remainingCredit = remainingCredit.subtract(toPay);
             }
-        }
 
-        for (LoanScheduleItem item : targetItems) {
-            if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
-            BigDecimal unpaidPrincipal = item.getPrincipalDue().subtract(item.getPrincipalPaid());
-            if (unpaidPrincipal.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal toPay = unpaidPrincipal.min(remainingCredit);
-                item.setPrincipalPaid(item.getPrincipalPaid().add(toPay));
-                principalPaidThisRun = principalPaidThisRun.add(toPay);
-                remainingCredit = remainingCredit.subtract(toPay);
+            // Then pay principal for this item
+            if (remainingCredit.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal unpaidPrincipal = item.getPrincipalDue().subtract(item.getPrincipalPaid());
+                if (unpaidPrincipal.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal toPay = unpaidPrincipal.min(remainingCredit);
+                    item.setPrincipalPaid(item.getPrincipalPaid().add(toPay));
+                    principalPaidThisRun = principalPaidThisRun.add(toPay);
+                    remainingCredit = remainingCredit.subtract(toPay);
+                }
             }
-        }
 
-        for (LoanScheduleItem item : targetItems) {
+            // Mark item as PAID if fully paid
             if (item.getPrincipalPaid().add(item.getInterestPaid()).compareTo(item.getTotalDue()) >= 0) {
                 item.setStatus(LoanScheduleStatus.PAID);
             }
         }
+
         scheduleItemRepository.saveAll(targetItems);
 
         app.setPrepaymentBalance(remainingCredit);
