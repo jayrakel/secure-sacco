@@ -1,4 +1,4 @@
-package com.jaytechwave.sacco.modules.obligations.job;
+package com.jaytechwave.sacco.modules.obligations.domain.job;
 
 import com.jaytechwave.sacco.modules.obligations.domain.service.ObligationPeriodService;
 import lombok.RequiredArgsConstructor;

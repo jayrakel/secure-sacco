@@ -1,4 +1,4 @@
-package com.jaytechwave.sacco.modules.members.domain.listener;
+package com.jaytechwave.sacco.modules.payments.domain.listener;
 
 import com.jaytechwave.sacco.modules.members.domain.service.MemberService;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
