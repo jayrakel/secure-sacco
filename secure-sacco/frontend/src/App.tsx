@@ -20,6 +20,7 @@ import DashboardRouter from "./features/dashboard/pages/DashboardRouter";
 import { SettingsProvider } from "./features/settings/context/SettingsProvider";
 import { SetupProvider } from "./features/setup/context/SetupProvider";
 import SetupWizardPage from "./features/setup/pages/SetupWizardPage";
+import VerifyContactPage from './features/auth/pages/VerifyContactPage';
 import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage';
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 import TrialBalancePage from './features/accounting/pages/TrialBalancePage';
@@ -99,6 +100,17 @@ function App() {
                             <Route path="/setup" element={
                                 <ProtectedRoute>
                                     <SetupWizardPage />
+                                </ProtectedRoute>
+                            } />
+                            {/*
+                          Contact Verification — full-page form for staff who must verify
+                          email + phone after their first password change. Lives OUTSIDE
+                          DashboardLayout. The api-client intercepts 403 CONTACT_VERIFICATION_REQUIRED
+                          and redirects here for all authenticated staff.
+                        */}
+                            <Route path="/verify-contact" element={
+                                <ProtectedRoute>
+                                    <VerifyContactPage />
                                 </ProtectedRoute>
                             } />
 

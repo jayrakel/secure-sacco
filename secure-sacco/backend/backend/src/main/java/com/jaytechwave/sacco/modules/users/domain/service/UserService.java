@@ -57,6 +57,10 @@ public class UserService {
             throw new IllegalArgumentException("Valid roles must be provided");
         }
 
+        // Staff users must change their temp password on first login and verify
+        // their email/phone before gaining access to the system.
+        // - MustChangePasswordFilter enforces mustChangePassword = true
+        // - ContactVerificationFilter enforces emailVerified + phoneVerified
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -65,6 +69,9 @@ public class UserService {
                 .phoneNumber(normalizePhone(request.getPhoneNumber()))
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .status(UserStatus.ACTIVE)
+                .mustChangePassword(true)
+                .emailVerified(false)
+                .phoneVerified(false)
                 .isDeleted(false)
                 .roles(roles)
                 .build();

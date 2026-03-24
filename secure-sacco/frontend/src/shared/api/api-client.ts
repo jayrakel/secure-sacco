@@ -19,7 +19,6 @@ apiClient.interceptors.response.use(
         // ── Must-change-password guard ────────────────────────────────────────
         // The backend returns 403 PASSWORD_CHANGE_REQUIRED when the user has an
         // active session but must change their password before doing anything else.
-        // Redirect to the dedicated change-password page immediately.
         if (status === 403 && errorCode === 'PASSWORD_CHANGE_REQUIRED') {
             if (!window.location.pathname.startsWith('/change-password')) {
                 window.location.href = '/change-password';
@@ -28,12 +27,14 @@ apiClient.interceptors.response.use(
         }
 
         // ── Contact verification guard ────────────────────────────────────────
-        // The backend returns 403 CONTACT_VERIFICATION_REQUIRED when the
-        // SYSTEM_ADMIN's email or phone has not yet been verified during setup.
+        // The backend returns 403 CONTACT_VERIFICATION_REQUIRED when any
+        // authenticated user's email or phone has not yet been verified.
+        // Applies to both SYSTEM_ADMIN and staff officers.
+        // Redirect to the dedicated standalone verification page.
         if (status === 403 && errorCode === 'CONTACT_VERIFICATION_REQUIRED') {
-            if (!window.location.pathname.startsWith('/setup') &&
-                !window.location.pathname.startsWith('/verify-contact')) {
-                window.location.href = '/setup';
+            if (!window.location.pathname.startsWith('/verify-contact') &&
+                !window.location.pathname.startsWith('/setup')) {
+                window.location.href = '/verify-contact';
             }
             return Promise.reject(error);
         }

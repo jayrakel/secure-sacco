@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,17 +17,20 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Intercepts requests from the SYSTEM_ADMIN (and staff officers) whose
- * email or phone has not yet been verified, and returns:
+ * Blocks any authenticated user whose email or phone has not yet been verified.
  *
  * <pre>HTTP 403 { "error": "CONTACT_VERIFICATION_REQUIRED", "message": "..." }</pre>
  *
- * <p>This filter runs <em>after</em> {@link MustChangePasswordFilter} in the
- * security chain, so by the time this filter fires the password has already
- * been changed.
+ * <p>Runs <em>after</em> {@link MustChangePasswordFilter} in the security chain,
+ * so the password has already been changed before this gate is reached.
+ *
+ * <p>Applies to ALL authenticated staff (SYSTEM_ADMIN and officer roles alike).
+ * Staff created via POST /api/v1/users are created with emailVerified=false and
+ * phoneVerified=false, so they hit this gate immediately after their first
+ * password change.
  *
  * <p>The frontend intercepts this 403 in {@code api-client.ts} and redirects
- * the user to {@code /verify-contact}.
+ * the user to the contact verification step.
  */
 @Slf4j
 @Component
@@ -39,7 +41,7 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
 
     /**
      * Paths that are always allowed even when contacts are not verified.
-     * Kept intentionally permissive so the wizard can function.
+     * Kept intentionally permissive so the wizard and auth flows can function.
      */
     private static final Set<String> ALLOWED_PREFIXES = Set.of(
             "/api/v1/auth/me",
@@ -47,7 +49,7 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
             "/api/v1/auth/logout",
             "/api/v1/auth/csrf",
             "/api/v1/auth/change-password",
-            "/api/v1/auth/verify/",       // send/confirm OTP endpoints
+            "/api/v1/auth/verify/",       // send/confirm email + phone verification
             "/api/v1/setup/",             // setup status endpoint
             "/api/v1/settings/sacco",     // admin needs to save platform config
             "/api/v1/users",              // admin needs to create officer users
@@ -73,17 +75,10 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Only enforce for SYSTEM_ADMIN — officers go through the activation flow
-        boolean isAdmin = auth.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch("ROLE_SYSTEM_ADMIN"::equals);
-
-        if (!isAdmin) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        // Lightweight per-request check using a single DB projection
+        // Lightweight per-request check using a single DB projection.
+        // Applies to ALL authenticated users — not just SYSTEM_ADMIN.
+        // Officers created via UserService.createUser() start with both flags false
+        // and must verify before gaining access.
         User user = userRepository.findByEmail(auth.getName()).orElse(null);
         if (user == null) {
             chain.doFilter(request, response);
@@ -91,7 +86,7 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
         }
 
         if (!user.isEmailVerified() || !user.isPhoneVerified()) {
-            log.warn("SYSTEM_ADMIN {} accessed {} before contact verification (email={}, phone={}).",
+            log.warn("User {} accessed {} before contact verification (emailVerified={}, phoneVerified={}).",
                     auth.getName(), path, user.isEmailVerified(), user.isPhoneVerified());
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
