@@ -67,6 +67,7 @@ public class UserService {
                 .status(UserStatus.ACTIVE)
                 .isDeleted(false)
                 .roles(roles)
+                .mustChangePassword(true)
                 .build();
 
         UserResponse response = mapToResponse(userRepository.save(user));

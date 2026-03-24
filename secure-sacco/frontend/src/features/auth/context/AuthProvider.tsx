@@ -28,7 +28,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (data: User) => void;
     logout: () => void;
-    refreshUser: () => Promise<void>;
+    refreshUser: () => Promise<User | null>;
 }
 
 // 1. Create context
@@ -51,15 +51,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Fetches /auth/me and updates user state. Intentionally has no routing concerns
-    // so the callback is stable (empty deps). Redirect logic lives in a separate effect below.
-    const fetchCurrentUser = useCallback(async () => {
+    // Fetches /auth/me and updates user state. Returns the fetched user so callers
+    // (e.g. LoginPage) can make navigation decisions without depending on async state.
+    const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
         setIsLoading(true);
         try {
             const response = await apiClient.get('/auth/me');
-            setUser(response.data || null);
+            const userData: User | null = response.data || null;
+            setUser(userData);
+            return userData;
         } catch {
             setUser(null);
+            return null;
         } finally {
             setIsLoading(false);
         }

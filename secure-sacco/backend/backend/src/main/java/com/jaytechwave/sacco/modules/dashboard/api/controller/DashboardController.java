@@ -21,10 +21,10 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
-    // Secure it purely on REPORTS_READ because V32 proved SYSTEM_ADMIN holds this!
-    @Operation(summary = "Staff dashboard metrics", description = "Returns 15 aggregated KPIs for the staff dashboard. Cached in Redis for 5 minutes. Requires REPORTS_READ.")
+    // Accessible to any authenticated staff user (anyone who is not exclusively a ROLE_MEMBER).
+    @Operation(summary = "Staff dashboard metrics", description = "Returns 15 aggregated KPIs for the staff dashboard. Cached in Redis for 5 minutes. Requires any staff role.")
     @GetMapping("/staff")
-    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    @PreAuthorize("isAuthenticated() && !hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<StaffDashboardDTO> getStaffDashboard() {
         return ResponseEntity.ok(dashboardService.getStaffDashboardMetrics());
     }
