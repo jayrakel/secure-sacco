@@ -51,11 +51,9 @@ export default function LoginPage() {
                 return; // Stop here and wait for the user to enter the code
             }
 
-            // 3. Normal Login Success Flow — refreshUser triggers redirect if mustChangePassword
-            await refreshUser();
-            // AuthProvider handles the /change-password redirect when flag is true.
-            // If we reach here, navigate normally.
-            navigate('/dashboard');
+            // 3. Normal Login Success Flow — use returned user to decide where to go
+            const userData = await refreshUser();
+            navigate(userData?.mustChangePassword ? '/change-password' : '/dashboard');
 
         } catch (err: unknown) {
             console.error("Login Error:", err);
@@ -84,8 +82,8 @@ export default function LoginPage() {
             });
 
             // Successfully validated MFA, fetch user and redirect
-            await refreshUser();
-            navigate('/dashboard');
+            const userData = await refreshUser();
+            navigate(userData?.mustChangePassword ? '/change-password' : '/dashboard');
         } catch (err: unknown) {
             setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Invalid authenticator code. Please try again.');
         } finally {

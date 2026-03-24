@@ -74,6 +74,7 @@ public class UserService {
                 .phoneVerified(false)
                 .isDeleted(false)
                 .roles(roles)
+                .mustChangePassword(true)
                 .build();
 
         UserResponse response = mapToResponse(userRepository.save(user));
