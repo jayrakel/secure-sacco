@@ -96,6 +96,7 @@ jobs:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
+          passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
           source: secure-sacco/infra/docker-compose.prod.yml
           target: /opt/sacco-staging/
           strip_components: 3   # removes secure-sacco/infra/ prefix, leaves docker-compose.prod.yml
@@ -115,6 +116,7 @@ jobs:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
+          passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
           envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,STAGING_GHCR_TOKEN,GITHUB_ACTOR
           script: |
             cd /opt/sacco-staging
