@@ -137,6 +137,7 @@ jobs:
             DB_USERNAME=$DB_USERNAME
             DB_PASSWORD=$DB_PASSWORD
             DB_NAME=sacco_staging
+            FRONTEND_URL=https://staging.jaytechwavesolutions.co.ke
             EOF
 
             export BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:staging-latest
@@ -149,7 +150,7 @@ jobs:
         run: |
           echo "Waiting for backend health check..."
           for i in $(seq 1 24); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ vars.STAGING_API_URL }}/actuator/health || echo "000")
+            STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" "${{ vars.STAGING_API_URL }}/actuator/health" || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "Backend is healthy!"
               exit 0
