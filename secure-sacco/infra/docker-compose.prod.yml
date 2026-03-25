@@ -44,17 +44,17 @@ services:
 
   # ─── Backend (Spring Boot) ───────────────────────────────────────────────────
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/backend:prod-latest}
-    container_name: sacco_backend
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SERVER_PORT: 8080
+  image: ${BACKEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/backend:prod-latest}
+  container_name: sacco_backend
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  environment:
+    SPRING_PROFILES_ACTIVE: prod
+    SERVER_PORT: 8080
 
       # Database
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-sacco_db}
@@ -73,12 +73,17 @@ services:
       APP_DEFAULT_ADMIN_PASSWORD: ${APP_DEFAULT_ADMIN_PASSWORD}
       APP_DEFAULT_ADMIN_PHONE: ${APP_DEFAULT_ADMIN_PHONE}
 
+      APP_FIELD_ENCRYPTION_KEY: ${APP_FIELD_ENCRYPTION_KEY}
+      APP_PII_HMAC_KEY: ${APP_PII_HMAC_KEY}
+
       # Argon2
       APP_ARGON2_SALT_LENGTH: ${APP_ARGON2_SALT_LENGTH:-16}
       APP_ARGON2_HASH_LENGTH: ${APP_ARGON2_HASH_LENGTH:-32}
       APP_ARGON2_PARALLELISM: ${APP_ARGON2_PARALLELISM:-1}
       APP_ARGON2_MEMORY: ${APP_ARGON2_MEMORY:-65536}
       APP_ARGON2_ITERATIONS: ${APP_ARGON2_ITERATIONS:-3}
+
+      
 
       # M-Pesa / Daraja
       MPESA_ENV: production
@@ -92,6 +97,8 @@ services:
 
       # CORS
       FRONTEND_URL: ${FRONTEND_URL}
+    ports:
+    - "127.0.0.1:8080:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s
