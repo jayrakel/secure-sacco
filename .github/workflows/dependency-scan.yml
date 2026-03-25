@@ -9,6 +9,9 @@ jobs:
   backend-owasp:
     name: Backend — OWASP NVD Scan
     runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
     steps:
       - name: Checkout
@@ -21,10 +24,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Check NVD API key presence
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY is missing"
+            exit 1
+          fi
+          echo "NVD_API_KEY is present"
+
       - name: Run OWASP Dependency Check
         working-directory: secure-sacco/backend/backend
         run: |
           mvn --batch-mode org.owasp:dependency-check-maven:check \
+            -DnvdApiKey="${NVD_API_KEY}" \
             -DfailBuildOnCVSS=7 \
             -Dformat=HTML
         continue-on-error: true
@@ -40,6 +52,7 @@ jobs:
   frontend-audit:
     name: Frontend — npm audit
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -59,7 +72,6 @@ jobs:
       - name: npm audit (high and critical only)
         working-directory: secure-sacco/frontend
         run: npm audit --audit-level=high
-        continue-on-error: true
 
   trivy-scan:
     name: Container — Trivy vulnerability scan
