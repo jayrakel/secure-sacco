@@ -125,7 +125,7 @@ export const Sidebar = () => {
     const activeSections = isStaff ? staffSections : memberSections;
 
     // ── Filter items for permissions/modules ─────────────────────────────────
-    const isSystemAdmin = user?.permissions?.includes('ROLE_SYSTEM_ADMIN');
+    const isSystemAdmin = user?.roles?.includes('ROLE_SYSTEM_ADMIN');
 
     const filterItems = (items: NavItem[]): NavItem[] =>
         items.filter(item => {

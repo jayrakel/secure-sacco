@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.setup;
 
+import com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.VerificationToken;
 import com.jaytechwave.sacco.modules.users.domain.entity.VerificationTokenType;
@@ -7,6 +8,7 @@ import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.users.domain.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +36,12 @@ public class ContactVerificationService {
     private static final int RATE_LIMIT_WINDOW_MIN = 15;
     private static final int RATE_LIMIT_MAX        = 3;
 
-    private final UserRepository             userRepository;
+    private final UserRepository              userRepository;
     private final VerificationTokenRepository tokenRepository;
+    private final EmailNotificationService    emailNotificationService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     // ── Email verification ────────────────────────────────────────────────────
 
@@ -57,9 +63,9 @@ public class ContactVerificationService {
                 .expiryDate(ZonedDateTime.now().plusHours(EMAIL_EXPIRY_HOURS))
                 .build());
 
-        // 📧 TODO: replace with real email service (SendGrid / SES / JavaMail)
-        log.info("📧 [MOCK EMAIL] Email verification link for {}: " +
-                "http://localhost:5173/verify-contact?type=email&token={}", email, token);
+        String verificationUrl = frontendUrl + "/verify-contact?type=email&token=" + token;
+        emailNotificationService.sendContactVerificationEmail(email, verificationUrl);
+        log.info("📧 Email verification link dispatched to {}", email);
     }
 
     /**
@@ -97,9 +103,10 @@ public class ContactVerificationService {
                 .expiryDate(ZonedDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
                 .build());
 
-        // 📱 TODO: replace with real SMS service (Africa's Talking / Twilio / Daraja B2C)
-        log.info("📱 [MOCK SMS] OTP for {} ({}): {}", email,
-                user.getPhoneNumber() != null ? user.getPhoneNumber() : "no-phone", code);
+        // 📱 SMS delivery deferred to v2 — integrate Africa's Talking / Twilio here.
+        // For initial setup, the OTP appears in server logs so the admin can complete verification.
+        log.info("📱 [SMS-PENDING] Phone OTP for {} ({}): {} — configure Africa's Talking in v2.",
+                email, user.getPhoneNumber() != null ? user.getPhoneNumber() : "no-phone", code);
     }
 
     /**

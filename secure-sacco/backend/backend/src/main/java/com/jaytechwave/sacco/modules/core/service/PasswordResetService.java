@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.service;
 
+import com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService;
 import com.jaytechwave.sacco.modules.users.domain.entity.PasswordResetToken;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.PasswordResetTokenRepository;
@@ -7,6 +8,7 @@ import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +23,15 @@ import java.util.UUID;
 @Slf4j
 public class PasswordResetService {
 
-    private final UserRepository userRepository;
+    private final UserRepository              userRepository;
     private final PasswordResetTokenRepository tokenRepository;
-    private final PiiSearchHashConverter piiSearchHashConverter;
-    private final PasswordEncoder passwordEncoder;
-    private final PasswordValidator passwordValidator;
+    private final PiiSearchHashConverter      piiSearchHashConverter;
+    private final PasswordEncoder             passwordEncoder;
+    private final PasswordValidator           passwordValidator;
+    private final EmailNotificationService    emailNotificationService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Transactional
     public void generatePasswordResetToken(String email) {
@@ -49,12 +55,9 @@ public class PasswordResetService {
 
         tokenRepository.save(resetToken);
 
-        // MOCK EMAIL SEND
-        log.info("\n=======================================================\n" +
-                "MOCK EMAIL: Password Reset Requested\n" +
-                "To: {}\n" +
-                "Link: http://localhost:5173/reset-password?token={}\n" +
-                "=======================================================", email, token);
+        String resetUrl = frontendUrl + "/reset-password?token=" + token;
+        emailNotificationService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+        log.info("📧 Password reset email dispatched to {}", user.getEmail());
     }
 
     @Transactional

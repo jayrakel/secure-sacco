@@ -36,6 +36,7 @@ import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalRe
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
+import AuditLogPage from './features/audit/pages/AuditLogPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -207,7 +208,7 @@ function App() {
 
                                 {/* --- STAFF LOANS ROUTE --- */}
                                 <Route path="loans" element={
-                                    <ProtectedRoute>
+                                    <ProtectedRoute requiredPermissions={['LOANS_READ']}>
                                         <LoanManagementPage />
                                     </ProtectedRoute>
                                 } />
@@ -247,6 +248,13 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
+
+                                {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
+                                <Route path="/audit/logs" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <AuditLogPage />
+                                    </ProtectedRoute>
+                                } />
 
                                 <Route path="/security" element={
                                     <ProtectedRoute>
