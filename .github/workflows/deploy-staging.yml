@@ -90,9 +90,9 @@ jobs:
           script: mkdir -p /opt/sacco-staging
 
       # ── Copy docker-compose to server ────────────────────────────────────────
-      # strip_components: 2 strips "secure-sacco/infra/" from the path,
-      # leaving docker-compose.prod.yml directly inside /opt/sacco-staging/.
-      # strip_components: 3 was wrong — it stripped the filename itself.
+      # Source: secure-sacco/infra/docker-compose.prod.yml
+      # strip_components: 2 removes 'secure-sacco/' and 'infra/'
+      # Result on server: /opt/sacco-staging/docker-compose.prod.yml
       - name: Copy docker-compose to staging server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -131,6 +131,10 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          # 15m gives Spring Boot plenty of time to start even cold.
+          # The SSH step itself should complete in <2 min because
+          # docker compose up -d no longer waits for healthchecks.
+          command_timeout: 15m
           envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,APP_OFFICIAL_EMAIL_DOMAIN,APP_DEFAULT_ADMIN_EMAIL,APP_DEFAULT_ADMIN_PASSWORD,APP_DEFAULT_ADMIN_PHONE,MPESA_CONSUMER_KEY,MPESA_CONSUMER_SECRET,MPESA_PASSKEY,MPESA_SHORTCODE,MPESA_CALLBACK_BASE_URL,STAGING_GHCR_TOKEN,GITHUB_ACTOR,BACKEND_IMAGE,FRONTEND_IMAGE,STAGING_FRONTEND_URL
           script: |
             set -e
@@ -162,10 +166,15 @@ jobs:
               printf 'FRONTEND_IMAGE=%s\n' "$FRONTEND_IMAGE"
             } > .env
 
+            # --no-wait: docker compose starts containers and returns immediately.
+            # The healthcheck polling is handled by the dedicated CI step below,
+            # which runs from the GitHub runner and has no SSH timeout constraint.
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans --no-wait
             docker image prune -f
 
+      # Health check runs from the GitHub runner — no SSH timeout risk.
+      # Polls for up to 2 minutes (24 x 5s).
       - name: Health check — wait for backend
         run: |
           echo "Waiting for backend health check..."
@@ -199,11 +208,12 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          command_timeout: 5m
           script: |
             echo "ROLLING BACK staging deployment..."
             cd /opt/sacco-staging
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker compose -f docker-compose.prod.yml up -d || true
+            docker compose -f docker-compose.prod.yml up -d --no-wait || true
 
       - name: Notify on failure
         if: failure()

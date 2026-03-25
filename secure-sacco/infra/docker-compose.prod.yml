@@ -19,7 +19,6 @@ services:
       start_period: 15s
     networks:
       - sacco-internal
-    # Postgres must NOT be exposed to the public internet
     expose:
       - "5432"
 
@@ -83,8 +82,6 @@ services:
       APP_ARGON2_MEMORY: ${APP_ARGON2_MEMORY:-65536}
       APP_ARGON2_ITERATIONS: ${APP_ARGON2_ITERATIONS:-3}
 
-      
-
       # M-Pesa / Daraja
       MPESA_ENV: ${MPESA_ENV:-sandbox}
       MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY}
@@ -98,7 +95,7 @@ services:
       # CORS
       FRONTEND_URL: ${FRONTEND_URL}
     ports:
-    - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8080:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 30s
@@ -116,10 +113,13 @@ services:
     container_name: sacco_frontend
     restart: unless-stopped
     depends_on:
+      # service_started (not service_healthy) so docker compose up -d returns
+      # immediately without blocking the CI SSH step for the full backend startup
+      # time. The separate health-check step in the workflow polls the backend
+      # directly and is the real gate for deployment success.
       backend:
-        condition: service_healthy
+        condition: service_started
     ports:
-      # Expose only frontend to the host; reverse proxy (Caddy/Nginx) handles TLS
       - "127.0.0.1:3000:80"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:80 > /dev/null"]
@@ -138,5 +138,4 @@ volumes:
 networks:
   sacco-internal:
     driver: bridge
-    # Isolate all SACCO containers from other Docker workloads on the host
     internal: false
