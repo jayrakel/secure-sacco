@@ -1,4 +1,8 @@
 server:
+  # Required when running behind a reverse proxy (Nginx, Render, Railway, etc.).
+  # Instructs Spring Boot to trust X-Forwarded-For / X-Forwarded-Proto headers,
+  # which MpesaIpWhitelistFilter relies on to resolve the real caller IP.
+  forward-headers-strategy: framework
   servlet:
     session:
       cookie:

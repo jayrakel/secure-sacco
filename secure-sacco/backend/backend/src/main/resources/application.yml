@@ -58,6 +58,27 @@ spring:
   jackson:
     time-zone: UTC
 
+  # ── Outgoing email (transactional) ──────────────────────────────────────────
+  # Set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM in your
+  # environment (.env / Render / Railway / Docker secrets).
+  # Compatible with any SMTP relay: SendGrid, AWS SES, Brevo, Gmail SMTP, etc.
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:noreply@securesacco.com}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 # LOGGING: Base profile logs only at INFO/WARN.
 # DEBUG-level security and web logging is in application-dev.yml ONLY.
 # This prevents accidental sensitive log leakage if the prod profile is not activated.
@@ -69,6 +90,9 @@ logging:
 app:
   field-encryption-key: ${APP_FIELD_ENCRYPTION_KEY}   # Base64-encoded 32-byte AES key
   pii-hmac-key: ${APP_PII_HMAC_KEY}                   # Base64-encoded 32-byte HMAC key
+
+  # Public URL of the frontend — used to build links in outgoing emails.
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
 
   official-email-domain: ${APP_OFFICIAL_EMAIL_DOMAIN:jaytechwave.org}
 

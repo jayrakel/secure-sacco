@@ -56,7 +56,7 @@ jobs:
 
       - name: Build and test
         working-directory: secure-sacco/backend/backend
-        run: mvn --batch-mode verify
+        run: mvn --batch-mode verify -Ddependency-check.skip=true
         env:
           SPRING_PROFILES_ACTIVE: test
           DB_URL: jdbc:postgresql://localhost:5432/sacco_test

@@ -106,6 +106,9 @@ public class SecurityConfig {
                         // --- Setup wizard status — public so the frontend can check before login ---
                         .requestMatchers("/api/v1/setup/**").permitAll()
 
+                        // --- Public SACCO metadata — login page reads saccoName before auth ---
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/settings/sacco").permitAll()
+
                         // --- Actuator: health is public (load balancer probes) ---
                         .requestMatchers("/actuator/health").permitAll()
 

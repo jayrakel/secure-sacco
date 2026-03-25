@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, ChevronRight, AlertTriangle, RefreshCw, X, Loader2, Smartphone, ArrowLeft } from 'lucide-react'; // Added Smartphone & ArrowLeft
+import axios from 'axios';
 
 import { useAuth } from '../context/AuthProvider';
 import apiClient from '../../../shared/api/api-client';
@@ -23,13 +24,21 @@ export default function LoginPage() {
     const [showResend, setShowResend] = useState(false);
     const [resendStatus, setResendStatus] = useState('');
 
+    // SACCO branding — fetched from the public settings endpoint
+    const [saccoName, setSaccoName] = useState('SACCO Portal');
+    const [saccoTagline, setSaccoTagline] = useState('Secure, Transparent, and Automated Management.');
+
+    useEffect(() => {
+        axios.get('/api/v1/settings/sacco')
+            .then(res => {
+                if (res.data?.saccoName) setSaccoName(res.data.saccoName);
+                if (res.data?.tagline)   setSaccoTagline(res.data.tagline);
+            })
+            .catch(() => { /* silently fall back to defaults */ });
+    }, []);
+
     const navigate = useNavigate();
     const { refreshUser } = useAuth();
-
-    const SACCO_NAME = "Secure SACCO";
-    const SACCO_TAGLINE = "Secure, Transparent, and Automated Management.";
-    const logoUrl = null;
-    const iconUrl = null;
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -137,15 +146,11 @@ export default function LoginPage() {
             <div className="hidden lg:flex w-1/2 bg-slate-900 flex-col justify-center items-center p-12 text-white relative">
                 <div className="relative z-10 text-center">
                     <div className="mb-8 inline-block p-6 bg-white/5 rounded-full backdrop-blur-sm border border-white/10 shadow-2xl">
-                        {iconUrl ? (
-                            <img src={iconUrl} alt="Icon" className="w-24 h-24 object-contain" />
-                        ) : (
-                            <ShieldCheck size={80} className="text-emerald-400" />
-                        )}
+                        <ShieldCheck size={80} className="text-emerald-400" />
                     </div>
-                    <h1 className="text-5xl font-bold mb-4 tracking-tight">{SACCO_NAME}</h1>
+                    <h1 className="text-5xl font-bold mb-4 tracking-tight">{saccoName}</h1>
                     <p className="text-slate-400 text-xl max-w-md mx-auto leading-relaxed">
-                        {SACCO_TAGLINE}
+                        {saccoTagline}
                     </p>
                 </div>
                 {/* Background Blobs */}
@@ -162,14 +167,10 @@ export default function LoginPage() {
                     <div className="bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
 
                         <div className="mb-6 flex justify-center">
-                            {logoUrl ? (
-                                <img src={logoUrl} alt={SACCO_NAME} className="h-16 object-contain" />
-                            ) : (
-                                <div className="flex items-center gap-2 text-slate-800">
-                                    <ShieldCheck className="text-emerald-600" size={32} />
-                                    <span className="text-xl font-bold">{SACCO_NAME}</span>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2 text-slate-800">
+                                <ShieldCheck className="text-emerald-600" size={32} />
+                                <span className="text-xl font-bold">{saccoName}</span>
+                            </div>
                         </div>
 
                         {requiresMfa ? (
@@ -372,7 +373,7 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <div className="w-full text-center py-6 text-slate-400 text-sm mt-auto border-t border-slate-200">
-                    <p>© {new Date().getFullYear()} {SACCO_NAME}. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} {saccoName}. All rights reserved.</p>
                     <div className="flex justify-center gap-4 mt-2">
                         <a href="#" className="hover:text-emerald-600 transition">Privacy Policy</a>
                         <span>•</span>
