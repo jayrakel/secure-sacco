@@ -87,9 +87,8 @@ jobs:
 
   # ─────────────────────────────────────────────
   # BACKEND — OWASP Dependency Check
-  # The NVD database is cached between runs so only
-  # incremental updates are fetched — drops runtime
-  # from ~20 min to ~2-3 min on warm cache.
+  # NVD database is cached weekly so only the delta
+  # is fetched on subsequent runs (~2-3 min vs 20 min).
   # ─────────────────────────────────────────────
   backend-security-scan:
     name: Backend — OWASP Dependency Scan
@@ -117,9 +116,13 @@ jobs:
           fi
           echo "NVD_API_KEY is present"
 
+      - name: Get ISO week number
+        id: week
+        run: echo "week=$(date +%Y-%V)" >> "$GITHUB_OUTPUT"
+
       # Cache the OWASP NVD database between runs.
-      # Key includes the ISO week number so the full DB refreshes
-      # automatically once a week; every other push just syncs the delta.
+      # Key rotates weekly so the full DB refreshes once a week;
+      # every other push just syncs the delta (seconds, not minutes).
       - name: Cache OWASP NVD database
         uses: actions/cache@v4
         with:
@@ -129,10 +132,6 @@ jobs:
             owasp-nvd-${{ runner.os }}-week-
             owasp-nvd-${{ runner.os }}-
 
-      - name: Get ISO week number
-        id: week
-        run: echo "week=$(date +%Y-%V)" >> "$GITHUB_OUTPUT"
-
       - name: Run OWASP Dependency Check
         working-directory: secure-sacco/backend/backend
         run: |
@@ -140,7 +139,7 @@ jobs:
             -DnvdApiKey="${NVD_API_KEY}" \
             -DdataDirectory="${HOME}/.dependency-check/data" \
             -DfailBuildOnCVSS=9 \
-            -DsuppressionFile=../../../.github/owasp-suppressions.xml \
+            -DsuppressionFile="${GITHUB_WORKSPACE}/.github/owasp-suppressions.xml" \
             -Dformat=HTML \
             -DnvdApiDelay=2000
         continue-on-error: true

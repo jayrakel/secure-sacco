@@ -80,7 +80,6 @@ jobs:
           cache-to: type=gha,mode=max
 
       # ── Ensure deploy directory exists on server ─────────────────────────────
-      # Must run BEFORE scp-action so the target directory is present.
       - name: Bootstrap deploy directory
         uses: appleboy/ssh-action@v1
         with:
@@ -91,6 +90,9 @@ jobs:
           script: mkdir -p /opt/sacco-staging
 
       # ── Copy docker-compose to server ────────────────────────────────────────
+      # strip_components: 2 strips "secure-sacco/infra/" from the path,
+      # leaving docker-compose.prod.yml directly inside /opt/sacco-staging/.
+      # strip_components: 3 was wrong — it stripped the filename itself.
       - name: Copy docker-compose to staging server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -100,7 +102,7 @@ jobs:
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
           source: secure-sacco/infra/docker-compose.prod.yml
           target: /opt/sacco-staging/
-          strip_components: 3
+          strip_components: 2
 
       - name: Deploy to staging server
         uses: appleboy/ssh-action@v1
