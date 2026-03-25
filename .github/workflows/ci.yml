@@ -91,8 +91,9 @@ jobs:
   backend-security-scan:
     name: Backend — OWASP Dependency Scan
     runs-on: ubuntu-latest
-    # Run on PRs and main; non-blocking (continue-on-error) until baseline is clean
     continue-on-error: true
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
     steps:
       - name: Checkout
@@ -105,10 +106,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Check NVD API key presence
+        run: |
+          if [ -z "$NVD_API_KEY" ]; then
+            echo "NVD_API_KEY is missing"
+            exit 1
+          fi
+          echo "NVD_API_KEY is present"
+
       - name: Run OWASP Dependency Check
         working-directory: secure-sacco/backend/backend
         run: |
           mvn --batch-mode org.owasp:dependency-check-maven:check \
+            -DnvdApiKey="${NVD_API_KEY}" \
             -DfailBuildOnCVSS=9 \
             -DsuppressionFile=../../../.github/owasp-suppressions.xml \
             -Dformat=HTML
