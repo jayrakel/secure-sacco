@@ -1,9 +1,5 @@
 name: Deploy to Staging
 
-# ─── Trigger ──────────────────────────────────────────────────────────────────
-# Run ONLY after the CI workflow completes successfully on main.
-# Previously this triggered on push directly, which meant staging could deploy
-# even when CI was failing. Now it waits for the CI workflow to finish first.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -19,7 +15,6 @@ jobs:
     name: Build & Deploy — Staging
     runs-on: ubuntu-latest
     environment: staging
-    # Guard: only proceed when the triggering CI run actually passed.
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
@@ -30,8 +25,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # workflow_run events provide the SHA of the completed run, not HEAD.
-          # Using ref from the workflow_run ensures we build the same commit CI tested.
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Docker Buildx
@@ -86,10 +79,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # ── Copy docker-compose.prod.yml to the staging server ──────────────────
-      # The file lives at secure-sacco/infra/docker-compose.prod.yml in the repo.
-      # The SSH deploy step expects it at /opt/sacco-staging/docker-compose.prod.yml.
-      # Previously the file was never copied, so docker compose pull would fail.
+      # ── Ensure deploy directory exists on server ─────────────────────────────
+      # Must run BEFORE scp-action so the target directory is present.
+      - name: Bootstrap deploy directory
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          script: mkdir -p /opt/sacco-staging
+
+      # ── Copy docker-compose to server ────────────────────────────────────────
       - name: Copy docker-compose to staging server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -99,49 +100,66 @@ jobs:
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
           source: secure-sacco/infra/docker-compose.prod.yml
           target: /opt/sacco-staging/
-          strip_components: 3   # removes secure-sacco/infra/ prefix, leaves docker-compose.prod.yml
+          strip_components: 3
 
       - name: Deploy to staging server
         uses: appleboy/ssh-action@v1
         env:
-          # Secrets passed through to the remote script via appleboy's envs mechanism
           APP_FIELD_ENCRYPTION_KEY: ${{ secrets.APP_FIELD_ENCRYPTION_KEY }}
           APP_PII_HMAC_KEY: ${{ secrets.APP_PII_HMAC_KEY }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           DB_USERNAME: ${{ secrets.STAGING_DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          APP_OFFICIAL_EMAIL_DOMAIN: ${{ vars.APP_OFFICIAL_EMAIL_DOMAIN }}
+          APP_DEFAULT_ADMIN_EMAIL: ${{ vars.APP_DEFAULT_ADMIN_EMAIL }}
+          APP_DEFAULT_ADMIN_PASSWORD: ${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}
+          APP_DEFAULT_ADMIN_PHONE: ${{ vars.APP_DEFAULT_ADMIN_PHONE }}
+          MPESA_CONSUMER_KEY: ${{ secrets.MPESA_CONSUMER_KEY }}
+          MPESA_CONSUMER_SECRET: ${{ secrets.MPESA_CONSUMER_SECRET }}
+          MPESA_PASSKEY: ${{ secrets.MPESA_PASSKEY }}
+          MPESA_SHORTCODE: ${{ vars.MPESA_SHORTCODE }}
+          MPESA_CALLBACK_BASE_URL: ${{ vars.MPESA_CALLBACK_BASE_URL }}
           STAGING_GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          BACKEND_IMAGE: ghcr.io/${{ github.repository }}/backend:staging-latest
+          FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend:staging-latest
+          STAGING_FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
-          envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,STAGING_GHCR_TOKEN,GITHUB_ACTOR
+          envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,APP_OFFICIAL_EMAIL_DOMAIN,APP_DEFAULT_ADMIN_EMAIL,APP_DEFAULT_ADMIN_PASSWORD,APP_DEFAULT_ADMIN_PHONE,MPESA_CONSUMER_KEY,MPESA_CONSUMER_SECRET,MPESA_PASSKEY,MPESA_SHORTCODE,MPESA_CALLBACK_BASE_URL,STAGING_GHCR_TOKEN,GITHUB_ACTOR,BACKEND_IMAGE,FRONTEND_IMAGE,STAGING_FRONTEND_URL
           script: |
+            set -e
             cd /opt/sacco-staging
 
-            # Authenticate with GHCR so docker compose pull can fetch the images.
-            # STAGING_GHCR_TOKEN is the GITHUB_TOKEN from the workflow — it has
-            # read:packages permission which is sufficient for pulling.
             echo "$STAGING_GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
-            # Write the full .env file the docker-compose expects.
-            # All secrets are injected via appleboy's `envs` — nothing is hardcoded here.
-            cat > .env <<EOF
-            APP_FIELD_ENCRYPTION_KEY=$APP_FIELD_ENCRYPTION_KEY
-            APP_PII_HMAC_KEY=$APP_PII_HMAC_KEY
-            REDIS_HOST=redis
-            REDIS_PORT=6379
-            REDIS_PASSWORD=$REDIS_PASSWORD
-            DB_USERNAME=$DB_USERNAME
-            DB_PASSWORD=$DB_PASSWORD
-            DB_NAME=sacco_staging
-            FRONTEND_URL=${{ vars.STAGING_FRONTEND_URL }}
-            EOF
+            # Write .env using printf — avoids heredoc indentation issues in YAML
+            {
+              printf 'APP_FIELD_ENCRYPTION_KEY=%s\n' "$APP_FIELD_ENCRYPTION_KEY"
+              printf 'APP_PII_HMAC_KEY=%s\n' "$APP_PII_HMAC_KEY"
+              printf 'REDIS_HOST=redis\n'
+              printf 'REDIS_PORT=6379\n'
+              printf 'REDIS_PASSWORD=%s\n' "$REDIS_PASSWORD"
+              printf 'DB_USERNAME=%s\n' "$DB_USERNAME"
+              printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+              printf 'DB_NAME=sacco_staging\n'
+              printf 'APP_OFFICIAL_EMAIL_DOMAIN=%s\n' "$APP_OFFICIAL_EMAIL_DOMAIN"
+              printf 'APP_DEFAULT_ADMIN_EMAIL=%s\n' "$APP_DEFAULT_ADMIN_EMAIL"
+              printf 'APP_DEFAULT_ADMIN_PASSWORD=%s\n' "$APP_DEFAULT_ADMIN_PASSWORD"
+              printf 'APP_DEFAULT_ADMIN_PHONE=%s\n' "$APP_DEFAULT_ADMIN_PHONE"
+              printf 'MPESA_CONSUMER_KEY=%s\n' "$MPESA_CONSUMER_KEY"
+              printf 'MPESA_CONSUMER_SECRET=%s\n' "$MPESA_CONSUMER_SECRET"
+              printf 'MPESA_PASSKEY=%s\n' "$MPESA_PASSKEY"
+              printf 'MPESA_SHORTCODE=%s\n' "$MPESA_SHORTCODE"
+              printf 'MPESA_CALLBACK_BASE_URL=%s\n' "$MPESA_CALLBACK_BASE_URL"
+              printf 'FRONTEND_URL=%s\n' "$STAGING_FRONTEND_URL"
+              printf 'BACKEND_IMAGE=%s\n' "$BACKEND_IMAGE"
+              printf 'FRONTEND_IMAGE=%s\n' "$FRONTEND_IMAGE"
+            } > .env
 
-            export BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:staging-latest
-            export FRONTEND_IMAGE=ghcr.io/${{ github.repository }}/frontend:staging-latest
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f
@@ -171,7 +189,7 @@ jobs:
             exit 1
           fi
 
-      - name: Automatic rollback on staging failure
+      - name: Rollback on failure
         if: failure()
         uses: appleboy/ssh-action@v1
         with:
@@ -182,12 +200,10 @@ jobs:
           script: |
             echo "ROLLING BACK staging deployment..."
             cd /opt/sacco-staging
-            docker compose -f docker-compose.prod.yml down
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml up -d || true
 
       - name: Notify on failure
         if: failure()
         run: |
           echo "Staging deployment failed. Check workflow logs."
-          # Add Slack/email notification here if desired:
-          # curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} -d '{"text":"Staging deploy failed: ${{ github.run_url }}"}'
