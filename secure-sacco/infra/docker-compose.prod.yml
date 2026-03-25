@@ -44,17 +44,17 @@ services:
 
   # ─── Backend (Spring Boot) ───────────────────────────────────────────────────
   backend:
-  image: ${BACKEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/backend:prod-latest}
-  container_name: sacco_backend
-  restart: unless-stopped
-  depends_on:
-    postgres:
-      condition: service_healthy
-    redis:
-      condition: service_healthy
-  environment:
-    SPRING_PROFILES_ACTIVE: prod
-    SERVER_PORT: 8080
+    image: ${BACKEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/backend:prod-latest}
+    container_name: sacco_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
 
       # Database
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-sacco_db}
@@ -86,7 +86,7 @@ services:
       
 
       # M-Pesa / Daraja
-      MPESA_ENV: production
+      MPESA_ENV: ${MPESA_ENV:-sandbox}
       MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY}
       MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET}
       MPESA_PASSKEY: ${MPESA_PASSKEY}

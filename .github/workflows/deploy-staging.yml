@@ -137,7 +137,7 @@ jobs:
             DB_USERNAME=$DB_USERNAME
             DB_PASSWORD=$DB_PASSWORD
             DB_NAME=sacco_staging
-            FRONTEND_URL=https://staging.jaytechwavesolutions.co.ke
+            FRONTEND_URL=${{ vars.STAGING_FRONTEND_URL }}
             EOF
 
             export BACKEND_IMAGE=ghcr.io/${{ github.repository }}/backend:staging-latest
@@ -178,6 +178,7 @@ jobs:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
+          passphrase: ${{ secrets.STAGING_SSH_PASSPHRASE }}
           script: |
             echo "ROLLING BACK staging deployment..."
             cd /opt/sacco-staging
