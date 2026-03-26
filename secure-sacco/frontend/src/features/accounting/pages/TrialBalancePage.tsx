@@ -53,9 +53,39 @@ const TrialBalancePage: React.FC = () => {
         setLoading(true);
         setError('');
         try {
-            const result = await accountingApi.getTrialBalance(date);
-            setData(result);
-        } catch {
+            const rawResult = await accountingApi.getTrialBalance(date);
+            const dataObj = rawResult as unknown;
+
+            console.log("Raw Trial Balance Response:", dataObj);
+
+            let parsedResponse: TrialBalanceResponse | null = null;
+
+            if (dataObj && typeof dataObj === 'object') {
+                const record = dataObj as Record<string, unknown>;
+
+                // Scenario 1: Standard Response { asOfDate: ..., lines: [...] }
+                if ('lines' in record && Array.isArray(record.lines)) {
+                    parsedResponse = record as unknown as TrialBalanceResponse;
+                }
+                // Scenario 2: Nested wrapper { data: { asOfDate: ..., lines: [...] } }
+                else if ('data' in record && typeof record.data === 'object' && record.data !== null) {
+                    const nested = record.data as Record<string, unknown>;
+                    if ('lines' in nested && Array.isArray(nested.lines)) {
+                        parsedResponse = nested as unknown as TrialBalanceResponse;
+                    }
+                }
+            }
+
+            if (parsedResponse && Array.isArray(parsedResponse.lines)) {
+                setData(parsedResponse);
+            } else {
+                console.error("Trial Balance data is missing or malformed.", dataObj);
+                setError('Received an invalid response format from the server.');
+                setData(null);
+            }
+
+        } catch (err) {
+            console.error(err);
             setError('Failed to load Trial Balance. Please try again.');
         } finally {
             setLoading(false);
@@ -64,7 +94,8 @@ const TrialBalancePage: React.FC = () => {
 
     useEffect(() => { fetchData(today); }, [today]);
 
-    const groups = data ? groupByType(data.lines) : {};
+    // FIX: Safely fallback to an empty array if data.lines is somehow still undefined
+    const groups = data && Array.isArray(data.lines) ? groupByType(data.lines) : {};
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
