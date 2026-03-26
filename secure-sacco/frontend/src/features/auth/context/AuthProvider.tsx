@@ -53,16 +53,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Fetches /auth/me and updates user state. Returns the fetched user so callers
     // (e.g. LoginPage) can make navigation decisions without depending on async state.
-    const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
+    const fetchCurrentUser = useCallback(async () => {
         setIsLoading(true);
         try {
             const response = await apiClient.get('/auth/me');
-            const userData: User | null = response.data || null;
-            setUser(userData);
-            return userData;
+            const data = response.data;
+
+            // Guard against nginx SPA fallback returning index.html as 200.
+            // If VITE_API_BASE_URL is wrong, every API call returns HTML —
+            // without this check the app treats the HTML string as a logged-in user.
+            if (!data || typeof data === 'string' || !('id' in data)) {
+                console.error('[AuthProvider] /auth/me returned non-user data — check VITE_API_BASE_URL');
+                setUser(null);
+                return;
+            }
+
+            setUser(data as User);
         } catch {
             setUser(null);
-            return null;
         } finally {
             setIsLoading(false);
         }

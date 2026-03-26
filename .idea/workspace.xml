@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: disable mail health indicator to unblock staging deploy">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: move OWASP scan to weekly schedule, unblock CI pipeline">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/context/AuthProvider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/context/AuthProvider.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,7 +129,7 @@
       <workItem from="1774470542019" duration="5129000" />
       <workItem from="1774514027895" duration="2550000" />
       <workItem from="1774519195673" duration="1433000" />
-      <workItem from="1774521041692" duration="4131000" />
+      <workItem from="1774521041692" duration="4829000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -197,7 +195,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774523165909</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="chore: move OWASP scan to weekly schedule, unblock CI pipeline">
+      <option name="closed" value="true" />
+      <created>1774525513611</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1774525513611</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -223,7 +229,8 @@
     <MESSAGE value="chore(config): disable mail health check in production profile" />
     <MESSAGE value="fix(setup): prevent silent bypass on setup status fetch error by marking setup as incomplete" />
     <MESSAGE value="fix: disable mail health indicator to unblock staging deploy" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: disable mail health indicator to unblock staging deploy" />
+    <MESSAGE value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
