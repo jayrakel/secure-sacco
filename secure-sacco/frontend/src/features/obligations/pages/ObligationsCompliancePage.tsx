@@ -77,8 +77,8 @@ const ObligationsCompliancePage: React.FC = () => {
         );
     });
 
-    const totalOverdue   = data?.content.reduce((s, e) => s + e.totalOverduePeriods, 0) ?? 0;
-    const totalShortfall = data?.content.reduce((s, e) => s + e.totalShortfall, 0) ?? 0;
+    const totalOverdue   = (data?.content ?? []).reduce((s, e) => s + e.totalOverduePeriods, 0);
+    const totalShortfall = (data?.content ?? []).reduce((s, e) => s + e.totalShortfall, 0);
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
