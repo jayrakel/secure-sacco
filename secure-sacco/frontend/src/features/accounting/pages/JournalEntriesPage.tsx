@@ -15,11 +15,41 @@ const JournalEntriesPage: React.FC = () => {
             setIsLoading(true);
             try {
                 const data = await accountingApi.getJournalEntries(page, PAGE_SIZE);
-                setJournals(data.content);
-                setTotalPages(data.totalPages);
-                setTotalElements(data.totalElements);
+
+                console.log("Raw API Response:", data); // Help us debug what the backend is actually sending!
+
+                // Safely extract the array, falling back to an empty array to prevent crashes
+                let journalsList: JournalEntry[] = [];
+                let totalPagesCount = 1;
+                let totalElementsCount = 0;
+
+                // Scenario 1: Standard Spring Boot Page (What the code originally expected)
+                if (data && data.content && Array.isArray(data.content)) {
+                    journalsList = data.content;
+                    totalPagesCount = data.totalPages || 1;
+                    totalElementsCount = data.totalElements || journalsList.length;
+                }
+                // Scenario 2: Backend returned an Array directly
+                else if (Array.isArray(data)) {
+                    journalsList = data;
+                    totalElementsCount = data.length;
+                }
+                // Scenario 3: Wrapped in a generic data object (e.g. data.data.content)
+                else if (data && (data as any).data && Array.isArray((data as any).data.content)) {
+                    const nested = (data as any).data;
+                    journalsList = nested.content;
+                    totalPagesCount = nested.totalPages || 1;
+                    totalElementsCount = nested.totalElements || journalsList.length;
+                }
+
+                setJournals(journalsList);
+                setTotalPages(totalPagesCount);
+                setTotalElements(totalElementsCount);
+
             } catch (error) {
                 console.error('Failed to load journals', error);
+                // Ensure journals is at least an empty array on error so the UI doesn't crash
+                setJournals([]);
             } finally {
                 setIsLoading(false);
             }
