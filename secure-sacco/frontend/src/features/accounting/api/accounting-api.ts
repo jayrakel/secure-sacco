@@ -79,7 +79,7 @@ export interface CreateManualJournalRequest {
 export const accountingApi = {
     getAccounts: async (): Promise<Account[]> => {
         const response = await apiClient.get<Account[]>('/accounting/accounts');
-        return response.data;
+        return Array.isArray(response.data) ? response.data : [];
     },
 
     getJournalEntries: async (page = 0, size = 20): Promise<PagedResponse<JournalEntry>> => {

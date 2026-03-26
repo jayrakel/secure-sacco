@@ -10,8 +10,8 @@ const ChartOfAccountsPage: React.FC = () => {
         const fetchAccounts = async () => {
             try {
                 const data = await accountingApi.getAccounts();
-                // Sort by account code (e.g., 1000, 1100, 2000)
-                setAccounts(data.sort((a, b) => a.accountCode.localeCompare(b.accountCode)));
+                const list = Array.isArray(data) ? data : [];
+                setAccounts(list.sort((a, b) => a.accountCode.localeCompare(b.accountCode)));
             } catch (error) {
                 console.error('Failed to load accounts', error);
             } finally {
