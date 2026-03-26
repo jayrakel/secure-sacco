@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
@@ -126,7 +126,7 @@
       <workItem from="1774467711707" duration="1401000" />
       <workItem from="1774470471037" duration="7000" />
       <workItem from="1774470542019" duration="5129000" />
-      <workItem from="1774514027895" duration="1817000" />
+      <workItem from="1774514027895" duration="2550000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -160,7 +160,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774476233518</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps">
+      <option name="closed" value="true" />
+      <created>1774516072059</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1774516072059</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -182,7 +190,8 @@
     <MESSAGE value="chore(ci+deploy): cache OWASP NVD DB for faster scans; improve staging env var handling and .env generation&#10;&#10;- Cache OWASP Dependency Check NVD database in CI, reducing scan time by using weekly cache keys and incremental updates&#10;- Pass additional environment variables to staging deploy for full .env generation, including MPESA and admin credentials&#10;- Generate .env on staging server using printf for reliability and completeness&#10;- Add deploy directory bootstrap step to ensure target exists before SCP&#10;- Refactor rollback and notification steps for clarity" />
     <MESSAGE value="chore(ci+deploy): clarify NVD cache logic; fix docker-compose strip_components in staging deploy" />
     <MESSAGE value="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml" />
+    <MESSAGE value="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
