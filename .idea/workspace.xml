@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: move OWASP scan to weekly schedule, unblock CI pipeline">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/context/AuthProvider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/context/AuthProvider.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/api/api-client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/api/api-client.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,7 +130,7 @@
       <workItem from="1774470542019" duration="5129000" />
       <workItem from="1774514027895" duration="2550000" />
       <workItem from="1774519195673" duration="1433000" />
-      <workItem from="1774521041692" duration="4829000" />
+      <workItem from="1774521041692" duration="5621000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -203,7 +204,23 @@
       <option name="project" value="LOCAL" />
       <updated>1774525513611</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data">
+      <option name="closed" value="true" />
+      <created>1774526679570</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1774526679570</updated>
+    </task>
+    <task id="LOCAL-00011" summary="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling">
+      <option name="closed" value="true" />
+      <created>1774527114580</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1774527114580</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -230,7 +247,9 @@
     <MESSAGE value="fix(setup): prevent silent bypass on setup status fetch error by marking setup as incomplete" />
     <MESSAGE value="fix: disable mail health indicator to unblock staging deploy" />
     <MESSAGE value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
+    <MESSAGE value="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data" />
+    <MESSAGE value="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
