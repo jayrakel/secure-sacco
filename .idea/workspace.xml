@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore(config): disable mail health check in production profile">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -126,7 +126,7 @@
       <workItem from="1774470471037" duration="7000" />
       <workItem from="1774470542019" duration="5129000" />
       <workItem from="1774514027895" duration="2550000" />
-      <workItem from="1774519195673" duration="544000" />
+      <workItem from="1774519195673" duration="1433000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -168,7 +168,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774516072059</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="chore(config): disable mail health check in production profile">
+      <option name="closed" value="true" />
+      <created>1774519998053</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1774519998053</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -191,7 +199,8 @@
     <MESSAGE value="chore(ci+deploy): clarify NVD cache logic; fix docker-compose strip_components in staging deploy" />
     <MESSAGE value="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml" />
     <MESSAGE value="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps" />
+    <MESSAGE value="chore(config): disable mail health check in production profile" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore(config): disable mail health check in production profile" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

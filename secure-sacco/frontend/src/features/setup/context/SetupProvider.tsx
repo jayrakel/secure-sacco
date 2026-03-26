@@ -11,7 +11,9 @@ export const SetupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const data = await setupApi.getStatus();
             setStatus(data);
         } catch {
-            setStatus({ phase: 'COMPLETE', complete: true, missingOfficerRoles: [] });
+            // On error, assume setup is NOT complete so the user
+            // is never silently bypassed into a broken state.
+            setStatus({ phase: 'CHANGE_PASSWORD', complete: false, missingOfficerRoles: [] });
         } finally {
             setLoading(false);
         }
