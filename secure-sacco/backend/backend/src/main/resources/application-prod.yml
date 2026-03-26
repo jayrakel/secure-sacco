@@ -58,6 +58,9 @@ app:
     phone: ${APP_DEFAULT_ADMIN_PHONE}
 
 management:
+  health:
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:
