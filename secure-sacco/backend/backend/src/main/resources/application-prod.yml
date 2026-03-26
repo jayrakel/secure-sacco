@@ -1,31 +1,29 @@
 server:
-  # Required when running behind a reverse proxy (Nginx, Render, Railway, etc.).
-  # Instructs Spring Boot to trust X-Forwarded-For / X-Forwarded-Proto headers,
-  # which MpesaIpWhitelistFilter relies on to resolve the real caller IP.
   forward-headers-strategy: framework
   servlet:
     session:
       cookie:
+        name: SACCO_SESSION
+        domain: jaytechwavesolutions.co.ke
+        same-site: none
         secure: true
         http-only: true
-        same-site: Strict
 
 spring:
   flyway:
-    repair-on-migrate: false   # Never auto-repair in production
-
+    repair-on-migrate: false
   datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
-      # Production pool sizing: tune based on your Postgres max_connections setting.
-      # Rule of thumb: (num_cores * 2) + disk spindle count. Adjust after load testing.
       maximum-pool-size: 20
       minimum-idle: 5
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
       pool-name: SaccoHikariPool-Prod
-      leak-detection-threshold: 60000   # Warn if connection held >60s — catches connection leaks
-
+      leak-detection-threshold: 60000
 
 sacco:
   security:
