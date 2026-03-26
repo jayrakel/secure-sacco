@@ -14,32 +14,40 @@ const JournalEntriesPage: React.FC = () => {
         const fetchJournals = async () => {
             setIsLoading(true);
             try {
-                const data = await accountingApi.getJournalEntries(page, PAGE_SIZE);
+                // Fetch data but tell TypeScript we want to verify its shape safely
+                const rawResponse = await accountingApi.getJournalEntries(page, PAGE_SIZE);
+                const data = rawResponse as unknown;
 
-                console.log("Raw API Response:", data); // Help us debug what the backend is actually sending!
+                console.log("Raw API Response:", data); // We still need this to debug!
 
-                // Safely extract the array, falling back to an empty array to prevent crashes
                 let journalsList: JournalEntry[] = [];
                 let totalPagesCount = 1;
                 let totalElementsCount = 0;
 
-                // Scenario 1: Standard Spring Boot Page (What the code originally expected)
-                if (data && data.content && Array.isArray(data.content)) {
-                    journalsList = data.content;
-                    totalPagesCount = data.totalPages || 1;
-                    totalElementsCount = data.totalElements || journalsList.length;
-                }
-                // Scenario 2: Backend returned an Array directly
-                else if (Array.isArray(data)) {
-                    journalsList = data;
-                    totalElementsCount = data.length;
-                }
-                // Scenario 3: Wrapped in a generic data object (e.g. data.data.content)
-                else if (data && (data as any).data && Array.isArray((data as any).data.content)) {
-                    const nested = (data as any).data;
-                    journalsList = nested.content;
-                    totalPagesCount = nested.totalPages || 1;
-                    totalElementsCount = nested.totalElements || journalsList.length;
+                // Safely inspect the structure without using 'any'
+                if (data && typeof data === 'object') {
+                    const record = data as Record<string, unknown>;
+
+                    // Scenario 1: Standard Spring Boot Page structure { content: [...] }
+                    if ('content' in record && Array.isArray(record.content)) {
+                        journalsList = record.content as JournalEntry[];
+                        totalPagesCount = typeof record.totalPages === 'number' ? record.totalPages : 1;
+                        totalElementsCount = typeof record.totalElements === 'number' ? record.totalElements : journalsList.length;
+                    }
+                    // Scenario 2: Array returned directly [...]
+                    else if (Array.isArray(data)) {
+                        journalsList = data as JournalEntry[];
+                        totalElementsCount = journalsList.length;
+                    }
+                    // Scenario 3: Nested data wrapper { data: { content: [...] } }
+                    else if ('data' in record && typeof record.data === 'object' && record.data !== null) {
+                        const nested = record.data as Record<string, unknown>;
+                        if ('content' in nested && Array.isArray(nested.content)) {
+                            journalsList = nested.content as JournalEntry[];
+                            totalPagesCount = typeof nested.totalPages === 'number' ? nested.totalPages : 1;
+                            totalElementsCount = typeof nested.totalElements === 'number' ? nested.totalElements : journalsList.length;
+                        }
+                    }
                 }
 
                 setJournals(journalsList);
