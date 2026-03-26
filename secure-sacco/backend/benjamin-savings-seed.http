@@ -1,0 +1,2087 @@
+### ==========================================
+### 0. BASELINE BALANCE (Before Sept 2022)
+### ==========================================
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 573852.00,
+  "referenceNumber": "MIG-SAV-0000001",
+  "transactionDate": "2022-08-31"
+}
+
+### ==========================================
+### YEAR 2022
+### ==========================================
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000002",
+  "transactionDate": "2022-09-01"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000003",
+  "transactionDate": "2022-09-08"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000004",
+  "transactionDate": "2022-09-15"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000005",
+  "transactionDate": "2022-09-22"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 4000.00,
+  "referenceNumber": "MIG-SAV-0000006",
+  "transactionDate": "2022-09-29"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000007",
+  "transactionDate": "2022-10-06"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000008",
+  "transactionDate": "2022-10-13"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000009",
+  "transactionDate": "2022-10-20"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000010",
+  "transactionDate": "2022-10-27"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000011",
+  "transactionDate": "2022-11-03"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000012",
+  "transactionDate": "2022-11-10"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000013",
+  "transactionDate": "2022-11-17"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000014",
+  "transactionDate": "2022-11-24"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000015",
+  "transactionDate": "2022-12-01"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000016",
+  "transactionDate": "2022-12-08"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000017",
+  "transactionDate": "2022-12-15"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000018",
+  "transactionDate": "2022-12-22"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000019",
+  "transactionDate": "2022-12-29"
+}
+
+### ==========================================
+### YEAR 2023
+### ==========================================
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000020",
+  "transactionDate": "2023-01-05"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000021",
+  "transactionDate": "2023-01-12"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000022",
+  "transactionDate": "2023-01-19"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000023",
+  "transactionDate": "2023-01-26"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000024",
+  "transactionDate": "2023-02-02"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000025",
+  "transactionDate": "2023-02-09"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000026",
+  "transactionDate": "2023-02-16"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000027",
+  "transactionDate": "2023-02-23"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000028",
+  "transactionDate": "2023-03-02"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000029",
+  "transactionDate": "2023-03-09"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000030",
+  "transactionDate": "2023-03-16"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000031",
+  "transactionDate": "2023-03-23"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000032",
+  "transactionDate": "2023-03-30"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000033",
+  "transactionDate": "2023-04-06"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000034",
+  "transactionDate": "2023-04-13"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000035",
+  "transactionDate": "2023-04-20"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000036",
+  "transactionDate": "2023-04-27"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000037",
+  "transactionDate": "2023-05-04"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000038",
+  "transactionDate": "2023-05-11"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000039",
+  "transactionDate": "2023-05-18"
+}
+
+// [SKIPPED] 2023-05-25: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000040",
+  "transactionDate": "2023-06-01"
+}
+
+// [SKIPPED] 2023-06-08: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000041",
+  "transactionDate": "2023-06-15"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000042",
+  "transactionDate": "2023-06-22"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000043",
+  "transactionDate": "2023-06-29"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000044",
+  "transactionDate": "2023-07-06"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000045",
+  "transactionDate": "2023-07-13"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000046",
+  "transactionDate": "2023-07-20"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000047",
+  "transactionDate": "2023-07-27"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000048",
+  "transactionDate": "2023-08-03"
+}
+
+// [SKIPPED] 2023-08-10: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000049",
+  "transactionDate": "2023-08-17"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000050",
+  "transactionDate": "2023-08-24"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 828.00,
+  "referenceNumber": "MIG-SAV-0000051",
+  "transactionDate": "2023-08-31"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 419016.00,
+  "referenceNumber": "MIG-SAV-0000052",
+  "transactionDate": "2023-09-07"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000053",
+  "transactionDate": "2023-09-14"
+}
+
+// [SKIPPED] 2023-09-21: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000054",
+  "transactionDate": "2023-09-28"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000055",
+  "transactionDate": "2023-10-05"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000056",
+  "transactionDate": "2023-10-12"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000057",
+  "transactionDate": "2023-10-19"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000058",
+  "transactionDate": "2023-10-26"
+}
+
+// [SKIPPED] 2023-11-02: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000059",
+  "transactionDate": "2023-11-09"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000060",
+  "transactionDate": "2023-11-16"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000061",
+  "transactionDate": "2023-11-23"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000062",
+  "transactionDate": "2023-11-30"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000063",
+  "transactionDate": "2023-12-07"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000064",
+  "transactionDate": "2023-12-14"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000065",
+  "transactionDate": "2023-12-21"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000066",
+  "transactionDate": "2023-12-28"
+}
+
+### ==========================================
+### YEAR 2024
+### ==========================================
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000067",
+  "transactionDate": "2024-01-04"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000068",
+  "transactionDate": "2024-01-11"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000069",
+  "transactionDate": "2024-01-18"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000070",
+  "transactionDate": "2024-01-25"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000071",
+  "transactionDate": "2024-02-01"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000072",
+  "transactionDate": "2024-02-08"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000073",
+  "transactionDate": "2024-02-15"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000074",
+  "transactionDate": "2024-02-22"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000075",
+  "transactionDate": "2024-02-29"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000076",
+  "transactionDate": "2024-03-07"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000077",
+  "transactionDate": "2024-03-14"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000078",
+  "transactionDate": "2024-03-21"
+}
+
+// [SKIPPED] 2024-03-28: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000079",
+  "transactionDate": "2024-04-04"
+}
+
+// [SKIPPED] 2024-04-11: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000080",
+  "transactionDate": "2024-04-18"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000081",
+  "transactionDate": "2024-04-25"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000082",
+  "transactionDate": "2024-05-02"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000083",
+  "transactionDate": "2024-05-09"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000084",
+  "transactionDate": "2024-05-16"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000085",
+  "transactionDate": "2024-05-23"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000086",
+  "transactionDate": "2024-05-30"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000087",
+  "transactionDate": "2024-06-06"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000088",
+  "transactionDate": "2024-06-13"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000089",
+  "transactionDate": "2024-06-20"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 900.00,
+  "referenceNumber": "MIG-SAV-0000090",
+  "transactionDate": "2024-06-27"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000091",
+  "transactionDate": "2024-07-04"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000092",
+  "transactionDate": "2024-07-11"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000093",
+  "transactionDate": "2024-07-18"
+}
+
+// [SKIPPED] 2024-07-25: Did not save (0.00 Ksh)
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000094",
+  "transactionDate": "2024-08-01"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000095",
+  "transactionDate": "2024-08-08"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000096",
+  "transactionDate": "2024-08-15"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000097",
+  "transactionDate": "2024-08-22"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000098",
+  "transactionDate": "2024-08-29"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 8539.00,
+  "referenceNumber": "MIG-SAV-0000099",
+  "transactionDate": "2024-09-05"
+}
+
+// =====================================================================
+// 🚨 MANUAL WITHDRAWAL REQUIRED: 2024-09-12
+// Benjamin's record shows a deduction of -144,723 Ksh this week.
+// The deposit endpoint will reject a negative number.
+// You will need to process this specific deduction via your normal
+// withdrawal/deduction flow inside the dashboard to keep the balance accurate!
+// =====================================================================
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 900.00,
+  "referenceNumber": "MIG-SAV-0000100",
+  "transactionDate": "2024-09-19"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000101",
+  "transactionDate": "2024-09-26"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000102",
+  "transactionDate": "2024-10-03"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000103",
+  "transactionDate": "2024-10-10"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000104",
+  "transactionDate": "2024-10-17"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 500.00,
+  "referenceNumber": "MIG-SAV-0000105",
+  "transactionDate": "2024-10-24"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 5000.00,
+  "referenceNumber": "MIG-SAV-0000106",
+  "transactionDate": "2024-10-31"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000107",
+  "transactionDate": "2024-11-07"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000108",
+  "transactionDate": "2024-11-14"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000109",
+  "transactionDate": "2024-11-21"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000110",
+  "transactionDate": "2024-11-28"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000111",
+  "transactionDate": "2024-12-05"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000112",
+  "transactionDate": "2024-12-12"
+}
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000113",
+  "transactionDate": "2024-12-19"
+}
+
+<> 2026-03-14T002328.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000114",
+  "transactionDate": "2024-12-27"
+}
+
+<> 2026-03-14T002329.200.json
+
+### ==========================================
+### YEAR 2025
+### ==========================================
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000115",
+  "transactionDate": "2025-01-02"
+}
+
+<> 2026-03-14T002330.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000116",
+  "transactionDate": "2025-01-09"
+}
+
+<> 2026-03-14T002333.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000117",
+  "transactionDate": "2025-01-16"
+}
+
+<> 2026-03-14T002340.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000118",
+  "transactionDate": "2025-01-23"
+}
+
+<> 2026-03-14T002342.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 1000.00,
+  "referenceNumber": "MIG-SAV-0000119",
+  "transactionDate": "2025-01-30"
+}
+
+<> 2026-03-14T002344.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000120",
+  "transactionDate": "2025-02-06"
+}
+
+<> 2026-03-14T002346.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000121",
+  "transactionDate": "2025-02-13"
+}
+
+<> 2026-03-14T002349.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000122",
+  "transactionDate": "2025-02-20"
+}
+
+<> 2026-03-14T002353.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 4000.00,
+  "referenceNumber": "MIG-SAV-0000123",
+  "transactionDate": "2025-02-27"
+}
+
+<> 2026-03-14T002355.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000124",
+  "transactionDate": "2025-03-06"
+}
+
+<> 2026-03-14T002356.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000125",
+  "transactionDate": "2025-03-13"
+}
+
+<> 2026-03-14T002357.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000126",
+  "transactionDate": "2025-03-20"
+}
+
+<> 2026-03-14T002359.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000127",
+  "transactionDate": "2025-03-27"
+}
+
+<> 2026-03-14T002413.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000128",
+  "transactionDate": "2025-04-03"
+}
+
+<> 2026-03-14T002414.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000129",
+  "transactionDate": "2025-04-10"
+}
+
+<> 2026-03-14T002416.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000130",
+  "transactionDate": "2025-04-17"
+}
+
+<> 2026-03-14T002417.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 5000.00,
+  "referenceNumber": "MIG-SAV-0000131",
+  "transactionDate": "2025-04-24"
+}
+
+<> 2026-03-14T002418.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000132",
+  "transactionDate": "2025-05-01"
+}
+
+<> 2026-03-14T002419.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000133",
+  "transactionDate": "2025-05-08"
+}
+
+<> 2026-03-14T002420.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000134",
+  "transactionDate": "2025-05-15"
+}
+
+<> 2026-03-14T002421.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000135",
+  "transactionDate": "2025-05-22"
+}
+
+<> 2026-03-14T002424.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000136",
+  "transactionDate": "2025-05-29"
+}
+
+<> 2026-03-14T002425.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000137",
+  "transactionDate": "2025-06-05"
+}
+
+<> 2026-03-14T002427.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000138",
+  "transactionDate": "2025-06-12"
+}
+
+<> 2026-03-14T002428.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000139",
+  "transactionDate": "2025-06-19"
+}
+
+<> 2026-03-14T002429.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000140",
+  "transactionDate": "2025-06-26"
+}
+
+<> 2026-03-14T002430.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000141",
+  "transactionDate": "2025-07-03"
+}
+
+<> 2026-03-14T002432.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000142",
+  "transactionDate": "2025-07-10"
+}
+
+<> 2026-03-14T002434.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000143",
+  "transactionDate": "2025-07-17"
+}
+
+<> 2026-03-14T002436.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000144",
+  "transactionDate": "2025-07-24"
+}
+
+<> 2026-03-14T002437.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000145",
+  "transactionDate": "2025-07-31"
+}
+
+<> 2026-03-14T002439.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 3000.00,
+  "referenceNumber": "MIG-SAV-0000146",
+  "transactionDate": "2025-08-07"
+}
+
+<> 2026-03-14T002440.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2100.00,
+  "referenceNumber": "MIG-SAV-0000147",
+  "transactionDate": "2025-08-14"
+}
+
+<> 2026-03-14T002441.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 4000.00,
+  "referenceNumber": "MIG-SAV-0000148",
+  "transactionDate": "2025-08-21"
+}
+
+<> 2026-03-14T002442.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 2000.00,
+  "referenceNumber": "MIG-SAV-0000149",
+  "transactionDate": "2025-08-28"
+}
+
+<> 2026-03-14T002442-1.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 18905.38,
+  "referenceNumber": "MIG-SAV-0000150",
+  "transactionDate": "2025-09-01"
+}
+
+<> 2026-03-14T002443.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 11000.00,
+  "referenceNumber": "MIG-SAV-0000151",
+  "transactionDate": "2025-09-04"
+}
+
+<> 2026-03-14T002446.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 13000.00,
+  "referenceNumber": "MIG-SAV-0000152",
+  "transactionDate": "2025-09-11"
+}
+
+<> 2026-03-14T002449.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 15000.00,
+  "referenceNumber": "MIG-SAV-0000153",
+  "transactionDate": "2025-09-18"
+}
+
+<> 2026-03-14T002450.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 11000.00,
+  "referenceNumber": "MIG-SAV-0000154",
+  "transactionDate": "2025-09-25"
+}
+
+<> 2026-03-14T002451.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 24100.00,
+  "referenceNumber": "MIG-SAV-0000155",
+  "transactionDate": "2025-10-02"
+}
+
+<> 2026-03-14T002452.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 20000.00,
+  "referenceNumber": "MIG-SAV-0000156",
+  "transactionDate": "2025-10-09"
+}
+
+<> 2026-03-14T002453.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 11000.00,
+  "referenceNumber": "MIG-SAV-0000157",
+  "transactionDate": "2025-10-16"
+}
+
+<> 2026-03-14T002456.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 30000.00,
+  "referenceNumber": "MIG-SAV-0000158",
+  "transactionDate": "2025-10-23"
+}
+
+<> 2026-03-14T002457.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 15000.00,
+  "referenceNumber": "MIG-SAV-0000159",
+  "transactionDate": "2025-10-30"
+}
+
+<> 2026-03-14T002459.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 12000.00,
+  "referenceNumber": "MIG-SAV-0000160",
+  "transactionDate": "2025-11-06"
+}
+
+<> 2026-03-14T002500.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 15100.00,
+  "referenceNumber": "MIG-SAV-0000161",
+  "transactionDate": "2025-11-13"
+}
+
+<> 2026-03-14T002502.200.json
+
+###
+POST http://localhost:8080/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 15000.00,
+  "referenceNumber": "MIG-SAV-0000162",
+  "transactionDate": "2025-11-20"
+}
+
+<> 2026-03-14T002503.200.json
