@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: set session cookie domain for cross-subdomain auth on staging">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/nginx.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/api/api-client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/api/api-client.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,7 +131,7 @@
       <workItem from="1774470542019" duration="5129000" />
       <workItem from="1774514027895" duration="2550000" />
       <workItem from="1774519195673" duration="1433000" />
-      <workItem from="1774521041692" duration="7724000" />
+      <workItem from="1774521041692" duration="9904000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -235,7 +237,23 @@
       <option name="project" value="LOCAL" />
       <updated>1774528462274</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value">
+      <option name="closed" value="true" />
+      <created>1774530001302</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1774530001302</updated>
+    </task>
+    <task id="LOCAL-00015" summary="fix: set session cookie domain for cross-subdomain auth on staging">
+      <option name="closed" value="true" />
+      <created>1774531000005</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1774531000005</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -266,7 +284,9 @@
     <MESSAGE value="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling" />
     <MESSAGE value="fix(api): allow configurable API base URL via VITE_API_BASE_URL env variable" />
     <MESSAGE value="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling" />
+    <MESSAGE value="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value" />
+    <MESSAGE value="fix: set session cookie domain for cross-subdomain auth on staging" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: set session cookie domain for cross-subdomain auth on staging" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
