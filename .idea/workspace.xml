@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -125,7 +126,7 @@
       <workItem from="1774467711707" duration="1401000" />
       <workItem from="1774470471037" duration="7000" />
       <workItem from="1774470542019" duration="5129000" />
-      <workItem from="1774514027895" duration="985000" />
+      <workItem from="1774514027895" duration="1817000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />

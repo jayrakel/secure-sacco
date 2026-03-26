@@ -170,7 +170,7 @@ jobs:
             # The healthcheck polling is handled by the dedicated CI step below,
             # which runs from the GitHub runner and has no SSH timeout constraint.
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans --no-wait
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f
 
       # Health check runs from the GitHub runner — no SSH timeout risk.
@@ -213,7 +213,7 @@ jobs:
             echo "ROLLING BACK staging deployment..."
             cd /opt/sacco-staging
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker compose -f docker-compose.prod.yml up -d --no-wait || true
+            docker compose -f docker-compose.prod.yml up -d || true
 
       - name: Notify on failure
         if: failure()
