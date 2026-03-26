@@ -114,7 +114,7 @@ app:
 sacco:
   security:
     cors:
-      allowed-origins: "https://app.securesacco.com" # Change this to your actual frontend prod URL
+      allowed-origins: "${FRONTEND_URL:http://localhost:5173}" # Change this to your actual frontend prod URL
 
   safaricom:
     daraja:
