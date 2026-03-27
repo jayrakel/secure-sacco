@@ -89,24 +89,31 @@ public class ContactVerificationService {
      * Generates a 6-digit OTP and logs it (mock).
      * In production, replace the log.info with your SMS/Daraja service call.
      */
-    @Transactional
+//    @Transactional
+//    public void sendPhoneOtp(String email) {
+//        User user = requireUser(email);
+//        if (user.isPhoneVerified()) return; // already verified, no-op
+//        enforceRateLimit(user, VerificationTokenType.PHONE_VERIFICATION);
+//
+//        String code = String.format("%06d", new Random().nextInt(1_000_000));
+//        tokenRepository.save(VerificationToken.builder()
+//                .user(user)
+//                .token(code)
+//                .tokenType(VerificationTokenType.PHONE_VERIFICATION)
+//                .expiryDate(ZonedDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
+//                .build());
+//
+//        // 📱 SMS delivery deferred to v2 — integrate Africa's Talking / Twilio here.
+//        // For initial setup, the OTP appears in server logs so the admin can complete verification.
+//        log.info("📱 [SMS-PENDING] Phone OTP for {} ({}): {} — configure Africa's Talking in v2.",
+//                email, user.getPhoneNumber() != null ? user.getPhoneNumber() : "no-phone", code);
+//    }
+
     public void sendPhoneOtp(String email) {
-        User user = requireUser(email);
-        if (user.isPhoneVerified()) return; // already verified, no-op
-        enforceRateLimit(user, VerificationTokenType.PHONE_VERIFICATION);
-
-        String code = String.format("%06d", new Random().nextInt(1_000_000));
-        tokenRepository.save(VerificationToken.builder()
-                .user(user)
-                .token(code)
-                .tokenType(VerificationTokenType.PHONE_VERIFICATION)
-                .expiryDate(ZonedDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
-                .build());
-
-        // 📱 SMS delivery deferred to v2 — integrate Africa's Talking / Twilio here.
-        // For initial setup, the OTP appears in server logs so the admin can complete verification.
-        log.info("📱 [SMS-PENDING] Phone OTP for {} ({}): {} — configure Africa's Talking in v2.",
-                email, user.getPhoneNumber() != null ? user.getPhoneNumber() : "no-phone", code);
+        // 📱 Phone verification disabled — Africa's Talking SMS not yet configured.
+        // Re-enable by removing this return statement and configuring AT credentials.
+        log.info("📱 [SMS-DISABLED] Phone verification skipped for {} — configure Africa's Talking to enable.", email);
+        return;
     }
 
     /**

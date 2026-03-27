@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: auto-confirm email verification if token is present in URL on verify contact page">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/ContactVerificationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/ContactVerificationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/setup/ContactVerificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/setup/ContactVerificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/VerifyContactPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/VerifyContactPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,7 +190,7 @@
       <workItem from="1774519195673" duration="1433000" />
       <workItem from="1774521041692" duration="16403000" />
       <workItem from="1774549022012" duration="2712000" />
-      <workItem from="1774588251045" duration="8098000" />
+      <workItem from="1774588251045" duration="8419000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -438,7 +442,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="chore(ci+deploy): cache OWASP NVD DB for faster scans; improve staging env var handling and .env generation&#10;&#10;- Cache OWASP Dependency Check NVD database in CI, reducing scan time by using weekly cache keys and incremental updates&#10;- Pass additional environment variables to staging deploy for full .env generation, including MPESA and admin credentials&#10;- Generate .env on staging server using printf for reliability and completeness&#10;- Add deploy directory bootstrap step to ensure target exists before SCP&#10;- Refactor rollback and notification steps for clarity" />
     <MESSAGE value="chore(ci+deploy): clarify NVD cache logic; fix docker-compose strip_components in staging deploy" />
     <MESSAGE value="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml" />
     <MESSAGE value="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps" />
@@ -463,7 +466,8 @@
     <MESSAGE value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
     <MESSAGE value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
     <MESSAGE value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
+    <MESSAGE value="feat: auto-confirm email verification if token is present in URL on verify contact page" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: auto-confirm email verification if token is present in URL on verify contact page" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

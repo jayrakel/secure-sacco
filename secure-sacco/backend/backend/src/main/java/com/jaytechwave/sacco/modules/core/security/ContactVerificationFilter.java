@@ -85,14 +85,27 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (!user.isEmailVerified() || !user.isPhoneVerified()) {
-            log.warn("User {} accessed {} before contact verification (emailVerified={}, phoneVerified={}).",
-                    auth.getName(), path, user.isEmailVerified(), user.isPhoneVerified());
+        //TODO: In the future, we could make this more granular by allowing access to some endpoints even if only one contact method is verified. For now, we require both to be verified for simplicity.
+//        if (!user.isEmailVerified() || !user.isPhoneVerified()) {
+//            log.warn("User {} accessed {} before contact verification (emailVerified={}, phoneVerified={}).",
+//                    auth.getName(), path, user.isEmailVerified(), user.isPhoneVerified());
+//            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+//            response.setContentType("application/json");
+//            response.getWriter().write(
+//                    "{\"error\":\"CONTACT_VERIFICATION_REQUIRED\"," +
+//                            "\"message\":\"You must verify your email and phone number before continuing.\"}"
+//            );
+//            return;
+//        }
+
+        if (!user.isEmailVerified()) {
+            log.warn("User {} accessed {} before email verification (emailVerified={}).",
+                    auth.getName(), path, user.isEmailVerified());
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
             response.getWriter().write(
                     "{\"error\":\"CONTACT_VERIFICATION_REQUIRED\"," +
-                            "\"message\":\"You must verify your email and phone number before continuing.\"}"
+                            "\"message\":\"You must verify your email address before continuing.\"}"
             );
             return;
         }

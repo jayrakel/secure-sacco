@@ -111,8 +111,10 @@ const VerifyContactPage: React.FC = () => {
         await refreshUser();
         navigate('/dashboard', { replace: true });
     };
+    //TODO - We should ideally re-check the verification status from the backend before allowing continue, in case they verified through another device or email client. This can be done by calling a dedicated API endpoint or re-fetching the user data and checking the flags again. For now, we'll optimistically assume success if both flows were completed in this session.
+    // const bothDone = emailDone && phoneDone;
 
-    const bothDone = emailDone && phoneDone;
+    const bothDone = emailDone;
 
     return (
         <div className="min-h-screen flex bg-slate-50 font-sans">
@@ -216,58 +218,17 @@ const VerifyContactPage: React.FC = () => {
                         </div>
 
                         {/* ── Phone card ──────────────────────────────────── */}
-                        <div className={`rounded-2xl border-2 p-5 transition-all ${
-                            phoneDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'
-                        }`}>
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <Phone className={`w-4 h-4 ${phoneDone ? 'text-emerald-500' : 'text-slate-400'}`} />
-                                    <span className="font-semibold text-slate-900 text-sm">Phone Number</span>
-                                    {user?.phoneNumber && (
-                                        <code className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
-                                            {user.phoneNumber}
-                                        </code>
-                                    )}
-                                </div>
-                                {phoneDone && (
-                                    <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
-                                        Verified ✓
-                                    </span>
-                                )}
+                        <div className="rounded-2xl border-2 border-slate-100 bg-slate-50 p-5">
+                            <div className="flex items-center gap-2">
+                                <Phone className="w-4 h-4 text-slate-300" />
+                                <span className="font-semibold text-slate-400 text-sm">Phone Number</span>
+                                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg">
+            Coming soon
+        </span>
                             </div>
-
-                            {!phoneDone && (
-                                <div className="space-y-3">
-                                    {!phoneSent ? (
-                                        <button onClick={sendPhone} disabled={loading} className={btnPrimary}>
-                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
-                                            Send OTP to Phone
-                                        </button>
-                                    ) : (
-                                        <div className="flex gap-2">
-                                            <input
-                                                value={phoneOtp}
-                                                onChange={e => setPhoneOtp(e.target.value.replace(/\D/g, ''))}
-                                                className={`${inp} tracking-[0.4em] font-mono text-lg text-center`}
-                                                placeholder="000000"
-                                                maxLength={6}
-                                            />
-                                            <button
-                                                onClick={confirmPhone}
-                                                disabled={loading || phoneOtp.length < 6}
-                                                className={btnPrimary}
-                                            >
-                                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
-                                            </button>
-                                        </div>
-                                    )}
-                                    {phoneSent && (
-                                        <button onClick={sendPhone} disabled={loading} className={btnGhost}>
-                                            <RefreshCw className="w-3 h-3" /> Resend OTP
-                                        </button>
-                                    )}
-                                </div>
-                            )}
+                            <p className="text-xs text-slate-400 mt-2">
+                                SMS verification will be enabled in a future update.
+                            </p>
                         </div>
 
                         {bothDone && (
