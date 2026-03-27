@@ -161,11 +161,12 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
 
             {/* ── Sidebar ───────────────────────────────────────────────── */}
             <aside className={`
-                ${isCollapsed ? 'w-17' : 'w-60'}
-                bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col relative shrink-0 z-40
-                fixed lg:static inset-y-0 left-0
-                ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            `}>
+    ${isCollapsed ? 'w-17' : 'w-60'}
+    /* Removed 'relative' from the line below */
+    bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col shrink-0 z-40
+    fixed lg:static inset-y-0 left-0
+    ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+`}>
 
                 {/* Mobile close button */}
                 <button
