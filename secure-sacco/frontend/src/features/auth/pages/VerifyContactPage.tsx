@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Phone, CheckCircle2, Loader2, RefreshCw, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider';
 import { setupApi } from '../../setup/api/setup-api';
@@ -35,6 +35,7 @@ const btnGhost = 'inline-flex items-center gap-1.5 text-xs text-slate-500 ' +
 const VerifyContactPage: React.FC = () => {
     const { user, refreshUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();  // ← INSIDE the component
 
     const [emailSent, setEmailSent]       = useState(false);
     const [emailToken, setEmailToken]     = useState('');
@@ -60,6 +61,25 @@ const VerifyContactPage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // ── Auto-confirm email if token is in the URL ──────────────────────────
+    useEffect(() => {  // ← INSIDE the component
+        const params = new URLSearchParams(location.search);
+        const type = params.get('type');
+        const token = params.get('token');
+
+        if (type === 'email' && token && !emailDone) {
+            act(async () => {
+                await setupApi.confirmEmail(token);
+                setEmailDone(true);
+                setEmailSent(true);
+                await refreshUser();
+                setSuccessMsg('Email verified ✓');
+                navigate('/verify-contact', { replace: true });
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const sendEmail = () => act(async () => {
         await setupApi.sendEmailVerification();
@@ -108,7 +128,6 @@ const VerifyContactPage: React.FC = () => {
                         Verify your email and phone to secure your account and complete your setup.
                     </p>
                 </div>
-                {/* Background blobs */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                     <div className="absolute top-10 left-10 w-32 h-32 bg-emerald-500 rounded-full mix-blend-multiply blur-3xl opacity-20" />
                     <div className="absolute bottom-10 right-10 w-32 h-32 bg-blue-500 rounded-full mix-blend-multiply blur-3xl opacity-20" />
@@ -119,7 +138,6 @@ const VerifyContactPage: React.FC = () => {
             <div className="w-full lg:w-1/2 flex flex-col justify-center p-8">
                 <div className="w-full max-w-md mx-auto">
 
-                    {/* Header */}
                     <div className="mb-8">
                         <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-2xl mb-4">
                             <ShieldCheck className="w-6 h-6 text-emerald-600" />
@@ -130,7 +148,6 @@ const VerifyContactPage: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* Alerts */}
                     {error && (
                         <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
                             <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
@@ -169,9 +186,7 @@ const VerifyContactPage: React.FC = () => {
                                 <div className="space-y-3">
                                     {!emailSent ? (
                                         <button onClick={sendEmail} disabled={loading} className={btnPrimary}>
-                                            {loading
-                                                ? <Loader2 className="w-4 h-4 animate-spin" />
-                                                : <Mail className="w-4 h-4" />}
+                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                                             Send Verification Email
                                         </button>
                                     ) : (
@@ -225,9 +240,7 @@ const VerifyContactPage: React.FC = () => {
                                 <div className="space-y-3">
                                     {!phoneSent ? (
                                         <button onClick={sendPhone} disabled={loading} className={btnPrimary}>
-                                            {loading
-                                                ? <Loader2 className="w-4 h-4 animate-spin" />
-                                                : <Phone className="w-4 h-4" />}
+                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
                                             Send OTP to Phone
                                         </button>
                                     ) : (
@@ -257,7 +270,6 @@ const VerifyContactPage: React.FC = () => {
                             )}
                         </div>
 
-                        {/* ── Continue button ─────────────────────────────── */}
                         {bothDone && (
                             <button
                                 onClick={handleContinue}

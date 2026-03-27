@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/notifications/EmailNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/notifications/EmailNotificationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -191,7 +186,7 @@
       <workItem from="1774519195673" duration="1433000" />
       <workItem from="1774521041692" duration="16403000" />
       <workItem from="1774549022012" duration="2712000" />
-      <workItem from="1774588251045" duration="7434000" />
+      <workItem from="1774588251045" duration="8098000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -417,7 +412,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774599579543</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API">
+      <option name="closed" value="true" />
+      <created>1774600869077</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1774600869077</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -435,7 +438,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose" />
     <MESSAGE value="chore(ci+deploy): cache OWASP NVD DB for faster scans; improve staging env var handling and .env generation&#10;&#10;- Cache OWASP Dependency Check NVD database in CI, reducing scan time by using weekly cache keys and incremental updates&#10;- Pass additional environment variables to staging deploy for full .env generation, including MPESA and admin credentials&#10;- Generate .env on staging server using printf for reliability and completeness&#10;- Add deploy directory bootstrap step to ensure target exists before SCP&#10;- Refactor rollback and notification steps for clarity" />
     <MESSAGE value="chore(ci+deploy): clarify NVD cache logic; fix docker-compose strip_components in staging deploy" />
     <MESSAGE value="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml" />
@@ -460,7 +462,8 @@
     <MESSAGE value="chore: add migration HTTP request logs, cookies, and response samples for historical savings import" />
     <MESSAGE value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
     <MESSAGE value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
+    <MESSAGE value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
