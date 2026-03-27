@@ -1,1198 +1,1204 @@
 ### ==========================================
-### YEAR 2022 (Samuel started at 0. No Baseline!)
+### 0. BASELINE BALANCE (Before Sept 2022)
 ### ==========================================
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-09-01", "transactionDate": "2022-09-01" }
+{ "memberNumber": "BVL-2022-000009", "amount": 282978.00, "referenceNumber": "PTR-MOS-BASE", "transactionDate": "2022-08-31" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-09-08", "transactionDate": "2022-09-08" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-09-01", "transactionDate": "2022-09-01" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-09-15", "transactionDate": "2022-09-15" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-09-08", "transactionDate": "2022-09-08" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-09-22", "transactionDate": "2022-09-22" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-09-15", "transactionDate": "2022-09-15" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-09-29", "transactionDate": "2022-09-29" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-09-22", "transactionDate": "2022-09-22" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-10-06", "transactionDate": "2022-10-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-09-29", "transactionDate": "2022-09-29" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-10-13", "transactionDate": "2022-10-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-10-06", "transactionDate": "2022-10-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-10-20", "transactionDate": "2022-10-20" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-10-13", "transactionDate": "2022-10-13" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-10-27", "transactionDate": "2022-10-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-10-20", "transactionDate": "2022-10-20" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-11-03", "transactionDate": "2022-11-03" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-10-27", "transactionDate": "2022-10-27" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-11-10", "transactionDate": "2022-11-10" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-11-03", "transactionDate": "2022-11-03" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-11-17", "transactionDate": "2022-11-17" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-11-10", "transactionDate": "2022-11-10" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-11-24", "transactionDate": "2022-11-24" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-11-17", "transactionDate": "2022-11-17" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-12-01", "transactionDate": "2022-12-01" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-11-24", "transactionDate": "2022-11-24" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-12-08", "transactionDate": "2022-12-08" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-12-01", "transactionDate": "2022-12-01" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-12-15", "transactionDate": "2022-12-15" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-12-08", "transactionDate": "2022-12-08" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-12-22", "transactionDate": "2022-12-22" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-12-15", "transactionDate": "2022-12-15" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2022-12-29", "transactionDate": "2022-12-29" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-12-22", "transactionDate": "2022-12-22" }
+
+### 
+POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2022-12-29", "transactionDate": "2022-12-29" }
 
 
 ### ==========================================
 ### YEAR 2023
 ### ==========================================
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-01-05", "transactionDate": "2023-01-05" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2023-01-05", "transactionDate": "2023-01-05" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-01-12", "transactionDate": "2023-01-12" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2023-01-12", "transactionDate": "2023-01-12" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-01-19", "transactionDate": "2023-01-19" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2023-01-19", "transactionDate": "2023-01-19" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-01-26", "transactionDate": "2023-01-26" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2023-01-26", "transactionDate": "2023-01-26" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-02-02", "transactionDate": "2023-02-02" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2023-02-02", "transactionDate": "2023-02-02" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-02-09", "transactionDate": "2023-02-09" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2023-02-09", "transactionDate": "2023-02-09" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-02-16", "transactionDate": "2023-02-16" }
+{ "memberNumber": "BVL-2022-000009", "amount": 522.00, "referenceNumber": "PTR-MOS-2023-02-16", "transactionDate": "2023-02-16" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-02-23", "transactionDate": "2023-02-23" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-02-23", "transactionDate": "2023-02-23" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-03-02", "transactionDate": "2023-03-02" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-03-02", "transactionDate": "2023-03-02" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-03-09", "transactionDate": "2023-03-09" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-03-09", "transactionDate": "2023-03-09" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-03-16", "transactionDate": "2023-03-16" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-03-16", "transactionDate": "2023-03-16" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-03-23", "transactionDate": "2023-03-23" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-03-23", "transactionDate": "2023-03-23" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-03-30", "transactionDate": "2023-03-30" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-03-30", "transactionDate": "2023-03-30" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-04-06", "transactionDate": "2023-04-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-04-06", "transactionDate": "2023-04-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-04-13", "transactionDate": "2023-04-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-04-13", "transactionDate": "2023-04-13" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-04-20", "transactionDate": "2023-04-20" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-04-20", "transactionDate": "2023-04-20" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-04-27", "transactionDate": "2023-04-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-04-27", "transactionDate": "2023-04-27" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-05-04", "transactionDate": "2023-05-04" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-05-04", "transactionDate": "2023-05-04" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-05-11", "transactionDate": "2023-05-11" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-05-11", "transactionDate": "2023-05-11" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-05-18", "transactionDate": "2023-05-18" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-05-18", "transactionDate": "2023-05-18" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-05-25", "transactionDate": "2023-05-25" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-05-25", "transactionDate": "2023-05-25" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-06-01", "transactionDate": "2023-06-01" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-06-01", "transactionDate": "2023-06-01" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-06-08", "transactionDate": "2023-06-08" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-06-08", "transactionDate": "2023-06-08" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-06-15", "transactionDate": "2023-06-15" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-06-15", "transactionDate": "2023-06-15" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-06-22", "transactionDate": "2023-06-22" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-06-22", "transactionDate": "2023-06-22" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-06-29", "transactionDate": "2023-06-29" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-06-29", "transactionDate": "2023-06-29" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-07-06", "transactionDate": "2023-07-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-07-06", "transactionDate": "2023-07-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-07-13", "transactionDate": "2023-07-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-07-13", "transactionDate": "2023-07-13" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-07-20", "transactionDate": "2023-07-20" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-07-20", "transactionDate": "2023-07-20" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-07-27", "transactionDate": "2023-07-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-07-27", "transactionDate": "2023-07-27" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-08-03", "transactionDate": "2023-08-03" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-08-03", "transactionDate": "2023-08-03" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-08-10", "transactionDate": "2023-08-10" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-08-10", "transactionDate": "2023-08-10" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-08-17", "transactionDate": "2023-08-17" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-08-17", "transactionDate": "2023-08-17" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-08-24", "transactionDate": "2023-08-24" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-08-24", "transactionDate": "2023-08-24" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2023-08-31", "transactionDate": "2023-08-31" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-08-31", "transactionDate": "2023-08-31" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 74866.00, "referenceNumber": "PTR-SAM-DIV-2023", "transactionDate": "2023-09-07" }
+{ "memberNumber": "BVL-2022-000009", "amount": 249057.00, "referenceNumber": "PTR-MOS-DIV-2023", "transactionDate": "2023-09-07" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-09-14", "transactionDate": "2023-09-14" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-09-14", "transactionDate": "2023-09-14" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-09-21", "transactionDate": "2023-09-21" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-09-21", "transactionDate": "2023-09-21" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-09-28", "transactionDate": "2023-09-28" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-09-28", "transactionDate": "2023-09-28" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-10-05", "transactionDate": "2023-10-05" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-10-05", "transactionDate": "2023-10-05" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-10-12", "transactionDate": "2023-10-12" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-10-12", "transactionDate": "2023-10-12" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-10-19", "transactionDate": "2023-10-19" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-10-19", "transactionDate": "2023-10-19" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-10-26", "transactionDate": "2023-10-26" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-10-26", "transactionDate": "2023-10-26" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-11-02", "transactionDate": "2023-11-02" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-11-02", "transactionDate": "2023-11-02" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-11-09", "transactionDate": "2023-11-09" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-11-09", "transactionDate": "2023-11-09" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-11-16", "transactionDate": "2023-11-16" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-11-16", "transactionDate": "2023-11-16" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-11-23", "transactionDate": "2023-11-23" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-11-23", "transactionDate": "2023-11-23" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-11-30", "transactionDate": "2023-11-30" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-11-30", "transactionDate": "2023-11-30" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-12-07", "transactionDate": "2023-12-07" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-12-07", "transactionDate": "2023-12-07" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-12-14", "transactionDate": "2023-12-14" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-12-14", "transactionDate": "2023-12-14" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-12-21", "transactionDate": "2023-12-21" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-12-21", "transactionDate": "2023-12-21" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2023-12-28", "transactionDate": "2023-12-28" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2023-12-28", "transactionDate": "2023-12-28" }
 
 
 ### ==========================================
 ### YEAR 2024
 ### ==========================================
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-01-04", "transactionDate": "2024-01-04" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-01-04", "transactionDate": "2024-01-04" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-01-11", "transactionDate": "2024-01-11" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-01-11", "transactionDate": "2024-01-11" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-01-18", "transactionDate": "2024-01-18" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-01-18", "transactionDate": "2024-01-18" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-01-25", "transactionDate": "2024-01-25" }
+{ "memberNumber": "BVL-2022-000009", "amount": 543.00, "referenceNumber": "PTR-MOS-2024-01-25", "transactionDate": "2024-01-25" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-02-01", "transactionDate": "2024-02-01" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-02-01", "transactionDate": "2024-02-01" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-02-08", "transactionDate": "2024-02-08" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-02-08", "transactionDate": "2024-02-08" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-02-15", "transactionDate": "2024-02-15" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-02-15", "transactionDate": "2024-02-15" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-02-22", "transactionDate": "2024-02-22" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-02-22", "transactionDate": "2024-02-22" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-02-29", "transactionDate": "2024-02-29" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-02-29", "transactionDate": "2024-02-29" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-03-07", "transactionDate": "2024-03-07" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-03-07", "transactionDate": "2024-03-07" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-03-14", "transactionDate": "2024-03-14" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-03-14", "transactionDate": "2024-03-14" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-03-21", "transactionDate": "2024-03-21" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-03-21", "transactionDate": "2024-03-21" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-03-28", "transactionDate": "2024-03-28" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-03-28", "transactionDate": "2024-03-28" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-04-04", "transactionDate": "2024-04-04" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-04-04", "transactionDate": "2024-04-04" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-04-11", "transactionDate": "2024-04-11" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-04-11", "transactionDate": "2024-04-11" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-04-18", "transactionDate": "2024-04-18" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-04-18", "transactionDate": "2024-04-18" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-04-25", "transactionDate": "2024-04-25" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-04-25", "transactionDate": "2024-04-25" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-05-02", "transactionDate": "2024-05-02" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-05-02", "transactionDate": "2024-05-02" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-05-09", "transactionDate": "2024-05-09" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-05-09", "transactionDate": "2024-05-09" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-05-16", "transactionDate": "2024-05-16" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-05-16", "transactionDate": "2024-05-16" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-05-23", "transactionDate": "2024-05-23" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-05-23", "transactionDate": "2024-05-23" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-05-30", "transactionDate": "2024-05-30" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-05-30", "transactionDate": "2024-05-30" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-06-06", "transactionDate": "2024-06-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-06-06", "transactionDate": "2024-06-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-06-13", "transactionDate": "2024-06-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 2000.00, "referenceNumber": "PTR-MOS-2024-06-13", "transactionDate": "2024-06-13" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-06-20", "transactionDate": "2024-06-20" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-06-20", "transactionDate": "2024-06-20" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-06-27", "transactionDate": "2024-06-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-06-27", "transactionDate": "2024-06-27" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-07-04", "transactionDate": "2024-07-04" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-07-04", "transactionDate": "2024-07-04" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-07-11", "transactionDate": "2024-07-11" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-07-11", "transactionDate": "2024-07-11" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-07-18", "transactionDate": "2024-07-18" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-07-18", "transactionDate": "2024-07-18" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-07-25", "transactionDate": "2024-07-25" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-07-25", "transactionDate": "2024-07-25" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-08-01", "transactionDate": "2024-08-01" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-08-01", "transactionDate": "2024-08-01" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-08-08", "transactionDate": "2024-08-08" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-08-08", "transactionDate": "2024-08-08" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-08-15", "transactionDate": "2024-08-15" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-08-15", "transactionDate": "2024-08-15" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-08-22", "transactionDate": "2024-08-22" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-08-22", "transactionDate": "2024-08-22" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-08-29", "transactionDate": "2024-08-29" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-08-29", "transactionDate": "2024-08-29" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 8539.00, "referenceNumber": "PTR-SAM-DIV-2024", "transactionDate": "2024-09-05" }
+{ "memberNumber": "BVL-2022-000009", "amount": 8539.00, "referenceNumber": "PTR-MOS-DIV-2024", "transactionDate": "2024-09-05" }
 
 // =====================================================================
 // 🚨 MANUAL WITHDRAWAL REQUIRED: 2024-09-12
-// Samuel had a deduction of -3,312.00 Ksh recorded this week.
+// Moses had a deduction of -1000.00 Ksh recorded this week.
 // Please process this deduction manually via the Dashboard UI.
 // =====================================================================
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-09-19", "transactionDate": "2024-09-19" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-09-19", "transactionDate": "2024-09-19" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-09-26", "transactionDate": "2024-09-26" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-09-26", "transactionDate": "2024-09-26" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-10-03", "transactionDate": "2024-10-03" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-10-03", "transactionDate": "2024-10-03" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-10-10", "transactionDate": "2024-10-10" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-10-10", "transactionDate": "2024-10-10" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-10-17", "transactionDate": "2024-10-17" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-10-17", "transactionDate": "2024-10-17" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-10-24", "transactionDate": "2024-10-24" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-10-24", "transactionDate": "2024-10-24" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-10-31", "transactionDate": "2024-10-31" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-10-31", "transactionDate": "2024-10-31" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-11-07", "transactionDate": "2024-11-07" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-11-07", "transactionDate": "2024-11-07" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-11-14", "transactionDate": "2024-11-14" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-11-14", "transactionDate": "2024-11-14" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-11-21", "transactionDate": "2024-11-21" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-11-21", "transactionDate": "2024-11-21" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-11-28", "transactionDate": "2024-11-28" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-11-28", "transactionDate": "2024-11-28" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-12-05", "transactionDate": "2024-12-05" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-12-05", "transactionDate": "2024-12-05" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-12-12", "transactionDate": "2024-12-12" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-12-12", "transactionDate": "2024-12-12" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-12-19", "transactionDate": "2024-12-19" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-12-19", "transactionDate": "2024-12-19" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2024-12-27", "transactionDate": "2024-12-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2024-12-27", "transactionDate": "2024-12-27" }
 
 
 ### ==========================================
 ### YEAR 2025
 ### ==========================================
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-01-02", "transactionDate": "2025-01-02" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-01-02", "transactionDate": "2025-01-02" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-01-09", "transactionDate": "2025-01-09" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-01-09", "transactionDate": "2025-01-09" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-01-16", "transactionDate": "2025-01-16" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-01-16", "transactionDate": "2025-01-16" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-01-23", "transactionDate": "2025-01-23" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-01-23", "transactionDate": "2025-01-23" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-01-30", "transactionDate": "2025-01-30" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-01-30", "transactionDate": "2025-01-30" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-02-06", "transactionDate": "2025-02-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-02-06", "transactionDate": "2025-02-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-02-13", "transactionDate": "2025-02-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-02-13", "transactionDate": "2025-02-13" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-02-20", "transactionDate": "2025-02-20" }
+{ "memberNumber": "BVL-2022-000009", "amount": 500.00, "referenceNumber": "PTR-MOS-2025-02-20", "transactionDate": "2025-02-20" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-02-27", "transactionDate": "2025-02-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3600.00, "referenceNumber": "PTR-MOS-2025-02-27", "transactionDate": "2025-02-27" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-03-06", "transactionDate": "2025-03-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 4761.00, "referenceNumber": "PTR-MOS-2025-03-06", "transactionDate": "2025-03-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-03-13", "transactionDate": "2025-03-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-03-13", "transactionDate": "2025-03-13" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 500.00, "referenceNumber": "PTR-SAM-2025-03-20", "transactionDate": "2025-03-20" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-03-20", "transactionDate": "2025-03-20" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-03-27", "transactionDate": "2025-03-27" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-03-27", "transactionDate": "2025-03-27" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-04-03", "transactionDate": "2025-04-03" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-04-03", "transactionDate": "2025-04-03" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-04-10", "transactionDate": "2025-04-10" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-04-10", "transactionDate": "2025-04-10" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-04-17", "transactionDate": "2025-04-17" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-04-17", "transactionDate": "2025-04-17" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-04-24", "transactionDate": "2025-04-24" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-04-24", "transactionDate": "2025-04-24" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-05-01", "transactionDate": "2025-05-01" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-05-01", "transactionDate": "2025-05-01" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-05-08", "transactionDate": "2025-05-08" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-05-08", "transactionDate": "2025-05-08" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-05-15", "transactionDate": "2025-05-15" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-05-15", "transactionDate": "2025-05-15" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-05-22", "transactionDate": "2025-05-22" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-05-22", "transactionDate": "2025-05-22" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-05-29", "transactionDate": "2025-05-29" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-05-29", "transactionDate": "2025-05-29" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-06-05", "transactionDate": "2025-06-05" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-06-05", "transactionDate": "2025-06-05" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-06-12", "transactionDate": "2025-06-12" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-06-12", "transactionDate": "2025-06-12" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-06-19", "transactionDate": "2025-06-19" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-06-19", "transactionDate": "2025-06-19" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-06-26", "transactionDate": "2025-06-26" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-06-26", "transactionDate": "2025-06-26" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-07-03", "transactionDate": "2025-07-03" }
+{ "memberNumber": "BVL-2022-000009", "amount": 2000.00, "referenceNumber": "PTR-MOS-2025-07-03", "transactionDate": "2025-07-03" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-07-10", "transactionDate": "2025-07-10" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-07-10", "transactionDate": "2025-07-10" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-07-17", "transactionDate": "2025-07-17" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-07-17", "transactionDate": "2025-07-17" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-07-24", "transactionDate": "2025-07-24" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-07-24", "transactionDate": "2025-07-24" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-07-31", "transactionDate": "2025-07-31" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-07-31", "transactionDate": "2025-07-31" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-08-07", "transactionDate": "2025-08-07" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-08-07", "transactionDate": "2025-08-07" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-08-14", "transactionDate": "2025-08-14" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-08-14", "transactionDate": "2025-08-14" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-08-21", "transactionDate": "2025-08-21" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-08-21", "transactionDate": "2025-08-21" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-08-28", "transactionDate": "2025-08-28" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-08-28", "transactionDate": "2025-08-28" }
 
 
 // =====================================================================
 // 🚨 MANUAL WITHDRAWAL REQUIRED: 2025-09-01
-// Samuel had a deduction of -95,957.23 Ksh recorded this week.
+// Moses had a deduction of -12181.88 Ksh recorded this week.
 // Please process this deduction manually via the Dashboard UI.
 // =====================================================================
 
-
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-09-04", "transactionDate": "2025-09-04" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-09-04", "transactionDate": "2025-09-04" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-09-11", "transactionDate": "2025-09-11" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-09-11", "transactionDate": "2025-09-11" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-09-18", "transactionDate": "2025-09-18" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-09-18", "transactionDate": "2025-09-18" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-09-25", "transactionDate": "2025-09-25" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-09-25", "transactionDate": "2025-09-25" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-10-02", "transactionDate": "2025-10-02" }
+{ "memberNumber": "BVL-2022-000009", "amount": 2000.00, "referenceNumber": "PTR-MOS-2025-10-02", "transactionDate": "2025-10-02" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-10-09", "transactionDate": "2025-10-09" }
+{ "memberNumber": "BVL-2022-000009", "amount": 2000.00, "referenceNumber": "PTR-MOS-2025-10-09", "transactionDate": "2025-10-09" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-10-16", "transactionDate": "2025-10-16" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-10-16", "transactionDate": "2025-10-16" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-10-23", "transactionDate": "2025-10-23" }
+{ "memberNumber": "BVL-2022-000009", "amount": 2000.00, "referenceNumber": "PTR-MOS-2025-10-23", "transactionDate": "2025-10-23" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-10-30", "transactionDate": "2025-10-30" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-10-30", "transactionDate": "2025-10-30" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-11-06", "transactionDate": "2025-11-06" }
+{ "memberNumber": "BVL-2022-000009", "amount": 3000.00, "referenceNumber": "PTR-MOS-2025-11-06", "transactionDate": "2025-11-06" }
 
-###
+### 
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/savings
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberNumber": "BVL-2022-000006", "amount": 1000.00, "referenceNumber": "PTR-SAM-2025-11-13", "transactionDate": "2025-11-13" }
+{ "memberNumber": "BVL-2022-000009", "amount": 1000.00, "referenceNumber": "PTR-MOS-2025-11-13", "transactionDate": "2025-11-13" }
 
 // [SKIPPED] 2025-11-20: Did not save (0.00 Ksh)

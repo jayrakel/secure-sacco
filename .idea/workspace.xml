@@ -4,9 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: add project encoding and Maven repository configuration files">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency">
+      <change afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalWithdrawalRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/gideon-savings-seeder.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/moses-savings-seeder.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/stephen-savings-seeder.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/tarcisio-savings-seeder.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,6 +30,7 @@
   <component name="CopilotPersistence">
     <persistenceIdMap>
       <entry key="_C:/Users/JAY/OneDrive/Desktop/secure-sacco" value="3BS07ua0EqtAaZS9eFMKNL1lX4E" />
+      <entry key="_C:/Users/JAY/OneDrive/Desktop/secure-sacco/secure-sacco/backend/backend" value="3BXNovXhZFWndXaFvJRMsBOWmrz" />
     </persistenceIdMap>
   </component>
   <component name="FileTemplateManagerImpl">
@@ -47,6 +62,15 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/gideon-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/stephen-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/moses-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/tarcisio-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" environment="stag" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -78,7 +102,25 @@
     "HTTP Request.All in benjamin-savings-seed.executor": "Run",
     "HTTP Request.All in charles-savings-seeder.executor": "Run",
     "HTTP Request.All in dashboard-test.executor": "Run",
+    "HTTP Request.All in gideon-savings-seeder (1).executor": "Run",
+    "HTTP Request.All in gideon-savings-seeder.executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder (1).executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder (2).executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder (3).executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder.executor": "Run",
+    "HTTP Request.All in kimere-savings-seeder (1).executor": "Run",
+    "HTTP Request.All in kimere-savings-seeder.executor": "Run",
+    "HTTP Request.All in moses-savings-seeder.executor": "Run",
+    "HTTP Request.All in salesio-savings-seeder.executor": "Run",
+    "HTTP Request.All in samuel-savings-seeder.executor": "Run",
+    "HTTP Request.All in stephen-savings-seeder.executor": "Run",
+    "HTTP Request.All in tarcisio-savings-seeder.executor": "Run",
+    "HTTP Request.All in withdrawals-seeder (1).executor": "Run",
+    "HTTP Request.All in withdrawals-seeder (2).executor": "Run",
+    "HTTP Request.All in withdrawals-seeder.executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor": "Run",
+    "HTTP Request.jacob-savings-seeder | #1.executor": "Run",
+    "HTTP Request.withdrawals-seeder | ==========================================#1.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
@@ -104,21 +146,33 @@
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
     "rest.client.default.execution.environment": "stag",
+    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
+    ]
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\backend" />
+    </key>
+  </component>
   <component name="RunDashboard">
     <option name="configurationStatuses">
       <map>
         <entry key="HttpClient.HttpRequestRunConfigurationType">
           <value>
             <map>
-              <entry key="All in benjamin-savings-seed" value="STOPPED" />
-              <entry key="All in charles-savings-seeder" value="STOPPED" />
-              <entry key="All in dashboard-test" value="STOPPED" />
+              <entry key="All in withdrawals-seeder" value="STOPPED" />
+              <entry key="All in withdrawals-seeder (1)" value="STOPPED" />
+              <entry key="All in withdrawals-seeder (2)" value="STOPPED" />
               <entry key="dashboard-test | Login as Admin (Run this first to get the token)" value="STOPPED" />
+              <entry key="withdrawals-seeder | ==========================================#1" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -133,19 +187,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in benjamin-savings-seed" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http">
+    <configuration name="All in withdrawals-seeder (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in charles-savings-seeder" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" path="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http">
+    <configuration name="All in withdrawals-seeder (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in dashboard-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" path="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http">
+    <configuration name="All in withdrawals-seeder" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
       <method v="2" />
     </configuration>
-    <configuration name="dashboard-test | Login as Admin (Run this first to get the token)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" executionIdentifier="Login as Admin (Run this first to get the token)" runType="Run single request">
+    <configuration name="dashboard-test | Login as Admin (Run this first to get the token)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" executionIdentifier="Login as Admin (Run this first to get the token)" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="withdrawals-seeder | ==========================================#1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" executionIdentifier="==========================================#1" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
@@ -157,10 +214,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in benjamin-savings-seed" />
-        <item itemvalue="HTTP Request.All in charles-savings-seeder" />
-        <item itemvalue="HTTP Request.All in dashboard-test" />
+        <item itemvalue="HTTP Request.All in withdrawals-seeder (2)" />
+        <item itemvalue="HTTP Request.All in withdrawals-seeder (1)" />
         <item itemvalue="HTTP Request.dashboard-test | Login as Admin (Run this first to get the token)" />
+        <item itemvalue="HTTP Request.withdrawals-seeder | ==========================================#1" />
+        <item itemvalue="HTTP Request.All in withdrawals-seeder" />
       </list>
     </recent_temporary>
   </component>
@@ -188,7 +246,9 @@
       <workItem from="1774521041692" duration="16403000" />
       <workItem from="1774549022012" duration="2712000" />
       <workItem from="1774588251045" duration="8419000" />
-      <workItem from="1774614153426" duration="4905000" />
+      <workItem from="1774614153426" duration="6142000" />
+      <workItem from="1774631641326" duration="5646000" />
+      <workItem from="1774637525899" duration="5731000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -462,7 +522,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774618353007</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency">
+      <option name="closed" value="true" />
+      <created>1774621836766</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1774621836766</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -480,7 +548,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(setup): prevent silent bypass on setup status fetch error by marking setup as incomplete" />
     <MESSAGE value="fix: disable mail health indicator to unblock staging deploy" />
     <MESSAGE value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
     <MESSAGE value="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data" />
@@ -505,7 +572,12 @@
     <MESSAGE value="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue" />
     <MESSAGE value="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode" />
     <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: add project encoding and Maven repository configuration files" />
+    <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -39,4 +39,15 @@ public class MigrationController {
                 "transactionReference", reference
         ));
     }
+
+    @PostMapping("/withdrawals")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> seedHistoricalWithdrawal(
+            @Valid @RequestBody com.jaytechwave.sacco.modules.core.dto.HistoricalWithdrawalRequest request) {
+        String reference = migrationService.seedHistoricalWithdrawal(request);
+        return ResponseEntity.ok(Map.of(
+                "message", "Historical withdrawal migrated successfully",
+                "transactionReference", reference
+        ));
+    }
 }
