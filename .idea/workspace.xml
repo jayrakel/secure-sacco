@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -428,7 +429,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774605433136</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue">
+      <option name="closed" value="true" />
+      <created>1774605739606</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1774605739606</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -446,7 +455,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml" />
     <MESSAGE value="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps" />
     <MESSAGE value="chore(config): disable mail health check in production profile" />
     <MESSAGE value="fix(setup): prevent silent bypass on setup status fetch error by marking setup as incomplete" />
@@ -471,7 +479,8 @@
     <MESSAGE value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
     <MESSAGE value="feat: auto-confirm email verification if token is present in URL on verify contact page" />
     <MESSAGE value="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter" />
+    <MESSAGE value="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
