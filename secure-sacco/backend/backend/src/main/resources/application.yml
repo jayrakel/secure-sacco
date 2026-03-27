@@ -58,23 +58,21 @@ spring:
   jackson:
     time-zone: UTC
 
-  # ── Outgoing email (transactional) ──────────────────────────────────────────
-  # Set MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM in your
-  # environment (.env / Render / Railway / Docker secrets).
-  # Compatible with any SMTP relay: SendGrid, AWS SES, Brevo, Gmail SMTP, etc.
+  # ── Outgoing email (Resend API) ───────────────────────────────────────────
+  # Set RESEND_API_KEY in environment. Get your key at https://resend.com
+  # MAIL_FROM must be a verified sender address or domain in Resend.
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    from: ${MAIL_FROM:noreply@securesacco.com}
+    host: smtp.resend.com
+    port: 465
+    username: resend
+    password: ${RESEND_API_KEY:}
+    from: ${MAIL_FROM:noreply@jaytechwavesolutions.co.ke}
     properties:
       mail:
         smtp:
           auth: true
-          starttls:
+          ssl:
             enable: true
-            required: true
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
