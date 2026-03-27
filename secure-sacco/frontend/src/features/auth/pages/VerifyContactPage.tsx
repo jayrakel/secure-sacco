@@ -35,19 +35,15 @@ const btnGhost = 'inline-flex items-center gap-1.5 text-xs text-slate-500 ' +
 const VerifyContactPage: React.FC = () => {
     const { user, refreshUser } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();  // ← INSIDE the component
+    const location = useLocation();
 
-    const [emailSent, setEmailSent]       = useState(false);
-    const [emailToken, setEmailToken]     = useState('');
-    const [emailDone, setEmailDone]       = useState(user?.emailVerified ?? false);
+    const [emailSent, setEmailSent] = useState(false);
+    const [emailToken, setEmailToken] = useState('');
+    const [emailDone, setEmailDone] = useState(user?.emailVerified ?? false);
 
-    const [phoneSent, setPhoneSent]       = useState(false);
-    const [phoneOtp, setPhoneOtp]         = useState('');
-    const [phoneDone, setPhoneDone]       = useState(user?.phoneVerified ?? false);
-
-    const [loading, setLoading]           = useState(false);
-    const [error, setError]               = useState('');
-    const [successMsg, setSuccessMsg]     = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
 
     const act = async (fn: () => Promise<void>) => {
         setLoading(true);
@@ -62,8 +58,8 @@ const VerifyContactPage: React.FC = () => {
         }
     };
 
-    // ── Auto-confirm email if token is in the URL ──────────────────────────
-    useEffect(() => {  // ← INSIDE the component
+    // Auto-confirm email if token is in the URL (user clicked the link)
+    useEffect(() => {
         const params = new URLSearchParams(location.search);
         const type = params.get('type');
         const token = params.get('token');
@@ -94,27 +90,10 @@ const VerifyContactPage: React.FC = () => {
         setSuccessMsg('Email verified ✓');
     });
 
-    const sendPhone = () => act(async () => {
-        await setupApi.sendPhoneOtp();
-        setPhoneSent(true);
-        setSuccessMsg('OTP sent to your registered phone number.');
-    });
-
-    const confirmPhone = () => act(async () => {
-        await setupApi.confirmPhone(phoneOtp.trim());
-        setPhoneDone(true);
-        await refreshUser();
-        setSuccessMsg('Phone verified ✓');
-    });
-
     const handleContinue = async () => {
         await refreshUser();
         navigate('/dashboard', { replace: true });
     };
-    //TODO - We should ideally re-check the verification status from the backend before allowing continue, in case they verified through another device or email client. This can be done by calling a dedicated API endpoint or re-fetching the user data and checking the flags again. For now, we'll optimistically assume success if both flows were completed in this session.
-    // const bothDone = emailDone && phoneDone;
-
-    const bothDone = emailDone;
 
     return (
         <div className="min-h-screen flex bg-slate-50 font-sans">
@@ -127,7 +106,7 @@ const VerifyContactPage: React.FC = () => {
                     </div>
                     <h1 className="text-4xl font-bold mb-4 tracking-tight">One Last Step</h1>
                     <p className="text-slate-400 text-lg max-w-md mx-auto leading-relaxed">
-                        Verify your email and phone to secure your account and complete your setup.
+                        Verify your email address to secure your account and complete your setup.
                     </p>
                 </div>
                 <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -146,7 +125,7 @@ const VerifyContactPage: React.FC = () => {
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800">Verify Your Contacts</h2>
                         <p className="text-slate-500 text-sm mt-1">
-                            Confirm your email and phone to access the portal.
+                            Confirm your email address to access the portal.
                         </p>
                     </div>
 
@@ -217,21 +196,22 @@ const VerifyContactPage: React.FC = () => {
                             )}
                         </div>
 
-                        {/* ── Phone card ──────────────────────────────────── */}
+                        {/* ── Phone card — disabled until Africa's Talking is configured ── */}
                         <div className="rounded-2xl border-2 border-slate-100 bg-slate-50 p-5">
                             <div className="flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-slate-300" />
                                 <span className="font-semibold text-slate-400 text-sm">Phone Number</span>
                                 <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg">
-            Coming soon
-        </span>
+                                    Coming soon
+                                </span>
                             </div>
                             <p className="text-xs text-slate-400 mt-2">
                                 SMS verification will be enabled in a future update.
                             </p>
                         </div>
 
-                        {bothDone && (
+                        {/* ── Continue — shown once email is verified ──────── */}
+                        {emailDone && (
                             <button
                                 onClick={handleContinue}
                                 className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm bg-slate-900 text-white hover:bg-emerald-600 transition-colors"
