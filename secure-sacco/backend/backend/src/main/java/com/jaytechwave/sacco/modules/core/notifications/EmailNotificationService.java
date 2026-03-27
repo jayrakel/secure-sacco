@@ -1,97 +1,73 @@
 package com.jaytechwave.sacco.modules.core.notifications;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
- * Sends transactional emails via the configured JavaMailSender (SMTP).
+ * Sends transactional emails via the Resend HTTP API (https://resend.com).
+ *
+ * <p>Uses HTTPS (port 443) instead of SMTP — works on Digital Ocean droplets
+ * where all SMTP ports (25, 465, 587) are blocked by default.
  *
  * <p>All sends are {@code @Async} so they never block the calling request thread.
- * Failures are logged as errors but do not propagate exceptions to callers —
- * the platform should handle retry / alerting at the infrastructure level
- * (e.g., dead-letter queue or log-based alerting).
  *
- * <p>Configure via environment variables (see application.yml spring.mail section):
+ * <p>Configure via environment variables:
  * <pre>
- *   MAIL_HOST      — SMTP server hostname   (e.g. smtp.sendgrid.net)
- *   MAIL_PORT      — SMTP port              (e.g. 587)
- *   MAIL_USERNAME  — SMTP auth username
- *   MAIL_PASSWORD  — SMTP auth password / API key
- *   MAIL_FROM      — Sender address         (e.g. noreply@yoursacco.co.ke)
+ *   RESEND_API_KEY  — API key from resend.com dashboard
+ *   MAIL_FROM       — Verified sender address (e.g. noreply@jaytechwavesolutions.co.ke)
  * </pre>
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailNotificationService {
 
-    private final JavaMailSender mailSender;
+    private final Resend resend;
+    private final String fromAddress;
 
-    @Value("${spring.mail.from}")
-    private String fromAddress;
+    public EmailNotificationService(
+            @Value("${resend.api-key:}") String apiKey,
+            @Value("${spring.mail.from:noreply@jaytechwavesolutions.co.ke}") String fromAddress
+    ) {
+        this.resend = new Resend(apiKey);
+        this.fromAddress = fromAddress;
+    }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    /**
-     * Sends the account activation email to a new member.
-     *
-     * @param toEmail       recipient email address
-     * @param activationUrl full URL including the activation token
-     * @param otpCode       6-digit OTP the member must enter on the activation page
-     */
     @Async
     public void sendActivationEmail(String toEmail, String activationUrl, String otpCode) {
-        String subject = "Activate Your SACCO Account";
-        String body = buildActivationBody(activationUrl, otpCode);
-        send(toEmail, subject, body);
+        send(toEmail, "Activate Your SACCO Account", buildActivationBody(activationUrl, otpCode));
     }
 
-    /**
-     * Sends the email-verification link to the SYSTEM_ADMIN during the setup wizard.
-     *
-     * @param toEmail           recipient email address
-     * @param verificationUrl   full URL including the verification token
-     */
     @Async
     public void sendContactVerificationEmail(String toEmail, String verificationUrl) {
-        String subject = "Verify Your Email Address";
-        String body = buildContactVerificationBody(verificationUrl);
-        send(toEmail, subject, body);
+        send(toEmail, "Verify Your Email Address", buildContactVerificationBody(verificationUrl));
     }
 
-    /**
-     * Sends a password-reset link.
-     *
-     * @param toEmail    recipient email address
-     * @param resetUrl   full URL including the password-reset token
-     */
     @Async
     public void sendPasswordResetEmail(String toEmail, String resetUrl) {
-        String subject = "Reset Your Password";
-        String body = buildPasswordResetBody(resetUrl);
-        send(toEmail, subject, body);
+        send(toEmail, "Reset Your Password", buildPasswordResetBody(resetUrl));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void send(String to, String subject, String htmlBody) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromAddress);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-            log.info("📧 Email sent to {} — subject: {}", to, subject);
-        } catch (MessagingException e) {
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(fromAddress)
+                    .to(to)
+                    .subject(subject)
+                    .html(htmlBody)
+                    .build();
+
+            var response = resend.emails().send(params);
+            log.info("📧 Email sent to {} — subject: {} — id: {}", to, subject, response.getId());
+        } catch (ResendException e) {
             log.error("📧 Failed to send email to {} — subject: {} — error: {}", to, subject, e.getMessage(), e);
         }
     }

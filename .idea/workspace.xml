@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: migrate outgoing email configuration to use Resend API and update deployment scripts">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/notifications/EmailNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/notifications/EmailNotificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -187,7 +191,7 @@
       <workItem from="1774519195673" duration="1433000" />
       <workItem from="1774521041692" duration="16403000" />
       <workItem from="1774549022012" duration="2712000" />
-      <workItem from="1774588251045" duration="6078000" />
+      <workItem from="1774588251045" duration="7434000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -397,7 +401,23 @@
       <option name="project" value="LOCAL" />
       <updated>1774599057416</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
+      <option name="closed" value="true" />
+      <created>1774599556031</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1774599556031</updated>
+    </task>
+    <task id="LOCAL-00028" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
+      <option name="closed" value="true" />
+      <created>1774599579543</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1774599579543</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -439,7 +459,8 @@
     <MESSAGE value="fix: update frontend build arg to use absolute API base URL in staging deployment" />
     <MESSAGE value="chore: add migration HTTP request logs, cookies, and response samples for historical savings import" />
     <MESSAGE value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
+    <MESSAGE value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

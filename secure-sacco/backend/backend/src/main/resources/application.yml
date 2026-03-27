@@ -58,24 +58,14 @@ spring:
   jackson:
     time-zone: UTC
 
-  # ── Outgoing email (Resend API) ───────────────────────────────────────────
-  # Set RESEND_API_KEY in environment. Get your key at https://resend.com
-  # MAIL_FROM must be a verified sender address or domain in Resend.
+  # ── Outgoing email (Resend HTTP API) ─────────────────────────────────────
+  # Resend sends over HTTPS (port 443) — no SMTP port restrictions.
+  # Get your API key at https://resend.com
   mail:
-    host: smtp.resend.com
-    port: 465
-    username: resend
-    password: ${RESEND_API_KEY:}
     from: ${MAIL_FROM:noreply@jaytechwavesolutions.co.ke}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          ssl:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+
+resend:
+  api-key: ${RESEND_API_KEY:}
 
 # LOGGING: Base profile logs only at INFO/WARN.
 # DEBUG-level security and web logging is in application-dev.yml ONLY.
