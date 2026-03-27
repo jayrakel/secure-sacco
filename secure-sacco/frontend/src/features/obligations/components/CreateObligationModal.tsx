@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Search, Loader2 } from 'lucide-react';
+import { X, Search, Loader2, AlertCircle } from 'lucide-react';
 import { obligationsApi, type ObligationFrequency, type ObligationResponse } from '../api/obligation-api';
 import { memberApi, type Member } from '../../members/api/member-api';
-import {getApiErrorMessage} from "../../../shared/utils/getApiErrorMessage.ts";
+import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage.ts";
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: (obligation: ObligationResponse) => void;
-    /** Pre-fill with a specific member (e.g. when opened from member detail) */
     prefilledMember?: Member;
 }
 
@@ -26,6 +25,7 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
     const [memberResults, setMemberResults]     = useState<Member[]>([]);
     const [selectedMember, setSelectedMember]   = useState<Member | null>(prefilledMember ?? null);
     const [searching, setSearching]             = useState(false);
+    const [searchError, setSearchError]         = useState('');
     const [submitting, setSubmitting]           = useState(false);
     const [errors, setErrors]                   = useState<Record<string, string>>({});
 
@@ -42,6 +42,7 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
             setSelectedMember(prefilledMember ?? null);
             setMemberSearch('');
             setMemberResults([]);
+            setSearchError('');
             setErrors({});
             setForm({ frequency: 'WEEKLY', amountDue: '', startDate: today, graceDays: '0' });
         }
@@ -49,11 +50,23 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
 
     // Debounced member search
     const searchMembers = useCallback(async (q: string) => {
-        if (!q || q.length < 2) { setMemberResults([]); return; }
+        if (!q || q.length < 2) {
+            setMemberResults([]);
+            setSearchError('');
+            return;
+        }
         setSearching(true);
+        setSearchError('');
         try {
             const res = await memberApi.getMembers(q, 'ACTIVE', 0, 6);
-            setMemberResults(res.content ?? []);
+            const list = Array.isArray(res?.content) ? res.content : [];
+            setMemberResults(list);
+            if (list.length === 0) {
+                setSearchError(`No active members found for "${q}"`);
+            }
+        } catch (err: unknown) {
+            setMemberResults([]);
+            setSearchError(getApiErrorMessage(err, 'Failed to search members. Please try again.'));
         } finally {
             setSearching(false);
         }
@@ -137,7 +150,11 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
                                     <span className="text-sm font-medium text-emerald-800">
                                         {selectedMember.memberNumber} — {selectedMember.firstName} {selectedMember.lastName}
                                     </span>
-                                    <button type="button" onClick={() => { setSelectedMember(null); setMemberSearch(''); }} className="text-emerald-500 hover:text-emerald-700 ml-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setSelectedMember(null); setMemberSearch(''); setSearchError(''); }}
+                                        className="text-emerald-500 hover:text-emerald-700 ml-2"
+                                    >
                                         <X size={14} />
                                     </button>
                                 </div>
@@ -147,20 +164,30 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
                                         <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
                                         <input
                                             type="text"
-                                            placeholder="Search by name or member number..."
+                                            placeholder="Type at least 2 characters to search..."
                                             value={memberSearch}
                                             onChange={e => setMemberSearch(e.target.value)}
                                             className={`w-full border rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${errors.member ? 'border-red-400' : 'border-slate-300'}`}
                                         />
                                         {searching && <Loader2 size={14} className="absolute right-3 top-2.5 text-slate-400 animate-spin" />}
                                     </div>
+
+                                    {/* Search error */}
+                                    {searchError && !searching && (
+                                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-amber-600">
+                                            <AlertCircle size={12} />
+                                            {searchError}
+                                        </div>
+                                    )}
+
+                                    {/* Results dropdown */}
                                     {memberResults.length > 0 && (
                                         <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
                                             {memberResults.map(m => (
                                                 <button
                                                     key={m.id}
                                                     type="button"
-                                                    onClick={() => { setSelectedMember(m); setMemberSearch(''); setMemberResults([]); }}
+                                                    onClick={() => { setSelectedMember(m); setMemberSearch(''); setMemberResults([]); setSearchError(''); }}
                                                     className="w-full text-left px-3 py-2.5 text-sm hover:bg-emerald-50 border-b border-slate-100 last:border-0 flex justify-between"
                                                 >
                                                     <span className="font-medium text-slate-700">{m.firstName} {m.lastName}</span>
@@ -196,14 +223,18 @@ export const CreateObligationModal: React.FC<Props> = ({ isOpen, onClose, onSucc
                     {field('startDate', 'Start Date', 'date', { min: today })}
                     {field('graceDays', 'Grace Days', 'number', { min: '0', max: '30', placeholder: '0' })}
 
-                    {errors.submit && (
+                    {errors.form && (
                         <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                            {errors.submit}
+                            {errors.form}
                         </div>
                     )}
 
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
                             Cancel
                         </button>
                         <button
