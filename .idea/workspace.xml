@@ -4,13 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: handle non-array account API responses safely in chart of accounts page and API client">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="chore: migrate outgoing email configuration to use Resend API and update deployment scripts">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -191,6 +187,7 @@
       <workItem from="1774519195673" duration="1433000" />
       <workItem from="1774521041692" duration="16403000" />
       <workItem from="1774549022012" duration="2712000" />
+      <workItem from="1774588251045" duration="6078000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -368,7 +365,39 @@
       <option name="project" value="LOCAL" />
       <updated>1774551219679</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="fix: update frontend build arg to use absolute API base URL in staging deployment">
+      <option name="closed" value="true" />
+      <created>1774589714169</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1774589714170</updated>
+    </task>
+    <task id="LOCAL-00024" summary="fix: update frontend build arg to use absolute API base URL in staging deployment">
+      <option name="closed" value="true" />
+      <created>1774596713701</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1774596713701</updated>
+    </task>
+    <task id="LOCAL-00025" summary="chore: add migration HTTP request logs, cookies, and response samples for historical savings import">
+      <option name="closed" value="true" />
+      <created>1774596751564</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1774596751564</updated>
+    </task>
+    <task id="LOCAL-00026" summary="chore: migrate outgoing email configuration to use Resend API and update deployment scripts">
+      <option name="closed" value="true" />
+      <created>1774599057416</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1774599057416</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -407,7 +436,10 @@
     <MESSAGE value="fix: update nginx API proxy to route /api requests directly to backend root and clarify config comments" />
     <MESSAGE value="fix: ensure totalOverdue and totalShortfall calculations handle undefined data content safely" />
     <MESSAGE value="fix: handle non-array account API responses safely in chart of accounts page and API client" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: handle non-array account API responses safely in chart of accounts page and API client" />
+    <MESSAGE value="fix: update frontend build arg to use absolute API base URL in staging deployment" />
+    <MESSAGE value="chore: add migration HTTP request logs, cookies, and response samples for historical savings import" />
+    <MESSAGE value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
