@@ -46,7 +46,7 @@ const StatCard: React.FC<StatCardProps> = ({
     const inner = (
         <div
             className={`
-                relative bg-white rounded-2xl border border-slate-200 shadow-sm p-5
+                relative bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5
                 flex flex-col gap-3 h-full group hover:shadow-md transition-shadow
                 ${accent ?? ''}
             `}
@@ -80,7 +80,7 @@ const StatCard: React.FC<StatCardProps> = ({
                 </div>
             ) : (
                 <div className="flex-1">
-                    <p className="text-2xl font-bold text-slate-800 leading-none tracking-tight">{value}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-slate-800 leading-none tracking-tight">{value}</p>
                 </div>
             )}
 
@@ -99,9 +99,9 @@ const QuickAction: React.FC<{
     onClick?: () => void;
 }> = ({ label, icon: Icon, to, onClick }) => {
     const cls = `
-        inline-flex items-center gap-2 px-4 py-2.5
+                inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5
         bg-white border border-slate-200 rounded-xl shadow-sm
-        text-sm font-semibold text-slate-700
+                text-xs sm:text-sm font-semibold text-slate-700
         hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700
         transition-colors
     `;
@@ -169,15 +169,15 @@ const AdminDashboardPage: React.FC = () => {
     const roleName = user?.roles?.[0]?.replace('ROLE_', '').replace(/_/g, ' ') ?? 'Admin';
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto pb-12">
 
             {/* ── Header ────────────────────────────────────────────────── */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
                         {greeting()}, {user?.firstName}
                     </h1>
-                    <p className="text-sm text-slate-400 mt-0.5">
+                    <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
                         {roleName}&nbsp;·&nbsp;
                         {new Date().toLocaleDateString('en-KE', {
                             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',

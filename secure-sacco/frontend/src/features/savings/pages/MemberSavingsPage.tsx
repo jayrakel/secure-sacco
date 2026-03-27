@@ -41,7 +41,7 @@ const MemberSavingsPage: React.FC = () => {
 
     if (isPending) {
         return (
-            <div className="p-6 max-w-4xl mx-auto text-center mt-12">
+            <div className="p-4 sm:p-6 max-w-4xl mx-auto text-center mt-12">
                 <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle size={40} />
                 </div>
@@ -52,7 +52,7 @@ const MemberSavingsPage: React.FC = () => {
     }
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">

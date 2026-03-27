@@ -132,7 +132,7 @@ export default function UserListPage() {
     );
 
     return (
-        <div className="p-6 max-w-7xl mx-auto font-sans">
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto font-sans">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">User Management</h1>

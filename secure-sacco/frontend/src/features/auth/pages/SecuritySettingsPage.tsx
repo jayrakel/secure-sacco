@@ -120,7 +120,7 @@ export default function SecuritySettingsPage() {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto font-sans">
+        <div className="p-4 sm:p-6 max-w-4xl mx-auto font-sans">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     <ShieldCheck className="text-emerald-600" /> Security Settings
