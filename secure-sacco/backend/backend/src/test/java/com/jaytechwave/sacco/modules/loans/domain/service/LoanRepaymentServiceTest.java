@@ -4,23 +4,26 @@ import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryServi
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +37,7 @@ class LoanRepaymentServiceTest {
     @Mock UserRepository userRepository;
     @Mock JournalEntryService journalEntryService;
     @Mock SecurityAuditService securityAuditService;
+    @Mock MemberRepository memberRepository;
 
     @InjectMocks
     private LoanRepaymentService service;
@@ -54,9 +58,11 @@ class LoanRepaymentServiceTest {
                 .isActive(true)
                 .build();
 
+        UUID memberId = UUID.randomUUID();
+
         application = LoanApplication.builder()
                 .id(UUID.randomUUID())
-                .memberId(UUID.randomUUID())
+                .memberId(memberId)
                 .loanProduct(product)
                 .principalAmount(new BigDecimal("10000.00"))
                 .applicationFee(BigDecimal.ZERO)
@@ -90,6 +96,14 @@ class LoanRepaymentServiceTest {
                 .interestPaid(BigDecimal.ZERO)
                 .status(LoanScheduleStatus.OVERDUE)
                 .build();
+
+        // 🚨 FIX: Mock the Member so Audit Logs can fetch the member number
+        Member mockMember = new Member();
+        mockMember.setId(memberId);
+        mockMember.setMemberNumber("M-TEST-001");
+
+        Mockito.lenient().when(memberRepository.findById(ArgumentMatchers.any()))
+                .thenReturn(Optional.of(mockMember));
     }
 
     private void stubSchedule(LoanScheduleItem... items) {

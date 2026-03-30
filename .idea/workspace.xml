@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentServiceTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -61,6 +63,7 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/base-balances-seeder.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" environment="dev" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -282,7 +285,7 @@
       <workItem from="1774703075702" duration="91000" />
       <workItem from="1774703460296" duration="7190000" />
       <workItem from="1774712131475" duration="1718000" />
-      <workItem from="1774849285425" duration="13368000" />
+      <workItem from="1774849285425" duration="14200000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -580,7 +583,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774863565460</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations">
+      <option name="closed" value="true" />
+      <created>1774864469482</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1774864469482</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -598,7 +609,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
     <MESSAGE value="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data" />
     <MESSAGE value="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling" />
     <MESSAGE value="fix(api): allow configurable API base URL via VITE_API_BASE_URL env variable" />
@@ -623,7 +633,8 @@
     <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
     <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
     <MESSAGE value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
+    <MESSAGE value="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations" />
+    <option name="LAST_COMMIT_MESSAGE" value="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
