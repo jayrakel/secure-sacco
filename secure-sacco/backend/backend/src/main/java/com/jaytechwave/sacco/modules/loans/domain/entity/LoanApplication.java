@@ -50,6 +50,9 @@ public class LoanApplication {
     @Column(columnDefinition = "TEXT")
     private String purpose;
 
+    @Column(name = "term_weeks", nullable = false)
+    private Integer termWeeks = 104;
+
     // --- Tier 1: Verification (Loans Officer) ---
     @Column(name = "verified_by")
     private UUID verifiedBy;
@@ -80,6 +83,9 @@ public class LoanApplication {
     @Builder.Default
     @Column(name = "prepayment_balance", nullable = false, precision = 15, scale = 2)
     private BigDecimal prepaymentBalance = BigDecimal.ZERO;
+
+    @Column(name = "reference_notes", columnDefinition = "TEXT")
+    private String referenceNotes;
 
     // --- Audit Fields ---
     @CreationTimestamp

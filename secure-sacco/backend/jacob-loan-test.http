@@ -1,0 +1,43 @@
+### ============================================================
+### LOGIN FIRST
+### ============================================================
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+    const raw = response.headers.valueOf("Set-Cookie");
+    if (raw) {
+        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) client.global.set("csrf_token", match[1]);
+        const s = raw.match(/SACCO_SESSION=([^;]+)/);
+        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    }
+%}
+
+### ============================================================
+### PHASE 1: DISBURSE JACOB'S LOAN (SMART MATH)
+### ============================================================
+### The Java backend will automatically backdate the Disbursement Date
+### to exactly 28 days before "2022-09-01".
+### It will see 10% p.a., see 104 weeks, and multiply by 2 years.
+
+POST http://localhost:8080/api/v1/migration/loans/disburse
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000004",
+  "loanProductCode": "Historical Smart Loan",
+  "principal": 144085.00,
+  "interest": 28817.08,
+  "weeklyScheduled": 1662.52,
+  "firstPaymentDate": "2022-09-01",
+  "termWeeks": 104,
+  "referenceNumber": "MIG-LOAN-JAC-2022"
+}

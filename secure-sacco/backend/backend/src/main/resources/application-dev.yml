@@ -34,3 +34,18 @@ logging:
     org.springframework.web.cors: DEBUG
     org.springframework.web: DEBUG
     org.flywaydb: INFO
+#
+## ==========================================
+## ADDED: REDIS CONFIGURATION TO FIX 'NOAUTH'
+## ==========================================
+#spring:
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#management:
+#  elastic:
+#    metrics:
+#      export:
+#        password: Michira._2000
+#      password: sacco_redis_pass_2024

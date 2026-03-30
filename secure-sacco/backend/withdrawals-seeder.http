@@ -1,179 +1,279 @@
 ### ==========================================
 ### MEMBER 1: Benjamin Muketha
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "cd02a69d-4aaf-42b2-928d-5088f0bb1996", "amount": 144723.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 144723.00,
+  "referenceNumber": "PTR-BEN-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ### ==========================================
 ### MEMBER 2: Salesio Mwiraria
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "74dbe64d-8bad-47e0-be15-8f85ef669660", "amount": 40893.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000002",
+  "amount": 40893.00,
+  "referenceNumber": "PTR-SAL-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "74dbe64d-8bad-47e0-be15-8f85ef669660", "amount": 164947.00, "referenceNotes": "2024-10-03" }
+{
+  "memberNumber": "BVL-2022-000002",
+  "amount": 164947.00,
+  "referenceNumber": "PTR-SAL-WDR-2024-OCT",
+  "transactionDate": "2024-10-03"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "74dbe64d-8bad-47e0-be15-8f85ef669660", "amount": 67947.59, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000002",
+  "amount": 67947.59,
+  "referenceNumber": "PTR-SAL-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 3: Charles Gicheru
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "f9e4fc0d-6e53-427c-ba88-d0fa977f1efc", "amount": 18319.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000003",
+  "amount": 18319.00,
+  "referenceNumber": "PTR-CHA-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "f9e4fc0d-6e53-427c-ba88-d0fa977f1efc", "amount": 10000.00, "referenceNotes": "2025-03-20" }
+{
+  "memberNumber": "BVL-2022-000003",
+  "amount": 10000.00,
+  "referenceNumber": "PTR-CHA-WDR-2025-MAR",
+  "transactionDate": "2025-03-20"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "f9e4fc0d-6e53-427c-ba88-d0fa977f1efc", "amount": 110776.97, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000003",
+  "amount": 110776.97,
+  "referenceNumber": "PTR-CHA-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 4: Jacob Mungai
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "85e2cf31-83f8-4623-860d-053294cf3bf7", "amount": 25090.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000004",
+  "amount": 25090.00,
+  "referenceNumber": "PTR-JAC-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "85e2cf31-83f8-4623-860d-053294cf3bf7", "amount": 71729.45, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000004",
+  "amount": 71729.45,
+  "referenceNumber": "PTR-JAC-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 5: Mbuthia Kimere
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "a3da2980-cc9c-4dbf-bd67-97316a52683c", "amount": 19774.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000005",
+  "amount": 19774.00,
+  "referenceNumber": "PTR-MBU-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "a3da2980-cc9c-4dbf-bd67-97316a52683c", "amount": 60479.81, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000005",
+  "amount": 60479.81,
+  "referenceNumber": "PTR-MBU-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 6: Samuel Matheri
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "f5afaec4-5149-43e6-87d2-2e5b7c457922", "amount": 3312.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000006",
+  "amount": 3312.00,
+  "referenceNumber": "PTR-SAM-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "f5afaec4-5149-43e6-87d2-2e5b7c457922", "amount": 95957.23, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000006",
+  "amount": 95957.23,
+  "referenceNumber": "PTR-SAM-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 7: Gideon Marangu
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "4f1e309b-1f7f-4475-9efc-947caeae638a", "amount": 49551.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000007",
+  "amount": 49551.00,
+  "referenceNumber": "PTR-GID-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "4f1e309b-1f7f-4475-9efc-947caeae638a", "amount": 102941.58, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000007",
+  "amount": 102941.58,
+  "referenceNumber": "PTR-GID-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 8: Stephen Njoroge
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "3fbea69c-913e-4016-b49e-e4e8dce3ecc3", "amount": 1188000.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000008",
+  "amount": 1188000.00,
+  "referenceNumber": "PTR-STE-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "3fbea69c-913e-4016-b49e-e4e8dce3ecc3", "amount": 20548.24, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000008",
+  "amount": 20548.24,
+  "referenceNumber": "PTR-STE-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 9: Moses Mburu
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "860a02b4-9aed-4f7c-92fa-b26098c4ff07", "amount": 1000.00, "referenceNotes": "2024-09-12" }
+{
+  "memberNumber": "BVL-2022-000009",
+  "amount": 1000.00,
+  "referenceNumber": "PTR-MOS-WDR-2024",
+  "transactionDate": "2024-09-12"
+}
 
 ###
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "860a02b4-9aed-4f7c-92fa-b26098c4ff07", "amount": 12181.88, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000009",
+  "amount": 12181.88,
+  "referenceNumber": "PTR-MOS-WDR-2025",
+  "transactionDate": "2025-09-01"
+}
 
 ### ==========================================
 ### MEMBER 10: Tarcisio Ngugi
 ### ==========================================
-POST {{api_url}}/api/v1/savings/withdrawals/manual
+POST {{api_url}}/api/v1/migration/withdrawals
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
-{ "memberId": "59f3dac5-b417-4fa8-802a-c73f26273087", "amount": 38525.63, "referenceNotes": "2025-09-01" }
+{
+  "memberNumber": "BVL-2022-000010",
+  "amount": 38525.63,
+  "referenceNumber": "PTR-TAR-WDR-2025",
+  "transactionDate": "2025-09-01"
+}

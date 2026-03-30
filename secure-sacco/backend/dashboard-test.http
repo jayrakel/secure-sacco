@@ -1,10 +1,10 @@
 ### Login as Admin (Run this first to get the token)
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/auth/login
+POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "admin@jaytechwavesolutions.co.ke",
-  "password": "M1chira._2000"
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
 }
 
 > {%
@@ -16,7 +16,7 @@ Content-Type: application/json
 %}
 
 ### 1. Migrate Member 1
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -30,7 +30,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 2. Migrate Member 2
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -44,7 +44,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 3. Migrate Member 3
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -58,7 +58,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 4. Migrate Member 4
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -72,7 +72,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 5. Migrate Member 5
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -86,7 +86,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 6. Migrate Member 6
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -100,7 +100,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 7. Migrate Member 7
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -114,7 +114,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 8. Migrate Member 8
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -128,7 +128,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 9. Migrate Member 9
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
@@ -142,7 +142,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 ### 10. Migrate Member 10
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
+POST http://localhost:8080/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 

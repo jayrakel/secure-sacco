@@ -26,7 +26,7 @@ public class LoanScheduleService {
 
     @Transactional
     public void generateWeeklySchedule(LoanApplication application) {
-        int termWeeks = application.getLoanProduct().getTermWeeks();
+        int termWeeks = application.getTermWeeks();
         int gracePeriod = application.getLoanProduct().getGracePeriodDays();
 
         // Schedule starts ticking after grace period
@@ -34,9 +34,19 @@ public class LoanScheduleService {
 
         BigDecimal principal = application.getPrincipalAmount();
 
-        // Total Interest = Principal * (Rate / 100)
-        BigDecimal interestRate = application.getLoanProduct().getInterestRate().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-        BigDecimal totalInterest = principal.multiply(interestRate).setScale(2, RoundingMode.HALF_UP);
+        // 1. Get the Annual Interest Rate (e.g. 10.00%)
+        BigDecimal annualRateDecimal = application.getLoanProduct().getInterestRate()
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+
+        // 2. Calculate the "Years Factor" (e.g. 104 weeks / 52 weeks = 2.0 years)
+        BigDecimal yearsFactor = BigDecimal.valueOf(termWeeks)
+                .divide(BigDecimal.valueOf(52), 4, RoundingMode.HALF_UP);
+
+        // 3. Total Interest = Principal * Annual Rate * Years Factor
+        BigDecimal totalInterest = principal
+                .multiply(annualRateDecimal)
+                .multiply(yearsFactor)
+                .setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal principalPerWeek = principal.divide(BigDecimal.valueOf(termWeeks), 2, RoundingMode.HALF_UP);
         BigDecimal interestPerWeek = totalInterest.divide(BigDecimal.valueOf(termWeeks), 2, RoundingMode.HALF_UP);

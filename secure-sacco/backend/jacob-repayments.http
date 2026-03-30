@@ -1,0 +1,34 @@
+### ============================================================
+### LOGIN FIRST
+### ============================================================
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+    const raw = response.headers.valueOf("Set-Cookie");
+    if (raw) {
+        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) client.global.set("csrf_token", match[1]);
+        const s = raw.match(/SACCO_SESSION=([^;]+)/);
+        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    }
+%}
+### ============================================================
+### REPAYMENT: Week 2 (He missed Week 1!)
+### ============================================================
+POST http://localhost:8080/api/v1/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000004",
+  "amount": 1662.52,
+  "transactionDate": "2022-09-08",
+  "referenceNumber": "MIG-REP-JAC-WK3"
+}

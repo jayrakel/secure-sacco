@@ -4,23 +4,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency">
-      <change afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalWithdrawalRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/gideon-savings-seeder.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/moses-savings-seeder.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/stephen-savings-seeder.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/tarcisio-savings-seeder.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalLoanDTOs.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V44__add_term_weeks_to_loans.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V45__seed_missing_chart_of_accounts.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V46__seed_kenyan_banks.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V47__seed_hardcoded_system_accounts.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V48__add_reference_notes_to_loan_applications.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/base-balances-seeder.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/entity/LoanApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/entity/LoanApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/repository/LoanApplicationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/repository/LoanApplicationRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/repository/LoanProductRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/repository/LoanProductRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-dev.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-dev.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,10 +70,10 @@
   &quot;isOnboardingCommentShown&quot;: true
 }</component>
   <component name="HttpClientSelectedEnvironments">
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" environment="stag" />
@@ -71,6 +82,10 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/moses-savings-seeder.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/tarcisio-savings-seeder.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/base-balances-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http" environment="dev" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -99,17 +114,33 @@
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Application.BackendApplication.executor": "Run",
+    "HTTP Request.All in base-balances-seeder (1).executor": "Run",
+    "HTTP Request.All in base-balances-seeder (2).executor": "Run",
+    "HTTP Request.All in base-balances-seeder.executor": "Run",
+    "HTTP Request.All in benjamin-savings-seed (1).executor": "Run",
     "HTTP Request.All in benjamin-savings-seed.executor": "Run",
     "HTTP Request.All in charles-savings-seeder.executor": "Run",
     "HTTP Request.All in dashboard-test.executor": "Run",
     "HTTP Request.All in gideon-savings-seeder (1).executor": "Run",
     "HTTP Request.All in gideon-savings-seeder.executor": "Run",
+    "HTTP Request.All in jacob-loan-test (1).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (2).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (3).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (4).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (5).executor": "Run",
+    "HTTP Request.All in jacob-loan-test.executor": "Run",
+    "HTTP Request.All in jacob-repayments (1).executor": "Run",
+    "HTTP Request.All in jacob-repayments.executor": "Run",
     "HTTP Request.All in jacob-savings-seeder (1).executor": "Run",
     "HTTP Request.All in jacob-savings-seeder (2).executor": "Run",
     "HTTP Request.All in jacob-savings-seeder (3).executor": "Run",
     "HTTP Request.All in jacob-savings-seeder.executor": "Run",
     "HTTP Request.All in kimere-savings-seeder (1).executor": "Run",
     "HTTP Request.All in kimere-savings-seeder.executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected (1).executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected (2).executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected (3).executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected.executor": "Run",
     "HTTP Request.All in moses-savings-seeder.executor": "Run",
     "HTTP Request.All in salesio-savings-seeder.executor": "Run",
     "HTTP Request.All in samuel-savings-seeder.executor": "Run",
@@ -118,8 +149,17 @@
     "HTTP Request.All in withdrawals-seeder (1).executor": "Run",
     "HTTP Request.All in withdrawals-seeder (2).executor": "Run",
     "HTTP Request.All in withdrawals-seeder.executor": "Run",
+    "HTTP Request.base-balances-seeder | #62.executor": "Run",
+    "HTTP Request.base-balances-seeder | ============================================================#1.executor": "Run",
+    "HTTP Request.base-balances-seeder | ============================================================#2 (1).executor": "Run",
+    "HTTP Request.base-balances-seeder | ============================================================#2.executor": "Run",
+    "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token) (1).executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor": "Run",
+    "HTTP Request.jacob-loan-test | ============================================================#1 (1).executor": "Run",
+    "HTTP Request.jacob-loan-test | ============================================================#1.executor": "Run",
+    "HTTP Request.jacob-loan-test | ============================================================#2.executor": "Run",
     "HTTP Request.jacob-savings-seeder | #1.executor": "Run",
+    "HTTP Request.migrations-seeder-corrected | ============================================================#1.executor": "Run",
     "HTTP Request.withdrawals-seeder | ==========================================#1.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RequestMappingsPanelOrder0": "0",
@@ -145,8 +185,8 @@
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "rest.client.default.execution.environment": "stag",
-    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
+    "rest.client.default.execution.environment": "dev",
+    "settings.editor.selected.configurable": "vcs.Git",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
@@ -168,11 +208,11 @@
         <entry key="HttpClient.HttpRequestRunConfigurationType">
           <value>
             <map>
-              <entry key="All in withdrawals-seeder" value="STOPPED" />
-              <entry key="All in withdrawals-seeder (1)" value="STOPPED" />
-              <entry key="All in withdrawals-seeder (2)" value="STOPPED" />
-              <entry key="dashboard-test | Login as Admin (Run this first to get the token)" value="STOPPED" />
-              <entry key="withdrawals-seeder | ==========================================#1" value="STOPPED" />
+              <entry key="All in jacob-loan-test" value="STOPPED" />
+              <entry key="All in jacob-loan-test (1)" value="STOPPED" />
+              <entry key="All in jacob-loan-test (5)" value="STOPPED" />
+              <entry key="All in jacob-repayments" value="STOPPED" />
+              <entry key="All in jacob-repayments (1)" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -187,38 +227,53 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in withdrawals-seeder (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http">
+    <configuration name="All in jacob-loan-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in withdrawals-seeder (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http">
+    <configuration name="All in jacob-loan-test (5)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in withdrawals-seeder" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http">
+    <configuration name="All in jacob-loan-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="All in jacob-repayments (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="All in jacob-repayments" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
       <method v="2" />
     </configuration>
-    <configuration name="dashboard-test | Login as Admin (Run this first to get the token)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" executionIdentifier="Login as Admin (Run this first to get the token)" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="withdrawals-seeder | ==========================================#1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" executionIdentifier="==========================================#1" runType="Run single request">
-      <method v="2" />
-    </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ACTIVE_PROFILES" value="dev,linear" />
+      <option name="envFilePaths">
+        <option value="$PROJECT_DIR$/secure-sacco/backend/backend/.env" />
+      </option>
       <module name="sacco" />
+      <selectedOptions>
+        <option name="environmentVariables" />
+      </selectedOptions>
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.jaytechwave.sacco.BackendApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="HTTP Request.All in jacob-loan-test (5)" />
+      <item itemvalue="HTTP Request.All in jacob-repayments (1)" />
+      <item itemvalue="HTTP Request.All in jacob-repayments" />
+      <item itemvalue="HTTP Request.All in jacob-loan-test (1)" />
+      <item itemvalue="HTTP Request.All in jacob-loan-test" />
+      <item itemvalue="Spring Boot.BackendApplication" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in withdrawals-seeder (2)" />
-        <item itemvalue="HTTP Request.All in withdrawals-seeder (1)" />
-        <item itemvalue="HTTP Request.dashboard-test | Login as Admin (Run this first to get the token)" />
-        <item itemvalue="HTTP Request.withdrawals-seeder | ==========================================#1" />
-        <item itemvalue="HTTP Request.All in withdrawals-seeder" />
+        <item itemvalue="HTTP Request.All in jacob-loan-test (1)" />
+        <item itemvalue="HTTP Request.All in jacob-loan-test" />
+        <item itemvalue="HTTP Request.All in jacob-repayments (1)" />
+        <item itemvalue="HTTP Request.All in jacob-repayments" />
+        <item itemvalue="HTTP Request.All in jacob-loan-test (5)" />
       </list>
     </recent_temporary>
   </component>
@@ -248,7 +303,11 @@
       <workItem from="1774588251045" duration="8419000" />
       <workItem from="1774614153426" duration="6142000" />
       <workItem from="1774631641326" duration="5646000" />
-      <workItem from="1774637525899" duration="5731000" />
+      <workItem from="1774637525899" duration="33622000" />
+      <workItem from="1774703075702" duration="91000" />
+      <workItem from="1774703460296" duration="7190000" />
+      <workItem from="1774712131475" duration="1718000" />
+      <workItem from="1774849285425" duration="12156000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -530,7 +589,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774621836766</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
+      <option name="closed" value="true" />
+      <created>1774643663489</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1774643663489</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -548,7 +615,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: disable mail health indicator to unblock staging deploy" />
     <MESSAGE value="chore: move OWASP scan to weekly schedule, unblock CI pipeline" />
     <MESSAGE value="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data" />
     <MESSAGE value="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling" />
@@ -573,7 +639,8 @@
     <MESSAGE value="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode" />
     <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
     <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
+    <MESSAGE value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

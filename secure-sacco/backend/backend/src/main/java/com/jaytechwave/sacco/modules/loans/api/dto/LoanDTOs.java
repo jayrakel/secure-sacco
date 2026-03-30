@@ -64,7 +64,9 @@ public class LoanDTOs {
             BigDecimal principalAmount,
 
             @NotBlank(message = "Purpose is required")
-            String purpose
+            String purpose,
+
+            String referenceNotes
     ) {}
 
     public record PayLoanFeeRequest(
@@ -84,6 +86,7 @@ public class LoanDTOs {
             Boolean applicationFeePaid,
             String status,
             String purpose,
+            String referenceNotes,
             LocalDateTime createdAt,
             List<GuarantorResponse> guarantors
     ) {}

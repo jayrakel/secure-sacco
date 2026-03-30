@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.core.controller;
 
 import com.jaytechwave.sacco.modules.core.dto.HistoricalMemberRequest;
 import com.jaytechwave.sacco.modules.core.service.MigrationService;
+import com.jaytechwave.sacco.modules.core.dto.HistoricalLoanDTOs;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,15 @@ public class MigrationController {
                 "message", "Historical withdrawal migrated successfully",
                 "transactionReference", reference
         ));
+    }
+
+    @PostMapping("/loans/disburse")
+    public ResponseEntity<String> migrateLoanDisbursement(@RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
+        return ResponseEntity.ok(migrationService.seedHistoricalLoanDisbursement(request));
+    }
+
+    @PostMapping("/loans/repay")
+    public ResponseEntity<String> migrateLoanRepayment(@RequestBody HistoricalLoanDTOs.HistoricalLoanRepaymentRequest request) {
+        return ResponseEntity.ok(migrationService.seedHistoricalLoanRepayment(request));
     }
 }

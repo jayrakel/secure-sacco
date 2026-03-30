@@ -5,6 +5,8 @@ import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.RepayLoanRequest;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
@@ -31,6 +33,7 @@ public class LoanRepaymentService {
     private final UserRepository userRepository;
     private final JournalEntryService journalEntryService;
     private final SecurityAuditService securityAuditService;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public InitiateStkResponse initiateRepayment(UUID applicationId, RepayLoanRequest request, String email) {
@@ -59,6 +62,7 @@ public class LoanRepaymentService {
         if (repayment.getStatus() == LoanRepaymentStatus.COMPLETED) return;
 
         LoanApplication app = repayment.getLoanApplication();
+        Member member = memberRepository.findById(app.getMemberId()).orElseThrow();
 
         app.setPrepaymentBalance(app.getPrepaymentBalance().add(repayment.getAmount()));
 
@@ -77,15 +81,85 @@ public class LoanRepaymentService {
 
         journalEntryService.postLoanRepayment(app.getMemberId(), repayment.getAmount(), interestAllocated, receiptNumber);
 
+        // 🚨 Standardized Audit Log
         securityAuditService.logEvent(
                 "LOAN_REPAYMENT_POSTED",
-                app.getId().toString(),
-                "KES " + repayment.getAmount() + " repayment posted. Receipt: " + receiptNumber
-                        + ". Principal: " + principalAllocated + ", Interest: " + interestAllocated
+                member.getMemberNumber(),
+                "Manual loan repayment of KES " + repayment.getAmount() + ". Ref: LNREP-" + receiptNumber
+                        + " (Principal: " + principalAllocated + ", Interest: " + interestAllocated + ")"
         );
 
         log.info("Allocated Mpesa Repayment {}. Int: {}, Prin: {}, Excess Credit: {}",
                 receiptNumber, interestAllocated, principalAllocated, prepaymentAllocated);
+    }
+
+    // =================================================================================
+    // MIGRATION BACKDOOR: Overloaded repayment method that accepts a historical date
+    // =================================================================================
+    @Transactional
+    public com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.LoanRepaymentResponse processHistoricalRepayment(
+            UUID loanId,
+            BigDecimal amount,
+            String receiptNumber,
+            java.time.LocalDate transactionDate,
+            String email) {
+
+        User admin = userRepository.findByEmail(email).orElseThrow(() -> new IllegalStateException("Admin user not found"));
+        LoanApplication app = loanApplicationRepository.findById(loanId)
+                .orElseThrow(() -> new IllegalArgumentException("Loan not found"));
+
+        Member member = memberRepository.findById(app.getMemberId()).orElseThrow();
+
+        // 1. Add to prepayment balance and run your existing waterfall allocation
+        app.setPrepaymentBalance(app.getPrepaymentBalance().add(amount));
+
+        BigDecimal[] allocations = executeWaterfallAllocation(app);
+        BigDecimal interestAllocated = allocations[0];
+        BigDecimal principalAllocated = allocations[1];
+        BigDecimal prepaymentAllocated = amount.subtract(interestAllocated).subtract(principalAllocated);
+
+        // 2. Create and save the completed repayment record directly
+        LoanRepayment repayment = LoanRepayment.builder()
+                .loanApplication(app)
+                .amount(amount)
+                .status(LoanRepaymentStatus.COMPLETED)
+                .receiptNumber(receiptNumber)
+                .interestAllocated(interestAllocated)
+                .principalAllocated(principalAllocated)
+                .prepaymentAllocated(prepaymentAllocated)
+                .build();
+
+        repayment = loanRepaymentRepository.save(repayment);
+
+        // 3. Post to accounting
+        journalEntryService.postLoanRepayment(
+                app.getMemberId(),
+                amount,
+                interestAllocated,
+                receiptNumber
+        );
+
+        // 4. Standardized Audit Log (Happening cleanly in the Front Door!)
+        securityAuditService.logEvent(
+                "LOAN_REPAYMENT_POSTED",
+                member.getMemberNumber(),
+                "Manual loan repayment of KES " + amount + ". Ref: LNREP-" + receiptNumber
+                        + " (Historical Date: " + transactionDate.toString() + ")"
+        );
+
+        log.info("Migrated Repayment {}. Int: {}, Prin: {}, Excess: {}",
+                receiptNumber, interestAllocated, principalAllocated, prepaymentAllocated);
+
+        return new com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.LoanRepaymentResponse(
+                repayment.getId(),
+                app.getId(),
+                amount,
+                principalAllocated,
+                interestAllocated,
+                prepaymentAllocated,
+                receiptNumber,
+                repayment.getStatus().name()
+        );
     }
 
     @Transactional
@@ -148,10 +222,12 @@ public class LoanRepaymentService {
         if (allItems.stream().allMatch(i -> i.getStatus() == LoanScheduleStatus.PAID)) {
             app.setStatus(LoanStatus.CLOSED);
 
+            // 🚨 Standardized Audit Log for Loan Closure
+            Member member = memberRepository.findById(app.getMemberId()).orElseThrow();
             securityAuditService.logEvent(
                     "LOAN_CLOSED",
-                    app.getId().toString(),
-                    "Loan fully repaid and closed"
+                    member.getMemberNumber(),
+                    "Loan fully repaid and closed. Ref: LOAN-" + app.getId().toString()
             );
         }
         loanApplicationRepository.save(app);
