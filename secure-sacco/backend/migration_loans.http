@@ -1,7 +1,7 @@
 ### ============================================================
 ### LOGIN FIRST
 ### ============================================================
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/auth/login
+POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -17,7 +17,7 @@ Content-Type: application/json
         const s = raw.match(/SACCO_SESSION=([^;]+)/);
         if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
     }
-    client.global.set("api_url", "https://staging.jaytechwavesolutions.co.ke");
+    client.global.set("api_url", "http://localhost:8080");
 %}
 
 ### ============================================================
