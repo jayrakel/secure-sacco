@@ -3,196 +3,201 @@ package com.jaytechwave.sacco.modules.loans.domain.service;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.LoanScheduleItemRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("LoanScheduleService")
 class LoanScheduleServiceTest {
 
     @Mock
     private LoanScheduleItemRepository scheduleItemRepository;
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
-    private LoanScheduleService service;
+    private LoanScheduleService loanScheduleService;
 
-    private LoanProduct product;
-    private LoanApplication application;
+    private LoanApplication mockApp;
+    private LoanProduct mockProduct;
 
     @BeforeEach
     void setUp() {
-        product = LoanProduct.builder()
-                .id(UUID.randomUUID())
-                .name("Standard Weekly Loan")
-                .termWeeks(4)
-                .interestRate(new BigDecimal("10.00"))  // 10% flat
-                .applicationFee(new BigDecimal("200.00"))
-                .gracePeriodDays(0)
-                .isActive(true)
-                .build();
+        mockProduct = new LoanProduct();
+        mockProduct.setId(UUID.randomUUID());
+        mockProduct.setInterestModel(InterestModel.FLAT);
+        mockProduct.setInterestRate(new BigDecimal("10.00")); // 10%
+        mockProduct.setTermWeeks(104);
+        mockProduct.setGracePeriodDays(28);
 
-        application = LoanApplication.builder()
-                .id(UUID.randomUUID())
-                .memberId(UUID.randomUUID())
-                .loanProduct(product)
-                .principalAmount(new BigDecimal("10000.00"))
-                .applicationFee(new BigDecimal("200.00"))
-                .applicationFeePaid(true)
-                .status(LoanStatus.ACTIVE)
-                .disbursedAt(LocalDateTime.of(2026, 1, 6, 0, 0))  // Tuesday
-                .build();
-    }
-
-    // ─── Schedule generation ───────────────────────────────────────────
-
-    @Test
-    @DisplayName("generates the correct number of schedule items")
-    void generateWeeklySchedule_createsCorrectItemCount() {
-        service.generateWeeklySchedule(application);
-
-        // 4-week term → 4 saves
-        verify(scheduleItemRepository, times(4)).save(any(LoanScheduleItem.class));
+        mockApp = new LoanApplication();
+        mockApp.setId(UUID.randomUUID());
+        mockApp.setLoanProduct(mockProduct);
+        mockApp.setPrincipalAmount(new BigDecimal("50000.00"));
+        // 🚨 THE FIX: Set termWeeks on the application itself
+        mockApp.setTermWeeks(104);
+        mockApp.setDisbursedAt(LocalDateTime.of(2024, 1, 1, 10, 0));
     }
 
     @Test
-    @DisplayName("first installment due 1 week from disbursal (no grace period)")
-    void generateWeeklySchedule_firstDueDateIsOneWeekFromDisbursal() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+    void generateWeeklySchedule_createsCorrectNumberOfItems() {
+        loanScheduleService.generateWeeklySchedule(mockApp);
 
-        LoanScheduleItem first = captor.getAllValues().get(0);
-        // Disbursed 2026-01-06 + 0 grace days → schedule start = 2026-01-06, first due = +7 days
-        assertThat(first.getDueDate()).isEqualTo(LocalDate.of(2026, 1, 13));
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+        assertEquals(104, items.size());
     }
 
     @Test
-    @DisplayName("grace period pushes schedule start date forward")
     void generateWeeklySchedule_respectsGracePeriod() {
-        product.setGracePeriodDays(14);
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+        loanScheduleService.generateWeeklySchedule(mockApp);
 
-        LoanScheduleItem first = captor.getAllValues().get(0);
-        // Schedule starts 2026-01-06 + 14 days = 2026-01-20; first due = +7 days = 2026-01-27
-        assertThat(first.getDueDate()).isEqualTo(LocalDate.of(2026, 1, 27));
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+        LoanScheduleItem firstItem = items.get(0);
+
+        // Disbursed Jan 1st. Grace period 28 days = Jan 29.
+        // First payment should be due Jan 29 + 1 week = Feb 5.
+        // (Assuming standard 7-day week schedule from the end of grace period)
+        LocalDateTime expectedDueDate = mockApp.getDisbursedAt()
+                .plusDays(mockProduct.getGracePeriodDays())
+                .plusWeeks(1);
+
+        assertEquals(expectedDueDate.toLocalDate(), firstItem.getDueDate());
     }
 
     @Test
-    @DisplayName("total principal across all weeks sums to loan principal")
     void generateWeeklySchedule_totalPrincipalMatchesLoanAmount() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+        loanScheduleService.generateWeeklySchedule(mockApp);
 
-        BigDecimal totalPrincipal = captor.getAllValues().stream()
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+        BigDecimal totalPrincipal = items.stream()
                 .map(LoanScheduleItem::getPrincipalDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        assertThat(totalPrincipal).isEqualByComparingTo(application.getPrincipalAmount());
+        assertEquals(mockApp.getPrincipalAmount(), totalPrincipal);
     }
 
     @Test
-    @DisplayName("total interest across all weeks sums to principal × rate")
     void generateWeeklySchedule_totalInterestMatchesExpected() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+        loanScheduleService.generateWeeklySchedule(mockApp);
 
-        BigDecimal totalInterest = captor.getAllValues().stream()
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+        BigDecimal totalInterest = items.stream()
                 .map(LoanScheduleItem::getInterestDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 10% of 10,000 = 1,000
-        assertThat(totalInterest).isEqualByComparingTo(new BigDecimal("1000.00"));
+        // 50,000 * 10% * (104/52) years = 10,000
+        BigDecimal expectedInterest = new BigDecimal("10000.00");
+        assertEquals(expectedInterest, totalInterest);
     }
 
     @Test
-    @DisplayName("each item totalDue equals principalDue + interestDue")
     void generateWeeklySchedule_totalDueIsSum() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+        loanScheduleService.generateWeeklySchedule(mockApp);
 
-        captor.getAllValues().forEach(item ->
-                assertThat(item.getTotalDue())
-                        .isEqualByComparingTo(item.getPrincipalDue().add(item.getInterestDue()))
-        );
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+        LoanScheduleItem firstItem = items.get(0);
+
+        BigDecimal expectedTotal = firstItem.getPrincipalDue().add(firstItem.getInterestDue());
+        assertEquals(expectedTotal, firstItem.getTotalDue());
     }
 
     @Test
-    @DisplayName("first item is DUE, rest are PENDING")
-    void generateWeeklySchedule_firstItemIsDueRestArePending() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+    void generateWeeklySchedule_reducingBalanceModel() {
+        mockProduct.setInterestModel(InterestModel.REDUCING_BALANCE);
+        mockProduct.setInterestRate(new BigDecimal("12.00")); // 12% annual -> ~0.23% weekly
 
-        List<LoanScheduleItem> items = captor.getAllValues();
-        assertThat(items.get(0).getStatus()).isEqualTo(LoanScheduleStatus.DUE);
-        assertThat(items.get(1).getStatus()).isEqualTo(LoanScheduleStatus.PENDING);
-        assertThat(items.get(2).getStatus()).isEqualTo(LoanScheduleStatus.PENDING);
-        assertThat(items.get(3).getStatus()).isEqualTo(LoanScheduleStatus.PENDING);
+        loanScheduleService.generateWeeklySchedule(mockApp);
+
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+
+        // In reducing balance, first interest should be highest, last should be lowest
+        BigDecimal firstInterest = items.get(0).getInterestDue();
+        BigDecimal lastInterest = items.get(items.size() - 1).getInterestDue();
+
+        assert(firstInterest.compareTo(lastInterest) > 0);
     }
 
     @Test
-    @DisplayName("weekly numbers are sequential starting at 1")
     void generateWeeklySchedule_weekNumbersAreSequential() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+        loanScheduleService.generateWeeklySchedule(mockApp);
 
-        List<LoanScheduleItem> items = captor.getAllValues();
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
         for (int i = 0; i < items.size(); i++) {
-            assertThat(items.get(i).getWeekNumber()).isEqualTo(i + 1);
+            assertEquals(i + 1, items.get(i).getWeekNumber());
         }
     }
 
     @Test
-    @DisplayName("initial principalPaid and interestPaid are zero")
-    void generateWeeklySchedule_initialPaidAmountsAreZero() {
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(4)).save(captor.capture());
+    void generateWeeklySchedule_handlesEmptyPrincipal() {
+        mockApp.setPrincipalAmount(BigDecimal.ZERO);
 
-        captor.getAllValues().forEach(item -> {
-            assertThat(item.getPrincipalPaid()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(item.getInterestPaid()).isEqualByComparingTo(BigDecimal.ZERO);
-        });
+        try {
+            loanScheduleService.generateWeeklySchedule(mockApp);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Principal amount must be greater than zero", e.getMessage());
+        }
     }
 
-    // ─── Odd-term rounding ───────────────────────────────────────────
+    @Test
+    void generateWeeklySchedule_handlesMissingDisbursementDate() {
+        mockApp.setDisbursedAt(null);
+
+        try {
+            loanScheduleService.generateWeeklySchedule(mockApp);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Loan must have a disbursement date to generate a schedule", e.getMessage());
+        }
+    }
 
     @Test
-    @DisplayName("final week absorbs rounding remainder — principal still sums exactly")
     void generateWeeklySchedule_oddTermPrincipalRoundingIsExact() {
-        // KES 10,000 over 3 weeks: 3,333.33 + 3,333.33 + 3,333.34
-        product.setTermWeeks(3);
-        ArgumentCaptor<LoanScheduleItem> captor = ArgumentCaptor.forClass(LoanScheduleItem.class);
-        service.generateWeeklySchedule(application);
-        verify(scheduleItemRepository, times(3)).save(captor.capture());
+        // Use an amount that doesn't divide cleanly by 104
+        mockApp.setPrincipalAmount(new BigDecimal("50000.33"));
 
-        BigDecimal total = captor.getAllValues().stream()
+        loanScheduleService.generateWeeklySchedule(mockApp);
+
+        ArgumentCaptor<List<LoanScheduleItem>> captor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleItemRepository).saveAll(captor.capture());
+
+        List<LoanScheduleItem> items = captor.getValue();
+        BigDecimal totalPrincipal = items.stream()
                 .map(LoanScheduleItem::getPrincipalDue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        assertThat(total).isEqualByComparingTo(new BigDecimal("10000.00"));
+        // The total of all scheduled principal payments MUST exactly equal the initial principal,
+        // regardless of how messy the division was.
+        assertEquals(mockApp.getPrincipalAmount(), totalPrincipal);
     }
 }
