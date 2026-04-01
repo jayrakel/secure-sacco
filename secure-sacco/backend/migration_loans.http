@@ -23,7 +23,7 @@ Content-Type: application/json
 ### ============================================================
 ### NOTE: Run 'GET {{api_url}}/api/v1/loans/products' to verify
 ### loanProductCode names before running disbursements.
-### Default product used: 'Standard Biashara Loan'
+### Default product used: 'Historical Smart Loan'
 ### ============================================================
 
 ### ============================================================
@@ -39,28 +39,14 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000001",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 1000000.00,
-  "interest": 0.00,
+  "interest": 200000,
   "weeklyScheduled": 11538.50,
   "firstPaymentDate": "2022-10-13",
   "termWeeks": 104,
   "referenceNumber": "MIG-LOAN-BEN-01"
 }
-
-###
-POST {{api_url}}/api/v1/migration/loans/repay
-Content-Type: application/json
-Cookie: {{sacco_cookie}}
-X-XSRF-TOKEN: {{csrf_token}}
-
-{
-  "memberNumber": "BVL-2022-000001",
-  "amount": 3000.00,
-  "transactionDate": "2022-10-06",
-  "referenceNumber": "MIG-LOAN-BEN-01-REP-001"
-}
-
 ### --- Loan 2: 1,300,000.00 | 104wks | 27,288.50/wk | CLOSED | 2 repayments | total repaid=34,000.00
 ###
 POST {{api_url}}/api/v1/migration/loans/disburse
@@ -70,7 +56,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000001",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 1300000.00,
   "interest": 0.00,
   "weeklyScheduled": 27288.50,
@@ -114,7 +100,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000001",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 577054.00,
   "interest": 0.00,
   "weeklyScheduled": 12207.00,
@@ -747,7 +733,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000002",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 50000.00,
   "interest": 0.00,
   "weeklyScheduled": 1058.00,
@@ -1181,7 +1167,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000002",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 200000.00,
   "interest": 0.00,
   "weeklyScheduled": 2307.70,
@@ -1446,7 +1432,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000002",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 100000.00,
   "interest": 0.00,
   "weeklyScheduled": 1153.85,
@@ -1468,7 +1454,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000003",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 155752.00,
   "interest": 0.00,
   "weeklyScheduled": 1812.12,
@@ -1486,7 +1472,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000003",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 158571.50,
   "interest": 0.00,
   "weeklyScheduled": 1321.43,
@@ -1517,7 +1503,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000003",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 258571.50,
   "interest": 0.00,
   "weeklyScheduled": 2263.45,
@@ -1552,7 +1538,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000004",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 144085.00,
   "interest": 0.00,
   "weeklyScheduled": 1662.52,
@@ -1570,7 +1556,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000004",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 145041.00,
   "interest": 0.00,
   "weeklyScheduled": 1208.70,
@@ -1605,7 +1591,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000005",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 358425.00,
   "interest": 0.00,
   "weeklyScheduled": 3058.10,
@@ -1636,7 +1622,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000005",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 370819.60,
   "interest": 0.00,
   "weeklyScheduled": 3090.20,
@@ -1671,7 +1657,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000006",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 42525.40,
   "interest": 0.00,
   "weeklyScheduled": 900.00,
@@ -1702,7 +1688,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000006",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 22200.00,
   "interest": 0.00,
   "weeklyScheduled": 469.62,
@@ -1750,7 +1736,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000007",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 70000.00,
   "interest": 0.00,
   "weeklyScheduled": 807.70,
@@ -2106,7 +2092,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000007",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 38490.80,
   "interest": 0.00,
   "weeklyScheduled": 814.23,
@@ -2128,7 +2114,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000008",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 1500000.00,
   "interest": 0.00,
   "weeklyScheduled": 12500.00,
@@ -2146,7 +2132,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000008",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 660000.00,
   "interest": 0.00,
   "weeklyScheduled": 12692.31,
@@ -2467,7 +2453,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000009",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 300000.00,
   "interest": 0.00,
   "weeklyScheduled": 2115.40,
@@ -2502,7 +2488,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000010",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 700000.00,
   "interest": 0.00,
   "weeklyScheduled": 4488.00,
@@ -2897,7 +2883,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "memberNumber": "BVL-2022-000010",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 463006.00,
   "interest": 0.00,
   "weeklyScheduled": 6373.41,

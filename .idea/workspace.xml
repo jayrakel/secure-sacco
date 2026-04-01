@@ -4,12 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add refinance loan functionality and historical penalty migration support">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/repository/AccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/repository/AccountRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/service/JournalEntryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/service/JournalEntryService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalLoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalLoanDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/entity/PenaltyStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/entity/PenaltyStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRuleRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRuleRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,6 +43,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -65,6 +83,7 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" environment="dev" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -98,6 +117,8 @@
     "HTTP Request.All in base-balances-seeder.executor": "Run",
     "HTTP Request.All in benjamin-savings-seed (1).executor": "Run",
     "HTTP Request.All in benjamin-savings-seed.executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (1).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test.executor": "Run",
     "HTTP Request.All in charles-savings-seeder.executor": "Run",
     "HTTP Request.All in dashboard-test.executor": "Run",
     "HTTP Request.All in gideon-savings-seeder (1).executor": "Run",
@@ -134,6 +155,16 @@
     "HTTP Request.base-balances-seeder | ============================================================#1.executor": "Run",
     "HTTP Request.base-balances-seeder | ============================================================#2 (1).executor": "Run",
     "HTTP Request.base-balances-seeder | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#1.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2.executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1 (1).executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1 (2).executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1 (3).executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1.executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token) (1).executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor": "Run",
     "HTTP Request.jacob-loan-test | ============================================================#1 (1).executor": "Run",
@@ -157,7 +188,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.BackendApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "dev",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
@@ -191,10 +222,11 @@
         <entry key="HttpClient.HttpRequestRunConfigurationType">
           <value>
             <map>
-              <entry key="All in jacob-loan-test (1)" value="STOPPED" />
-              <entry key="All in migration_loans" value="STOPPED" />
-              <entry key="migration_loans | ============================================================#1" value="STOPPED" />
-              <entry key="migration_loans | ============================================================#1 (1)" value="STOPPED" />
+              <entry key="All in benjamin-ultimate-test" value="STOPPED" />
+              <entry key="All in benjamin-ultimate-test (1)" value="STOPPED" />
+              <entry key="benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1)" value="STOPPED" />
+              <entry key="benjamin-ultimate-test | ============================================================#1" value="STOPPED" />
+              <entry key="benjamin-ultimate-test | ============================================================#2 (2)" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -209,22 +241,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in jacob-loan-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http">
+    <configuration name="All in benjamin-ultimate-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in migration_loans (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in migration_loans" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http">
+    <configuration name="All in benjamin-ultimate-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
       <method v="2" />
     </configuration>
-    <configuration name="migration_loans | ============================================================#1 (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" executionIdentifier="============================================================#1" runType="Run single request">
+    <configuration name="benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="1. LOGIN (Get System Admin Session)" runType="Run single request">
       <method v="2" />
     </configuration>
-    <configuration name="migration_loans | ============================================================#1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" executionIdentifier="============================================================#1" runType="Run single request">
+    <configuration name="benjamin-ultimate-test | ============================================================#1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="============================================================#1" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test | ============================================================#2 (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="============================================================#2" index="5" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
@@ -242,20 +274,20 @@
       </method>
     </configuration>
     <list>
-      <item itemvalue="HTTP Request.All in migration_loans" />
-      <item itemvalue="HTTP Request.All in migration_loans (1)" />
-      <item itemvalue="HTTP Request.migration_loans | ============================================================#1" />
-      <item itemvalue="HTTP Request.migration_loans | ============================================================#1 (1)" />
-      <item itemvalue="HTTP Request.All in jacob-loan-test (1)" />
+      <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
+      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1)" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test | ============================================================#1" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test | ============================================================#2 (2)" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in migration_loans (1)" />
-        <item itemvalue="HTTP Request.migration_loans | ============================================================#1 (1)" />
-        <item itemvalue="HTTP Request.migration_loans | ============================================================#1" />
-        <item itemvalue="HTTP Request.All in migration_loans" />
-        <item itemvalue="HTTP Request.All in jacob-loan-test (1)" />
+        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
+        <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test | ============================================================#1" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1)" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test | ============================================================#2 (2)" />
       </list>
     </recent_temporary>
   </component>
@@ -289,7 +321,8 @@
       <workItem from="1774703075702" duration="91000" />
       <workItem from="1774703460296" duration="7190000" />
       <workItem from="1774712131475" duration="1718000" />
-      <workItem from="1774849285425" duration="14653000" />
+      <workItem from="1774849285425" duration="23806000" />
+      <workItem from="1775021039419" duration="10291000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -603,7 +636,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774865253264</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
+      <option name="closed" value="true" />
+      <created>1774866996485</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1774866996486</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -621,7 +662,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling" />
     <MESSAGE value="fix(api): allow configurable API base URL via VITE_API_BASE_URL env variable" />
     <MESSAGE value="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling" />
     <MESSAGE value="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value" />
@@ -646,7 +686,8 @@
     <MESSAGE value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
     <MESSAGE value="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations" />
     <MESSAGE value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
-    <option name="LAST_COMMIT_MESSAGE" value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
+    <MESSAGE value="feat: add refinance loan functionality and historical penalty migration support" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add refinance loan functionality and historical penalty migration support" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

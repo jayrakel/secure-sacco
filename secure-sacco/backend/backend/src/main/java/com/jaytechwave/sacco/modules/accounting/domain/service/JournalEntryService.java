@@ -1,12 +1,10 @@
 package com.jaytechwave.sacco.modules.accounting.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.api.dto.JournalEntryDTOs.*;
-import com.jaytechwave.sacco.modules.accounting.domain.entity.Account;
-import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntry;
-import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntryLine;
-import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntryStatus;
+import com.jaytechwave.sacco.modules.accounting.domain.entity.*;
 import com.jaytechwave.sacco.modules.accounting.domain.repository.AccountRepository;
 import com.jaytechwave.sacco.modules.accounting.domain.repository.JournalEntryRepository;
+import com.jaytechwave.sacco.modules.accounting.domain.entity.AccountType;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -219,15 +217,22 @@ public class JournalEntryService {
         journalEntryRepository.save(entry);
     }
 
+    // 🚨 UPDATED WITH IDEMPOTENCY GUARD
     @Transactional
     public void postLoanDisbursement(UUID memberId, BigDecimal principalAmount, String reference) {
+        String journalRef = "LNDIS-" + reference;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
         Account bankAccount = accountRepository.findByAccountCode("1002")
                 .orElseThrow(() -> new IllegalStateException("Bank account (1002) not found"));
         Account loansReceivable = accountRepository.findByAccountCode("1200")
                 .orElseThrow(() -> new IllegalStateException("Loans Receivable account (1200) not found"));
 
         JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("LNDIS-" + reference).description("Loan disbursement")
+                .referenceNumber(journalRef).description("Loan disbursement")
                 .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
 
         entry.addLine(JournalEntryLine.builder().account(loansReceivable).memberId(memberId)
@@ -240,14 +245,33 @@ public class JournalEntryService {
         journalEntryRepository.save(entry);
     }
 
+    // 🚨 UPDATED WITH IDEMPOTENCY, EMPTY TRANSACTION AND INTEREST OVERFLOW GUARDS
     @Transactional
     public void postLoanRepayment(UUID memberId, BigDecimal totalAmount, BigDecimal interestAmount, String reference) {
+        if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("Cannot post repayment journal entry for amount <= 0. Ref: {}", reference);
+            return;
+        }
+
+        if (interestAmount.compareTo(totalAmount) > 0) {
+            throw new IllegalStateException(
+                    "Interest amount cannot exceed total repayment amount. Ref: " + reference +
+                            " | total=" + totalAmount + " | interest=" + interestAmount
+            );
+        }
+
+        String journalRef = "LNREP-" + reference;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
         Account mpesaClearing = accountRepository.findByAccountCode("1001").orElseThrow();
         Account loanReceivable = accountRepository.findByAccountCode("1200").orElseThrow();
-        Account interestIncome = accountRepository.findByAccountCode("4110").orElseThrow();
+        Account interestIncome  = accountRepository.findByAccountCode("4110").orElseThrow();
 
         JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("LNREP-" + reference).description("Loan repayment via M-Pesa")
+                .referenceNumber(journalRef).description("Loan repayment via M-Pesa")
                 .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
 
         entry.addLine(JournalEntryLine.builder().account(mpesaClearing).memberId(memberId)
@@ -402,5 +426,68 @@ public class JournalEntryService {
                 entry.getId(), entry.getTransactionDate(), entry.getReferenceNumber(),
                 entry.getDescription(), entry.getStatus().name(), lineResponses
         );
+    }
+
+    // 🚨 UPDATED WITH IDEMPOTENCY AND MATHEMATICAL GUARDS
+    @Transactional
+    public void postLoanRefinance(UUID memberId, BigDecimal oldLoanBalance, BigDecimal newLoanPrincipal, BigDecimal netCashDisbursed, String reference) {
+        String journalRef = "LNREF-" + reference;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        // Mathematical Guard: Ensure Trial Balance is respected before proceeding
+        BigDecimal totalDebits = newLoanPrincipal;
+        BigDecimal totalCredits = oldLoanBalance.add(netCashDisbursed);
+        if (totalDebits.compareTo(totalCredits) != 0) {
+            throw new IllegalStateException(String.format("Loan refinance entry is unbalanced: debits=%.2f credits=%.2f", totalDebits, totalCredits));
+        }
+
+        Account loanReceivable = accountRepository.findByAccountCode("1200")
+                .orElseThrow(() -> new IllegalStateException("Loan Portfolio account not found"));
+
+        Account bankAccount = accountRepository.findByAccountCode("1002")
+                .orElseThrow(() -> new IllegalStateException("Bank/Cash account not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .transactionDate(java.time.LocalDate.now())
+                .description("Loan Refinance/Top-up Disbursement")
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // 1. Debit Loan Receivable for the FULL new loan amount
+        entry.addLine(JournalEntryLine.builder()
+                .account(loanReceivable)
+                .memberId(memberId)
+                .debitAmount(newLoanPrincipal)
+                .creditAmount(BigDecimal.ZERO)
+                .description("New Refinanced Loan Principal")
+                .build());
+
+        // 2. Credit Loan Receivable to clear the old loan's remaining balance
+        if (oldLoanBalance.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder()
+                    .account(loanReceivable)
+                    .memberId(memberId)
+                    .debitAmount(BigDecimal.ZERO)
+                    .creditAmount(oldLoanBalance)
+                    .description("Clear Old Loan Balance")
+                    .build());
+        }
+
+        // 3. Credit Bank/Cash for the actual physical money given to the member
+        if (netCashDisbursed.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder()
+                    .account(bankAccount)
+                    .memberId(memberId)
+                    .debitAmount(BigDecimal.ZERO)
+                    .creditAmount(netCashDisbursed)
+                    .description("Net Cash Disbursed to Member")
+                    .build());
+        }
+
+        journalEntryRepository.save(entry);
     }
 }

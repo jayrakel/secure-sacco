@@ -154,4 +154,13 @@ public class LoanDTOs {
             long daysInArrears,
             BigDecimal arrearsAmount
     ) {}
+
+    public record RefinanceRequest(
+            UUID oldLoanId,
+            String loanProductCode,
+            BigDecimal topUpAmount,       // The extra cash they are asking for
+            Integer newTermWeeks,
+            String referenceNumber,
+            java.time.LocalDate historicalDateOverride
+    ) {}
 }

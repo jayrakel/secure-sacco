@@ -1,20 +1,40 @@
 package com.jaytechwave.sacco.modules.core.service;
 
+import com.jaytechwave.sacco.modules.accounting.domain.entity.Account;
+import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntry;
+import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntryLine;
+import com.jaytechwave.sacco.modules.accounting.domain.entity.JournalEntryStatus;
+import com.jaytechwave.sacco.modules.accounting.domain.repository.AccountRepository;
+import com.jaytechwave.sacco.modules.accounting.domain.repository.JournalEntryRepository;
+import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.core.dto.HistoricalLoanDTOs;
 import com.jaytechwave.sacco.modules.core.dto.HistoricalMemberRequest;
 import com.jaytechwave.sacco.modules.core.dto.HistoricalWithdrawalRequest;
 import com.jaytechwave.sacco.modules.core.dto.HistoricalSavingsRequest;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanApplication;
+import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
+import com.jaytechwave.sacco.modules.loans.domain.repository.LoanApplicationRepository;
+import com.jaytechwave.sacco.modules.loans.domain.repository.LoanProductRepository;
+import com.jaytechwave.sacco.modules.loans.domain.repository.LoanRepaymentRepository;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanApplicationService;
+import com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService;
 import com.jaytechwave.sacco.modules.members.api.dto.MemberDTOs.CreateMemberRequest;
 import com.jaytechwave.sacco.modules.members.api.dto.MemberDTOs.MemberResponse;
 import com.jaytechwave.sacco.modules.members.domain.entity.Gender;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.members.domain.service.MemberService;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.Penalty;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRule;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRuleRepository;
 import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccountStatus;
+import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository;
+import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -39,17 +59,21 @@ public class MigrationService {
 
     @PersistenceContext
     private EntityManager entityManager;
-    private final com.jaytechwave.sacco.modules.members.domain.service.MemberService memberService;
-    private final com.jaytechwave.sacco.modules.savings.domain.service.SavingsService savingsService;
-    private final com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository savingsAccountRepository;
-    private final com.jaytechwave.sacco.modules.loans.domain.repository.LoanApplicationRepository loanRepository;
-    private final com.jaytechwave.sacco.modules.loans.domain.repository.LoanProductRepository loanProductRepository;
-    private final com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService loanRepaymentService;
-    private final com.jaytechwave.sacco.modules.loans.domain.repository.LoanRepaymentRepository loanRepaymentRepository;
-    private final com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService journalEntryService;
+    private final MemberService memberService;
+    private final SavingsService savingsService;
+    private final SavingsAccountRepository savingsAccountRepository;
+    private final LoanApplicationRepository loanRepository;
+    private final LoanProductRepository loanProductRepository;
+    private final LoanRepaymentService loanRepaymentService;
+    private final PenaltyRuleRepository penaltyRuleRepository;
+    private final LoanRepaymentRepository loanRepaymentRepository;
+    private final JournalEntryService journalEntryService;
     private final LoanApplicationService loanApplicationService;
+    private final MemberRepository memberRepository;
+    private final PenaltyRepository penaltyRepository;
+    private final AccountRepository accountRepository;
+    private final JournalEntryRepository journalEntryRepository;
     private final UserRepository    userRepository;
-    private final MemberRepository  memberRepository;
     private final PasswordEncoder   passwordEncoder;
     private final JdbcTemplate      jdbcTemplate;
 
@@ -134,8 +158,8 @@ public class MigrationService {
         entityManager.flush();
         entityManager.clear();
 
-        java.time.LocalDate historicalDate = request.transactionDate();
-        java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(historicalDate.atStartOfDay());
+        LocalDate historicalDate = request.transactionDate();
+        Timestamp historicalTs = Timestamp.valueOf(historicalDate.atStartOfDay());
 
         jdbcTemplate.update("UPDATE savings_transactions SET posted_at = ?, created_at = ?, updated_at = ? WHERE id = ?",
                 historicalTs, historicalTs, historicalTs, response.transactionId());
@@ -195,8 +219,8 @@ public class MigrationService {
         entityManager.flush();
         entityManager.clear();
 
-        java.time.LocalDate historicalDate = request.transactionDate();
-        java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(historicalDate.atStartOfDay());
+        LocalDate historicalDate = request.transactionDate();
+        Timestamp historicalTs = Timestamp.valueOf(historicalDate.atStartOfDay());
 
         jdbcTemplate.update(
                 "UPDATE savings_transactions SET posted_at = ?, created_at = ?, updated_at = ? WHERE id = ?",
@@ -257,7 +281,7 @@ public class MigrationService {
         loan.setPurpose("MIGRATION: " + request.referenceNumber());
 
         // Force it directly to APPROVED so the Service accepts it
-        loan.setStatus(com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus.APPROVED);
+        loan.setStatus(LoanStatus.APPROVED);
         var savedApp = loanRepository.save(loan);
 
         // 3. Send it through the newly upgraded Front Door!
@@ -288,7 +312,7 @@ public class MigrationService {
 
         var activeLoan = loanRepository.findFirstByMemberIdAndStatusOrderByCreatedAtDesc(
                 member.getId(),
-                com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus.ACTIVE
+                LoanStatus.ACTIVE
         ).orElseThrow(() -> new IllegalStateException("No active loan found for member: " + request.memberNumber()));
 
         // 1. Send it through the newly upgraded Front Door!
@@ -332,5 +356,65 @@ public class MigrationService {
         }
 
         return response.id().toString();
+    }
+
+    @Transactional
+    public void migrateHistoricalPenalty(String memberNumber, BigDecimal amount, LocalDate penaltyDate, String reference) {
+        Member member = memberRepository.findByMemberNumber(memberNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberNumber));
+
+        // 1. Fetch a generic/default PenaltyRule for migration
+        // (Make sure you have a rule named "Lateness Penalty" or adjust the string below to match an existing rule in your DB)
+        PenaltyRule rule = penaltyRuleRepository.findByName("Lateness Penalty")
+                .orElseGet(() -> penaltyRuleRepository.findAll().stream().findFirst()
+                        .orElseThrow(() -> new IllegalStateException("No Penalty Rules found in the system!")));
+
+        // 2. Create the Penalty Record matching your EXACT entity fields
+        Penalty penalty = Penalty.builder()
+                .memberId(member.getId())
+                .penaltyRule(rule)
+                .referenceType("MIGRATION")
+                .originalAmount(amount)
+                .outstandingAmount(amount)
+                .principalPaid(BigDecimal.ZERO)
+                .interestPaid(BigDecimal.ZERO)
+                .amountWaived(BigDecimal.ZERO)
+                .status(PenaltyStatus.UNPAID)
+                .createdAt(penaltyDate.atStartOfDay())
+                .build();
+
+        penaltyRepository.save(penalty);
+
+        // 3. Post the Accounting for the specific historical date
+        Account penaltyReceivable = accountRepository.findByAccountName("Penalty Receivable")
+                .orElseThrow(() -> new IllegalStateException("Penalty Receivable account not found"));
+
+        Account penaltyIncome = accountRepository.findByAccountName("Penalty Income")
+                .orElseThrow(() -> new IllegalStateException("Penalty Income account not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber("MIG-PEN-" + reference)
+                .description("Migrated Historical Penalty")
+                .transactionDate(penaltyDate) // Backdated!
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(penaltyReceivable)
+                .memberId(member.getId())
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Penalty Receivable")
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(penaltyIncome)
+                .memberId(member.getId())
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Penalty Income Accrued")
+                .build());
+
+        journalEntryRepository.save(entry);
     }
 }

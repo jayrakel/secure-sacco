@@ -1,0 +1,134 @@
+### ============================================================
+### THE ULTIMATE INTEGRATION TEST: BENJAMIN MUKETHA
+### Tests: Disbursements -> Penalties -> Waterfall -> Refinance
+### ============================================================
+@baseUrl = http://localhost:8080/api/v1
+
+### 1. LOGIN (Get System Admin Session)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+    const raw = response.headers.valueOf("Set-Cookie");
+    if (raw) {
+        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) client.global.set("csrf_token", match[1]);
+        const s = raw.match(/SACCO_SESSION=([^;]+)/);
+        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    }
+%}
+
+### ============================================================
+### PHASE 1: THE INITIAL LOAN (Oct 2022)
+### ============================================================
+POST {{baseUrl}}/migration/loans/disburse
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "loanProductCode": "Standard Biashara Loan",
+  "principal": 1000000.00,
+  "interest": 200004.00,
+  "weeklyScheduled": 11538.50,
+  "firstPaymentDate": "2022-10-13",
+  "termWeeks": 104,
+  "referenceNumber": "MIG-BEN-PH1-DISB"
+}
+
+### ------------------------------------------------------------
+### TEST A: APPLY HISTORICAL PENALTY
+### Benjamin gets fined 200 Ksh for being late in March 2023
+### ------------------------------------------------------------
+POST {{baseUrl}}/migration/penalties/apply
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 200.00,
+  "penaltyDate": "2023-03-02",
+  "referenceNumber": "PEN-BEN-001"
+}
+
+### ------------------------------------------------------------
+### TEST B: REPAYMENT WATERFALL
+### He pays 15,000. The system MUST pay the 200 Ksh penalty
+### FIRST, then put the remaining 14,800 against the loan!
+### ------------------------------------------------------------
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "amount": 15000.00,
+  "transactionDate": "2023-03-09",
+  "referenceNumber": "REP-BEN-001"
+}
+
+
+### ============================================================
+### PHASE 2: THE TOP-UP / REFINANCE (May 2024)
+### ============================================================
+
+### Step 2A: Fetch Phase 1 Loan ID
+GET {{baseUrl}}/loans/member/BVL-2022-000001/active
+Cookie: {{sacco_cookie}}
+
+> {%
+    client.global.set("phase1_loan_id", response.body.id);
+%}
+
+### Step 2B: Execute the Refinance (Top-Up of 315,000)
+POST {{baseUrl}}/loans/refinance
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "oldLoanId": "{{phase1_loan_id}}",
+  "loanProductCode": "Standard Biashara Loan",
+  "topUpAmount": 315000.00,
+  "newTermWeeks": 31,
+  "referenceNumber": "MIG-BEN-PH2-REF",
+  "historicalDateOverride": "2024-05-30"
+}
+
+
+### ============================================================
+### PHASE 3: THE FINAL RESTRUCTURE (Oct 2024)
+### He couldn't finish the 31-week aggressive timeline, so they
+### restructure his remaining balance into a 52-week term.
+### ============================================================
+
+### Step 3A: Fetch Phase 2 Loan ID
+GET {{baseUrl}}/loans/member/BVL-2022-000001/active
+Cookie: {{sacco_cookie}}
+
+> {%
+    client.global.set("phase2_loan_id", response.body.id);
+%}
+
+### Step 3B: Execute Final Refinance (Top-Up of 0, just extending time)
+POST {{baseUrl}}/loans/refinance
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "oldLoanId": "{{phase2_loan_id}}",
+  "loanProductCode": "Standard Biashara Loan",
+  "topUpAmount": 0.00,
+  "newTermWeeks": 52,
+  "referenceNumber": "MIG-BEN-PH3-REF",
+  "historicalDateOverride": "2024-10-10"
+}

@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.loans.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
@@ -19,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,6 +40,7 @@ public class LoanApplicationService {
     private final JournalEntryService journalEntryService;
     private final LoanScheduleService loanScheduleService;
     private final SecurityAuditService securityAuditService;
+    private final LoanScheduleItemRepository scheduleItemRepository;
 
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
@@ -257,6 +261,72 @@ public class LoanApplicationService {
         );
 
         return response;
+    }
+
+    @Transactional
+    public LoanApplicationResponse refinanceLoan(LoanDTOs.RefinanceRequest request, String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail).orElseThrow();
+
+        // 1. Fetch Old Loan & Member
+        LoanApplication oldLoan = loanApplicationRepository.findById(request.oldLoanId())
+                .orElseThrow(() -> new IllegalArgumentException("Old loan not found"));
+
+        if (oldLoan.getStatus() != LoanStatus.ACTIVE && oldLoan.getStatus() != LoanStatus.IN_GRACE) {
+            throw new IllegalStateException("Only active loans can be refinanced.");
+        }
+
+        Member member = memberRepository.findById(oldLoan.getMemberId()).orElseThrow();
+
+        // 2. Calculate exactly what is left to pay on the old loan (Principal + Interest)
+        List<LoanScheduleItem> oldSchedule = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(oldLoan.getId());
+        BigDecimal oldLoanBalance = oldSchedule.stream()
+                .filter(item -> item.getStatus() != LoanScheduleStatus.PAID)
+                .map(item -> item.getTotalDue().subtract(item.getPrincipalPaid()).subtract(item.getInterestPaid()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 3. Mark old loan as CLOSED
+        oldLoan.setStatus(LoanStatus.CLOSED);
+        loanApplicationRepository.save(oldLoan);
+
+        // 4. Create the New Consolidated Loan
+        LoanProduct product = loanProductRepository.findByName(request.loanProductCode()).orElseThrow();
+        BigDecimal newPrincipal = oldLoanBalance.add(request.topUpAmount());
+
+        LoanApplication newLoan = LoanApplication.builder()
+                .memberId(member.getId())
+                .loanProduct(product)
+                .principalAmount(newPrincipal)
+                .termWeeks(request.newTermWeeks())
+                .status(LoanStatus.ACTIVE)
+                .disbursedBy(admin.getId())
+                // Use historical date if provided (for migration), otherwise use NOW (for real-time)
+                .disbursedAt(request.historicalDateOverride() != null ?
+                        request.historicalDateOverride().atStartOfDay() : LocalDateTime.now())
+                .build();
+
+        newLoan = loanApplicationRepository.save(newLoan);
+
+        // 5. Generate the new schedule
+        loanScheduleService.generateWeeklySchedule(newLoan);
+
+        // 6. Post Accounting (Net Cash)
+        journalEntryService.postLoanRefinance(
+                member.getId(),
+                oldLoanBalance,
+                newPrincipal,
+                request.topUpAmount(), // The net cash disbursed
+                request.referenceNumber()
+        );
+
+        // 7. Audit Logging
+        securityAuditService.logEvent(
+                "LOAN_REFINANCED",
+                member.getMemberNumber(),
+                "Refinanced Loan " + oldLoan.getId() + ". Old Balance: KES " + oldLoanBalance +
+                        ", Top-Up: KES " + request.topUpAmount() + ", New Face Value: KES " + newPrincipal
+        );
+
+        return mapToResponse(newLoan);
     }
 
     @Transactional

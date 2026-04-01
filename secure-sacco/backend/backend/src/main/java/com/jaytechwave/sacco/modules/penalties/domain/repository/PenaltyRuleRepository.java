@@ -11,5 +11,6 @@ import java.util.UUID;
 @Repository
 public interface PenaltyRuleRepository extends JpaRepository<PenaltyRule, UUID> {
     Optional<PenaltyRule> findByCode(String code);
+    Optional<PenaltyRule> findByName(String name);
     List<PenaltyRule> findByIsActiveTrue();
 }

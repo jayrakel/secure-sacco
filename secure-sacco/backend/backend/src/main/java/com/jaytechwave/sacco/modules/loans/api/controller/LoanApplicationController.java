@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.loans.api.controller;
 
+import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanApplicationService;
@@ -163,5 +164,13 @@ public class LoanApplicationController {
             @Valid @RequestBody RepayLoanRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(loanRepaymentService.initiateRepayment(id, request, authentication.getName()));
+    }
+
+    @PostMapping("/refinance")
+    @PreAuthorize("hasAuthority('LOAN_DISBURSE')")
+    public ResponseEntity<LoanDTOs.LoanApplicationResponse> refinanceLoan(
+            @RequestBody LoanDTOs.RefinanceRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.refinanceLoan(request, authentication.getName()));
     }
 }

@@ -53,12 +53,37 @@ public class MigrationController {
     }
 
     @PostMapping("/loans/disburse")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<String> migrateLoanDisbursement(@RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
         return ResponseEntity.ok(migrationService.seedHistoricalLoanDisbursement(request));
     }
 
     @PostMapping("/loans/repay")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<String> migrateLoanRepayment(@RequestBody HistoricalLoanDTOs.HistoricalLoanRepaymentRequest request) {
         return ResponseEntity.ok(migrationService.seedHistoricalLoanRepayment(request));
+    }
+
+    // The DTO for the Penalty Request
+    public record HistoricalPenaltyRequest(
+            String memberNumber,
+            java.math.BigDecimal amount,
+            java.time.LocalDate penaltyDate,
+            String referenceNumber
+    ) {}
+
+    // The Endpoint
+    @PostMapping("/penalties/apply")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> applyHistoricalPenalty(@RequestBody HistoricalPenaltyRequest request) {
+        migrationService.migrateHistoricalPenalty(
+                request.memberNumber(),
+                request.amount(),
+                request.penaltyDate(),
+                request.referenceNumber()
+        );
+        return ResponseEntity.ok(Map.of(
+                "message", "Historical penalty applied successfully"
+        ));
     }
 }
