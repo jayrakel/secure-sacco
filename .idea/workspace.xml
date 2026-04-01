@@ -5,24 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add refinance loan functionality and historical penalty migration support">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/repository/AccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/repository/AccountRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/service/JournalEntryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/service/JournalEntryService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalLoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/dto/HistoricalLoanDTOs.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/entity/PenaltyStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/entity/PenaltyStatus.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRuleRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRuleRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/repository/LoanApplicationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/repository/LoanApplicationRepository.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -322,7 +309,7 @@
       <workItem from="1774703460296" duration="7190000" />
       <workItem from="1774712131475" duration="1718000" />
       <workItem from="1774849285425" duration="23806000" />
-      <workItem from="1775021039419" duration="10291000" />
+      <workItem from="1775021039419" duration="11604000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -644,7 +631,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774866996486</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="feat: add refinance loan functionality and historical penalty migration support">
+      <option name="closed" value="true" />
+      <created>1775033304459</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1775033304459</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

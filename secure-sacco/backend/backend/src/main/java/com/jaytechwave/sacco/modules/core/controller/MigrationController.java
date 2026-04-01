@@ -7,10 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -85,5 +82,12 @@ public class MigrationController {
         return ResponseEntity.ok(Map.of(
                 "message", "Historical penalty applied successfully"
         ));
+    }
+
+    @GetMapping("/loans/active/{memberNumber}")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> getActiveLoanId(@PathVariable String memberNumber) {
+        String loanId = migrationService.getActiveLoanIdByMemberNumber(memberNumber);
+        return ResponseEntity.ok(Map.of("id", loanId));
     }
 }

@@ -51,6 +51,7 @@ import jakarta.persistence.PersistenceContext;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -416,5 +417,18 @@ public class MigrationService {
                 .build());
 
         journalEntryRepository.save(entry);
+    }
+
+    @Transactional(readOnly = true)
+    public String getActiveLoanIdByMemberNumber(String memberNumber) {
+        Member member = memberRepository.findByMemberNumber(memberNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberNumber));
+
+        LoanApplication activeLoan = loanRepository.findFirstByMemberIdAndStatusOrderByCreatedAtDesc(
+                member.getId(),
+                LoanStatus.ACTIVE
+        ).orElseThrow(() -> new IllegalStateException("No active loan found for member: " + memberNumber));
+
+        return activeLoan.getId().toString();
     }
 }
