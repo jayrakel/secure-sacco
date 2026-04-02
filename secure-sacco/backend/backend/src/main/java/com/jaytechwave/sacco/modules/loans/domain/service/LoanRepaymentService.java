@@ -10,6 +10,7 @@ import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class LoanRepaymentService {
     private final JournalEntryService journalEntryService;
     private final SecurityAuditService securityAuditService;
     private final MemberRepository memberRepository;
+    private final PenaltyRepository penaltyRepository;
 
     @Transactional
     public InitiateStkResponse initiateRepayment(UUID applicationId, RepayLoanRequest request, String email) {
@@ -181,16 +183,32 @@ public class LoanRepaymentService {
         BigDecimal interestPaidThisRun = BigDecimal.ZERO;
         BigDecimal principalPaidThisRun = BigDecimal.ZERO;
 
-        // 🚨 Let it pay off ANY unpaid week (including future PENDING weeks!)
-        List<LoanScheduleItem> targetItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId())
+        // 1. 🚨 WATERFALL STAGE 1: Pay off any outstanding Penalties FIRST
+        java.util.List<com.jaytechwave.sacco.modules.penalties.domain.entity.Penalty> unpaidPenalties =
+                penaltyRepository.findAll().stream()
+                        .filter(p -> p.getMemberId().equals(app.getMemberId()) && p.getStatus() == com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus.UNPAID)
+                        .toList();
+
+        for (com.jaytechwave.sacco.modules.penalties.domain.entity.Penalty p : unpaidPenalties) {
+            if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
+
+            BigDecimal toPay = p.getOutstandingAmount().min(remainingCredit);
+            p.setOutstandingAmount(p.getOutstandingAmount().subtract(toPay));
+            remainingCredit = remainingCredit.subtract(toPay);
+
+            if (p.getOutstandingAmount().compareTo(BigDecimal.ZERO) == 0) {
+                p.setStatus(com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus.PAID);
+            }
+            penaltyRepository.save(p);
+        }
+
+        // 2. WATERFALL STAGE 2: Pay the Loan Schedule
+        java.util.List<LoanScheduleItem> targetItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId())
                 .stream().filter(i -> i.getStatus() != LoanScheduleStatus.PAID).toList();
 
-
-        // Waterfall: Process each item in order (oldest first), paying interest then principal for each item
         for (LoanScheduleItem item : targetItems) {
             if (remainingCredit.compareTo(BigDecimal.ZERO) <= 0) break;
 
-            // Pay interest first for this item
             BigDecimal unpaidInterest = item.getInterestDue().subtract(item.getInterestPaid());
             if (unpaidInterest.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal toPay = unpaidInterest.min(remainingCredit);
@@ -199,7 +217,6 @@ public class LoanRepaymentService {
                 remainingCredit = remainingCredit.subtract(toPay);
             }
 
-            // Then pay principal for this item
             if (remainingCredit.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal unpaidPrincipal = item.getPrincipalDue().subtract(item.getPrincipalPaid());
                 if (unpaidPrincipal.compareTo(BigDecimal.ZERO) > 0) {
@@ -210,27 +227,17 @@ public class LoanRepaymentService {
                 }
             }
 
-            // Mark item as PAID if fully paid
             if (item.getPrincipalPaid().add(item.getInterestPaid()).compareTo(item.getTotalDue()) >= 0) {
                 item.setStatus(LoanScheduleStatus.PAID);
             }
         }
 
         scheduleItemRepository.saveAll(targetItems);
-
         app.setPrepaymentBalance(remainingCredit);
 
-        List<LoanScheduleItem> allItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId());
+        java.util.List<LoanScheduleItem> allItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId());
         if (allItems.stream().allMatch(i -> i.getStatus() == LoanScheduleStatus.PAID)) {
             app.setStatus(LoanStatus.CLOSED);
-
-            // 🚨 Standardized Audit Log for Loan Closure
-            Member member = memberRepository.findById(app.getMemberId()).orElseThrow();
-            securityAuditService.logEvent(
-                    "LOAN_CLOSED",
-                    member.getMemberNumber(),
-                    "Loan fully repaid and closed. Ref: LOAN-" + app.getId().toString()
-            );
         }
         loanApplicationRepository.save(app);
 

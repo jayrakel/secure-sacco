@@ -156,10 +156,17 @@ public class LoanDTOs {
     ) {}
 
     public record RefinanceRequest(
+            @NotNull(message = "Old loan ID is required")
             UUID oldLoanId,
+            @NotBlank(message = "Loan product code is required")
             String loanProductCode,
-            BigDecimal topUpAmount,       // The extra cash they are asking for
+            @NotNull(message = "Top-up amount is required")
+            @DecimalMin(value = "0.0", message = "Top-up amount must be 0 or greater")
+            BigDecimal topUpAmount,
+            @NotNull(message = "New term weeks is required")
+            @Min(value = 1, message = "New term weeks must be at least 1")
             Integer newTermWeeks,
+            @NotBlank(message = "Reference number is required")
             String referenceNumber,
             java.time.LocalDate historicalDateOverride
     ) {}

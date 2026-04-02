@@ -14,18 +14,17 @@ Content-Type: application/json
 }
 
 > {%
-    const raw = response.headers.valueOf("Set-Cookie");
-    if (raw) {
-        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
-        if (match) client.global.set("csrf_token", match[1]);
-        const s = raw.match(/SACCO_SESSION=([^;]+)/);
-        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    for (const cookie of cookies) {
+        const csrf = cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (csrf) client.global.set("csrf_token", csrf[1]);
+        const session = cookie.match(/SACCO_SESSION=([^;]+)/);
+        if (session) client.global.set("sacco_cookie", "SACCO_SESSION=" + session[1]);
     }
 %}
 
 ### ============================================================
 ### LOAN 1: KES 1,000,000 | Oct 2022 | 104 weeks
-### Benjamin's original loan. He paid 61 installments.
 ### ============================================================
 
 ###
@@ -46,7 +45,10 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 > {%
-    client.global.set("loan1_id", response.body.id);
+    if (response.status === 200) {
+        const id = response.body.id || response.body;
+        client.global.set("loan1_id", id.toString().trim());
+    }
 %}
 
 ### --- Loan 1 Repayments (61 payments) ---
@@ -541,12 +543,6 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 ### ============================================================
 ### LOAN 2: REFINANCE (Top-Up KES 300,000) | May 2024 | 104 weeks
-### At this point Benjamin had ~20 installments left on Loan 1.
-### The SACCO topped up his remaining balance with 300K.
-### New face value = 1,300,000 | New weekly = 27,288.50
-###
-### 🚨 IMPORTANT: Copy the loan1_id from the disburse response above
-### and paste it below as "oldLoanId" before running this request.
 ### ============================================================
 
 ###
@@ -565,7 +561,10 @@ X-XSRF-TOKEN: {{csrf_token}}
 }
 
 > {%
-    client.global.set("loan2_id", response.body.id);
+    if (response.status === 200) {
+        const id = response.body.id || response.body;
+        client.global.set("loan2_id", id.toString().trim());
+    }
 %}
 
 ### --- Loan 2 Repayments (12 payments) ---
@@ -668,11 +667,6 @@ X-XSRF-TOKEN: {{csrf_token}}
 
 ### ============================================================
 ### LOAN 3: RESTRUCTURE | Oct 2024 | 52 weeks | KES 577,054
-### Benjamin couldn't keep up with the high weekly payment on L2.
-### SACCO took his remaining balance and reissued as fresh 52-wk loan.
-### topUpAmount = 0 (pure restructure, no new cash)
-###
-### 🚨 IMPORTANT: Copy loan2_id from the refinance response above.
 ### ============================================================
 
 ###
@@ -690,7 +684,7 @@ X-XSRF-TOKEN: {{csrf_token}}
   "historicalDateOverride": "2024-10-10"
 }
 
-### --- Loan 3 Repayments (47 payments, fully paid off by Aug 2025) ---
+### --- Loan 3 Repayments (47 payments) ---
 
 ###
 POST {{baseUrl}}/migration/loans/repay

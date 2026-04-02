@@ -90,4 +90,12 @@ public class MigrationController {
         String loanId = migrationService.getActiveLoanIdByMemberNumber(memberNumber);
         return ResponseEntity.ok(Map.of("id", loanId));
     }
+
+    public record CronRequest(java.time.LocalDate evaluationDate) {}
+
+    @PostMapping("/cron/evaluate-penalties")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> runTimeMachineCron(@RequestBody CronRequest request) {
+        return ResponseEntity.ok(migrationService.evaluatePenaltiesUpToDate(request.evaluationDate()));
+    }
 }
