@@ -3,6 +3,8 @@
 ### Tests: Disbursements -> Penalties -> Waterfall -> Refinance
 ### ============================================================
 @baseUrl = http://localhost:8080/api/v1
+@memberNumber = BVL-2022-000001
+@runId = {{$timestamp}}
 
 ### 1. LOGIN (Get System Admin Session)
 POST {{baseUrl}}/auth/login
@@ -32,14 +34,14 @@ Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
-  "memberNumber": "BVL-2022-000001",
-  "loanProductCode": "Standard Biashara Loan",
+  "memberNumber": "{{memberNumber}}",
+  "loanProductCode": "Historical Smart Loan",
   "principal": 1000000.00,
   "interest": 200004.00,
   "weeklyScheduled": 11538.50,
   "firstPaymentDate": "2022-10-13",
   "termWeeks": 104,
-  "referenceNumber": "MIG-BEN-PH1-DISB"
+  "referenceNumber": "MIG-BEN-PH1-DISB-{{runId}}"
 }
 
 ### ------------------------------------------------------------
@@ -52,10 +54,10 @@ Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
-  "memberNumber": "BVL-2022-000001",
+  "memberNumber": "{{memberNumber}}",
   "amount": 200.00,
   "penaltyDate": "2023-03-02",
-  "referenceNumber": "PEN-BEN-001"
+  "referenceNumber": "PEN-BEN-001-{{runId}}"
 }
 
 ### ------------------------------------------------------------
@@ -69,10 +71,10 @@ Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
-  "memberNumber": "BVL-2022-000001",
+  "memberNumber": "{{memberNumber}}",
   "amount": 15000.00,
   "transactionDate": "2023-03-09",
-  "referenceNumber": "REP-BEN-001"
+  "referenceNumber": "REP-BEN-001-{{runId}}"
 }
 
 
@@ -81,25 +83,28 @@ X-XSRF-TOKEN: {{csrf_token}}
 ### ============================================================
 
 ### Step 2A: Fetch Phase 1 Loan ID
-GET {{baseUrl}}/loans/member/BVL-2022-000001/active
+GET {{baseUrl}}/migration/loans/active/{{memberNumber}}
 Cookie: {{sacco_cookie}}
 
 > {%
+    if (response.status !== 200 || !response.body || !response.body.id) {
+        throw new Error("Could not fetch active loan id for phase 1. Response: " + response.body);
+    }
     client.global.set("phase1_loan_id", response.body.id);
 %}
 
 ### Step 2B: Execute the Refinance (Top-Up of 315,000)
-POST {{baseUrl}}/loans/refinance
+POST {{baseUrl}}/loans/applications/refinance
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "oldLoanId": "{{phase1_loan_id}}",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "topUpAmount": 315000.00,
   "newTermWeeks": 31,
-  "referenceNumber": "MIG-BEN-PH2-REF",
+  "referenceNumber": "MIG-BEN-PH2-REF-{{runId}}",
   "historicalDateOverride": "2024-05-30"
 }
 
@@ -111,24 +116,27 @@ X-XSRF-TOKEN: {{csrf_token}}
 ### ============================================================
 
 ### Step 3A: Fetch Phase 2 Loan ID
-GET {{baseUrl}}/loans/member/BVL-2022-000001/active
+GET {{baseUrl}}/migration/loans/active/{{memberNumber}}
 Cookie: {{sacco_cookie}}
 
 > {%
+    if (response.status !== 200 || !response.body || !response.body.id) {
+        throw new Error("Could not fetch active loan id for phase 2. Response: " + response.body);
+    }
     client.global.set("phase2_loan_id", response.body.id);
 %}
 
 ### Step 3B: Execute Final Refinance (Top-Up of 0, just extending time)
-POST {{baseUrl}}/loans/refinance
+POST {{baseUrl}}/loans/applications/refinance
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "oldLoanId": "{{phase2_loan_id}}",
-  "loanProductCode": "Standard Biashara Loan",
+  "loanProductCode": "Historical Smart Loan",
   "topUpAmount": 0.00,
   "newTermWeeks": 52,
-  "referenceNumber": "MIG-BEN-PH3-REF",
+  "referenceNumber": "MIG-BEN-PH3-REF-{{runId}}",
   "historicalDateOverride": "2024-10-10"
 }

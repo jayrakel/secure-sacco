@@ -167,7 +167,7 @@ public class LoanApplicationController {
     }
 
     @PostMapping("/refinance")
-    @PreAuthorize("hasAuthority('LOAN_DISBURSE')")
+    @PreAuthorize("hasAnyAuthority('LOANS_DISBURSE', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<LoanDTOs.LoanApplicationResponse> refinanceLoan(
             @RequestBody LoanDTOs.RefinanceRequest request,
             Authentication authentication) {
