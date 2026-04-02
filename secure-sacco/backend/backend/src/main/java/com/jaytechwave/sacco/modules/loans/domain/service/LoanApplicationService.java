@@ -299,7 +299,8 @@ public class LoanApplicationService {
                 .termWeeks(request.newTermWeeks())
                 .status(LoanStatus.ACTIVE)
                 .disbursedBy(admin.getId())
-                // Use historical date if provided (for migration), otherwise use NOW (for real-time)
+                .applicationFee(BigDecimal.ZERO)
+                .applicationFeePaid(true)
                 .disbursedAt(request.historicalDateOverride() != null ?
                         request.historicalDateOverride().atStartOfDay() : LocalDateTime.now())
                 .build();

@@ -13,8 +13,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * Redis-backed API rate limiter using a sliding-window counter approach.
@@ -50,6 +52,10 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
             "/api/v1/savings/deposit/manual",    new RateLimit(20, Duration.ofHours(1)),
             "/api/v1/savings/withdraw/manual",   new RateLimit(10, Duration.ofHours(1))
     );
+    private static final List<String> RATE_LIMIT_BYPASS_PREFIXES = List.of(
+            "/api/v1/migration/",
+            "/api/v1/loans/applications/refinance"
+    );
 
     private final StringRedisTemplate redis;
 
@@ -70,9 +76,17 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+
         String userIdentifier = auth.getName();
         String path = request.getRequestURI();
         String method = request.getMethod();
+
+        for (String bypassPrefix : RATE_LIMIT_BYPASS_PREFIXES) {
+            if (path.startsWith(bypassPrefix)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
 
         // Only apply to mutating operations for endpoint-specific limits
         if ("GET".equalsIgnoreCase(method) || "OPTIONS".equalsIgnoreCase(method)) {

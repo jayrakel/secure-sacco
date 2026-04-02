@@ -51,8 +51,10 @@ public class MigrationController {
 
     @PostMapping("/loans/disburse")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<String> migrateLoanDisbursement(@RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
-        return ResponseEntity.ok(migrationService.seedHistoricalLoanDisbursement(request));
+    public ResponseEntity<Map<String, String>> migrateLoanDisbursement(
+            @RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
+        String loanId = migrationService.seedHistoricalLoanDisbursement(request);
+        return ResponseEntity.ok(Map.of("id", loanId));
     }
 
     @PostMapping("/loans/repay")

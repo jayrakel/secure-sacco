@@ -546,7 +546,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 ### ============================================================
 
 ###
-POST {{baseUrl}}/loans/refinance
+POST {{baseUrl}}/loans/applications/refinance
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
@@ -670,7 +670,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 ### ============================================================
 
 ###
-POST {{baseUrl}}/loans/refinance
+POST {{baseUrl}}/loans/applications/refinance
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}

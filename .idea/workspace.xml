@@ -4,16 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance loan processing with improved cookie handling and penalty evaluation">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/ApiRateLimitFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/ApiRateLimitFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -129,6 +125,7 @@
     "HTTP Request.All in benjamin-ultimate-test (1).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (2).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (4).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test-with-timetravel (1).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test-with-timetravel (2).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test-with-timetravel (3).executor": "Run",
@@ -173,6 +170,87 @@
     "HTTP Request.base-balances-seeder | ============================================================#1.executor": "Run",
     "HTTP Request.base-balances-seeder | ============================================================#2 (1).executor": "Run",
     "HTTP Request.base-balances-seeder | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #10.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #11.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #12.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #13.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #14.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #15.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #16.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #17.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #18.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #19.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #20.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #21.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #22.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #23.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #24.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #25.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #26.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #27.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #28.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #29.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #30.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #31.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #32.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #33.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #34.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #35.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #36.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #37.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #38.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #39.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #4.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #40.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #41.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #42.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #43.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #44.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #45 (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #45.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #46.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #47.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #48.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #49.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #5.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #50.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #51.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #52.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #53.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #54.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #55.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #56.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #57.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #58.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #59.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #6.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #60.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #61.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #62.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #63.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #66.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #67.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #68.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #69.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #7.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #70.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #71.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #72.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #73.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #74.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #75.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #76.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #79.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #8.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #80.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #81.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #82.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #83.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #84.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #9.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 1 Repayments (61 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 2 Repayments (12 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 3 Repayments (47 payments) ---.executor": "Run",
     "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | 1. LOGIN.executor": "Run",
@@ -180,7 +258,9 @@
     "HTTP Request.benjamin-ultimate-test | ============================================================#1.executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2 (1).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2 (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (3).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#3.executor": "Run",
     "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1).executor": "Run",
     "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2).executor": "Run",
     "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3).executor": "Run",
@@ -250,8 +330,9 @@
             <map>
               <entry key="All in benjamin-ultimate-test" value="STOPPED" />
               <entry key="All in benjamin-ultimate-test (1)" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (2)" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (3)" value="STOPPED" />
+              <entry key="benjamin-ultimate-test | #82" value="STOPPED" />
+              <entry key="benjamin-ultimate-test | #83" value="STOPPED" />
+              <entry key="benjamin-ultimate-test | #84" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -269,19 +350,19 @@
     <configuration name="All in benjamin-ultimate-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in benjamin-ultimate-test (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in benjamin-ultimate-test (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in benjamin-ultimate-test-with-timetravel" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http">
-      <method v="2" />
-    </configuration>
     <configuration name="All in benjamin-ultimate-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test | #82" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="#82" index="82" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test | #83" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="#83" index="83" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test | #84" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="#84" index="84" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
@@ -301,18 +382,18 @@
     <list>
       <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
       <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (3)" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test-with-timetravel" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test | #82" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test | #83" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test | #84" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (3)" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
         <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
         <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test-with-timetravel" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test | #84" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test | #83" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test | #82" />
       </list>
     </recent_temporary>
   </component>
@@ -694,7 +775,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775117796362</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="feat: enhance loan processing with improved cookie handling and penalty evaluation">
+      <option name="closed" value="true" />
+      <created>1775164976195</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1775164976195</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -712,7 +801,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value" />
     <MESSAGE value="fix: set session cookie domain for cross-subdomain auth on staging" />
     <MESSAGE value="fix: proxy API requests through nginx and update API base URL handling for staging" />
     <MESSAGE value="fix: add mail server environment variables to production docker compose" />
@@ -737,7 +825,8 @@
     <MESSAGE value="feat: add refinance loan functionality and historical penalty migration support" />
     <MESSAGE value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
     <MESSAGE value="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration" />
+    <MESSAGE value="feat: enhance loan processing with improved cookie handling and penalty evaluation" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance loan processing with improved cookie handling and penalty evaluation" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
