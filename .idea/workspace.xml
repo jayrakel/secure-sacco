@@ -4,27 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add refinance loan functionality and historical penalty migration support">
-      <change afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/COMPLETION_CHECKLIST.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/DELIVERABLES.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/IMPLEMENTATION_SUMMARY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/INDEX.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/TIME_TRAVELER_QUICK_REFERENCE.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/TIME_TRAVELER_README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/VISUAL_SUMMARY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V49__update_loan_missed_installment_penalty_to_percentage.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-time-travel-api.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/cron-test.http" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: implement TimeTravelerService for loan simulation and schedule progression">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_REF.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_START.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanScheduleService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -342,7 +329,7 @@
       <workItem from="1774712131475" duration="1718000" />
       <workItem from="1774849285425" duration="23806000" />
       <workItem from="1775021039419" duration="11604000" />
-      <workItem from="1775105589808" duration="8846000" />
+      <workItem from="1775105589808" duration="9963000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -672,7 +659,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775033304459</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="feat: implement TimeTravelerService for loan simulation and schedule progression">
+      <option name="closed" value="true" />
+      <created>1775116665174</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1775116665175</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -690,7 +685,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(api): allow configurable API base URL via VITE_API_BASE_URL env variable" />
     <MESSAGE value="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling" />
     <MESSAGE value="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value" />
     <MESSAGE value="fix: set session cookie domain for cross-subdomain auth on staging" />
@@ -715,7 +709,8 @@
     <MESSAGE value="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations" />
     <MESSAGE value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
     <MESSAGE value="feat: add refinance loan functionality and historical penalty migration support" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add refinance loan functionality and historical penalty migration support" />
+    <MESSAGE value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

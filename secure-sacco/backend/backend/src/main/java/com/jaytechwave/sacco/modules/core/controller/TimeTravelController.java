@@ -47,31 +47,31 @@ public class TimeTravelController {
     }
 
     /**
-     * POST /api/v1/time-travel/advance?weeks=4
+     * POST /api/v1/time-travel/advance?days=7
      *
-     * Manually advance virtual timeline by N weeks.
+     * Manually advance virtual timeline by N days.
      * Triggers loan schedule progressions automatically.
      *
      * Query params:
-     * - weeks: number of weeks to advance (default: 1)
+     * - days: number of days to advance (default: 7 = 1 week)
      *
-     * Response: { "message": "Advanced 4 weeks. Virtual date: 2023-10-05" }
+     * Response: { "message": "Advanced 7 days. Virtual date: 2023-10-05" }
      */
     @PostMapping("/advance")
-    public ResponseEntity<AdvanceResponse> advanceTime(@RequestParam(defaultValue = "1") int weeks) {
-        log.warn("⏱️  [ADMIN] MANUAL TIME TRAVEL: Advancing {} weeks", weeks);
+    public ResponseEntity<AdvanceResponse> advanceTime(@RequestParam(defaultValue = "7") int days) {
+        log.warn("⏱️  [ADMIN] MANUAL TIME TRAVEL: Advancing {} days", days);
 
-        if (weeks <= 0) {
+        if (days <= 0) {
             return ResponseEntity.badRequest()
-                    .body(new AdvanceResponse("Error: weeks must be > 0"));
+                    .body(new AdvanceResponse("Error: days must be > 0"));
         }
 
-        timeTravelerService.advanceVirtualTimeByWeeks(weeks);
+        timeTravelerService.advanceVirtualTimeByDays(days);
         var state = timeTravelerService.getState();
 
         return ResponseEntity.ok(
                 new AdvanceResponse(
-                        "Advised " + weeks + " weeks. Virtual date: " + state.virtualDate(),
+                        "Advanced " + days + " days. Virtual date: " + state.virtualDate(),
                         state.virtualDate().toString(),
                         String.format("%.1f%%", state.progressPercent())
                 )
@@ -117,6 +117,77 @@ public class TimeTravelController {
     }
 
     /**
+     * POST /api/v1/time-travel/configure
+     *
+     * Configure simulation period for system-wide testing
+     *
+     * Request body:
+     * {
+     *   "startDate": "2022-10-06",
+     *   "endDate": "2025-08-28",
+     *   "daysPerTick": 7
+     * }
+     *
+     * Response: { "message": "Configured simulation period" }
+     */
+    @PostMapping("/configure")
+    public ResponseEntity<ConfigureResponse> configureSim(@RequestBody ConfigureRequest request) {
+        log.warn("⏱️  [ADMIN] CONFIGURING TIME-TRAVELER: {} → {}",
+                request.startDate(), request.endDate());
+
+        if (request.startDate().isAfter(request.endDate())) {
+            return ResponseEntity.badRequest()
+                    .body(new ConfigureResponse("Error: startDate must be before endDate"));
+        }
+
+        timeTravelerService.configureSimulation(request.startDate(), request.endDate());
+        if (request.daysPerTick() > 0) {
+            timeTravelerService.setAdvancementRate(request.daysPerTick());
+        }
+
+        return ResponseEntity.ok(
+                new ConfigureResponse(
+                        "Simulation configured: " + request.startDate() + " → " + request.endDate(),
+                        request.daysPerTick()
+                )
+        );
+    }
+
+    /**
+     * POST /api/v1/time-travel/set-target?memberId=<uuid>
+     *
+     * (Optional) Focus on specific member's loans
+     * If not set, all members' loans are advanced
+     *
+     * Query param:
+     * - memberId: UUID of member to focus on (omit to reset to all members)
+     *
+     * Response: { "message": "Target member set" }
+     */
+    @PostMapping("/set-target")
+    public ResponseEntity<TargetResponse> setTargetMember(
+            @RequestParam(required = false) String memberId) {
+
+        if (memberId == null || memberId.isEmpty()) {
+            timeTravelerService.setTargetMember(null);
+            return ResponseEntity.ok(
+                    new TargetResponse("Target reset: advancing ALL members' loans")
+            );
+        }
+
+        try {
+            java.util.UUID uuid = java.util.UUID.fromString(memberId);
+            timeTravelerService.setTargetMember(uuid);
+            return ResponseEntity.ok(
+                    new TargetResponse("Target member set to: " + memberId)
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new TargetResponse("Invalid member UUID format"));
+        }
+    }
+
+    /**
      * Response DTO for advance endpoint
      */
     public record AdvanceResponse(
@@ -143,6 +214,34 @@ public class TimeTravelController {
     public record ProgressResponse(
             double progress,
             boolean complete
+    ) {}
+
+    /**
+     * Request DTO for configure endpoint
+     */
+    public record ConfigureRequest(
+            java.time.LocalDate startDate,
+            java.time.LocalDate endDate,
+            int daysPerTick
+    ) {}
+
+    /**
+     * Response DTO for configure endpoint
+     */
+    public record ConfigureResponse(
+            String message,
+            int daysPerTick
+    ) {
+        public ConfigureResponse(String message) {
+            this(message, 0);
+        }
+    }
+
+    /**
+     * Response DTO for set-target endpoint
+     */
+    public record TargetResponse(
+            String message
     ) {}
 }
 
