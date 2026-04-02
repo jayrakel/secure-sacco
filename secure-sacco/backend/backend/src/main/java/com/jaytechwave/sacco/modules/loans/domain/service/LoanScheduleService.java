@@ -130,4 +130,66 @@ public class LoanScheduleService {
             }
         }
     }
+
+    /**
+     * ⏱️ TIME TRAVEL SUPPORT: Advance pending installments at a specific virtual date
+     * Used by TimeTravelerService to simulate loan progression without changing system clock
+     *
+     * @param virtualDate the virtual date to use instead of LocalDate.now()
+     */
+    @Transactional
+    public void advancePendingInstallmentsAtDate(LocalDate virtualDate) {
+        log.debug("⏱️  Advancing schedule items at virtual date: {}", virtualDate);
+        // Move to DUE if due date is within the active week (7 days) of virtual date
+        List<LoanScheduleItem> pendingToDue = scheduleItemRepository.findByStatusAndDueDateLessThanEqual(
+                LoanScheduleStatus.PENDING, virtualDate.plusDays(7));
+
+        for (LoanScheduleItem item : pendingToDue) {
+            item.setStatus(LoanScheduleStatus.DUE);
+            scheduleItemRepository.save(item);
+            log.debug("⏱️  Advanced schedule item {} to DUE (virtual: {})", item.getId(), virtualDate);
+        }
+    }
+
+    /**
+     * ⏱️ TIME TRAVEL SUPPORT: Process past-due installments at a specific virtual date
+     * Used by TimeTravelerService for time-traveling loan testing
+     *
+     * @param virtualDate the virtual date to use for overdue calculations
+     */
+    @Transactional
+    public void processPastDueInstallmentsAtDate(LocalDate virtualDate) {
+        log.debug("⏱️  Processing past-due items at virtual date: {}", virtualDate);
+        // Find everything strictly before virtualDate that is still marked PENDING or DUE
+        List<LoanScheduleItem> pastDueItems = scheduleItemRepository.findByDueDateBeforeAndStatusIn(
+                virtualDate,
+                List.of(LoanScheduleStatus.PENDING, LoanScheduleStatus.DUE)
+        );
+
+        for (LoanScheduleItem item : pastDueItems) {
+            BigDecimal totalPaid = item.getPrincipalPaid().add(item.getInterestPaid());
+            BigDecimal shortfall = item.getTotalDue().subtract(totalPaid);
+
+            if (shortfall.compareTo(BigDecimal.ZERO) > 0) {
+                // Member did not fully pay this installment!
+                item.setStatus(LoanScheduleStatus.OVERDUE);
+                scheduleItemRepository.save(item);
+
+                // Trigger penalty event
+                eventPublisher.publishEvent(new LoanInstallmentOverdueEvent(
+                        item.getLoanApplication().getId(),
+                        item.getId(),
+                        shortfall,
+                        item.getDueDate()
+                ));
+
+                log.info("⏱️  Marked schedule item {} as OVERDUE (virtual: {}). Shortfall: {}", 
+                        item.getId(), virtualDate, shortfall);
+            } else {
+                // Safety check: It was somehow fully paid but status didn't update
+                item.setStatus(LoanScheduleStatus.PAID);
+                scheduleItemRepository.save(item);
+            }
+        }
+    }
 }

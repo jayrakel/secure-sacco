@@ -1,0 +1,35 @@
+@baseUrl = http://localhost:8080/api/v1
+
+### 1. LOGIN (If you need a fresh session)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+    const raw = response.headers.valueOf("Set-Cookie");
+    if (raw) {
+        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) client.global.set("csrf_token", match[1]);
+        const s = raw.match(/SACCO_SESSION=([^;]+)/);
+        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    }
+%}
+
+### ============================================================
+### RUN THE TIME-MACHINE CRON
+### We set the date to March 1, 2023. The system will look at all
+### schedule items due before this date, find the ones Benjamin
+### didn't fully pay, and slam them with KES 200 penalties.
+### ============================================================
+POST {{baseUrl}}/migration/cron/evaluate-penalties
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "evaluationDate": "2023-03-01"
+}

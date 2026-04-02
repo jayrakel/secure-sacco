@@ -181,8 +181,10 @@ public class LoanRepaymentService {
         BigDecimal interestPaidThisRun = BigDecimal.ZERO;
         BigDecimal principalPaidThisRun = BigDecimal.ZERO;
 
+        // 🚨 Let it pay off ANY unpaid week (including future PENDING weeks!)
         List<LoanScheduleItem> targetItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId())
-                .stream().filter(i -> i.getStatus() == LoanScheduleStatus.DUE || i.getStatus() == LoanScheduleStatus.OVERDUE).toList();
+                .stream().filter(i -> i.getStatus() != LoanScheduleStatus.PAID).toList();
+
 
         // Waterfall: Process each item in order (oldest first), paying interest then principal for each item
         for (LoanScheduleItem item : targetItems) {

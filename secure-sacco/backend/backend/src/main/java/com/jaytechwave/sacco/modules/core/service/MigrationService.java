@@ -255,7 +255,7 @@ public class MigrationService {
     }
 
     // ==============================================================================
-    // LOAN MIGRATION: PHASE 1 - DISBURSEMENT (WITH GRACE PERIOD GHOSTING)
+    // LOAN MIGRATION: PHASE 1 - DISBURSEMENT (WITH REAL DATES & GL BACKDATING)
     // ==============================================================================
     @Transactional
     public String seedHistoricalLoanDisbursement(HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
@@ -267,11 +267,10 @@ public class MigrationService {
         var product = loanProductRepository.findByName(request.loanProductCode())
                 .orElseThrow(() -> new IllegalStateException("Loan Product not found: " + request.loanProductCode()));
 
-        // 1. Calculate the Ghost Date
-        long graceDays = product.getGracePeriodDays();
-        LocalDate ghostDate = request.firstPaymentDate().minusWeeks(1).minusDays(graceDays);
+        // 1. Use the REAL Disbursement Date
+        LocalDate realDisbursementDate = request.firstPaymentDate();
 
-        // 2. We have to "fast-track" an application through the queue to get it ready for disbursement
+        // 2. Fast-track application
         LoanApplication loan = new LoanApplication();
         loan.setMemberId(member.getId());
         loan.setLoanProduct(product);
@@ -280,29 +279,44 @@ public class MigrationService {
         loan.setApplicationFeePaid(true);
         loan.setTermWeeks(request.termWeeks() != null ? request.termWeeks() : 104);
         loan.setPurpose("MIGRATION: " + request.referenceNumber());
+        loan.setReferenceNotes(request.referenceNumber()); // 🚨 Crucial for finding the GL entry!
 
-        // Force it directly to APPROVED so the Service accepts it
-        loan.setStatus(LoanStatus.APPROVED);
+        loan.setStatus(com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus.APPROVED);
         var savedApp = loanRepository.save(loan);
 
-        // 3. Send it through the newly upgraded Front Door!
-        // We pass the System Admin email and the historical Ghost Date
+        // 3. Send it through the Front Door using the Real Date
         var response = loanApplicationService.disburseHistoricalApplication(
                 savedApp.getId(),
                 org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName(),
-                ghostDate
+                realDisbursementDate
         );
 
-        // 4. Force the SQL Created_At timestamp so the DB reflects the 2022 truth
-        java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(ghostDate.atStartOfDay());
+        // 4. 🚨 MAGIC BULLET: Force Hibernate to write to DB immediately!
+        entityManager.flush();
+        entityManager.clear();
+
+        // 5. Time Machine SQL
+        java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(realDisbursementDate.atStartOfDay());
+
         jdbcTemplate.update("UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
                 historicalTs, historicalTs, historicalTs, response.id());
+
+        // Backdate the Disbursement Journal Entry!
+        String disbJeRef = "LNDIS-" + request.referenceNumber();
+        jdbcTemplate.update(
+                "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
+                realDisbursementDate, historicalTs, historicalTs, disbJeRef
+        );
+        jdbcTemplate.update(
+                "UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
+                historicalTs, historicalTs, disbJeRef
+        );
 
         return response.id().toString();
     }
 
     // ==============================================================================
-    // LOAN MIGRATION: PHASE 2 - REPAYMENTS (VIA FRONT DOOR)
+    // LOAN MIGRATION: PHASE 2 - REPAYMENTS (WITH FLUSH MAGIC)
     // ==============================================================================
     @Transactional
     public String seedHistoricalLoanRepayment(HistoricalLoanDTOs.HistoricalLoanRepaymentRequest request) {
@@ -316,7 +330,6 @@ public class MigrationService {
                 LoanStatus.ACTIVE
         ).orElseThrow(() -> new IllegalStateException("No active loan found for member: " + request.memberNumber()));
 
-        // 1. Send it through the newly upgraded Front Door!
         String adminEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
 
         var response = loanRepaymentService.processHistoricalRepayment(
@@ -327,7 +340,10 @@ public class MigrationService {
                 adminEmail
         );
 
-        // 2. TIME MACHINE: Force the SQL Created_At timestamp so the DB reflects the 2022 truth
+        // 🚨 MAGIC BULLET: Force write to DB immediately!
+        entityManager.flush();
+        entityManager.clear();
+
         java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(request.transactionDate().atStartOfDay());
 
         jdbcTemplate.update(
@@ -335,26 +351,16 @@ public class MigrationService {
                 historicalTs, historicalTs, response.id()
         );
 
-        // 3. ASYNC TIME MACHINE: Backdate the Accounting Ledgers
+        // Clean, direct backdating without the awful while loops!
         String jeReference = "LNREP-" + request.referenceNumber();
-        int rowsUpdated = 0;
-        int maxAttempts = 50;
-
-        while (rowsUpdated == 0 && maxAttempts > 0) {
-            try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-            rowsUpdated = jdbcTemplate.update(
-                    "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
-                    request.transactionDate(), historicalTs, historicalTs, jeReference
-            );
-            maxAttempts--;
-        }
-
-        if (rowsUpdated > 0) {
-            jdbcTemplate.update(
-                    "UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
-                    historicalTs, historicalTs, jeReference
-            );
-        }
+        jdbcTemplate.update(
+                "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
+                request.transactionDate(), historicalTs, historicalTs, jeReference
+        );
+        jdbcTemplate.update(
+                "UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
+                historicalTs, historicalTs, jeReference
+        );
 
         return response.id().toString();
     }
