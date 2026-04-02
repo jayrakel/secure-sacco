@@ -4,14 +4,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: implement TimeTravelerService for loan simulation and schedule progression">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_REF.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_START.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration">
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/db-forest-config.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/00_START_HERE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/BENJAMIN_LOAN_PENALTY_TEST.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CODEBASE_AUDIT_REPORT.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/COMPLETE_104_WEEK_TEST.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DEVELOPER_GUIDE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/FIXED_LOAN_DISBURSEMENT.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/FIX_403_ERROR.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/FRESH_ACTIVE_LOANS_TEST.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/PENALTY_TEST_NO_JQ.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/QUICK_START_PENALTY_TEST.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SIMPLIFIED_NO_MEMBER_CREATION.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SOLUTION_SEED_PRODUCTS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TROUBLESHOOT_LOAD_DATA.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/USE_HTTP_FILE_INSTEAD.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/advanced_diagnostic.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin_complete_test.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/better_diagnostic.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/diagnose.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/seed_loan_products.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-time-travel-api.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-time-travel-api.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -84,6 +104,8 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/cron-test.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-time-travel-api.http" environment="dev-benjamin-test" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" environment="dev" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -117,9 +139,19 @@
     "HTTP Request.All in base-balances-seeder.executor": "Run",
     "HTTP Request.All in benjamin-savings-seed (1).executor": "Run",
     "HTTP Request.All in benjamin-savings-seed.executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (1).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (2).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (3).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (4).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api.executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (1).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (2).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (1).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (2).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (4).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel.executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test.executor": "Run",
     "HTTP Request.All in charles-savings-seeder.executor": "Run",
     "HTTP Request.All in cron-test (1).executor": "Run",
@@ -167,6 +199,12 @@
     "HTTP Request.benjamin-ultimate-test | ============================================================#2 (1).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2 (2).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ====================.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | Benjamin's Ultimate Loan Test with Time-Travel & Penalty Tracking.executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (1).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (2).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (3).executor": "Run",
@@ -228,11 +266,11 @@
         <entry key="HttpClient.HttpRequestRunConfigurationType">
           <value>
             <map>
-              <entry key="All in benjamin-ultimate-test" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (1)" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (2)" value="STOPPED" />
-              <entry key="All in cron-test" value="STOPPED" />
-              <entry key="All in cron-test (1)" value="STOPPED" />
+              <entry key="All in benjamin-ultimate-test-with-timetravel" value="STOPPED" />
+              <entry key="benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1)" value="STOPPED" />
+              <entry key="benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2)" value="STOPPED" />
+              <entry key="benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3)" value="STOPPED" />
+              <entry key="benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -247,22 +285,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in benjamin-ultimate-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in benjamin-ultimate-test (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in benjamin-ultimate-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in cron-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/cron-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in cron-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="&lt;No Environment&gt;" path="$PROJECT_DIR$/secure-sacco/backend/cron-test.http">
+    <configuration name="All in benjamin-ultimate-test-with-timetravel" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" executionIdentifier="==================== 3. CONFIGURE TIME-TRAVELER ====================" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" executionIdentifier="==================== 3. CONFIGURE TIME-TRAVELER ====================" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" executionIdentifier="==================== 3. CONFIGURE TIME-TRAVELER ====================" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" executionIdentifier="==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================" index="3" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
@@ -280,20 +318,20 @@
       </method>
     </configuration>
     <list>
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
-      <item itemvalue="HTTP Request.All in cron-test" />
-      <item itemvalue="HTTP Request.All in cron-test (1)" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
+      <item itemvalue="HTTP Request.All in benjamin-ultimate-test-with-timetravel" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1)" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2)" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3)" />
+      <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in cron-test (1)" />
-        <item itemvalue="HTTP Request.All in cron-test" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
+        <item itemvalue="HTTP Request.All in benjamin-ultimate-test-with-timetravel" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3)" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2)" />
+        <item itemvalue="HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -329,7 +367,7 @@
       <workItem from="1774712131475" duration="1718000" />
       <workItem from="1774849285425" duration="23806000" />
       <workItem from="1775021039419" duration="11604000" />
-      <workItem from="1775105589808" duration="9963000" />
+      <workItem from="1775105589808" duration="16112000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -667,7 +705,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775116665175</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration">
+      <option name="closed" value="true" />
+      <created>1775117796362</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1775117796362</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -685,7 +731,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling" />
     <MESSAGE value="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value" />
     <MESSAGE value="fix: set session cookie domain for cross-subdomain auth on staging" />
     <MESSAGE value="fix: proxy API requests through nginx and update API base URL handling for staging" />
@@ -710,7 +755,8 @@
     <MESSAGE value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
     <MESSAGE value="feat: add refinance loan functionality and historical penalty migration support" />
     <MESSAGE value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
+    <MESSAGE value="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

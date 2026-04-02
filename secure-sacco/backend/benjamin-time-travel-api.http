@@ -4,10 +4,9 @@
 ### ============================================================
 
 @baseUrl = http://localhost:8080/api/v1
-@adminToken = YOUR_ADMIN_JWT_TOKEN_HERE
 
 ### ============================================================
-### 1. LOGIN AS ADMIN (get JWT token)
+### 1. LOGIN AS ADMIN
 ### ============================================================
 
 POST {{baseUrl}}/auth/login
@@ -24,195 +23,107 @@ Content-Type: application/json
         const match = raw.match(/XSRF-TOKEN=([^;]+)/);
         if (match) client.global.set("csrf_token", match[1]);
         const s = raw.match(/SACCO_SESSION=([^;]+)/);
-        if (s) client.global.set("admin_cookie", "SACCO_SESSION=" + s[1]);
-    }
-    // For JWT-based auth (if using stateless API):
-    if (response.body && response.body.token) {
-        client.global.set("admin_token", response.body.token);
+        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
     }
 %}
 
 ### ============================================================
 ### 2. CHECK INITIAL TIME-TRAVEL STATUS
-### ============================================================
 ### Should show Week 0, Virtual Date = 2022-10-06, Progress = 0%
+### ============================================================
 
 GET {{baseUrl}}/time-travel/status
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+
 
 ### ============================================================
-### 3. RESET SIMULATION (ensure clean state)
+### 3. RESET SIMULATION (Ensure a clean state)
 ### ============================================================
 
 POST {{baseUrl}}/time-travel/reset
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 
 ### ============================================================
 ### 4. ADVANCE TIME BY 4 WEEKS
-### ============================================================
 ### Virtual Date should advance to ~2022-11-03 (4 weeks forward)
+### ============================================================
 
 POST {{baseUrl}}/time-travel/advance?weeks=4
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 
 ### ============================================================
 ### 5. CHECK STATUS AGAIN
+### Should now show Week 4, Virtual Date = 2022-11-03
 ### ============================================================
-### Should now show Week 4, Virtual Date = 2022-11-03, Progress ≈ 2.3%
 
 GET {{baseUrl}}/time-travel/status
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+
 
 ### ============================================================
 ### 6. CHECK PROGRESS PERCENTAGE
 ### ============================================================
 
 GET {{baseUrl}}/time-travel/progress
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+
 
 ### ============================================================
 ### 7. ADVANCE LARGE JUMP (26 weeks = ~6 months virtual)
-### ============================================================
 ### This should get us to ~May 2023 (midway through Loan 1)
+### ============================================================
 
 POST {{baseUrl}}/time-travel/advance?weeks=26
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 
 ### ============================================================
-### 8. QUERY BENJAMIN'S LOAN STATUS AT VIRTUAL DATE
+### 8. GET BENJAMIN'S ACTIVE LOAN
+### Verify the loan state at the current virtual date
 ### ============================================================
-### This endpoint should be implemented to query loan state
-### at the current virtual date (requires additional endpoint)
 
-GET {{baseUrl}}/loans/search?memberNumber=BVL-2022-000001
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+GET {{baseUrl}}/migration/loans/active/BVL-2022-000001
+Cookie: {{sacco_cookie}}
 
-### ============================================================
-### 9. CHECK LOAN SCHEDULE AT CURRENT VIRTUAL TIME
-### ============================================================
-### Shows which installments are DUE, PENDING, PAID, OVERDUE
-
-GET {{baseUrl}}/loans/schedule?memberNumber=BVL-2022-000001
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
 
 ### ============================================================
-### 10. BIG JUMP: Advance to Loan 2 Refinance Date (May 30, 2024)
-### ============================================================
+### 9. BIG JUMP: Advance to Loan 2 Refinance Date (May 30, 2024)
 ### From Week 4 → ~Week 61 (57 weeks forward = ~10 months virtual)
+### ============================================================
 
 POST {{baseUrl}}/time-travel/advance?weeks=57
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 
 ### ============================================================
-### 11. VERIFY REFINANCE IS NOW ELIGIBLE
-### ============================================================
-
-GET {{baseUrl}}/loans/BVL-2022-000001/refinance-eligibility
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### ============================================================
-### 12. JUMP TO LOAN 3 RESTRUCTURE DATE (Oct 10, 2024)
-### ============================================================
+### 10. JUMP TO LOAN 3 RESTRUCTURE DATE (Oct 10, 2024)
 ### Advance another 18 weeks from current position
+### ============================================================
 
 POST {{baseUrl}}/time-travel/advance?weeks=18
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 
 ### ============================================================
-### 13. VERIFY RESTRUCTURE IS ELIGIBLE
-### ============================================================
-
-GET {{baseUrl}}/loans/BVL-2022-000001/restructure-eligibility
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### ============================================================
-### 14. JUMP TO NEAR END OF SIMULATION (Aug 2025)
-### ============================================================
+### 11. JUMP TO NEAR END OF SIMULATION (Aug 2025)
 ### Advance remaining weeks to ~85% complete
+### ============================================================
 
 POST {{baseUrl}}/time-travel/advance?weeks=45
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 
 ### ============================================================
-### 15. FINAL STATUS CHECK (should be near 100%)
+### 12. FINAL STATUS CHECK (should be near 100%)
 ### ============================================================
 
 GET {{baseUrl}}/time-travel/status
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### ============================================================
-### 16. VERIFY ALL LOANS MARKED PAID
-### ============================================================
-
-GET {{baseUrl}}/loans/search?memberNumber=BVL-2022-000001&status=PAID
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### ============================================================
-### 17. RESET AND START OVER
-### ============================================================
-
-POST {{baseUrl}}/time-travel/reset
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### ============================================================
-### AUTOMATED TEST SEQUENCE
-### ============================================================
-### Copy/paste sequence for continuous testing:
-### 1. Reset to start
-### 2. Loop: Advance 4 weeks
-### 3. Verify schedule state
-### 4. Repeat until complete
-
-### Reset
-POST {{baseUrl}}/time-travel/reset
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### Week 4
-POST {{baseUrl}}/time-travel/advance?weeks=4
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### Check Schedule
-GET {{baseUrl}}/loans/schedule?memberNumber=BVL-2022-000001
-Authorization: Bearer {{admin_token}}
-Cookie: {{admin_cookie}}
-
-### ============================================================
-### NOTES
-### ============================================================
-###
-### - Replace {{admin_token}} with actual JWT token from login response
-### - Replace {{admin_cookie}} with actual XSRF + SESSION cookies
-###
-### - Automatic cron job runs every 6 hours and advances 1 week
-###   If you see status unchanged after 6 hours, check backend logs
-###
-### - Virtual date calculation: 2022-10-06 + (weeks * 7 days)
-###   Week 0 = 2022-10-06
-###   Week 1 = 2022-10-13
-###   Week 52 = 2023-10-05
-###   Week 104 = 2024-10-04
-###   Week 170 = 2025-08-28 (end)
-###
-### - To disable automatic progression, comment out @Scheduled in TimeTravelerService
-### - Simulation halts automatically when reaching Aug 28, 2025
-###
-### ============================================================
-
+Cookie: {{sacco_cookie}}

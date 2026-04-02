@@ -1,0 +1,210 @@
+### Benjamin's Ultimate Loan Test with Time-Travel & Penalty Tracking
+### Uses existing Benjamin (BVL-2022-000001) - Tests all 104 installments
+### Location: backend/benjamin-ultimate-test-with-timetravel.http
+
+### ==================== 1. LOGIN ====================
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+  client.global.set("csrf_token", response.body.user.id);
+  // Benjamin already exists - just use his member number
+  client.global.set("member_number", "BVL-2022-000001");
+%}
+
+### ==================== 3. CONFIGURE TIME-TRAVELER ====================
+### Start: Oct 6, 2022 | End: Aug 28, 2025
+### 7 days per tick = Benjamin's entire 3-year cycle
+
+POST http://localhost:8080/api/v1/time-travel/configure
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "startDate": "2022-10-06",
+  "endDate": "2025-08-28",
+  "daysPerTick": 7
+}
+
+### ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================
+
+POST http://localhost:8080/api/v1/migration/loans/disburse
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "{{member_number}}",
+  "loanProductCode": "Historical Smart Loan",
+  "principal": 1000000.00,
+  "interestRate": 20,
+  "termWeeks": 104,
+  "disbursementDate": "2022-10-06",
+  "referenceNumber": "LOAN-BENJAMIN-001"
+}
+
+> {%
+  client.global.set("loan1_id", response.body.id);
+%}
+
+
+### ==================== 5. VERIFY INITIAL SCHEDULE ====================
+
+GET http://localhost:8080/api/v1/loans/schedule?memberNumber={{member_number}}
+
+---
+
+### ==================== 6. CHECK INITIAL STATE (Day 0) ====================
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+### ==================== 7. ADVANCE WEEK 1 (Oct 13, 2022) - INSTALLMENT DUE ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=7
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/loans/schedule?memberNumber={{member_number}}&weekNumber=1
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+
+---
+
+### ==================== 8. ADVANCE WEEK 8 (Nov 24, 2022) - FIRST PENALTY TRIGGERS ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=49
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/loans/schedule?memberNumber={{member_number}}&weekNumber=1
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+# Expected: 20% penalty on week 1 installment
+
+---
+
+### ==================== 9. ADVANCE WEEK 16 (Jan 19, 2023) - 16 WEEKS MISSED ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=56
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+# Expected: Multiple penalties accumulated
+
+---
+
+### ==================== 10. ADVANCE WEEK 26 (Apr 20, 2023) - QUARTER COMPLETE ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=70
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+# Check accumulated penalties
+
+---
+
+### ==================== 11. ADVANCE WEEK 52 (Oct 5, 2023) - HALF WAY ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=182
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/loans/schedule?memberNumber={{member_number}}
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+# Check penalties at halfway point
+
+---
+
+### ==================== 12. ADVANCE WEEK 61 (May 30, 2024) - LOAN 1 NEAR COMPLETE ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=63
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+# Final penalties for Loan 1
+
+---
+
+### ==================== 13. ADVANCE WEEK 104 (Aug 28, 2025) - LOAN COMPLETE ====================
+
+POST http://localhost:8080/api/v1/time-travel/advance?days=301
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+---
+
+GET http://localhost:8080/api/v1/time-travel/status
+
+---
+
+GET http://localhost:8080/api/v1/loans/schedule?memberNumber={{member_number}}
+
+---
+
+GET http://localhost:8080/api/v1/penalties?memberNumber={{member_number}}
+# Final penalty summary
+
+---
+
+### ==================== 14. SUMMARY ====================
+### Loan 1: Oct 6, 2022 → Aug 28, 2025 (104 weeks, 20% penalties for each missed week)
+### Time-travel advances: 7 days per tick = full cycle in ~2 months real time
+### All 104 installments tracked
+### Penalties applied automatically each week when overdue
+
+
+

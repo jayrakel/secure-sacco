@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/time-travel")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN') or hasAuthority('ADMIN')")
+@PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
 public class TimeTravelController {
 
     private final TimeTravelerService timeTravelerService;
