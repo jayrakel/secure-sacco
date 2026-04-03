@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance loan processing with improved cookie handling and penalty evaluation">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/MigrationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/ApiRateLimitFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/ApiRateLimitFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/entity/LoanStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/entity/LoanStatus.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -330,7 +331,7 @@
             <map>
               <entry key="All in benjamin-ultimate-test" value="STOPPED" />
               <entry key="All in benjamin-ultimate-test (1)" value="STOPPED" />
-              <entry key="benjamin-ultimate-test | #82" value="STOPPED" />
+              <entry key="All in benjamin-ultimate-test (2)" value="STOPPED" />
               <entry key="benjamin-ultimate-test | #83" value="STOPPED" />
               <entry key="benjamin-ultimate-test | #84" value="STOPPED" />
             </map>
@@ -350,16 +351,16 @@
     <configuration name="All in benjamin-ultimate-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
       <method v="2" />
     </configuration>
+    <configuration name="All in benjamin-ultimate-test (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="All in benjamin-ultimate-test (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
+      <method v="2" />
+    </configuration>
     <configuration name="All in benjamin-ultimate-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
-      <method v="2" />
-    </configuration>
-    <configuration name="benjamin-ultimate-test | #82" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="#82" index="82" runType="Run single request">
-      <method v="2" />
-    </configuration>
-    <configuration name="benjamin-ultimate-test | #83" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="#83" index="83" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration name="benjamin-ultimate-test | #84" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" executionIdentifier="#84" index="84" runType="Run single request">
@@ -382,18 +383,18 @@
     <list>
       <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
       <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
-      <item itemvalue="HTTP Request.benjamin-ultimate-test | #82" />
-      <item itemvalue="HTTP Request.benjamin-ultimate-test | #83" />
+      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
+      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (3)" />
       <item itemvalue="HTTP Request.benjamin-ultimate-test | #84" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (3)" />
+        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
         <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
         <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
         <item itemvalue="HTTP Request.benjamin-ultimate-test | #84" />
-        <item itemvalue="HTTP Request.benjamin-ultimate-test | #83" />
-        <item itemvalue="HTTP Request.benjamin-ultimate-test | #82" />
       </list>
     </recent_temporary>
   </component>
@@ -783,7 +784,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775164976195</updated>
     </task>
-    <option name="localTasksCounter" value="45" />
+    <task id="LOCAL-00045" summary="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response">
+      <option name="closed" value="true" />
+      <created>1775171632566</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1775171632566</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -801,7 +810,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: set session cookie domain for cross-subdomain auth on staging" />
     <MESSAGE value="fix: proxy API requests through nginx and update API base URL handling for staging" />
     <MESSAGE value="fix: add mail server environment variables to production docker compose" />
     <MESSAGE value="fix: improve journal entries API response parsing for safer type handling" />
@@ -826,7 +834,8 @@
     <MESSAGE value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
     <MESSAGE value="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration" />
     <MESSAGE value="feat: enhance loan processing with improved cookie handling and penalty evaluation" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance loan processing with improved cookie handling and penalty evaluation" />
+    <MESSAGE value="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

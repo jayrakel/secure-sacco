@@ -227,7 +227,8 @@ public class LoanRepaymentService {
                 }
             }
 
-            if (item.getPrincipalPaid().add(item.getInterestPaid()).compareTo(item.getTotalDue()) >= 0) {
+            BigDecimal totalPaidOnItem = item.getPrincipalPaid().add(item.getInterestPaid());
+            if (item.getTotalDue().subtract(totalPaidOnItem).compareTo(BigDecimal.valueOf(1.00)) <= 0) {
                 item.setStatus(LoanScheduleStatus.PAID);
             }
         }
@@ -237,7 +238,16 @@ public class LoanRepaymentService {
 
         java.util.List<LoanScheduleItem> allItems = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(app.getId());
         if (allItems.stream().allMatch(i -> i.getStatus() == LoanScheduleStatus.PAID)) {
-            app.setStatus(LoanStatus.CLOSED);
+            if (app.getStatus() != LoanStatus.REFINANCED && app.getStatus() != LoanStatus.RESTRUCTURED) {
+                app.setStatus(LoanStatus.CLOSED);
+
+                Member member = memberRepository.findById(app.getMemberId()).orElseThrow();
+                securityAuditService.logEvent(
+                        "LOAN_CLOSED",
+                        member.getMemberNumber(),
+                        "Loan fully repaid and closed. Ref: LOAN-" + app.getId().toString()
+                );
+            }
         }
         loanApplicationRepository.save(app);
 

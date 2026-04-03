@@ -284,8 +284,12 @@ public class LoanApplicationService {
                 .map(item -> item.getTotalDue().subtract(item.getPrincipalPaid()).subtract(item.getInterestPaid()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 3. Mark old loan as CLOSED
-        oldLoan.setStatus(LoanStatus.CLOSED);
+        // 3. Explicitly define the business outcome of the old loan
+        if (request.topUpAmount().compareTo(BigDecimal.ZERO) > 0) {
+            oldLoan.setStatus(LoanStatus.REFINANCED);
+        } else {
+            oldLoan.setStatus(LoanStatus.RESTRUCTURED);
+        }
         loanApplicationRepository.save(oldLoan);
 
         // 4. Create the New Consolidated Loan

@@ -542,7 +542,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 { "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2024-05-09", "referenceNumber": "BEN-L1-REP-061" }
 
 ### ============================================================
-### LOAN 2: REFINANCE (Top-Up KES 300,000) | May 2024 | 104 weeks
+### LOAN 2: REFINANCE (Top-Up KES 300,000) | May 2024 | 20 weeks
 ### ============================================================
 
 ###
@@ -555,7 +555,7 @@ X-XSRF-TOKEN: {{csrf_token}}
   "oldLoanId": "{{loan1_id}}",
   "loanProductCode": "Historical Smart Loan",
   "topUpAmount": 300000.00,
-  "newTermWeeks": 104,
+  "newTermWeeks": 20,
   "referenceNumber": "MIG-BEN-L2-REF",
   "historicalDateOverride": "2024-05-30"
 }

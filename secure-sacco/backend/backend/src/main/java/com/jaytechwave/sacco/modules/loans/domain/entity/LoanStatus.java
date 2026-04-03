@@ -11,5 +11,7 @@ public enum LoanStatus {
     IN_GRACE,
     ACTIVE,               // Disbursed
     CLOSED,               // Fully paid
-    DEFAULTED
+    DEFAULTED,
+    REFINANCED,   // loan was topped-up
+    RESTRUCTURED
 }
