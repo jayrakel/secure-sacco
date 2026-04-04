@@ -14,6 +14,7 @@ import java.util.UUID;
 @Repository
 public interface LoanApplicationRepository extends JpaRepository<LoanApplication, UUID> {
     List<LoanApplication> findByMemberIdOrderByCreatedAtDesc(UUID memberId);
+    Optional<LoanApplication> findByMemberIdAndStatus (UUID memberId, LoanStatus status);
     Optional<LoanApplication> findFirstByMemberIdAndStatusOrderByCreatedAtDesc(UUID memberId, LoanStatus status);
     List<LoanApplication> findByStatus(LoanStatus status);
     Page<LoanApplication> findByStatus(LoanStatus status, Pageable pageable);

@@ -3491,6 +3491,14 @@ Content-Type: application/json
 Cookie: {{sacco_cookie}}
 X-XSRF-TOKEN: {{csrf_token}}
 
+{ "memberNumber": "BVL-2022-000003", "amount": 500.00, "referenceNumber": "PTR-CHA-2025-03-20", "transactionDate": "2025-03-20" }
+
+###
+POST {{api_url}}/api/v1/migration/savings
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
 { "memberNumber": "BVL-2022-000003", "amount": 1000.00, "referenceNumber": "PTR-CHA-2025-03-27", "transactionDate": "2025-03-27" }
 
 ###

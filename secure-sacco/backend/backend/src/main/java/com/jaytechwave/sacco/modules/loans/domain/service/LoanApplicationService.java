@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.loans.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs.*;
 import com.jaytechwave.sacco.modules.loans.domain.entity.*;
 import com.jaytechwave.sacco.modules.loans.domain.repository.*;
@@ -16,9 +17,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,6 +42,8 @@ public class LoanApplicationService {
     private final JournalEntryService journalEntryService;
     private final LoanScheduleService loanScheduleService;
     private final SecurityAuditService securityAuditService;
+    private final LoanScheduleItemRepository scheduleItemRepository;
+    private final JdbcTemplate jdbcTemplate; // ← ADDED: needed for created_at backdating
 
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
@@ -260,6 +267,141 @@ public class LoanApplicationService {
     }
 
     @Transactional
+    public LoanApplicationResponse refinanceLoan(LoanDTOs.RefinanceRequest request, String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail).orElseThrow();
+
+        // 1. Fetch Old Loan & Member
+        LoanApplication oldLoan = loanApplicationRepository.findById(request.oldLoanId())
+                .orElseThrow(() -> new IllegalArgumentException("Old loan not found"));
+
+        if (oldLoan.getStatus() != LoanStatus.ACTIVE && oldLoan.getStatus() != LoanStatus.IN_GRACE) {
+            throw new IllegalStateException("Only active loans can be refinanced.");
+        }
+
+        Member member = memberRepository.findById(oldLoan.getMemberId()).orElseThrow();
+
+        // 2. Calculate exactly what is left to pay on the old loan (Principal + Interest)
+        List<LoanScheduleItem> oldSchedule = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(oldLoan.getId());
+        BigDecimal oldLoanBalance = oldSchedule.stream()
+                .filter(item -> item.getStatus() != LoanScheduleStatus.PAID)
+                .map(item -> item.getTotalDue().subtract(item.getPrincipalPaid()).subtract(item.getInterestPaid()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 3. Explicitly define the business outcome of the old loan
+        if (request.topUpAmount().compareTo(BigDecimal.ZERO) > 0) {
+            oldLoan.setStatus(LoanStatus.REFINANCED);
+        } else {
+            oldLoan.setStatus(LoanStatus.RESTRUCTURED);
+        }
+        loanApplicationRepository.save(oldLoan);
+
+        // 4. Create the New Consolidated Loan
+        LoanProduct product = loanProductRepository.findByName(request.loanProductCode()).orElseThrow();
+        BigDecimal newPrincipal = oldLoanBalance.add(request.topUpAmount());
+
+        LoanApplication newLoan = LoanApplication.builder()
+                .memberId(member.getId())
+                .loanProduct(product)
+                .principalAmount(newPrincipal)
+                .termWeeks(request.newTermWeeks())
+                .status(LoanStatus.ACTIVE)
+                .disbursedBy(admin.getId())
+                .applicationFee(BigDecimal.ZERO)
+                .applicationFeePaid(true)
+                .disbursedAt(request.historicalDateOverride() != null ?
+                        request.historicalDateOverride().atStartOfDay() : LocalDateTime.now())
+                .build();
+
+        newLoan = loanApplicationRepository.save(newLoan);
+
+        // 5. Generate the new schedule
+        loanScheduleService.generateWeeklySchedule(newLoan);
+
+// 5a. 🚨 GRACE PERIOD FIX: Refinanced/restructured loans should NOT have a grace
+//     period. The generateWeeklySchedule uses the product's grace period to push
+//     the first due date forward. Shift it back immediately.
+        int graceDays = product.getGracePeriodDays();
+        if (graceDays > 0) {
+            jdbcTemplate.update(
+                    "UPDATE loan_schedule_items " +
+                            "SET due_date = due_date - INTERVAL '" + graceDays + " days' " +
+                            "WHERE loan_application_id = ?",
+                    newLoan.getId());
+            log.info("⚙️  Shifted schedule back {} days (grace period removed) for refinanced loan {}",
+                    graceDays, newLoan.getId());
+        }
+
+        // 5b. SCHEDULE OVERRIDE: If interestOverride provided, rewrite schedule
+        //     with the exact historical interest (e.g. 5% on top-up only)
+        if (request.interestOverride() != null
+                && request.interestOverride().compareTo(BigDecimal.ZERO) > 0) {
+
+            int termWeeks = request.newTermWeeks();
+            BigDecimal totalInterest = request.interestOverride();
+
+            BigDecimal principalPerWeek = newPrincipal
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal interestPerWeek = totalInterest
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+
+            BigDecimal principalAccumulated = BigDecimal.ZERO;
+            BigDecimal interestAccumulated = BigDecimal.ZERO;
+
+            List<LoanScheduleItem> items = scheduleItemRepository
+                    .findByLoanApplicationIdOrderByWeekNumberAsc(newLoan.getId());
+
+            for (int i = 0; i < items.size(); i++) {
+                LoanScheduleItem item = items.get(i);
+                boolean isLast = (i == items.size() - 1);
+
+                BigDecimal p = isLast ? newPrincipal.subtract(principalAccumulated) : principalPerWeek;
+                BigDecimal ir = isLast ? totalInterest.subtract(interestAccumulated) : interestPerWeek;
+
+                item.setPrincipalDue(p);
+                item.setInterestDue(ir);
+                item.setTotalDue(p.add(ir));
+                scheduleItemRepository.save(item);
+
+                principalAccumulated = principalAccumulated.add(p);
+                interestAccumulated = interestAccumulated.add(ir);
+            }
+            log.info("✅ Refinance schedule overridden. Principal={}, InterestOverride={}", newPrincipal, totalInterest);
+        }
+
+        // 5c. 🚨 TIME MACHINE: If a historical date was provided, backdate created_at on the
+        //     new loan so the UI shows the correct "Disbursed On" date instead of today.
+        //     @CreationTimestamp always writes the real wall-clock time — JDBC is the only way
+        //     to override it after the fact.
+        if (request.historicalDateOverride() != null) {
+            Timestamp historicalTs = Timestamp.valueOf(
+                    request.historicalDateOverride().atStartOfDay());
+            jdbcTemplate.update(
+                    "UPDATE loan_applications SET created_at = ?, updated_at = ? WHERE id = ?",
+                    historicalTs, historicalTs, newLoan.getId());
+            log.info("⏮️  Backdated new loan {} created_at → {}", newLoan.getId(), request.historicalDateOverride());
+        }
+
+        // 6. Post Accounting (Net Cash)
+        journalEntryService.postLoanRefinance(
+                member.getId(),
+                oldLoanBalance,
+                newPrincipal,
+                request.topUpAmount(), // The net cash disbursed
+                request.referenceNumber()
+        );
+
+        // 7. Audit Logging
+        securityAuditService.logEvent(
+                "LOAN_REFINANCED",
+                member.getMemberNumber(),
+                "Refinanced Loan " + oldLoan.getId() + ". Old Balance: KES " + oldLoanBalance +
+                        ", Top-Up: KES " + request.topUpAmount() + ", New Face Value: KES " + newPrincipal
+        );
+
+        return mapToResponse(newLoan);
+    }
+
+    @Transactional
     public LoanApplicationResponse disburseApplication(UUID applicationId, String email) {
         User treasurer = userRepository.findByEmail(email).orElseThrow();
         LoanApplication app = loanApplicationRepository.findById(applicationId)
@@ -383,4 +525,3 @@ public class LoanApplicationService {
         );
     }
 }
-

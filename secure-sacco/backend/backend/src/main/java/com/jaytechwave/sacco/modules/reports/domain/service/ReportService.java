@@ -108,7 +108,7 @@ public class ReportService {
                     la.id::varchar AS reference,
                     'Loan Disbursement' AS description
                 FROM loan_applications la
-                WHERE la.member_id = ? AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED', 'CLOSED')
+                WHERE la.member_id = ? AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED', 'CLOSED', 'REFINED', 'RESTRUCTURED')
                 
                 UNION ALL
                 

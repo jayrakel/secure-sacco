@@ -41,7 +41,6 @@ public class PenaltyService {
         // 1. STRICT IDEMPOTENCY CHECK
         String idempotencyKey = "MISS-" + event.scheduleItemId().toString();
         if (penaltyAccrualRepository.existsByIdempotencyKey(idempotencyKey)) {
-            log.info("Idempotency hit: Penalty already generated for schedule item {}", event.scheduleItemId());
             return;
         }
 
@@ -51,11 +50,15 @@ public class PenaltyService {
 
         LoanApplication app = loanApplicationRepository.findById(event.loanApplicationId()).orElseThrow();
 
+        // 🚨 FIX 1: CLIENT REQUEST - Calculate 20% ONLY on the leftover balance (shortfall)
         BigDecimal penaltyAmount = rule.getBaseAmountType() == AmountType.FIXED ?
                 rule.getBaseAmountValue() :
                 event.shortfallAmount().multiply(rule.getBaseAmountValue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
         if (penaltyAmount.compareTo(BigDecimal.ZERO) <= 0) return;
+
+        // 🚨 FIX 2: HISTORICAL DATE - Determine the exact day the penalty was incurred
+        java.time.LocalDateTime historicalPenaltyDate = event.dueDate().plusDays(1).atStartOfDay();
 
         // 2. Create the Header
         Penalty penalty = Penalty.builder()
@@ -65,27 +68,31 @@ public class PenaltyService {
                 .penaltyRule(rule)
                 .originalAmount(penaltyAmount)
                 .outstandingAmount(penaltyAmount)
+                .principalPaid(BigDecimal.ZERO)
+                .interestPaid(BigDecimal.ZERO)
+                .amountWaived(BigDecimal.ZERO)
                 .status(PenaltyStatus.OPEN)
+                .createdAt(historicalPenaltyDate)
                 .build();
 
         // 3. Create the Immutable Accrual Line Item
-        UUID tempAccrualId = UUID.randomUUID(); // Generate early to strictly link the GL Journal
+        UUID tempAccrualId = UUID.randomUUID();
         PenaltyAccrual accrual = PenaltyAccrual.builder()
-                .id(tempAccrualId)
+                // ID removed to allow Hibernate auto-generation
                 .accrualKind(AccrualKind.PRINCIPAL)
                 .amount(penaltyAmount)
-                .accruedAt(java.time.LocalDateTime.now())
+                .accruedAt(historicalPenaltyDate) // Set exact historical date in the DB
                 .idempotencyKey(idempotencyKey)
                 .journalReference("PENC-" + tempAccrualId.toString())
                 .build();
 
         penalty.addAccrual(accrual);
-        penaltyRepository.save(penalty); // Cascade perfectly saves the accrual!
+        penaltyRepository.save(penalty);
 
         // 4. Post to the GL to maintain immutable accounting
         journalEntryService.postPenaltyCreation(app.getMemberId(), penaltyAmount, tempAccrualId.toString());
 
-        log.info("Applied ledger-backed {} penalty to Member {}. Amount: {}", rule.getCode(), app.getMemberId(), penaltyAmount);
+        log.info("Applied ledger-backed {} penalty to Member {}. Amount: {} on {}", rule.getCode(), app.getMemberId(), penaltyAmount, historicalPenaltyDate);
     }
 
     @Transactional
@@ -140,7 +147,6 @@ public class PenaltyService {
                     if (!penaltyAccrualRepository.existsByIdempotencyKey(idempotencyKey)) {
                         UUID accrualId = UUID.randomUUID();
                         PenaltyAccrual accrual = PenaltyAccrual.builder()
-                                .id(accrualId)
                                 .accrualKind(AccrualKind.INTEREST)
                                 .amount(interestAmount)
                                 .accruedAt(java.time.LocalDateTime.now())

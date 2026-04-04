@@ -7,10 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -53,12 +50,54 @@ public class MigrationController {
     }
 
     @PostMapping("/loans/disburse")
-    public ResponseEntity<String> migrateLoanDisbursement(@RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
-        return ResponseEntity.ok(migrationService.seedHistoricalLoanDisbursement(request));
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> migrateLoanDisbursement(
+            @RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
+        String loanId = migrationService.seedHistoricalLoanDisbursement(request);
+        return ResponseEntity.ok(Map.of("id", loanId));
     }
 
     @PostMapping("/loans/repay")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<String> migrateLoanRepayment(@RequestBody HistoricalLoanDTOs.HistoricalLoanRepaymentRequest request) {
         return ResponseEntity.ok(migrationService.seedHistoricalLoanRepayment(request));
+    }
+
+    // The DTO for the Penalty Request
+    public record HistoricalPenaltyRequest(
+            String memberNumber,
+            java.math.BigDecimal amount,
+            java.time.LocalDate penaltyDate,
+            String referenceNumber
+    ) {}
+
+    // The Endpoint
+    @PostMapping("/penalties/apply")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> applyHistoricalPenalty(@RequestBody HistoricalPenaltyRequest request) {
+        migrationService.migrateHistoricalPenalty(
+                request.memberNumber(),
+                request.amount(),
+                request.penaltyDate(),
+                request.referenceNumber()
+        );
+        return ResponseEntity.ok(Map.of(
+                "message", "Historical penalty applied successfully"
+        ));
+    }
+
+    @GetMapping("/loans/active/{memberNumber}")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> getActiveLoanId(@PathVariable String memberNumber) {
+        String loanId = migrationService.getActiveLoanIdByMemberNumber(memberNumber);
+        return ResponseEntity.ok(Map.of("id", loanId));
+    }
+
+    public record CronRequest(java.time.LocalDate evaluationDate) {}
+
+    @PostMapping("/cron/evaluate-penalties")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Object>> runTimeMachineCron(@RequestBody CronRequest request) {
+        return ResponseEntity.ok(migrationService.evaluatePenaltiesUpToDate(request.evaluationDate()));
     }
 }
