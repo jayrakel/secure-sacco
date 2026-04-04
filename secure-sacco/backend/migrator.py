@@ -6,8 +6,8 @@ import time
 # ==========================================
 # CONFIGURATION
 # ==========================================
-BASE_URL = "http://localhost:8080/api/v1"
-EMAIL = "jaytechwavesolutions@gmail.com"
+BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1/"
+EMAIL = "admin@jaytechwavesolutions.co.ke"
 PASSWORD = "Michira._2000"
 CSV_FILE = "Statement_BVL-2022-000001_all (1).csv"
 MEMBER_NUMBER = "BVL-2022-000001"

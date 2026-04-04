@@ -29,13 +29,13 @@ def login():
 def get_headers():
     return {"Content-Type": "application/json", "X-XSRF-TOKEN": csrf_token}
 
-def wipe_member_data(member_number):
-    print(f"  🧹 Wiping previous migration data for {member_number}...")
-    res = session.delete(f"{BASE_URL}/migration/cleanup/{member_number}", headers=get_headers())
-    if res.status_code == 200:
-        print("  ✅ Cleanup successful. Clean slate achieved.")
-    else:
-        print(f"  ⚠️ Cleanup warning: {res.text}")
+# def wipe_member_data(member_number):
+#     print(f"  🧹 Wiping previous migration data for {member_number}...")
+#     res = session.delete(f"{BASE_URL}/migration/cleanup/{member_number}", headers=get_headers())
+#     if res.status_code == 200:
+#         print("  ✅ Cleanup successful. Clean slate achieved.")
+#     else:
+#         print(f"  ⚠️ Cleanup warning: {res.text}")
 
 def configure_time_traveler(start_date, end_date):
     global current_virtual_date
@@ -98,7 +98,7 @@ def migrate_salesio():
     member = "BVL-2022-000002"
     print(f"\n{'='*60}\n🚀 MIGRATING: Salesio Mwiraria ({member})\n{'='*60}")
 
-    wipe_member_data(member)
+    # wipe_member_data(member)
     configure_time_traveler("2023-01-12", "2025-11-20")
 
     # 1. DISBURSE INITIAL LOAN

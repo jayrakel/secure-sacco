@@ -4,13 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update loan refinancing logic and adjust loan term duration in test configurations">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/Statement_BVL-2022-000002_all.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_cha.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_sal.py" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: implement migration scripts for loan processing and data handling">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/reports/domain/service/ReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/reports/domain/service/ReportService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanRepaymentServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrator_cha.py" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_cha.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrator_sal.py" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_sal.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -426,7 +428,7 @@
       <workItem from="1775021039419" duration="11604000" />
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
-      <workItem from="1775309966859" duration="5559000" />
+      <workItem from="1775309966859" duration="11427000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -804,7 +806,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775279860281</updated>
     </task>
-    <option name="localTasksCounter" value="48" />
+    <task id="LOCAL-00048" summary="feat: implement migration scripts for loan processing and data handling">
+      <option name="closed" value="true" />
+      <created>1775335387822</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1775335387822</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -825,7 +835,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: add mail server environment variables to production docker compose" />
     <MESSAGE value="fix: improve journal entries API response parsing for safer type handling" />
     <MESSAGE value="fix: update nginx API proxy to route /api requests directly to backend root and clarify config comments" />
     <MESSAGE value="fix: ensure totalOverdue and totalShortfall calculations handle undefined data content safely" />
@@ -850,7 +859,8 @@
     <MESSAGE value="feat: enhance loan processing with improved cookie handling and penalty evaluation" />
     <MESSAGE value="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response" />
     <MESSAGE value="feat: update loan refinancing logic and adjust loan term duration in test configurations" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: update loan refinancing logic and adjust loan term duration in test configurations" />
+    <MESSAGE value="feat: implement migration scripts for loan processing and data handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: implement migration scripts for loan processing and data handling" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

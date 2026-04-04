@@ -35,11 +35,34 @@ def get_headers():
     return {"Content-Type": "application/json", "X-XSRF-TOKEN": csrf_token}
 
 # ==========================================
+# SMART RATE LIMITER (THE FIX)
+# ==========================================
+def make_safe_request(method, url, **kwargs):
+    time.sleep(0.3) # Small delay to reduce chance of hitting rate limits
+    while True:
+        if method.upper() == 'POST':
+            res = session.post(url, **kwargs)
+        elif method.upper() == 'DELETE':
+            res = session.delete(url, **kwargs)
+        else:
+            res = session.get(url, **kwargs)
+
+        if res.status_code == 429:
+            try:
+                retry_after = int(res.json().get('retryAfter', 3))
+            except:
+                retry_after = 3
+            print(f"    ⏳ [RATE LIMIT] Backend needs a breather. Pausing for {retry_after} seconds...")
+            time.sleep(retry_after + 0.5) # Add half a second buffer
+        else:
+            return res
+
+# ==========================================
 # TIME TRAVEL ENGINE
 # ==========================================
-def wipe_member_data():
-    print(f"\n🧹 Wiping previous migration data for {MEMBER_NUMBER}...")
-    session.delete(f"{BASE_URL}/migration/cleanup/{MEMBER_NUMBER}", headers=get_headers())
+# def wipe_member_data():
+#     print(f"\n🧹 Wiping previous migration data for {MEMBER_NUMBER}...")
+#     make_safe_request('DELETE', f"{BASE_URL}/migration/cleanup/{MEMBER_NUMBER}", headers=get_headers())
 
 def jump_to_date(target_date_str, date_format="%d %b %Y"):
     global current_virtual_date
@@ -48,7 +71,7 @@ def jump_to_date(target_date_str, date_format="%d %b %Y"):
 
     if delta > 0:
         print(f"  🕰️ Advancing clock by {delta} days to {target_date.strftime('%Y-%m-%d')}...")
-        response = session.post(f"{BASE_URL}/time-travel/advance?days={delta}", headers=get_headers())
+        response = make_safe_request('POST', f"{BASE_URL}/time-travel/advance?days={delta}", headers=get_headers())
         if response.status_code == 200:
             current_virtual_date = target_date
             time.sleep(1) # Let cron finish
@@ -68,11 +91,11 @@ def disburse_initial_loan():
         "principal": 155752.00,
         "interest": 31150.40,
         "weeklyScheduled": 1797.14,
-        "firstPaymentDate": "2022-09-29", # 🟢 THE FIX: 28 Days after 01-Sep-2022
+        "firstPaymentDate": "2022-09-08", # 28 Days Grace Period
         "termWeeks": 104,
         "referenceNumber": "MIG-CHA-L1-DISB"
     }
-    res = session.post(f"{BASE_URL}/migration/loans/disburse", json=payload, headers=get_headers())
+    res = make_safe_request('POST', f"{BASE_URL}/migration/loans/disburse", json=payload, headers=get_headers())
     if res.status_code == 200:
         active_loan_id = res.json().get('id', res.text.strip().strip('"'))
         print("✅ Loan 1 Disbursed!")
@@ -91,9 +114,9 @@ def refinance_loan_2():
         "newTermWeeks": 156,
         "referenceNumber": "MIG-CHA-L2-REF",
         "historicalDateOverride": "2023-09-07",
-        "firstPaymentDate": "2023-10-05" # 🟢 THE FIX: 28 Days after 07-Sep-2023
+        "firstPaymentDate": "2023-09-14"
     }
-    res = session.post(f"{BASE_URL}/loans/applications/refinance", json=payload, headers=get_headers())
+    res = make_safe_request('POST', f"{BASE_URL}/loans/applications/refinance", json=payload, headers=get_headers())
     if res.status_code == 200:
         active_loan_id = res.json().get('id', res.text.strip().strip('"'))
         print("✅ Refinanced to Loan 2!")
@@ -109,22 +132,22 @@ def restructure_loan_3():
         "newTermWeeks": 156,
         "referenceNumber": "MIG-CHA-L3-REF",
         "historicalDateOverride": "2024-01-04",
-        "firstPaymentDate": "2024-02-01" # 🟢 THE FIX: 28 Days after 04-Jan-2024
+        "firstPaymentDate": "2024-01-11"
     }
-    res = session.post(f"{BASE_URL}/loans/applications/refinance", json=payload, headers=get_headers())
+    res = make_safe_request('POST', f"{BASE_URL}/loans/applications/refinance", json=payload, headers=get_headers())
     if res.status_code == 200:
         active_loan_id = res.json().get('id', res.text.strip().strip('"'))
         print("✅ Restructured to Loan 3!")
 
 def submit_payment(api_date, amount, ref):
     print(f"  💵 Submitting Loan Repayment: KES {amount} on {api_date}")
-    session.post(f"{BASE_URL}/migration/loans/repay", json={
+    make_safe_request('POST', f"{BASE_URL}/migration/loans/repay", json={
         "memberNumber": MEMBER_NUMBER, "amount": amount, "transactionDate": api_date, "referenceNumber": ref
     }, headers=get_headers())
 
 def submit_penalty(api_date, amount, ref):
     print(f"  🚨 Submitting Penalty Fine: KES {amount} on {api_date}")
-    session.post(f"{BASE_URL}/penalties/repay", json={
+    make_safe_request('POST', f"{BASE_URL}/penalties/repay", json={
         "memberNumber": MEMBER_NUMBER, "amount": amount, "transactionDate": api_date, "referenceNumber": ref
     }, headers=get_headers())
 
@@ -133,11 +156,11 @@ def submit_penalty(api_date, amount, ref):
 # ==========================================
 if __name__ == "__main__":
     login()
-    wipe_member_data()
+    # wipe_member_data()
 
     # 1. Reset and Configure Time Traveler
-    session.post(f"{BASE_URL}/time-travel/configure", json={"startDate": "2022-08-01", "endDate": "2025-11-20", "daysPerTick": 7}, headers=get_headers())
-    session.post(f"{BASE_URL}/time-travel/reset", headers=get_headers())
+    make_safe_request('POST', f"{BASE_URL}/time-travel/configure", json={"startDate": "2022-08-01", "endDate": "2025-11-20", "daysPerTick": 7}, headers=get_headers())
+    make_safe_request('POST', f"{BASE_URL}/time-travel/reset", headers=get_headers())
 
     # 2. Start the journey
     disburse_initial_loan()

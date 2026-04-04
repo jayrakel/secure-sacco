@@ -17,10 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,7 @@ public class LoanApplicationService {
     private final LoanScheduleService loanScheduleService;
     private final SecurityAuditService securityAuditService;
     private final LoanScheduleItemRepository scheduleItemRepository;
+    private final JdbcTemplate jdbcTemplate; // ← ADDED: needed for created_at backdating
 
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
@@ -314,8 +317,22 @@ public class LoanApplicationService {
         // 5. Generate the new schedule
         loanScheduleService.generateWeeklySchedule(newLoan);
 
+// 5a. 🚨 GRACE PERIOD FIX: Refinanced/restructured loans should NOT have a grace
+//     period. The generateWeeklySchedule uses the product's grace period to push
+//     the first due date forward. Shift it back immediately.
+        int graceDays = product.getGracePeriodDays();
+        if (graceDays > 0) {
+            jdbcTemplate.update(
+                    "UPDATE loan_schedule_items " +
+                            "SET due_date = due_date - INTERVAL '" + graceDays + " days' " +
+                            "WHERE loan_application_id = ?",
+                    newLoan.getId());
+            log.info("⚙️  Shifted schedule back {} days (grace period removed) for refinanced loan {}",
+                    graceDays, newLoan.getId());
+        }
+
         // 5b. SCHEDULE OVERRIDE: If interestOverride provided, rewrite schedule
-//     with the exact historical interest (e.g. 5% on top-up only)
+        //     with the exact historical interest (e.g. 5% on top-up only)
         if (request.interestOverride() != null
                 && request.interestOverride().compareTo(BigDecimal.ZERO) > 0) {
 
@@ -349,6 +366,19 @@ public class LoanApplicationService {
                 interestAccumulated = interestAccumulated.add(ir);
             }
             log.info("✅ Refinance schedule overridden. Principal={}, InterestOverride={}", newPrincipal, totalInterest);
+        }
+
+        // 5c. 🚨 TIME MACHINE: If a historical date was provided, backdate created_at on the
+        //     new loan so the UI shows the correct "Disbursed On" date instead of today.
+        //     @CreationTimestamp always writes the real wall-clock time — JDBC is the only way
+        //     to override it after the fact.
+        if (request.historicalDateOverride() != null) {
+            Timestamp historicalTs = Timestamp.valueOf(
+                    request.historicalDateOverride().atStartOfDay());
+            jdbcTemplate.update(
+                    "UPDATE loan_applications SET created_at = ?, updated_at = ? WHERE id = ?",
+                    historicalTs, historicalTs, newLoan.getId());
+            log.info("⏮️  Backdated new loan {} created_at → {}", newLoan.getId(), request.historicalDateOverride());
         }
 
         // 6. Post Accounting (Net Cash)
@@ -495,4 +525,3 @@ public class LoanApplicationService {
         );
     }
 }
-
