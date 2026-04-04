@@ -5,70 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update loan refinancing logic and adjust loan term duration in test configurations">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/cron-proof.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/loans-seeder-2.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/docs/SYSTEM_WIDE_QUICK_REF.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/docs/SYSTEM_WIDE_QUICK_START.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/Statement_BVL-2022-000002_all.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_cha.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_sal.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/00_START_HERE.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/00_START_HERE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/AGENTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BENJAMIN_LOAN_PENALTY_TEST.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/BENJAMIN_LOAN_PENALTY_TEST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CODEBASE_AUDIT_REPORT.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/CODEBASE_AUDIT_REPORT.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/COMPLETE_104_WEEK_TEST.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/COMPLETE_104_WEEK_TEST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DEVELOPER_GUIDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/DEVELOPER_GUIDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/FIXED_LOAN_DISBURSEMENT.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/FIXED_LOAN_DISBURSEMENT.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/FIX_403_ERROR.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/FIX_403_ERROR.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/FRESH_ACTIVE_LOANS_TEST.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/FRESH_ACTIVE_LOANS_TEST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PENALTY_TEST_NO_JQ.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/PENALTY_TEST_NO_JQ.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/QUICK_START_PENALTY_TEST.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/QUICK_START_PENALTY_TEST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SIMPLIFIED_NO_MEMBER_CREATION.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/SIMPLIFIED_NO_MEMBER_CREATION.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SOLUTION_SEED_PRODUCTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/SOLUTION_SEED_PRODUCTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TROUBLESHOOT_LOAD_DATA.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/TROUBLESHOOT_LOAD_DATA.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USE_HTTP_FILE_INSTEAD.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/USE_HTTP_FILE_INSTEAD.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/COMPLETION_CHECKLIST.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/COMPLETION_CHECKLIST.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/DELIVERABLES.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/DELIVERABLES.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/IMPLEMENTATION_SUMMARY.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/IMPLEMENTATION_SUMMARY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/INDEX.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/INDEX.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_REF.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/Statement_BVL-2022-000001_all (1).csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_START.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/benjamin-loan-seeder-with-cron.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/TIME_TRAVELER_QUICK_REFERENCE.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/TIME_TRAVELER_QUICK_REFERENCE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/TIME_TRAVELER_README.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/TIME_TRAVELER_README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/VISUAL_SUMMARY.md" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/VISUAL_SUMMARY.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/advanced_diagnostic.sh" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/advanced_diagnostic.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MigrationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/entity/InterestMode.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/entity/InterestMode.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/service/PenaltyService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/service/PenaltyService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/base-balances-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/base-balances-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/benjamin-savings-seed.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-time-travel-api.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/benjamin-time-travel-api.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test-with-timetravel.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/benjamin-ultimate-test-with-timetravel.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/loans-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/benjamin_complete_test.sh" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/benjamin_complete_test.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/better_diagnostic.sh" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/better_diagnostic.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/members-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/diagnose.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/gideon-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/savings-seeder.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/moses-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/seed_loan_products.sh" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/docs/seed_loan_products.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/stephen-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/tarcisio-savings-seeder.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/pages/MyLoansPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/pages/MyLoansPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,12 +40,18 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="jayrakel &lt;gesorajonathan@gmail.com&gt;" />
+      </list>
+    </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="main" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="SIGN_OFF_COMMIT" value="true" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -137,6 +85,9 @@
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
 }</component>
+  <component name="MaliciousPackageCheckinHandlerState">
+    <option name="packageCheck" value="true" />
+  </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -147,6 +98,9 @@
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
@@ -202,6 +156,7 @@
     &quot;HTTP Request.All in jacob-savings-seeder.executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.All in kimere-savings-seeder (1).executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.All in kimere-savings-seeder.executor&quot;: &quot;Run&quot;,
+    &quot;HTTP Request.All in members-seeder.executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.All in migration_loans (1).executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.All in migration_loans.executor&quot;: &quot;Run&quot;,
     &quot;HTTP Request.All in migrations-seeder-corrected (1).executor&quot;: &quot;Run&quot;,
@@ -346,9 +301,11 @@
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;SHELLCHECK.PATH&quot;: &quot;C:\\Users\\JAY\\AppData\\Roaming\\JetBrains\\IntelliJIdea2025.3\\plugins\\Shell Script\\shellcheck.exe&quot;,
     &quot;Spring Boot.BackendApplication.executor&quot;: &quot;Run&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;test&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -360,7 +317,7 @@
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
     &quot;rest.client.default.execution.environment&quot;: &quot;dev&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.github.linearviewer.settings.LinearSettingsConfigurable&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -377,23 +334,6 @@
       <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\backend" />
     </key>
   </component>
-  <component name="RunDashboard">
-    <option name="configurationStatuses">
-      <map>
-        <entry key="HttpClient.HttpRequestRunConfigurationType">
-          <value>
-            <map>
-              <entry key="All in benjamin-loan-seeder-with-cron" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (4)" value="STOPPED" />
-              <entry key="All in cron-proof" value="STOPPED" />
-              <entry key="All in cron-test" value="STOPPED" />
-              <entry key="cron-test | 1. LOGIN (If you need a fresh session)" value="STOPPED" />
-            </map>
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
   <component name="RunManager" selected="Spring Boot.BackendApplication">
     <configuration default="true" type="Application" factoryName="Application">
       <option name="ALTERNATIVE_JRE_PATH" value="$USER_HOME$/.jdks/temurin-17.0.18" />
@@ -405,13 +345,13 @@
     <configuration name="All in benjamin-loan-seeder-with-cron" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-loan-seeder-with-cron.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in benjamin-ultimate-test (4)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
     <configuration name="All in cron-proof" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/cron-proof.http">
       <method v="2" />
     </configuration>
     <configuration name="All in cron-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/cron-test.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="All in members-seeder" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/members-seeder.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
@@ -435,8 +375,8 @@
       </method>
     </configuration>
     <list>
+      <item itemvalue="HTTP Request.All in members-seeder" />
       <item itemvalue="HTTP Request.All in benjamin-loan-seeder-with-cron" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (4)" />
       <item itemvalue="HTTP Request.All in cron-proof" />
       <item itemvalue="HTTP Request.All in cron-test" />
       <item itemvalue="HTTP Request.cron-test | 1. LOGIN (If you need a fresh session)" />
@@ -444,11 +384,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="HTTP Request.All in members-seeder" />
         <item itemvalue="HTTP Request.All in cron-proof" />
         <item itemvalue="HTTP Request.All in benjamin-loan-seeder-with-cron" />
         <item itemvalue="HTTP Request.All in cron-test" />
         <item itemvalue="HTTP Request.cron-test | 1. LOGIN (If you need a fresh session)" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (4)" />
       </list>
     </recent_temporary>
   </component>
@@ -485,6 +425,8 @@
       <workItem from="1774849285425" duration="23806000" />
       <workItem from="1775021039419" duration="11604000" />
       <workItem from="1775105589808" duration="16112000" />
+      <workItem from="1775278274570" duration="13719000" />
+      <workItem from="1775309966859" duration="5559000" />
     </task>
     <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
       <option name="closed" value="true" />
@@ -854,11 +796,22 @@
       <option name="project" value="LOCAL" />
       <updated>1775175881295</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
+      <option name="closed" value="true" />
+      <created>1775279860281</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1775279860281</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UpdateCopyrightCheckinHandler">
+    <option name="UPDATE_COPYRIGHT" value="true" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
