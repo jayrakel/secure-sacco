@@ -1,0 +1,1120 @@
+### ============================================================
+### BENJAMIN MUKETHA — COMPLETE LOAN MIGRATION TEST
+### 3 loans: Initial → Refinance (top-up 300K) → Restructure
+### ============================================================
+@baseUrl = http://localhost:8080/api/v1
+
+### 1. LOGIN & SAVE TOKENS
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    for (const cookie of cookies) {
+        const csrf = cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (csrf) client.global.set("csrf_token", csrf[1]);
+        const session = cookie.match(/SACCO_SESSION=([^;]+)/);
+        if (session) client.global.set("sacco_cookie", "SACCO_SESSION=" + session[1]);
+    }
+%}
+
+### ============================================================
+### 2. INITIALIZE TIME TRAVELER (Start at Oct 6, 2022)
+### ============================================================
+
+POST {{baseUrl}}/time-travel/configure
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "startDate": "2022-10-06",
+  "endDate": "2025-08-28",
+  "daysPerTick": 7
+}
+
+### Reset clock to ensure a clean start
+POST {{baseUrl}}/time-travel/reset
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+### ============================================================
+### LOAN 1: KES 1,000,000 | Oct 2022 | 104 weeks
+### 🚨 28-DAY GRACE PERIOD APPLIED HERE
+### ============================================================
+
+POST {{baseUrl}}/migration/loans/disburse
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "loanProductCode": "Historical Smart Loan",
+  "principal": 1000000.00,
+  "interest": 200004.00,
+  "weeklyScheduled": 11538.50,
+  "firstPaymentDate": "2022-11-03",
+  "termWeeks": 104,
+  "referenceNumber": "MIG-BEN-L1-DISB"
+}
+
+> {%
+    if (response.status === 200) {
+        const id = response.body.id || response.body;
+        client.global.set("loan1_id", id.toString().trim());
+    }
+%}
+
+### --- Loan 1 Repayments (61 payments) ---
+### These stack in the Prepayment Balance. As the virtual clock advances,
+### the backend cron will wake up and automatically consume them!
+
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 3000.00, "transactionDate": "2022-10-06", "referenceNumber": "BEN-L1-REP-001" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 3000.00, "transactionDate": "2022-10-13", "referenceNumber": "BEN-L1-REP-002" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 8250.00, "transactionDate": "2022-10-20", "referenceNumber": "BEN-L1-REP-003" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 4000.00, "transactionDate": "2022-10-27", "referenceNumber": "BEN-L1-REP-004" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 7000.00, "transactionDate": "2022-11-03", "referenceNumber": "BEN-L1-REP-005" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2022-11-10", "referenceNumber": "BEN-L1-REP-006" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2022-11-17", "referenceNumber": "BEN-L1-REP-007" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11800.00, "transactionDate": "2022-11-24", "referenceNumber": "BEN-L1-REP-008" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2022-12-01", "referenceNumber": "BEN-L1-REP-009" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2022-12-08", "referenceNumber": "BEN-L1-REP-010" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2022-12-15", "referenceNumber": "BEN-L1-REP-011" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11700.00, "transactionDate": "2022-12-22", "referenceNumber": "BEN-L1-REP-012" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2022-12-29", "referenceNumber": "BEN-L1-REP-013" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2023-01-05", "referenceNumber": "BEN-L1-REP-014" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-01-12", "referenceNumber": "BEN-L1-REP-015" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-01-19", "referenceNumber": "BEN-L1-REP-016" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11700.00, "transactionDate": "2023-01-26", "referenceNumber": "BEN-L1-REP-017" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-02-02", "referenceNumber": "BEN-L1-REP-018" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-02-09", "referenceNumber": "BEN-L1-REP-019" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-02-16", "referenceNumber": "BEN-L1-REP-020" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-02-23", "referenceNumber": "BEN-L1-REP-021" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-03-02", "referenceNumber": "BEN-L1-REP-022" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-03-09", "referenceNumber": "BEN-L1-REP-023" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-03-16", "referenceNumber": "BEN-L1-REP-024" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-03-23", "referenceNumber": "BEN-L1-REP-025" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-03-30", "referenceNumber": "BEN-L1-REP-026" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-04-06", "referenceNumber": "BEN-L1-REP-027" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-04-13", "referenceNumber": "BEN-L1-REP-028" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-04-20", "referenceNumber": "BEN-L1-REP-029" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-04-27", "referenceNumber": "BEN-L1-REP-030" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 9500.00, "transactionDate": "2023-05-04", "referenceNumber": "BEN-L1-REP-031" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-05-11", "referenceNumber": "BEN-L1-REP-032" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-05-18", "referenceNumber": "BEN-L1-REP-033" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10500.00, "transactionDate": "2023-06-01", "referenceNumber": "BEN-L1-REP-034" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-06-22", "referenceNumber": "BEN-L1-REP-035" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-07-13", "referenceNumber": "BEN-L1-REP-036" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 9500.00, "transactionDate": "2023-07-20", "referenceNumber": "BEN-L1-REP-037" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 9500.00, "transactionDate": "2023-07-27", "referenceNumber": "BEN-L1-REP-038" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 9000.00, "transactionDate": "2023-08-03", "referenceNumber": "BEN-L1-REP-039" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-08-17", "referenceNumber": "BEN-L1-REP-040" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-08-24", "referenceNumber": "BEN-L1-REP-041" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-08-31", "referenceNumber": "BEN-L1-REP-042" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-09-07", "referenceNumber": "BEN-L1-REP-043" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2023-09-14", "referenceNumber": "BEN-L1-REP-044" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2023-09-28", "referenceNumber": "BEN-L1-REP-045" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-10-05", "referenceNumber": "BEN-L1-REP-046" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-10-12", "referenceNumber": "BEN-L1-REP-047" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-10-19", "referenceNumber": "BEN-L1-REP-048" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-10-26", "referenceNumber": "BEN-L1-REP-049" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12500.00, "transactionDate": "2023-11-09", "referenceNumber": "BEN-L1-REP-050" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12500.00, "transactionDate": "2023-11-16", "referenceNumber": "BEN-L1-REP-051" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11700.00, "transactionDate": "2023-11-23", "referenceNumber": "BEN-L1-REP-052" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2023-11-30", "referenceNumber": "BEN-L1-REP-053" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2023-12-14", "referenceNumber": "BEN-L1-REP-054" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2024-01-04", "referenceNumber": "BEN-L1-REP-055" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2024-01-11", "referenceNumber": "BEN-L1-REP-056" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2024-01-18", "referenceNumber": "BEN-L1-REP-057" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2024-01-25", "referenceNumber": "BEN-L1-REP-058" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2024-02-01", "referenceNumber": "BEN-L1-REP-059" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2024-03-21", "referenceNumber": "BEN-L1-REP-060" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2024-05-09", "referenceNumber": "BEN-L1-REP-061" }
+
+
+### ============================================================
+### MEGA JUMP #1: Fast-Forward to Refinance Date (May 30, 2024)
+### 🚨 This simulates 602 days passing. The cron will wake up,
+### consume all the prepayments exactly when they were due, and
+### apply KES 200 fines for any gaps!
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?days=602
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### LOAN 2: REFINANCE (Top-Up KES 300,000) | May 2024 | 21 weeks
+### 🚨 ZERO GRACE PERIOD (Punishment applied)
+### ============================================================
+
+POST {{baseUrl}}/loans/applications/refinance
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "oldLoanId": "{{loan1_id}}",
+  "loanProductCode": "Historical Smart Loan",
+  "topUpAmount": 300000.00,
+  "interestOverride": 15000.00,
+  "newTermWeeks": 21,
+  "referenceNumber": "MIG-BEN-L2-REF",
+  "historicalDateOverride": "2024-05-30",
+  "firstPaymentDate": "2024-06-06"
+}
+
+> {%
+    if (response.status === 200) {
+        const id = response.body.id || response.body;
+        client.global.set("loan2_id", id.toString().trim());
+    }
+%}
+
+### --- Loan 2 Repayments (12 payments) ---
+
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 20000.00, "transactionDate": "2024-05-30", "referenceNumber": "BEN-L2-REP-001" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 14000.00, "transactionDate": "2024-06-06", "referenceNumber": "BEN-L2-REP-002" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 43000.00, "transactionDate": "2024-06-13", "referenceNumber": "BEN-L2-REP-003" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 26000.00, "transactionDate": "2024-06-20", "referenceNumber": "BEN-L2-REP-004" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 19000.00, "transactionDate": "2024-06-27", "referenceNumber": "BEN-L2-REP-005" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 14000.00, "transactionDate": "2024-07-18", "referenceNumber": "BEN-L2-REP-006" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 6000.00, "transactionDate": "2024-08-29", "referenceNumber": "BEN-L2-REP-007" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 20000.00, "transactionDate": "2024-09-05", "referenceNumber": "BEN-L2-REP-008" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 27100.00, "transactionDate": "2024-09-12", "referenceNumber": "BEN-L2-REP-009" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 28000.00, "transactionDate": "2024-09-19", "referenceNumber": "BEN-L2-REP-010" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 28000.00, "transactionDate": "2024-09-26", "referenceNumber": "BEN-L2-REP-011" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 27200.00, "transactionDate": "2024-10-03", "referenceNumber": "BEN-L2-REP-012" }
+
+
+### ============================================================
+### MEGA JUMP #2: Fast-Forward to Restructure Date (Oct 10, 2024)
+### 🚨 This simulates 133 days passing, allowing the Cron to
+### evaluate Loan 2's schedule.
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?days=133
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### LOAN 3: RESTRUCTURE | Oct 2024 | 43 weeks
+### 🚨 ZERO GRACE PERIOD (Punishment applied)
+### ============================================================
+
+POST {{baseUrl}}/loans/applications/refinance
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "oldLoanId": "{{loan2_id}}",
+  "loanProductCode": "Historical Smart Loan",
+  "topUpAmount": 0.00,
+  "newTermWeeks": 43,
+  "referenceNumber": "MIG-BEN-L3-REF",
+  "historicalDateOverride": "2024-10-10",
+  "firstPaymentDate": "2024-10-17"
+}
+
+### --- Loan 3 Repayments (47 payments) ---
+
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12250.00, "transactionDate": "2024-10-10", "referenceNumber": "BEN-L3-REP-001" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12500.00, "transactionDate": "2024-10-17", "referenceNumber": "BEN-L3-REP-002" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12500.00, "transactionDate": "2024-10-24", "referenceNumber": "BEN-L3-REP-003" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2024-10-31", "referenceNumber": "BEN-L3-REP-004" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13900.00, "transactionDate": "2024-11-07", "referenceNumber": "BEN-L3-REP-005" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2024-11-14", "referenceNumber": "BEN-L3-REP-006" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10500.00, "transactionDate": "2024-11-21", "referenceNumber": "BEN-L3-REP-007" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2024-11-28", "referenceNumber": "BEN-L3-REP-008" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2024-12-05", "referenceNumber": "BEN-L3-REP-009" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2024-12-12", "referenceNumber": "BEN-L3-REP-010" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2024-12-19", "referenceNumber": "BEN-L3-REP-011" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2024-12-27", "referenceNumber": "BEN-L3-REP-012" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-01-02", "referenceNumber": "BEN-L3-REP-013" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-01-09", "referenceNumber": "BEN-L3-REP-014" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2025-01-16", "referenceNumber": "BEN-L3-REP-015" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-01-23", "referenceNumber": "BEN-L3-REP-016" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 9900.00, "transactionDate": "2025-01-30", "referenceNumber": "BEN-L3-REP-017" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11500.00, "transactionDate": "2025-02-06", "referenceNumber": "BEN-L3-REP-018" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 14000.00, "transactionDate": "2025-02-13", "referenceNumber": "BEN-L3-REP-019" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 15000.00, "transactionDate": "2025-02-20", "referenceNumber": "BEN-L3-REP-020" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 18000.00, "transactionDate": "2025-02-27", "referenceNumber": "BEN-L3-REP-021" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 15000.00, "transactionDate": "2025-03-06", "referenceNumber": "BEN-L3-REP-022" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2025-03-13", "referenceNumber": "BEN-L3-REP-023" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 21000.00, "transactionDate": "2025-03-20", "referenceNumber": "BEN-L3-REP-024" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 15000.00, "transactionDate": "2025-03-27", "referenceNumber": "BEN-L3-REP-025" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2025-04-03", "referenceNumber": "BEN-L3-REP-026" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2025-04-10", "referenceNumber": "BEN-L3-REP-027" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 24900.00, "transactionDate": "2025-04-17", "referenceNumber": "BEN-L3-REP-028" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 12000.00, "transactionDate": "2025-04-24", "referenceNumber": "BEN-L3-REP-029" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-05-01", "referenceNumber": "BEN-L3-REP-030" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2025-05-08", "referenceNumber": "BEN-L3-REP-031" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-05-15", "referenceNumber": "BEN-L3-REP-032" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2025-05-22", "referenceNumber": "BEN-L3-REP-033" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-05-29", "referenceNumber": "BEN-L3-REP-034" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 6000.00, "transactionDate": "2025-06-05", "referenceNumber": "BEN-L3-REP-035" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2025-06-12", "referenceNumber": "BEN-L3-REP-036" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 10000.00, "transactionDate": "2025-06-19", "referenceNumber": "BEN-L3-REP-037" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 11000.00, "transactionDate": "2025-06-26", "referenceNumber": "BEN-L3-REP-038" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 5000.00, "transactionDate": "2025-07-03", "referenceNumber": "BEN-L3-REP-039" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 16000.00, "transactionDate": "2025-07-10", "referenceNumber": "BEN-L3-REP-040" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 17000.00, "transactionDate": "2025-07-17", "referenceNumber": "BEN-L3-REP-041" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 37814.00, "transactionDate": "2025-07-24", "referenceNumber": "BEN-L3-REP-042" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 14000.00, "transactionDate": "2025-07-31", "referenceNumber": "BEN-L3-REP-043" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 15000.00, "transactionDate": "2025-08-07", "referenceNumber": "BEN-L3-REP-044" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 15000.00, "transactionDate": "2025-08-14", "referenceNumber": "BEN-L3-REP-045" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 13000.00, "transactionDate": "2025-08-21", "referenceNumber": "BEN-L3-REP-046" }
+
+###
+POST {{baseUrl}}/migration/loans/repay
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{ "memberNumber": "BVL-2022-000001", "amount": 14000.00, "transactionDate": "2025-08-28", "referenceNumber": "BEN-L3-REP-047" }
+
+
+### ============================================================
+### MEGA JUMP #3: Fast-Forward to End Date (Aug 28, 2025)
+### 🚨 Simulates 322 days to evaluate the final loan schedule.
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?days=322
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}

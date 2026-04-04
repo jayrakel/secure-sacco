@@ -314,6 +314,43 @@ public class LoanApplicationService {
         // 5. Generate the new schedule
         loanScheduleService.generateWeeklySchedule(newLoan);
 
+        // 5b. SCHEDULE OVERRIDE: If interestOverride provided, rewrite schedule
+//     with the exact historical interest (e.g. 5% on top-up only)
+        if (request.interestOverride() != null
+                && request.interestOverride().compareTo(BigDecimal.ZERO) > 0) {
+
+            int termWeeks = request.newTermWeeks();
+            BigDecimal totalInterest = request.interestOverride();
+
+            BigDecimal principalPerWeek = newPrincipal
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal interestPerWeek = totalInterest
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+
+            BigDecimal principalAccumulated = BigDecimal.ZERO;
+            BigDecimal interestAccumulated = BigDecimal.ZERO;
+
+            List<LoanScheduleItem> items = scheduleItemRepository
+                    .findByLoanApplicationIdOrderByWeekNumberAsc(newLoan.getId());
+
+            for (int i = 0; i < items.size(); i++) {
+                LoanScheduleItem item = items.get(i);
+                boolean isLast = (i == items.size() - 1);
+
+                BigDecimal p = isLast ? newPrincipal.subtract(principalAccumulated) : principalPerWeek;
+                BigDecimal ir = isLast ? totalInterest.subtract(interestAccumulated) : interestPerWeek;
+
+                item.setPrincipalDue(p);
+                item.setInterestDue(ir);
+                item.setTotalDue(p.add(ir));
+                scheduleItemRepository.save(item);
+
+                principalAccumulated = principalAccumulated.add(p);
+                interestAccumulated = interestAccumulated.add(ir);
+            }
+            log.info("✅ Refinance schedule overridden. Principal={}, InterestOverride={}", newPrincipal, totalInterest);
+        }
+
         // 6. Post Accounting (Net Cash)
         journalEntryService.postLoanRefinance(
                 member.getId(),

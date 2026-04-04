@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
@@ -281,7 +282,7 @@ public class MigrationService {
         loan.setApplicationFeePaid(true);
         loan.setTermWeeks(request.termWeeks() != null ? request.termWeeks() : 104);
         loan.setPurpose("MIGRATION: " + request.referenceNumber());
-        loan.setReferenceNotes(request.referenceNumber()); // 🚨 Crucial for finding the GL entry!
+        loan.setReferenceNotes(request.referenceNumber());
 
         loan.setStatus(com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus.APPROVED);
         var savedApp = loanRepository.save(loan);
@@ -289,30 +290,76 @@ public class MigrationService {
         // 3. Send it through the Front Door using the Real Date
         var response = loanApplicationService.disburseHistoricalApplication(
                 savedApp.getId(),
-                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName(),
+                org.springframework.security.core.context.SecurityContextHolder
+                        .getContext().getAuthentication().getName(),
                 realDisbursementDate
         );
 
-        // 4. 🚨 MAGIC BULLET: Force Hibernate to write to DB immediately!
+        // 4. 🚨 SCHEDULE OVERRIDE: If actual historical interest is provided,
+        //    rewrite the schedule items to match the real Excel amounts exactly.
+        //    Without this, the system uses the product's annual rate which may differ.
+        if (request.interest() != null && request.interest().compareTo(BigDecimal.ZERO) > 0) {
+            int termWeeks = request.termWeeks() != null ? request.termWeeks() : 104;
+            BigDecimal totalInterest = request.interest();
+            BigDecimal principal = request.principal();
+
+            BigDecimal principalPerWeek = principal
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal interestPerWeek = totalInterest
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+
+            BigDecimal principalAccumulated = BigDecimal.ZERO;
+            BigDecimal interestAccumulated = BigDecimal.ZERO;
+
+            var scheduleItems = scheduleItemRepository
+                    .findByLoanApplicationIdOrderByWeekNumberAsc(response.id());
+
+            for (int i = 0; i < scheduleItems.size(); i++) {
+                var item = scheduleItems.get(i);
+                boolean isLast = (i == scheduleItems.size() - 1);
+
+                BigDecimal p = isLast
+                        ? principal.subtract(principalAccumulated)
+                        : principalPerWeek;
+                BigDecimal ir = isLast
+                        ? totalInterest.subtract(interestAccumulated)
+                        : interestPerWeek;
+
+                item.setPrincipalDue(p);
+                item.setInterestDue(ir);
+                item.setTotalDue(p.add(ir));
+                scheduleItemRepository.save(item);
+
+                principalAccumulated = principalAccumulated.add(p);
+                interestAccumulated = interestAccumulated.add(ir);
+            }
+
+            log.info("✅ Schedule overridden with historical amounts for {}. " +
+                            "Principal={}, Interest={}, WeeklyInstallment={}",
+                    request.referenceNumber(), principal, totalInterest,
+                    principal.add(totalInterest)
+                            .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP));
+        }
+
+        // 5. MAGIC BULLET: Force Hibernate to write to DB immediately
         entityManager.flush();
         entityManager.clear();
 
-        // 5. Time Machine SQL
+        // 6. Time Machine SQL — backdate all timestamps
         java.sql.Timestamp historicalTs = java.sql.Timestamp.valueOf(realDisbursementDate.atStartOfDay());
 
-        jdbcTemplate.update("UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
+        jdbcTemplate.update(
+                "UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
                 historicalTs, historicalTs, historicalTs, response.id());
 
-        // Backdate the Disbursement Journal Entry!
         String disbJeRef = "LNDIS-" + request.referenceNumber();
         jdbcTemplate.update(
                 "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
-                realDisbursementDate, historicalTs, historicalTs, disbJeRef
-        );
+                realDisbursementDate, historicalTs, historicalTs, disbJeRef);
         jdbcTemplate.update(
-                "UPDATE journal_entry_lines SET created_at = ?, updated_at = ? WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
-                historicalTs, historicalTs, disbJeRef
-        );
+                "UPDATE journal_entry_lines SET created_at = ?, updated_at = ? " +
+                        "WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE reference_number = ?)",
+                historicalTs, historicalTs, disbJeRef);
 
         return response.id().toString();
     }
@@ -440,7 +487,7 @@ public class MigrationService {
         return activeLoan.getId().toString();
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public java.util.Map<String, Object> evaluatePenaltiesUpToDate(LocalDate evaluationDate) {
         log.info("🕰️ Running Time-Machine Cron for Date: {}", evaluationDate);
 

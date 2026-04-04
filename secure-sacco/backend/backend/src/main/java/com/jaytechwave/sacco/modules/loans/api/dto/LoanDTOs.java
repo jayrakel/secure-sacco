@@ -163,6 +163,7 @@ public class LoanDTOs {
             @NotNull(message = "Top-up amount is required")
             @DecimalMin(value = "0.0", message = "Top-up amount must be 0 or greater")
             BigDecimal topUpAmount,
+            BigDecimal interestOverride,
             @NotNull(message = "New term weeks is required")
             @Min(value = 1, message = "New term weeks must be at least 1")
             Integer newTermWeeks,

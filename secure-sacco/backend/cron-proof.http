@@ -1,0 +1,38 @@
+@baseUrl = http://localhost:8080/api/v1
+# (Assuming you are already logged in and have tokens)
+
+### 1. RESET THE CLOCK to Oct 6, 2022
+POST {{baseUrl}}/time-travel/reset
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+### 2. DISBURSE A FRESH LOAN
+### (First payment will be due on Nov 3, 2022 because of the 28-day grace period)
+POST {{baseUrl}}/migration/loans/disburse
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "memberNumber": "BVL-2022-000001",
+  "loanProductCode": "Historical Smart Loan",
+  "principal": 1000000.00,
+  "interest": 200004.00,
+  "weeklyScheduled": 11538.50,
+  "firstPaymentDate": "2022-11-03",
+  "termWeeks": 104,
+  "referenceNumber": "CRON-TEST-DISB"
+}
+
+### 3. THE TRAP: Advance Time past the Due Date WITHOUT PAYING!
+### We advance 35 days (Jumping to Nov 10).
+### 🚨 Watch your Spring Boot console when you click play!
+POST {{baseUrl}}/time-travel/advance?days=35
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### 4. CHECK THE DAMAGE
+### The Cron should have automatically generated a KES 200 (or 20%) penalty!
+GET {{baseUrl}}/penalties?memberNumber=BVL-2022-000001
+Cookie: {{sacco_cookie}}

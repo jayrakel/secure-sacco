@@ -555,7 +555,8 @@ X-XSRF-TOKEN: {{csrf_token}}
   "oldLoanId": "{{loan1_id}}",
   "loanProductCode": "Historical Smart Loan",
   "topUpAmount": 300000.00,
-  "newTermWeeks": 20,
+  "interestOverride": 15000.00,
+  "newTermWeeks": 21,
   "referenceNumber": "MIG-BEN-L2-REF",
   "historicalDateOverride": "2024-05-30"
 }
