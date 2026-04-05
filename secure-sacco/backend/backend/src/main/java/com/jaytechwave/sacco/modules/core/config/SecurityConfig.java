@@ -43,17 +43,15 @@ public class SecurityConfig {
 
         // --- 2. Advanced HTTP Security Headers (CSP, HSTS, Clickjacking) ---
         http.headers(headers -> headers
-                .frameOptions(frame -> frame.deny())                          // Prevent Clickjacking
+                .frameOptions(org.springframework.security.config.Customizer.withDefaults())  // Prevent Clickjacking
                 .contentTypeOptions(org.springframework.security.config.Customizer.withDefaults()) // MIME sniffing
                 .httpStrictTransportSecurity(hsts -> hsts                     // Enforce HTTPS
                         .includeSubDomains(true)
                         .maxAgeInSeconds(31536000))
-                .contentSecurityPolicy(csp -> csp                             // Prevent XSS
-                        .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none'"))
+                .contentSecurityPolicy(csp -> csp                             // CSP with Trusted Types policy support
+                        .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'"))
                 .referrerPolicy(ref -> ref                                    // Privacy
                         .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                .permissionsPolicy(policy -> policy                           // Device access
-                        .policy("geolocation=(), microphone=(), camera=()"))
         );
 
         // Define the standard CSRF request handler for SPAs

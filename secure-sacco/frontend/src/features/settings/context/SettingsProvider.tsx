@@ -34,16 +34,25 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     useEffect(() => {
         if (isAuthenticated && !setupLoading && setupComplete) {
-            // refreshSettings is an async function — setSettings is called after the await,
-            // not synchronously. eslint-disable is intentional here.
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             void refreshSettings();
         }
     }, [isAuthenticated, setupComplete, setupLoading, refreshSettings]);
 
+    // ─── DYNAMIC FAVICON UPDATE ──────────────────────────────────────────────
+    useEffect(() => {
+        if (settings?.faviconUrl) {
+            let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+            link.href = settings.faviconUrl;
+        }
+    }, [settings?.faviconUrl]);
+    // ──────────────────────────────────────────────────────────────────────────
+
     return (
-        // Expose null when the user is not authenticated; avoids a synchronous
-        // setSettings(null) call inside an effect to clear on logout.
         <SettingsContext.Provider value={{ settings: isAuthenticated ? settings : null, refreshSettings }}>
             {children}
         </SettingsContext.Provider>

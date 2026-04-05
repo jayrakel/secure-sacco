@@ -16,6 +16,9 @@ public class SaccoSettingsDTOs {
         @NotBlank(message = "SACCO Name is required")
         private String saccoName;
 
+        private String logoUrl;
+        private String faviconUrl;
+
         @NotBlank(message = "Prefix is required")
         @Size(min = 3, max = 3, message = "Prefix must be exactly 3 characters")
         private String prefix;
@@ -33,6 +36,8 @@ public class SaccoSettingsDTOs {
     public static class UpdateCoreRequest {
         @NotBlank(message = "SACCO Name is required")
         private String saccoName;
+        private String logoUrl;
+        private String faviconUrl;
 
         @NotBlank(message = "Prefix is required")
         @Size(min = 3, max = 3, message = "Prefix must be exactly 3 characters")

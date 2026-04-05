@@ -6,6 +6,8 @@ export interface SaccoSettings {
     prefix?: string;
     padLength?: number;
     registrationFee?: number; // <--- NEW FIELD ADDED
+    logoUrl?: string;
+    faviconUrl?: string;
     enabledModules?: Record<string, boolean>;
 }
 
@@ -14,6 +16,8 @@ export interface CoreSettingsPayload {
     prefix: string;
     padLength: number;
     registrationFee: number; // <--- NEW FIELD ADDED
+    logoUrl?: string;
+    faviconUrl?: string;
 }
 
 export interface UpdateFlagsPayload {
