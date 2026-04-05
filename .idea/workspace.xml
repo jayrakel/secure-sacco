@@ -5,13 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add loan product seeder and update session cookies for staging environment">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/reports/domain/service/ReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/reports/domain/service/ReportService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrator_sal.py" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator_sal.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/savings-seeder.http" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/savings-seeder.http" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -469,15 +463,7 @@
       <workItem from="1775021039419" duration="11604000" />
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
-      <workItem from="1775309966859" duration="34053000" />
-    </task>
-    <task id="LOCAL-00004" summary="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml">
-      <option name="closed" value="true" />
-      <created>1774476233518</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1774476233518</updated>
+      <workItem from="1775309966859" duration="34676000" />
     </task>
     <task id="LOCAL-00005" summary="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps">
       <option name="closed" value="true" />
@@ -863,7 +849,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775387492591</updated>
     </task>
-    <option name="localTasksCounter" value="53" />
+    <task id="LOCAL-00053" summary="feat: add loan product seeder and update session cookies for staging environment">
+      <option name="closed" value="true" />
+      <created>1775392814199</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1775392814199</updated>
+    </task>
+    <option name="localTasksCounter" value="54" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -517,7 +517,7 @@ export const MemberStatementPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between pt-1.5 border-t border-slate-100">
                                                 <span className="font-bold text-slate-700">Outstanding</span>
-                                                <span className={`font-bold font-mono ${response?.summary?.penaltiesOutstanding > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                                                <span className={`font-bold font-mono ${(response?.summary?.penaltiesOutstanding ?? 0) > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
                                                     {fmt(Math.max(0, response?.summary?.penaltiesOutstanding ?? 0))}
                                                 </span>
                                             </div>
