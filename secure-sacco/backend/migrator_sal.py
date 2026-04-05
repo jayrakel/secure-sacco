@@ -7,13 +7,13 @@ import os
 # ==========================================
 # CONFIGURATION
 # ==========================================
-# BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
-# EMAIL = "admin@jaytechwavesolutions.co.ke"
-# PASSWORD = "Michira._2000"
+BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
+EMAIL = "admin@jaytechwavesolutions.co.ke"
+PASSWORD = "M1chira._2000"
 #
-BASE_URL = "http://localhost:8080/api/v1"
-EMAIL = "jaytechwavesolutions@gmail.com"
-PASSWORD = "Michira._2000"
+# BASE_URL = "http://localhost:8080/api/v1"
+# EMAIL = "jaytechwavesolutions@gmail.com"
+# PASSWORD = "Michira._2000"
 
 CSV_DIR = os.path.dirname(os.path.abspath(__file__))
 session = requests.Session()

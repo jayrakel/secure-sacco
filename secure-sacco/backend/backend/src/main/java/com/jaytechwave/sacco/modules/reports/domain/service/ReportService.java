@@ -248,47 +248,37 @@ public class ReportService {
             }
         }
 
-         // 6. 🟢 THE FIX: The Waterfall Payment Deductor!
-         // Because the Waterfall Engine pays penalties inside standard 'Loan Repayments',
-         // the standalone 'penalty_repayments' table misses them. We deduce the exact Paid amount mathematically.
-         overviewRepository.findById(memberId).ifPresent(overview -> {
-             // Get the true live penalty balance from the database view
-             BigDecimal actualOutstanding = overview.getPenaltyOutstanding() != null
-                     ? overview.getPenaltyOutstanding()
-                     : BigDecimal.ZERO;
+        // 6. 🟢 THE FIX: The Absolute Truth Reconciler
+        // We must enforce the mathematical rule for the UI: Charged = Paid + Outstanding
+        overviewRepository.findById(memberId).ifPresent(overview -> {
+            // 1. Get the absolute truth for Outstanding (This includes ALL compounding interest)
+            BigDecimal actualOutstanding = overview.getPenaltyOutstanding() != null
+                    ? overview.getPenaltyOutstanding()
+                    : BigDecimal.ZERO;
 
-             // ✅ Use the DATABASE value as the source of truth for current outstanding
-             summary.setPenaltiesOutstanding(actualOutstanding);
+            BigDecimal statementCharged = summary.getPenaltiesCharged();
+            BigDecimal statementPaid = summary.getPenaltiesPaid();
 
-             // Query for ALL-TIME penalties (not just in date range)
-             String allTimePenaltiesSql = """
-                 SELECT 
-                     COALESCE(SUM(CASE WHEN type = 'ACCRUAL' THEN amount ELSE 0 END), 0) AS total_charged,
-                     COALESCE(SUM(CASE WHEN type = 'REPAYMENT' OR type = 'WAIVER' THEN amount ELSE 0 END), 0) AS total_paid
-                 FROM (
-                     SELECT 'ACCRUAL' AS type, original_amount AS amount FROM penalties WHERE member_id = ?
-                     UNION ALL
-                     SELECT 'REPAYMENT', amount FROM penalty_repayments WHERE member_id = ? AND status = 'COMPLETED'
-                 ) AS all_penalties
-                 """;
+            // 2. Deduce Waterfall Payments:
+            // If the base charged from the statement is greater than what they currently owe,
+            // they MUST have paid the difference via the Loan Repayment waterfall!
+            if (statementCharged.compareTo(actualOutstanding) > 0) {
+                BigDecimal hiddenPayments = statementCharged.subtract(actualOutstanding);
+                if (hiddenPayments.compareTo(statementPaid) > 0) {
+                    statementPaid = hiddenPayments;
+                    summary.setPenaltiesPaid(statementPaid);
+                }
+            }
 
-             try {
-                 jdbcTemplate.queryForObject(allTimePenaltiesSql, (rs, rowNum) -> {
-                     BigDecimal totalLifetimeCharged = rs.getBigDecimal("total_charged") != null ? rs.getBigDecimal("total_charged") : BigDecimal.ZERO;
+            // 3. Deduce Compounding Interest & Force Mathematical Perfection:
+            // We force the 'Charged' amount to exactly equal the true Outstanding plus whatever they Paid.
+            // This guarantees the UI math (Charged - Paid = Outstanding) is always 100% flawless.
+            BigDecimal trueCharged = actualOutstanding.add(statementPaid);
+            summary.setPenaltiesCharged(trueCharged);
 
-                     // Deduced paid = Total lifetime charged - Current outstanding
-                     BigDecimal deducedPaid = totalLifetimeCharged.subtract(actualOutstanding).max(BigDecimal.ZERO);
-
-                     // If our deduced paid amount is higher than what we found, override it!
-                     if (deducedPaid.compareTo(summary.getPenaltiesPaid()) > 0) {
-                         summary.setPenaltiesPaid(deducedPaid);
-                     }
-                     return null;
-                 }, memberId, memberId);
-             } catch (Exception e) {
-                 // If query fails, just keep the deduced paid as is
-             }
-         });
+            // (Optional, just to ensure DTO is complete if you use this field)
+            summary.setPenaltiesOutstanding(actualOutstanding);
+        });
 
         // 7. Create and return the response
         StatementResponseDTO response = new StatementResponseDTO();
