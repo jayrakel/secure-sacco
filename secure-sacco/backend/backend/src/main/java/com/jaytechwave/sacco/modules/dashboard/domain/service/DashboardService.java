@@ -32,7 +32,7 @@ public class DashboardService {
                 COALESCE((SELECT SUM(total_savings_balance) FROM v_member_savings_balance), 0) AS total_savings,
 
                 (SELECT COUNT(*) FROM loan_applications WHERE status IN ('ACTIVE','IN_GRACE','DEFAULTED'))  AS active_loans,
-                COALESCE((SELECT SUM(outstanding_principal) FROM v_member_loan_summary), 0)                AS loan_portfolio,
+                COALESCE((SELECT SUM(outstanding_principal + outstanding_interest) FROM v_member_loan_summary), 0) AS loan_portfolio,
                 (SELECT COUNT(DISTINCT loan_application_id) FROM loan_schedule_items
                     WHERE due_date < CURRENT_DATE AND status != 'PAID')                    AS loans_in_arrears,
                 COALESCE((SELECT SUM(total_arrears) FROM v_member_loan_summary), 0)        AS total_arrears_amount,

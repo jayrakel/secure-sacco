@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add loan product seeder and update session cookies for staging environment">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update outstanding penalties display to handle null values gracefully">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/dashboard/domain/service/DashboardService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/dashboard/domain/service/DashboardService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -463,15 +465,7 @@
       <workItem from="1775021039419" duration="11604000" />
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
-      <workItem from="1775309966859" duration="34676000" />
-    </task>
-    <task id="LOCAL-00005" summary="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps">
-      <option name="closed" value="true" />
-      <created>1774516072059</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1774516072059</updated>
+      <workItem from="1775309966859" duration="36749000" />
     </task>
     <task id="LOCAL-00006" summary="chore(config): disable mail health check in production profile">
       <option name="closed" value="true" />
@@ -857,7 +851,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775392814199</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="feat: update outstanding penalties display to handle null values gracefully">
+      <option name="closed" value="true" />
+      <created>1775393123424</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1775393123429</updated>
+    </task>
+    <option name="localTasksCounter" value="55" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -878,7 +880,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="chore: add migration HTTP request logs, cookies, and response samples for historical savings import" />
     <MESSAGE value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
     <MESSAGE value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
     <MESSAGE value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
@@ -903,7 +904,8 @@
     <MESSAGE value="feat: enable time travel feature and configure migration settings in application.yml" />
     <MESSAGE value="feat: enhance member statement retrieval with summary details and historical date handling" />
     <MESSAGE value="feat: add loan product seeder and update session cookies for staging environment" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add loan product seeder and update session cookies for staging environment" />
+    <MESSAGE value="feat: update outstanding penalties display to handle null values gracefully" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update outstanding penalties display to handle null values gracefully" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
