@@ -4,27 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance loan application processing with grace period adjustments and historical date backdating">
-      <change afterPath="$PROJECT_DIR$/BEFORE_AFTER_MIGRATION.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/BENJAMIN_STORY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/COMPLETE_AUDIT_DOCUMENTATION.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DOCUMENTATION_INDEX.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/FINAL_ROOT_CAUSE_10023_KES_GAP.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/IMPLEMENTATION_CHECKLIST.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/INDEPENDENT_AUDIT_VERIFICATION.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MIGRATION_COMPLETION_REPORT.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ROOT_CAUSE_10023_GAP_NOV_20_2025.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ROOT_CAUSE_UI_ARREARS_DISCREPANCY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/WHY_ONLY_CHARLES_HAS_ISSUE.md" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: implement time travel feature and fix loan schedule status discrepancies">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/entity/LoanScheduleStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/entity/LoanScheduleStatus.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/migrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/migrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -442,15 +425,7 @@
       <workItem from="1775021039419" duration="11604000" />
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
-      <workItem from="1775309966859" duration="18713000" />
-    </task>
-    <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
-      <option name="closed" value="true" />
-      <created>1774467830640</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1774467830640</updated>
+      <workItem from="1775309966859" duration="19680000" />
     </task>
     <task id="LOCAL-00002" summary="chore(ci+deploy): cache OWASP NVD DB for faster scans; improve staging env var handling and .env generation&#10;&#10;- Cache OWASP Dependency Check NVD database in CI, reducing scan time by using weekly cache keys and incremental updates&#10;- Pass additional environment variables to staging deploy for full .env generation, including MPESA and admin credentials&#10;- Generate .env on staging server using printf for reliability and completeness&#10;- Add deploy directory bootstrap step to ensure target exists before SCP&#10;- Refactor rollback and notification steps for clarity">
       <option name="closed" value="true" />
@@ -836,7 +811,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775341692943</updated>
     </task>
-    <option name="localTasksCounter" value="50" />
+    <task id="LOCAL-00050" summary="feat: implement time travel feature and fix loan schedule status discrepancies">
+      <option name="closed" value="true" />
+      <created>1775349293454</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1775349293455</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -857,7 +840,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix: update nginx API proxy to route /api requests directly to backend root and clarify config comments" />
     <MESSAGE value="fix: ensure totalOverdue and totalShortfall calculations handle undefined data content safely" />
     <MESSAGE value="fix: handle non-array account API responses safely in chart of accounts page and API client" />
     <MESSAGE value="fix: update frontend build arg to use absolute API base URL in staging deployment" />
@@ -882,7 +864,8 @@
     <MESSAGE value="feat: update loan refinancing logic and adjust loan term duration in test configurations" />
     <MESSAGE value="feat: implement migration scripts for loan processing and data handling" />
     <MESSAGE value="feat: enhance loan application processing with grace period adjustments and historical date backdating" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance loan application processing with grace period adjustments and historical date backdating" />
+    <MESSAGE value="feat: implement time travel feature and fix loan schedule status discrepancies" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: implement time travel feature and fix loan schedule status discrepancies" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
