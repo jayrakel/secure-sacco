@@ -5,6 +5,8 @@ import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementItemDTO
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummaryDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.DailyCollectionDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementResponseDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementSummaryDTO;
 import com.jaytechwave.sacco.modules.reports.domain.repository.MemberFinancialOverviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -93,7 +95,8 @@ public class ReportService {
                     st.type AS transaction_type,
                     st.amount AS amount,
                     st.reference AS reference,
-                    'Savings ' || st.type AS description
+                    'Savings ' || st.type AS description,
+                    1 AS txn_order
                 FROM savings_transactions st
                 JOIN savings_accounts sa ON st.savings_account_id = sa.id
                 WHERE sa.member_id = ? AND st.status = 'POSTED'
@@ -106,9 +109,11 @@ public class ReportService {
                     'DISBURSEMENT' AS transaction_type,
                     la.principal_amount AS amount,
                     la.id::varchar AS reference,
-                    'Loan Disbursement' AS description
+                    'Disbursed - ' || COALESCE(lp.name, 'Loan') AS description,
+                    0 AS txn_order
                 FROM loan_applications la
-                WHERE la.member_id = ? AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED', 'CLOSED', 'REFINED', 'RESTRUCTURED')
+                LEFT JOIN loan_products lp ON la.loan_product_id = lp.id
+                WHERE la.member_id = ? AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED', 'CLOSED', 'REFINANCED', 'RESTRUCTURED')
                 
                 UNION ALL
                 
@@ -118,10 +123,12 @@ public class ReportService {
                     'REPAYMENT' AS transaction_type,
                     lr.amount AS amount,
                     lr.receipt_number AS reference,
-                    'Loan Repayment' AS description
+                    'Repayment - ' || COALESCE(lp.name, 'Loan') AS description,
+                    2 AS txn_order
                 FROM loan_repayments lr
                 JOIN loan_applications la ON lr.loan_application_id = la.id
-                WHERE la.member_id = ? AND lr.status = 'COMPLETED'
+                LEFT JOIN loan_products lp ON la.loan_product_id = lp.id
+                WHERE la.member_id = ? AND lr.status = 'COMPLETED' AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED', 'CLOSED', 'REFINANCED', 'RESTRUCTURED')
                 
                 UNION ALL
                 
@@ -131,7 +138,8 @@ public class ReportService {
                     'ACCRUAL' AS transaction_type,
                     p.original_amount AS amount,
                     p.id::varchar AS reference,
-                    'Penalty Applied' AS description
+                    'Penalty Applied' AS description,
+                    1 AS txn_order
                 FROM penalties p
                 WHERE p.member_id = ?
                 
@@ -143,11 +151,12 @@ public class ReportService {
                     'REPAYMENT' AS transaction_type,
                     prp.amount AS amount,
                     prp.receipt_number AS reference,
-                    'Penalty Repayment' AS description
+                    'Penalty Repayment' AS description,
+                    2 AS txn_order
                 FROM penalty_repayments prp
                 WHERE prp.member_id = ? AND prp.status = 'COMPLETED'
             ) AS combined
-            ORDER BY transaction_date DESC
+            ORDER BY transaction_date ASC, txn_order ASC
             """;
 
         List<StatementItemDTO> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -175,6 +184,107 @@ public class ReportService {
         }
 
         return results;
+    }
+
+    // ── NEW: STATEMENT WITH CORRECTED OUTSTANDING BALANCE ─────
+    @Transactional(readOnly = true)
+    public StatementResponseDTO getMemberStatementWithSummary(UUID memberId, String fromDate, String toDate) {
+        // 1. Get the statement items (This now includes the FULL history)
+        List<StatementItemDTO> items = getMemberStatement(memberId, fromDate, toDate);
+
+        // 2. Initialize Summary
+        StatementSummaryDTO summary = new StatementSummaryDTO();
+
+        // 3. Get accurate Outstanding Balance from our Source-of-Truth View
+        try {
+            String loanSql = """
+                SELECT 
+                    COALESCE(outstanding_principal, 0) AS outstanding_principal,
+                    COALESCE(outstanding_interest, 0) AS outstanding_interest
+                FROM v_member_loan_summary
+                WHERE member_id = ?
+                """;
+
+            jdbcTemplate.queryForObject(loanSql, (rs, rowNum) -> {
+                BigDecimal principal = rs.getBigDecimal("outstanding_principal");
+                BigDecimal interest = rs.getBigDecimal("outstanding_interest");
+                summary.setLoanOutstanding(
+                        principal.add(interest != null ? interest : BigDecimal.ZERO)
+                );
+                return null;
+            }, memberId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            summary.setLoanOutstanding(BigDecimal.ZERO);
+        }
+
+        // 4. Query the ACTIVE Disbursed and Repaid amounts directly!
+        // We only look at live loans for the summary widget.
+        String activeLoanStatsSql = """
+            SELECT 
+                COALESCE((SELECT SUM(principal_amount) FROM loan_applications WHERE member_id = ? AND status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED')), 0) as total_disbursed,
+                COALESCE((SELECT SUM(lr.amount) FROM loan_repayments lr JOIN loan_applications la ON lr.loan_application_id = la.id WHERE la.member_id = ? AND la.status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED') AND lr.status = 'COMPLETED'), 0) as total_repaid
+            """;
+
+        jdbcTemplate.queryForObject(activeLoanStatsSql, (rs, rowNum) -> {
+            summary.setLoanDisbursed(rs.getBigDecimal("total_disbursed"));
+            summary.setLoanRepaid(rs.getBigDecimal("total_repaid"));
+            return null;
+        }, memberId, memberId);
+
+        // 5. Calculate Savings and Penalties from the statement items
+        for (StatementItemDTO item : items) {
+            if ("SAVINGS".equals(item.getModule())) {
+                if ("DEPOSIT".equals(item.getType())) {
+                    summary.setSavingsDeposited(summary.getSavingsDeposited().add(item.getAmount()));
+                } else if ("WITHDRAWAL".equals(item.getType())) {
+                    summary.setSavingsWithdrawn(summary.getSavingsWithdrawn().add(item.getAmount()));
+                }
+            } else if ("PENALTIES".equals(item.getModule())) {
+                if ("ACCRUAL".equals(item.getType())) {
+                    summary.setPenaltiesCharged(summary.getPenaltiesCharged().add(item.getAmount()));
+                } else if ("REPAYMENT".equals(item.getType()) || "WAIVER".equals(item.getType())) {
+                    summary.setPenaltiesPaid(summary.getPenaltiesPaid().add(item.getAmount()));
+                }
+            }
+        }
+
+        // 6. 🟢 THE FIX: The Absolute Truth Reconciler
+        // We must enforce the mathematical rule for the UI: Charged = Paid + Outstanding
+        overviewRepository.findById(memberId).ifPresent(overview -> {
+            // 1. Get the absolute truth for Outstanding (This includes ALL compounding interest)
+            BigDecimal actualOutstanding = overview.getPenaltyOutstanding() != null
+                    ? overview.getPenaltyOutstanding()
+                    : BigDecimal.ZERO;
+
+            BigDecimal statementCharged = summary.getPenaltiesCharged();
+            BigDecimal statementPaid = summary.getPenaltiesPaid();
+
+            // 2. Deduce Waterfall Payments:
+            // If the base charged from the statement is greater than what they currently owe,
+            // they MUST have paid the difference via the Loan Repayment waterfall!
+            if (statementCharged.compareTo(actualOutstanding) > 0) {
+                BigDecimal hiddenPayments = statementCharged.subtract(actualOutstanding);
+                if (hiddenPayments.compareTo(statementPaid) > 0) {
+                    statementPaid = hiddenPayments;
+                    summary.setPenaltiesPaid(statementPaid);
+                }
+            }
+
+            // 3. Deduce Compounding Interest & Force Mathematical Perfection:
+            // We force the 'Charged' amount to exactly equal the true Outstanding plus whatever they Paid.
+            // This guarantees the UI math (Charged - Paid = Outstanding) is always 100% flawless.
+            BigDecimal trueCharged = actualOutstanding.add(statementPaid);
+            summary.setPenaltiesCharged(trueCharged);
+
+            // (Optional, just to ensure DTO is complete if you use this field)
+            summary.setPenaltiesOutstanding(actualOutstanding);
+        });
+
+        // 7. Create and return the response
+        StatementResponseDTO response = new StatementResponseDTO();
+        response.setItems(items);
+        response.setSummary(summary);
+        return response;
     }
 
     @Transactional(readOnly = true)

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { useSettings } from '../../settings/context/useSettings';
-import { reportApi, type StatementItemDTO } from '../api/report-api';
+import { reportApi, type StatementItemDTO, type StatementResponseDTO } from '../api/report-api';
 import { memberApi, type Member } from '../../members/api/member-api';
 import {
     ArrowLeft, FileText, Download, Printer, Search,
@@ -84,6 +84,7 @@ export const MemberStatementPage: React.FC = () => {
 
     // Statement
     const [statement,  setStatement]  = useState<StatementItemDTO[]>([]);
+    const [response,   setResponse]   = useState<StatementResponseDTO | null>(null);
     const [loading,    setLoading]    = useState(false);
     const [error,      setError]      = useState('');
     const [hasFetched, setHasFetched] = useState(false);
@@ -125,9 +126,11 @@ export const MemberStatementPage: React.FC = () => {
                 toIsoDateTime(fromDate, false),
                 toIsoDateTime(toDate, true),
             );
-            // Sort chronologically
-            data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            setStatement(data);
+            // Backend already returns in correct chronological order with proper transaction sequencing
+            // Just ensure it's in ascending order (earliest first)
+            data.items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            setStatement(data.items);
+            setResponse(data);
             setHasFetched(true);
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -153,20 +156,34 @@ export const MemberStatementPage: React.FC = () => {
             return { ...item, runningBalance: balance, isCredit };
         });
 
-        const savingsDeposits    = statement.filter(i => i.module === 'SAVINGS' && i.type === 'DEPOSIT').reduce((s,i) => s + i.amount, 0);
-        const savingsWithdrawals = statement.filter(i => i.module === 'SAVINGS' && i.type === 'WITHDRAWAL').reduce((s,i) => s + i.amount, 0);
-        const loanDisbursed      = statement.filter(i => i.module === 'LOANS' && i.type === 'DISBURSEMENT').reduce((s,i) => s + i.amount, 0);
-        const loanRepaid         = statement.filter(i => i.module === 'LOANS' && i.type === 'REPAYMENT').reduce((s,i) => s + i.amount, 0);
-        const penaltiesCharged   = statement.filter(i => i.module === 'PENALTIES' && i.type === 'ACCRUAL').reduce((s,i) => s + i.amount, 0);
-        const penaltiesPaid      = statement.filter(i => i.module === 'PENALTIES' && ['REPAYMENT','WAIVER'].includes(i.type)).reduce((s,i) => s + i.amount, 0);
+        // Use the summary from the response if available, otherwise calculate from statement
+        const statsObj = response?.summary ? {
+            savingsDeposits: response.summary.savingsDeposited,
+            savingsWithdrawals: response.summary.savingsWithdrawn,
+            savingsNet: response.summary.savingsDeposited - response.summary.savingsWithdrawn,
+            loanDisbursed: response.summary.loanDisbursed,
+            loanRepaid: response.summary.loanRepaid,
+            loanOutstanding: response.summary.loanOutstanding,  // ✅ This is now correct!
+            penaltiesCharged: response.summary.penaltiesCharged,
+            penaltiesPaid: response.summary.penaltiesPaid,
+        } : {
+            savingsDeposits: 0,
+            savingsWithdrawals: 0,
+            savingsNet: 0,
+            loanDisbursed: 0,
+            loanRepaid: 0,
+            loanOutstanding: 0,
+            penaltiesCharged: 0,
+            penaltiesPaid: 0,
+        };
 
         return {
             rows: enriched,
             openingBalance: 0,
             closingBalance: balance,
-            stats: { savingsDeposits, savingsWithdrawals, savingsNet: savingsDeposits - savingsWithdrawals, loanDisbursed, loanRepaid, penaltiesCharged, penaltiesPaid },
+            stats: statsObj,
         };
-    }, [statement]);
+    }, [statement, response]);
 
     const handleExportCSV = () => {
         const header = 'Date,Module,Type,Reference,Description,Debit,Credit,Balance\n';
@@ -476,8 +493,8 @@ export const MemberStatementPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between pt-1.5 border-t border-slate-100">
                                                 <span className="font-bold text-slate-700">Outstanding</span>
-                                                <span className={`font-bold font-mono ${stats.loanDisbursed - stats.loanRepaid > 0 ? 'text-sky-700' : 'text-emerald-700'}`}>
-                                                    {fmt(Math.max(0, stats.loanDisbursed - stats.loanRepaid))}
+                                                <span className={`font-bold font-mono ${stats.loanOutstanding > 0 ? 'text-sky-700' : 'text-emerald-700'}`}>
+                                                    {fmt(Math.max(0, stats.loanOutstanding))}
                                                 </span>
                                             </div>
                                         </div>
@@ -500,8 +517,8 @@ export const MemberStatementPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between pt-1.5 border-t border-slate-100">
                                                 <span className="font-bold text-slate-700">Outstanding</span>
-                                                <span className={`font-bold font-mono ${stats.penaltiesCharged - stats.penaltiesPaid > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
-                                                    {fmt(Math.max(0, stats.penaltiesCharged - stats.penaltiesPaid))}
+                                                <span className={`font-bold font-mono ${(response?.summary?.penaltiesOutstanding ?? 0) > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                                                    {fmt(Math.max(0, response?.summary?.penaltiesOutstanding ?? 0))}
                                                 </span>
                                             </div>
                                         </div>

@@ -461,6 +461,9 @@ public class LoanApplicationService {
     // =================================================================================
     // MIGRATION BACKDOOR: Overloaded disbursement method that accepts a historical date
     // =================================================================================
+    // =================================================================================
+    // MIGRATION BACKDOOR: Overloaded disbursement method that accepts a historical date
+    // =================================================================================
     @Transactional
     public LoanApplicationResponse disburseHistoricalApplication(UUID applicationId, String email, java.time.LocalDate backdateOverride) {
         User treasurer = userRepository.findByEmail(email).orElseThrow();
@@ -496,6 +499,18 @@ public class LoanApplicationService {
         loanScheduleService.generateWeeklySchedule(app);
 
         LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
+
+        // 🟢 THE FIX: TIME MACHINE - Backdate the Loan Application's immutable created_at timestamp
+        Timestamp historicalTs = Timestamp.valueOf(backdateOverride.atStartOfDay());
+        jdbcTemplate.update(
+                "UPDATE loan_applications SET created_at = ?, updated_at = ? WHERE id = ?",
+                historicalTs, historicalTs, app.getId());
+
+        // 🟢 THE FIX: TIME MACHINE - Backdate the General Ledger Journal Entry!
+        // We must update the accounting ledger so the statement picks up the correct historical date.
+        jdbcTemplate.update(
+                "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
+                historicalTs, historicalTs, historicalTs, "LNDIS-" + reference);
 
         // 5. EXACT SAVINGS FORMAT for the Audit Log
         securityAuditService.logEvent(

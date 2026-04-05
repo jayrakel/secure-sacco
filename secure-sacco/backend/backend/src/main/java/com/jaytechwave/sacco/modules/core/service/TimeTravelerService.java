@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.loans.domain.entity.LoanApplication;
 import com.jaytechwave.sacco.modules.loans.domain.repository.LoanApplicationRepository;
 import com.jaytechwave.sacco.modules.loans.domain.service.LoanScheduleService;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.penalties.job.PenaltyJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -12,7 +13,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import org.springframework.jdbc.core.JdbcTemplate;
 import java.time.LocalDate;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -28,6 +32,9 @@ public class TimeTravelerService {
     private final MigrationService migrationService;
     private final MemberRepository memberRepository;
     private final LoanScheduleService loanScheduleService;
+    private final PenaltyJob penaltyJob;
+    private final JdbcTemplate jdbcTemplate;     // 🟢 Add this
+    private final EntityManager entityManager;
 
     // --- State Variables ---
     private LocalDate simulationStartDate = LocalDate.of(2022, 10, 6);
@@ -85,14 +92,42 @@ public class TimeTravelerService {
 
     @Transactional
     public void advanceVirtualTimeByDays(int days) {
-        this.virtualDaysOffset += days;
-        LocalDate currentVirtualDate = getVirtualDate();
+
+        for (int i = 0; i < days; i++) {
+            // 1. Advance the clock by exactly 1 day
+            this.virtualDaysOffset += 1;
+            LocalDate currentVirtualDate = getVirtualDate();
+
+            // 2. Trigger business logic (These will create records stamped with real-time April 2026)
+            triggerScheduleProgression(currentVirtualDate);
+            penaltyJob.executeDailyPenaltyInterestAccrual();
+
+            // 3. 🚨 CRITICAL: Force Hibernate to write the new penalties to PostgreSQL immediately!
+            // If we don't flush, the JDBC updates below won't see the new records.
+            entityManager.flush();
+
+            // 4. 🟢 THE TIME MACHINE VACUUM
+            // Instantly sweep the database and backdate anything created in the last millisecond to the historical date
+            Timestamp virtualTs = Timestamp.valueOf(currentVirtualDate.atStartOfDay());
+
+            // Sweep Base Penalties
+            jdbcTemplate.update(
+                    "UPDATE penalties SET created_at = ?, updated_at = ? WHERE CAST(created_at AS DATE) = CURRENT_DATE",
+                    virtualTs, virtualTs);
+
+            // Sweep Daily Penalty Accruals
+            jdbcTemplate.update(
+                    "UPDATE penalty_accruals SET created_at = ?, updated_at = ? WHERE CAST(created_at AS DATE) = CURRENT_DATE",
+                    virtualTs, virtualTs);
+
+            // Sweep the Accounting Ledger (So the statement orders them perfectly!)
+            jdbcTemplate.update(
+                    "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE CAST(created_at AS DATE) = CURRENT_DATE",
+                    virtualTs, virtualTs, virtualTs);
+        }
 
         log.info("🕰️ TIME TRAVEL: Clock advanced {} days to {} (Progress: {:.1f}%)",
-                days, currentVirtualDate, getSimulationProgress());
-
-        // 1. Advance the loan schedules (mark items as DUE or OVERDUE)
-        triggerScheduleProgression(currentVirtualDate);
+                days, getVirtualDate(), getSimulationProgress());
     }
 
     // --- Internal Helpers ---

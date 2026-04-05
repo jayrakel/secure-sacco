@@ -1,6 +1,7 @@
 ### ============================================================
 ### LOGIN FIRST — sets csrf_token, sacco_cookie, api_url
 ### ============================================================
+
 POST https://staging.jaytechwavesolutions.co.ke/api/v1/auth/login
 Content-Type: application/json
 
