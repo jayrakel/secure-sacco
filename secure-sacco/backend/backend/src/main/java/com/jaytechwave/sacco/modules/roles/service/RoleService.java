@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.roles.domain.repository.PermissionRepositor
 import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final SecurityAuditService securityAuditService;
+    private final CacheManager cacheManager;
 
     @Transactional(readOnly = true)
     public List<RoleResponse> getAllRoles() {
@@ -130,6 +132,12 @@ public class RoleService {
 
         role.setPermissions(newPermissions);
         Role savedRole = roleRepository.save(role);
+
+        // ✅ CRITICAL: Invalidate ALL user caches since role permissions changed
+        // This forces Spring Security to reload authorities on next request
+        if (cacheManager.getCache("userCache") != null) {
+            cacheManager.getCache("userCache").clear();
+        }
 
         // --- ADDED AUDIT LOG ---
         securityAuditService.logEvent(

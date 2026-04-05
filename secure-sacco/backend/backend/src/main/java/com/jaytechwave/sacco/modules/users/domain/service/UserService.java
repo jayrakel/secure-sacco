@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
     private final SecurityAuditService securityAuditService;
+    private final CacheManager cacheManager;
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
@@ -128,6 +130,11 @@ public class UserService {
         }
         user.setRoles(roles);
         userRepository.save(user);
+
+        // ✅ CRITICAL: Clear user cache so authorities are reloaded on next auth
+        if (cacheManager.getCache("userCache") != null) {
+            cacheManager.getCache("userCache").clear();
+        }
 
         securityAuditService.logEvent(
                 "USER_ROLES_UPDATED",
