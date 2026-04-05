@@ -22,19 +22,19 @@ export default function CreateUserModal({ onClose, onSuccess }: CreateUserModalP
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        const fetchRoles = async () => {
-            try {
-                const roles = await roleApi.getAllRoles();
-                setAvailableRoles(roles);
-            } catch (err) {
-                setError('Failed to load roles.');
-            } finally {
-                setIsLoadingRoles(false);
-            }
-        };
-        void fetchRoles();
-    }, []);
+     useEffect(() => {
+         const fetchRoles = async () => {
+             try {
+                 const roles = await roleApi.getAllRoles();
+                 setAvailableRoles(roles);
+             } catch {
+                 setError('Failed to load roles.');
+             } finally {
+                 setIsLoadingRoles(false);
+             }
+         };
+         void fetchRoles();
+     }, []);
 
     const handleRoleToggle = (roleId: string) => {
         setFormData((prev) => ({

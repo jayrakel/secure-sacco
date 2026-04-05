@@ -27,14 +27,34 @@ export default function LoginPage() {
     // SACCO branding — fetched from the public settings endpoint
     const [saccoName, setSaccoName] = useState('SACCO Portal');
     const [saccoTagline, setSaccoTagline] = useState('Secure, Transparent, and Automated Management.');
+    const [logoUrl, setLogoUrl] = useState('');
+    const [faviconUrl, setFaviconUrl] = useState('');
 
     useEffect(() => {
         axios.get('/api/v1/settings/sacco')
             .then(res => {
-                if (res.data?.saccoName) setSaccoName(res.data.saccoName);
+                console.log('✓ Settings fetched on login page:', res.data);
+                if (res.data?.saccoName) {
+                    setSaccoName(res.data.saccoName);
+                    document.title = res.data.saccoName + ' - Secure SACCO';
+                }
                 if (res.data?.tagline)   setSaccoTagline(res.data.tagline);
+                if (res.data?.logoUrl) setLogoUrl(res.data.logoUrl);
+                if (res.data?.faviconUrl) {
+                    setFaviconUrl(res.data.faviconUrl);
+                    // Update favicon
+                    let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+                    if (!link) {
+                        link = document.createElement('link');
+                        link.rel = 'icon';
+                        document.head.appendChild(link);
+                    }
+                    link.href = res.data.faviconUrl;
+                }
             })
-            .catch(() => { /* silently fall back to defaults */ });
+            .catch((error) => {
+                console.error('⚠ Failed to fetch settings on login page:', error.response?.status, error.message);
+            });
     }, []);
 
     const navigate = useNavigate();
@@ -145,8 +165,12 @@ export default function LoginPage() {
             {/* Left Side Branding */}
             <div className="hidden lg:flex w-1/2 bg-slate-900 flex-col justify-center items-center p-12 text-white relative">
                 <div className="relative z-10 text-center">
-                    <div className="mb-8 inline-block p-6 bg-white/5 rounded-full backdrop-blur-sm border border-white/10 shadow-2xl">
-                        <ShieldCheck size={80} className="text-emerald-400" />
+                    <div className="mb-8 inline-block p-6 bg-white rounded-full">
+                        {logoUrl ? (
+                            <img src={logoUrl} alt={saccoName} className="w-28 h-28 object-contain" />
+                        ) : (
+                            <ShieldCheck size={80} className="text-emerald-400" />
+                        )}
                     </div>
                     <h1 className="text-5xl font-bold mb-4 tracking-tight">{saccoName}</h1>
                     <p className="text-slate-400 text-xl max-w-md mx-auto leading-relaxed">
@@ -167,8 +191,12 @@ export default function LoginPage() {
                     <div className="bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
 
                         <div className="mb-6 flex justify-center">
-                            <div className="flex items-center gap-2 text-slate-800">
-                                <ShieldCheck className="text-emerald-600" size={32} />
+                            <div className="flex items-center gap-3 text-slate-800">
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt={saccoName} className="w-8 h-8 object-contain" />
+                                ) : (
+                                    <ShieldCheck className="text-emerald-600" size={32} />
+                                )}
                                 <span className="text-xl font-bold">{saccoName}</span>
                             </div>
                         </div>
@@ -375,11 +403,11 @@ export default function LoginPage() {
                 <div className="w-full text-center py-6 text-slate-400 text-sm mt-auto border-t border-slate-200">
                     <p>© {new Date().getFullYear()} {saccoName}. All rights reserved.</p>
                     <div className="flex justify-center gap-4 mt-2">
-                        <a href="#" className="hover:text-emerald-600 transition">Privacy Policy</a>
+                        <a href="/privacy-policy" className="hover:text-emerald-600 transition">Privacy Policy</a>
                         <span>•</span>
-                        <a href="#" className="hover:text-emerald-600 transition">Terms of Service</a>
+                        <a href="/terms-of-service" className="hover:text-emerald-600 transition">Terms of Service</a>
                         <span>•</span>
-                        <a href="#" className="hover:text-emerald-600 transition">Support</a>
+                        <a href="/support" className="hover:text-emerald-600 transition">Support</a>
                     </div>
                 </div>
 

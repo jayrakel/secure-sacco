@@ -29,7 +29,6 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Get SACCO settings")
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getSettings() {
         if (!settingsService.isInitialized()) {
             return ResponseEntity.ok(Map.of("initialized", false));

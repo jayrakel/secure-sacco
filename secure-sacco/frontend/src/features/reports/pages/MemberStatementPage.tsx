@@ -74,10 +74,10 @@ export const MemberStatementPage: React.FC = () => {
     // ── DYNAMIC LOGO HELPER ──
     const DynamicLogo = ({ size = 48, className = "" }: { size?: number, className?: string }) => {
         // We will use the faviconUrl for that perfect square look
-        if ((settings as any)?.faviconUrl) {
+        if (settings?.faviconUrl) {
             return (
                 <img
-                    src={(settings as any).faviconUrl}
+                    src={settings.faviconUrl}
                     alt={saccoName}
                     style={{ width: size, height: size }}
                     className={`object-contain drop-shadow-sm shrink-0 ${className}`}
@@ -182,9 +182,9 @@ export const MemberStatementPage: React.FC = () => {
         } finally { setLoading(false); }
     }, [activeMemberId, fromDate, toDate, isStaff]);
 
-    useEffect(() => {
-        if (!isStaff && activeMemberId) fetchStatement();
-    }, [isStaff, activeMemberId]);
+     useEffect(() => {
+         if (!isStaff && activeMemberId) fetchStatement();
+     }, [isStaff, activeMemberId, fetchStatement]);
 
     // ── Derived data ──────────────────────────────────────────────────────────
 

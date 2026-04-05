@@ -34,7 +34,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     useEffect(() => {
         if (isAuthenticated && !setupLoading && setupComplete) {
-            void refreshSettings();
+            // Call refreshSettings asynchronously to avoid setState in effect
+            const loadSettings = async () => {
+                await refreshSettings();
+            };
+            void loadSettings();
         }
     }, [isAuthenticated, setupComplete, setupLoading, refreshSettings]);
 

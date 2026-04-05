@@ -46,8 +46,12 @@ apiClient.interceptors.response.use(
         }
 
         // ── Expired / unauthenticated session ─────────────────────────────────
+        // Public pages (login, legal pages, etc.) should not be redirected on 401
+        const publicPaths = ['/login', '/privacy-policy', '/terms-of-service', '/support', '/activate', '/reset-password'];
+        const isPublicPage = publicPaths.some(p => window.location.pathname.startsWith(p));
+
         if (status === 401) {
-            if (!window.location.pathname.startsWith('/login')) {
+            if (!isPublicPage) {
                 window.location.href = '/login';
             }
             return Promise.reject(error);
