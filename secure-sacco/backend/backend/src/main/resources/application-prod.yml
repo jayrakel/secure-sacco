@@ -54,6 +54,10 @@ app:
     email: ${APP_DEFAULT_ADMIN_EMAIL}
     password: ${APP_DEFAULT_ADMIN_PASSWORD}
     phone: ${APP_DEFAULT_ADMIN_PHONE}
+  time-travel:
+    enabled: true
+  migration:
+    enabled: true
 
 management:
   health:

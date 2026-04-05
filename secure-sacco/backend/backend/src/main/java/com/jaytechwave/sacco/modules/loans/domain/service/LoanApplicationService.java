@@ -293,6 +293,17 @@ public class LoanApplicationService {
         } else {
             oldLoan.setStatus(LoanStatus.RESTRUCTURED);
         }
+
+        // 🟢 THE FIX (BENJAMIN'S BUG): Kill the Ghost Schedules!
+        List<LoanScheduleItem> oldSchedulesToNeutralize = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(oldLoan.getId());
+        for (LoanScheduleItem item : oldSchedulesToNeutralize) {
+            // If the schedule hasn't been paid, neutralize it so the cron job ignores it
+            if (item.getStatus() != LoanScheduleStatus.PAID) {
+                item.setStatus(LoanScheduleStatus.REPLACED);
+            }
+        }
+        scheduleItemRepository.saveAll(oldSchedulesToNeutralize);
+
         loanApplicationRepository.save(oldLoan);
 
         // 4. Create the New Consolidated Loan
@@ -304,10 +315,11 @@ public class LoanApplicationService {
                 .loanProduct(product)
                 .principalAmount(newPrincipal)
                 .termWeeks(request.newTermWeeks())
-                .status(LoanStatus.ACTIVE)
+                .status(LoanStatus.ACTIVE) // 🟢 THE FIX (CHARLES'S BUG): Ensure the new loan is ACTIVE
                 .disbursedBy(admin.getId())
                 .applicationFee(BigDecimal.ZERO)
                 .applicationFeePaid(true)
+                .referenceNotes(request.referenceNumber() != null ? "MIGRATION: " + request.referenceNumber() : null) // 🟢 COSMETIC FIX
                 .disbursedAt(request.historicalDateOverride() != null ?
                         request.historicalDateOverride().atStartOfDay() : LocalDateTime.now())
                 .build();
