@@ -6,17 +6,17 @@ import time
 # ==========================================
 # CONFIGURATION
 # ==========================================
-# BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
-# EMAIL = "admin@jaytechwavesolutions.co.ke"
+BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
+EMAIL = "admin@jaytechwavesolutions.co.ke"
+PASSWORD = "M1chira._2000"
+CSV_FILE = "Statement_BVL-2022-000001_all (1).csv"
+MEMBER_NUMBER = "BVL-2022-000001"
+
+# BASE_URL = "http://localhost:8080/api/v1"
+# EMAIL = "jaytechwavesolutions@gmail.com"
 # PASSWORD = "Michira._2000"
 # CSV_FILE = "Statement_BVL-2022-000001_all (1).csv"
 # MEMBER_NUMBER = "BVL-2022-000001"
-
-BASE_URL = "http://localhost:8080/api/v1"
-EMAIL = "jaytechwavesolutions@gmail.com"
-PASSWORD = "Michira._2000"
-CSV_FILE = "Statement_BVL-2022-000001_all (1).csv"
-MEMBER_NUMBER = "BVL-2022-000001"
 
 # Create a session to automatically handle Cookies
 session = requests.Session()

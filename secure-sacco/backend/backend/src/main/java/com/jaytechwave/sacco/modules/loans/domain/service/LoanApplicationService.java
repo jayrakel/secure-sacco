@@ -380,7 +380,7 @@ public class LoanApplicationService {
             log.info("✅ Refinance schedule overridden. Principal={}, InterestOverride={}", newPrincipal, totalInterest);
         }
 
-        // 5c. 🚨 TIME MACHINE: If a historical date was provided, backdate created_at on the
+        // 5c. 🚨 TIME MACHINE: If a historical date was provided, backdate created_at AND disbursed_at on the
         //     new loan so the UI shows the correct "Disbursed On" date instead of today.
         //     @CreationTimestamp always writes the real wall-clock time — JDBC is the only way
         //     to override it after the fact.
@@ -388,9 +388,9 @@ public class LoanApplicationService {
             Timestamp historicalTs = Timestamp.valueOf(
                     request.historicalDateOverride().atStartOfDay());
             jdbcTemplate.update(
-                    "UPDATE loan_applications SET created_at = ?, updated_at = ? WHERE id = ?",
-                    historicalTs, historicalTs, newLoan.getId());
-            log.info("⏮️  Backdated new loan {} created_at → {}", newLoan.getId(), request.historicalDateOverride());
+                    "UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
+                    historicalTs, historicalTs, historicalTs, newLoan.getId());
+            log.info("⏮️  Backdated new loan {} created_at & disbursed_at → {}", newLoan.getId(), request.historicalDateOverride());
         }
 
         // 6. Post Accounting (Net Cash)
@@ -500,11 +500,11 @@ public class LoanApplicationService {
 
         LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
 
-        // 🟢 THE FIX: TIME MACHINE - Backdate the Loan Application's immutable created_at timestamp
+        // 🟢 THE FIX: TIME MACHINE - Backdate the Loan Application's immutable created_at and disbursed_at timestamps
         Timestamp historicalTs = Timestamp.valueOf(backdateOverride.atStartOfDay());
         jdbcTemplate.update(
-                "UPDATE loan_applications SET created_at = ?, updated_at = ? WHERE id = ?",
-                historicalTs, historicalTs, app.getId());
+                "UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
+                historicalTs, historicalTs, historicalTs, app.getId());
 
         // 🟢 THE FIX: TIME MACHINE - Backdate the General Ledger Journal Entry!
         // We must update the accounting ledger so the statement picks up the correct historical date.

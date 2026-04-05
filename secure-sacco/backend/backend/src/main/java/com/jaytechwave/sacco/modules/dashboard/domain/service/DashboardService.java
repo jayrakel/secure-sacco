@@ -34,7 +34,7 @@ public class DashboardService {
                 (SELECT COUNT(*) FROM loan_applications WHERE status IN ('ACTIVE','IN_GRACE','DEFAULTED'))  AS active_loans,
                 COALESCE((SELECT SUM(outstanding_principal + outstanding_interest) FROM v_member_loan_summary), 0) AS loan_portfolio,
                 (SELECT COUNT(DISTINCT loan_application_id) FROM loan_schedule_items
-                    WHERE due_date < CURRENT_DATE AND status != 'PAID')                    AS loans_in_arrears,
+                    WHERE due_date < CURRENT_DATE AND status NOT IN ('PAID', 'REPLACED'))  AS loans_in_arrears,
                 COALESCE((SELECT SUM(total_arrears) FROM v_member_loan_summary), 0)        AS total_arrears_amount,
                 (SELECT COUNT(*) FROM loan_applications WHERE status = 'PENDING_APPROVAL') AS pending_loan_applications,
 
