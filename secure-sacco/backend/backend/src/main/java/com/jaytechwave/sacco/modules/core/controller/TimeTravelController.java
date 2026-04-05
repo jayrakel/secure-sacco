@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.core.controller;
 import com.jaytechwave.sacco.modules.core.service.TimeTravelerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/time-travel")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.time-travel.enabled", havingValue = "true")
 @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
 public class TimeTravelController {
 

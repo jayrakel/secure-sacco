@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.loans.domain.service.LoanScheduleService;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,8 +20,8 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("!prod") // 🚨 NEVER RUN IN PRODUCTION
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.time-travel.enabled", havingValue = "true")
 public class TimeTravelerService {
 
     private final LoanApplicationRepository loanApplicationRepository;
@@ -92,18 +93,6 @@ public class TimeTravelerService {
 
         // 1. Advance the loan schedules (mark items as DUE or OVERDUE)
         triggerScheduleProgression(currentVirtualDate);
-    }
-
-    // --- Scheduled Job ---
-
-    @Scheduled(cron = "0 0 0,6,12,18 * * *") // Every 6 hours
-    @Transactional
-    public void executeTimeProgressionCheck() {
-        if (isSimulationComplete()) {
-            log.info("⏸️ Time-travel simulation COMPLETE at {}.", simulationEndDate);
-            return;
-        }
-        advanceVirtualTimeByDays(daysPerTick);
     }
 
     // --- Internal Helpers ---

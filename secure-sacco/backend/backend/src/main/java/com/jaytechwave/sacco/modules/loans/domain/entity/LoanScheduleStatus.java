@@ -4,5 +4,6 @@ public enum LoanScheduleStatus {
     PENDING, // Future installment
     DUE,     // Due this week
     OVERDUE, // Missed the due date
-    PAID     // Fully cleared
+    PAID,     // Fully cleared
+    REPLACED // Payment waived (e.g. due to hardship)
 }
