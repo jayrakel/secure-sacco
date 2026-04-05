@@ -7,6 +7,10 @@ import os
 # ==========================================
 # CONFIGURATION
 # ==========================================
+# BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
+# EMAIL = "admin@jaytechwavesolutions.co.ke"
+# PASSWORD = "Michira._2000"
+#
 BASE_URL = "http://localhost:8080/api/v1"
 EMAIL = "jaytechwavesolutions@gmail.com"
 PASSWORD = "Michira._2000"
