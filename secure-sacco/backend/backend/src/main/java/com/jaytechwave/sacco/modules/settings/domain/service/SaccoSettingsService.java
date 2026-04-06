@@ -26,7 +26,12 @@ public class SaccoSettingsService {
 
     @Transactional(readOnly = true)
     public boolean isInitialized() {
-        return settingsRepository.count() > 0;
+        try {
+            return settingsRepository.count() > 0;
+        } catch (Exception e) {
+            // If there's a database error, assume not initialized
+            return false;
+        }
     }
 
     @Transactional
