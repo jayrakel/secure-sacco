@@ -4,19 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add branding URL fields and update database schema for logo and favicon">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/PrivacyPolicyPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/SupportPage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/TermsOfServicePage.tsx" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update Trusted Types handling and add react-qr-code dependency">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/controller/SaccoSettingsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/controller/SaccoSettingsController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/LoginPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/LoginPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/MemberStatementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/MemberStatementPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/context/SettingsProvider.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/context/SettingsProvider.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/components/CreateUserModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/components/CreateUserModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/PrivacyPolicyPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/PrivacyPolicyPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/TermsOfServicePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/TermsOfServicePage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/components/BankStatementPrintable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/components/BankStatementPrintable.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -331,7 +327,6 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "SHELLCHECK.PATH": "C:\\Users\\JAY\\AppData\\Roaming\\JetBrains\\IntelliJIdea2025.3\\plugins\\Shell Script\\shellcheck.exe",
     "Spring Boot.BackendApplication.executor": "Run",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
@@ -460,23 +455,7 @@
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
       <workItem from="1775309966859" duration="41932000" />
-      <workItem from="1775414197404" duration="17727000" />
-    </task>
-    <task id="LOCAL-00009" summary="chore: move OWASP scan to weekly schedule, unblock CI pipeline">
-      <option name="closed" value="true" />
-      <created>1774525513611</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1774525513611</updated>
-    </task>
-    <task id="LOCAL-00010" summary="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data">
-      <option name="closed" value="true" />
-      <created>1774526679570</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1774526679570</updated>
+      <workItem from="1775414197404" duration="18379000" />
     </task>
     <task id="LOCAL-00011" summary="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling">
       <option name="closed" value="true" />
@@ -854,7 +833,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775431134401</updated>
     </task>
-    <option name="localTasksCounter" value="58" />
+    <task id="LOCAL-00058" summary="feat: add public legal pages and update session handling for unauthenticated access">
+      <option name="closed" value="true" />
+      <created>1775433567266</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1775433567266</updated>
+    </task>
+    <task id="LOCAL-00059" summary="feat: add public legal pages and update session handling for unauthenticated access">
+      <option name="closed" value="true" />
+      <created>1775433725232</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1775433725233</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -875,8 +870,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: auto-confirm email verification if token is present in URL on verify contact page" />
-    <MESSAGE value="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter" />
     <MESSAGE value="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue" />
     <MESSAGE value="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode" />
     <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
@@ -900,7 +893,9 @@
     <MESSAGE value="feat: update loan portfolio calculation to include outstanding interest" />
     <MESSAGE value="feat: backdate loan application timestamps for historical accuracy" />
     <MESSAGE value="feat: add branding URL fields and update database schema for logo and favicon" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add branding URL fields and update database schema for logo and favicon" />
+    <MESSAGE value="feat: add public legal pages and update session handling for unauthenticated access" />
+    <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update Trusted Types handling and add react-qr-code dependency" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

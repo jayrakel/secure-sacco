@@ -1,4 +1,3 @@
-import React from 'react';
 
 // Adjust these interfaces to match your actual report-api.ts response types
 export interface PrintTransaction {
