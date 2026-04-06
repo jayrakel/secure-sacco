@@ -6,7 +6,7 @@ import {
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
     ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X,
 } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 
 interface NavItem {
     label: string;

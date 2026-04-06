@@ -28,7 +28,6 @@ export default function LoginPage() {
     const [saccoName, setSaccoName] = useState('SACCO Portal');
     const [saccoTagline, setSaccoTagline] = useState('Secure, Transparent, and Automated Management.');
     const [logoUrl, setLogoUrl] = useState('');
-    const [faviconUrl, setFaviconUrl] = useState('');
 
     useEffect(() => {
         axios.get('/api/v1/settings/sacco')
@@ -41,7 +40,6 @@ export default function LoginPage() {
                 if (res.data?.tagline)   setSaccoTagline(res.data.tagline);
                 if (res.data?.logoUrl) setLogoUrl(res.data.logoUrl);
                 if (res.data?.faviconUrl) {
-                    setFaviconUrl(res.data.faviconUrl);
                     // Update favicon
                     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
                     if (!link) {
