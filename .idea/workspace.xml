@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance Trusted Types handling with improved TypeScript interface">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -448,15 +448,7 @@
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
       <workItem from="1775309966859" duration="41932000" />
-      <workItem from="1775414197404" duration="19031000" />
-    </task>
-    <task id="LOCAL-00013" summary="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling">
-      <option name="closed" value="true" />
-      <created>1774528462272</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1774528462274</updated>
+      <workItem from="1775414197404" duration="19335000" />
     </task>
     <task id="LOCAL-00014" summary="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value">
       <option name="closed" value="true" />
@@ -842,7 +834,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775434246909</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling">
+      <option name="closed" value="true" />
+      <created>1775435022634</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1775435022635</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -863,7 +863,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode" />
     <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
     <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
     <MESSAGE value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
@@ -888,7 +887,8 @@
     <MESSAGE value="feat: add public legal pages and update session handling for unauthenticated access" />
     <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
     <MESSAGE value="feat: enhance Trusted Types handling with improved TypeScript interface" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance Trusted Types handling with improved TypeScript interface" />
+    <MESSAGE value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
