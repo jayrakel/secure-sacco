@@ -4,15 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update Trusted Types handling and add react-qr-code dependency">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance Trusted Types handling with improved TypeScript interface">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/PrivacyPolicyPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/PrivacyPolicyPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/TermsOfServicePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/legal/pages/TermsOfServicePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/components/BankStatementPrintable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/components/BankStatementPrintable.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -455,23 +448,7 @@
       <workItem from="1775105589808" duration="16112000" />
       <workItem from="1775278274570" duration="13719000" />
       <workItem from="1775309966859" duration="41932000" />
-      <workItem from="1775414197404" duration="18379000" />
-    </task>
-    <task id="LOCAL-00011" summary="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling">
-      <option name="closed" value="true" />
-      <created>1774527114580</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1774527114580</updated>
-    </task>
-    <task id="LOCAL-00012" summary="fix(api): allow configurable API base URL via VITE_API_BASE_URL env variable">
-      <option name="closed" value="true" />
-      <created>1774527428489</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1774527428489</updated>
+      <workItem from="1775414197404" duration="19031000" />
     </task>
     <task id="LOCAL-00013" summary="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling">
       <option name="closed" value="true" />
@@ -849,7 +826,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775433725233</updated>
     </task>
-    <option name="localTasksCounter" value="60" />
+    <task id="LOCAL-00060" summary="feat: update Trusted Types handling and add react-qr-code dependency">
+      <option name="closed" value="true" />
+      <created>1775434118034</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1775434118034</updated>
+    </task>
+    <task id="LOCAL-00061" summary="feat: enhance Trusted Types handling with improved TypeScript interface">
+      <option name="closed" value="true" />
+      <created>1775434246909</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1775434246909</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -870,7 +863,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue" />
     <MESSAGE value="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode" />
     <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
     <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
@@ -895,7 +887,8 @@
     <MESSAGE value="feat: add branding URL fields and update database schema for logo and favicon" />
     <MESSAGE value="feat: add public legal pages and update session handling for unauthenticated access" />
     <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: update Trusted Types handling and add react-qr-code dependency" />
+    <MESSAGE value="feat: enhance Trusted Types handling with improved TypeScript interface" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance Trusted Types handling with improved TypeScript interface" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

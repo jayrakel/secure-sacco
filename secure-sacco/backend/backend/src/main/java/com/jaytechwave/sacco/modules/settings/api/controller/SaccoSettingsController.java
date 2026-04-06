@@ -30,20 +30,27 @@ public class SaccoSettingsController {
     @Operation(summary = "Get SACCO settings")
     @GetMapping
     public ResponseEntity<?> getSettings() {
-        if (!settingsService.isInitialized()) {
-            return ResponseEntity.ok(Map.of("initialized", false));
+        try {
+            if (!settingsService.isInitialized()) {
+                return ResponseEntity.ok(Map.of("initialized", false));
+            }
+            SaccoSettings settings = settingsService.getSettings();
+            return ResponseEntity.ok(Map.of(
+                    "initialized", true,
+                    "saccoName", settings.getSaccoName(),
+                    "prefix", settings.getMemberNumberPrefix(),
+                    "padLength", settings.getMemberNumberPadLength(),
+                    "registrationFee", settings.getRegistrationFee(),
+                    "logoUrl", settings.getLogoUrl(),
+                    "faviconUrl", settings.getFaviconUrl(),
+                    "enabledModules", settings.getEnabledModules()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of(
+                    "initialized", false,
+                    "error", "Failed to retrieve settings: " + e.getMessage()
+            ));
         }
-        SaccoSettings settings = settingsService.getSettings();
-        return ResponseEntity.ok(Map.of(
-                "initialized", true,
-                "saccoName", settings.getSaccoName(),
-                "prefix", settings.getMemberNumberPrefix(),
-                "padLength", settings.getMemberNumberPadLength(),
-                "registrationFee", settings.getRegistrationFee(),
-                "logoUrl", settings.getLogoUrl(),
-                "faviconUrl", settings.getFaviconUrl(),
-                "enabledModules", settings.getEnabledModules()
-        ));
     }
 
     // --- NEW: Generate Prefix Preview ---
