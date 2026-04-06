@@ -162,7 +162,6 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             {/* ── Sidebar ───────────────────────────────────────────────── */}
             <aside className={`
     ${isCollapsed ? 'w-17' : 'w-60'}
-    /* Removed 'relative' from the line below */
     bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col shrink-0 z-40
     fixed lg:static inset-y-0 left-0
     ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -186,7 +185,20 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
 
                 {/* Logo */}
                 <div className={`flex items-center gap-3 border-b border-slate-800 shrink-0 ${isCollapsed ? 'p-4 justify-center' : 'p-5'}`}>
-                    <div className="bg-emerald-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">S</div>
+                    {settings?.logoUrl ? (
+                        <img
+                            key={settings.logoUrl}
+                            src={settings.logoUrl}
+                            alt="Logo"
+                            // 👇 Updated scaling logic here 👇
+                            className={`object-contain shrink-0 drop-shadow-sm transition-all duration-300 ${isCollapsed ? 'w-8 h-8 rounded-lg' : 'h-8 w-auto max-w-[160px]'}`}
+                        />
+                    ) : (
+                        <div className="bg-emerald-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {settings?.saccoName ? settings.saccoName.charAt(0).toUpperCase() : 'S'}
+                        </div>
+                    )}
+
                     {!isCollapsed && (
                         <span className="font-bold text-sm text-white truncate">{settings?.saccoName || 'Secure SACCO'}</span>
                     )}

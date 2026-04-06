@@ -29,7 +29,6 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Get SACCO settings")
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getSettings() {
         if (!settingsService.isInitialized()) {
             return ResponseEntity.ok(Map.of("initialized", false));
@@ -41,6 +40,8 @@ public class SaccoSettingsController {
                 "prefix", settings.getMemberNumberPrefix(),
                 "padLength", settings.getMemberNumberPadLength(),
                 "registrationFee", settings.getRegistrationFee(),
+                "logoUrl", settings.getLogoUrl(),
+                "faviconUrl", settings.getFaviconUrl(),
                 "enabledModules", settings.getEnabledModules()
         ));
     }
@@ -64,7 +65,9 @@ public class SaccoSettingsController {
                     request.getSaccoName(),
                     request.getPrefix(),
                     request.getPadLength(),
-                    request.getRegistrationFee() // <--- ADDED
+                    request.getRegistrationFee(), // <--- ADDED
+                    request.getLogoUrl(),
+                    request.getFaviconUrl()
             );
 
             auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_INITIALIZED", "Global Settings", getClientIP(httpRequest), "SACCO core settings initialized.");
@@ -84,7 +87,9 @@ public class SaccoSettingsController {
                 request.getSaccoName(),
                 request.getPrefix(),
                 request.getPadLength(),
-                request.getRegistrationFee() // <--- ADDED
+                request.getRegistrationFee(), // <--- ADDED
+                request.getLogoUrl(),
+                request.getFaviconUrl()
         );
 
         auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_UPDATED", "Global Settings", getClientIP(httpRequest), "Updated core SACCO settings.");

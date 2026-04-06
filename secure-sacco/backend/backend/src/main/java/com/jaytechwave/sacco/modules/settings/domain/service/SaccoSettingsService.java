@@ -30,7 +30,7 @@ public class SaccoSettingsService {
     }
 
     @Transactional
-    public SaccoSettings initializeSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee) {
+    public SaccoSettings initializeSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee, String logoUrl, String faviconUrl) {
         if (isInitialized()) {
             throw new IllegalStateException("SACCO settings are already initialized. Use update instead.");
         }
@@ -47,6 +47,8 @@ public class SaccoSettingsService {
                 .memberNumberPrefix(prefix.toUpperCase())
                 .memberNumberPadLength(padLength)
                 .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00"))
+                .logoUrl(logoUrl)
+                .faviconUrl(faviconUrl)
                 .enabledModules(initialModules)
                 .build();
 
@@ -62,7 +64,7 @@ public class SaccoSettingsService {
     }
 
     @Transactional
-    public SaccoSettings updateCoreSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee) {
+    public SaccoSettings updateCoreSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee, String logoUrl, String faviconUrl) {
         SaccoSettings settings = getSettings();
 
         if (prefix == null || prefix.length() != 3) {
@@ -82,6 +84,10 @@ public class SaccoSettingsService {
         if (registrationFee != null) {
             settings.setRegistrationFee(registrationFee);
         }
+
+        // Update the branding URLs
+        settings.setLogoUrl(logoUrl);
+        settings.setFaviconUrl(faviconUrl);
 
         SaccoSettings saved = settingsRepository.save(settings);
 

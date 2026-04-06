@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../../shared/api/api-client';
 
 // Pages that are publicly accessible — AuthProvider must NOT redirect away from these
-const PUBLIC_PATHS = ['/login', '/activate', '/reset-password'];
+const PUBLIC_PATHS = ['/login', '/activate', '/reset-password', '/privacy-policy', '/terms-of-service', '/support'];
 
 interface User {
     id: string;

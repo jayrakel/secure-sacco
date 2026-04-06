@@ -38,6 +38,9 @@ import MeetingsManagementPage from './features/meetings/pages/MeetingsManagement
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
+import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
+import SupportPage from './features/legal/pages/SupportPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -114,6 +117,11 @@ function App() {
                                     <VerifyContactPage />
                                 </ProtectedRoute>
                             } />
+
+                            {/* Legal pages - public, accessible without authentication */}
+                            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+                            <Route path="/support" element={<SupportPage />} />
 
                             {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                             <Route element={

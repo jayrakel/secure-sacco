@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { settingsApi } from '../api/settings-api';
 import type { SaccoSettings } from '../api/settings-api';
 import { useSettings } from '../context/useSettings';
-import { Settings, Loader2, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Settings, Image, Loader2, CheckCircle2, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 // ─── Reusable form field ──────────────────────────────────────────────────────
@@ -34,6 +34,8 @@ const SaccoSettingsPage: React.FC = () => {
     const [prefix, setPrefix] = useState('');
     const [padLength, setPadLength] = useState<number>(7);
     const [registrationFee, setRegistrationFee] = useState<number>(1000);
+    const [logoUrl, setLogoUrl] = useState('');
+    const [faviconUrl, setFaviconUrl] = useState('');
     const [enabledModules, setEnabledModules] = useState<Record<string, boolean>>({
         members: true,
         loans: false,
@@ -57,6 +59,8 @@ const SaccoSettingsPage: React.FC = () => {
                     setPrefix(data.prefix?.replace('-', '') || '');
                     setPadLength(data.padLength || 7);
                     setRegistrationFee(data.registrationFee || 1000);
+                    setLogoUrl(data.logoUrl || '');
+                    setFaviconUrl(data.faviconUrl || '');
                     setPrefixManuallyEdited(true);
                     if (data.enabledModules) setEnabledModules(data.enabledModules);
                 }
@@ -82,6 +86,22 @@ const SaccoSettingsPage: React.FC = () => {
         return () => clearTimeout(id);
     }, [saccoName, prefixManuallyEdited]);
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Enforce a 2MB size limit to keep the database fast
+            if (file.size > 6 * 1024 * 1024) {
+                setError('Image is too large. Please select a file under 2MB.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setter(reader.result as string); // Converts image to Base64 string
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleCoreSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSavingCore(true);
@@ -93,6 +113,8 @@ const SaccoSettingsPage: React.FC = () => {
             prefix: prefix.toUpperCase(),
             padLength,
             registrationFee,
+            logoUrl,
+            faviconUrl,
         };
 
         try {
@@ -183,6 +205,66 @@ const SaccoSettingsPage: React.FC = () => {
                             className={inputCls}
                         />
                     </Field>
+
+                    {/* --- NEW BRANDING FIELDS (FILE UPLOAD) --- */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 pt-6 border-t border-slate-100">
+
+                        {/* Logo Upload */}
+                        <Field label="SACCO Logo" hint="Upload official logo (PNG/JPG, max 6MB).">
+                            <div className="flex items-center gap-4 mt-2">
+                                {logoUrl ? (
+                                    <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 p-1">
+                                        <img src={logoUrl} alt="Logo Preview" className="w-full h-full object-contain" />
+                                    </div>
+                                ) : (
+                                    <div className="w-16 h-16 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center shrink-0 text-slate-400">
+                                        <Image size={24} />
+                                    </div>
+                                )}
+                                <div className="flex-1">
+                                    <input
+                                        type="file"
+                                        accept="image/png, image/jpeg, image/svg+xml"
+                                        onChange={(e) => handleImageUpload(e, setLogoUrl)}
+                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer"
+                                    />
+                                    {logoUrl && (
+                                        <button type="button" onClick={() => setLogoUrl('')} className="text-xs text-red-500 mt-2 hover:underline font-medium">
+                                            Remove Image
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </Field>
+
+                        {/* Favicon Upload */}
+                        <Field label="Browser Favicon" hint="Upload tab icon (1:1 aspect ratio, max 6MB).">
+                            <div className="flex items-center gap-4 mt-2">
+                                {faviconUrl ? (
+                                    <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 p-2">
+                                        <img src={faviconUrl} alt="Favicon Preview" className="w-full h-full object-contain" />
+                                    </div>
+                                ) : (
+                                    <div className="w-16 h-16 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center shrink-0 text-slate-400">
+                                        <Image size={24} />
+                                    </div>
+                                )}
+                                <div className="flex-1">
+                                    <input
+                                        type="file"
+                                        accept="image/png, image/jpeg, image/x-icon"
+                                        onChange={(e) => handleImageUpload(e, setFaviconUrl)}
+                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer"
+                                    />
+                                    {faviconUrl && (
+                                        <button type="button" onClick={() => setFaviconUrl('')} className="text-xs text-red-500 mt-2 hover:underline font-medium">
+                                            Remove Image
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </Field>
+                    </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <Field

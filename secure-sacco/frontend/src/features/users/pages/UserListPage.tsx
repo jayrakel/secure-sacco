@@ -3,6 +3,7 @@ import { userApi, type User } from '../api/user-api';
 import { roleApi, type Role } from '../api/role-api';
 import UserSessionsModal from '../../sessions/components/UserSessionsModal';
 import HasPermission from '../../../shared/components/HasPermission';
+import CreateUserModal from '../components/CreateUserModal';
 import {
     Plus,
     Edit2,
@@ -25,6 +26,7 @@ export default function UserListPage() {
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
@@ -142,7 +144,10 @@ export default function UserListPage() {
                 </div>
 
                 <HasPermission permission="USER_CREATE">
-                    <button className="bg-slate-900 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-sm">
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)} /* <-- Add the onClick handler */
+                        className="bg-slate-900 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-sm"
+                    >
                         <Plus size={18} />
                         Add New User
                     </button>
@@ -389,6 +394,16 @@ export default function UserListPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {/* ADD THIS NEW MODAL RENDER HERE */}
+            {isCreateModalOpen && (
+                <CreateUserModal
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onSuccess={() => {
+                        setIsCreateModalOpen(false);
+                        void fetchData(); // Refresh the table after creation
+                    }}
+                />
             )}
         </div>
     );
