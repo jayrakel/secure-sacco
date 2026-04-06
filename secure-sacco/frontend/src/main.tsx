@@ -4,7 +4,18 @@ import App from './App' // Ensure this path is correct
 import './index.css'
 
 // Verify Trusted Types policy is available (fallback in case HTML inline script didn't work)
-const win = window as any; // Type assertion to any to bypass strict TypeScript checks for Trusted Types API
+interface TrustedTypesWindow extends Window {
+  trustedTypes?: {
+    defaultPolicy: unknown;
+    createPolicy(name: string, rules: {
+      createScript?: (str: string) => string;
+      createScriptURL?: (str: string) => string;
+      createHTML?: (str: string) => string;
+    }): unknown;
+  };
+}
+
+const win = window as TrustedTypesWindow;
 if (typeof win.trustedTypes !== 'undefined' && !win.trustedTypes.defaultPolicy) {
   try {
     win.trustedTypes.createPolicy('default', {
