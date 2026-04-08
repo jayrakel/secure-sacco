@@ -768,7 +768,7 @@ const MigrationPage: React.FC = () => {
                         </div>
                         {!logCollapsed && (
                             <div className="p-4">
-                                <LogPanel entries={log} onClear={() => setLog([])} />
+                                <LogPanel entries={log} />
                             </div>
                         )}
                     </div>
