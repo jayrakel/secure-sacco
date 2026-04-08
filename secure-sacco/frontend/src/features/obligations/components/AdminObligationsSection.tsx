@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldCheck, History, RefreshCw, Edit2, Plus } from 'lucide-react';
 import { obligationsApi, type ObligationResponse, type ObligationPeriodResponse, type PagedResponse } from '../api/obligation-api';
+import { type Member } from '../../members/api/member-api';
 import { ObligationStatusCard } from './ObligationStatusCard';
 import { ObligationHistoryTable } from './ObligationHistoryTable';
 import { CreateObligationModal } from './CreateObligationModal';
 
 interface Props {
     memberId: string; // 🟢 Required: Admin must specify whose profile they are viewing
-    memberData?: Record<string, unknown>; // Optional: Pass the full member object to prefill the modal
+    memberData?: Member; // Optional: Pass the full member object to prefill the modal
 }
 
 export const AdminObligationsSection: React.FC<Props> = ({ memberId, memberData }) => {
