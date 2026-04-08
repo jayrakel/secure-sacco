@@ -38,6 +38,7 @@ import MeetingsManagementPage from './features/meetings/pages/MeetingsManagement
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import MigrationPage from './features/migration/pages/MigrationPage';
 import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
 import SupportPage from './features/legal/pages/SupportPage';
@@ -273,6 +274,13 @@ function App() {
                                 <Route path="/audit/logs" element={
                                     <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
                                         <AuditLogPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Historical data migration — SYSTEM_ADMIN only */}
+                                <Route path="/migration" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <MigrationPage />
                                     </ProtectedRoute>
                                 } />
 

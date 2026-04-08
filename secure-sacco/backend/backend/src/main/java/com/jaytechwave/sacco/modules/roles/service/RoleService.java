@@ -6,6 +6,9 @@ import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import com.jaytechwave.sacco.modules.roles.domain.repository.PermissionRepository;
 import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.core.security.SessionInvalidationService;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
     private final SecurityAuditService securityAuditService;
     private final CacheManager cacheManager;
+    private final SessionInvalidationService sessionInvalidationService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<RoleResponse> getAllRoles() {
@@ -133,11 +138,9 @@ public class RoleService {
         role.setPermissions(newPermissions);
         Role savedRole = roleRepository.save(role);
 
-        // ✅ CRITICAL: Invalidate ALL user caches since role permissions changed
-        // This forces Spring Security to reload authorities on next request
-        if (cacheManager.getCache("userCache") != null) {
-            cacheManager.getCache("userCache").clear();
-        }
+        // ✅ CRITICAL: Invalidate ALL user caches and sessions since role permissions changed
+        // This forces Spring Security to reload authorities on next request and forces re-login
+        sessionInvalidationService.invalidateAllSessions();
 
         // --- ADDED AUDIT LOG ---
         securityAuditService.logEvent(
@@ -154,6 +157,15 @@ public class RoleService {
         return permissionRepository.findAll().stream()
                 .map(this::mapToPermissionResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all users that have a specific role.
+     * This is used to notify/warn when permissions are about to be changed.
+     */
+    @Transactional(readOnly = true)
+    public long countUsersWithRole(UUID roleId) {
+        return userRepository.countByRolesId(roleId);
     }
 
     // --- MAPPERS ---

@@ -1,17 +1,20 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { settingsApi } from '../api/settings-api';
 import type { SaccoSettings } from '../api/settings-api';
+import { penaltyApi } from '../../penalties/api/penalty-api';
+import type { PenaltyRule, PenaltyRuleRequest, AmountType, InterestMode } from '../../penalties/api/penalty-api';
 import { useSettings } from '../context/useSettings';
 import {
     Building2, Shield, Bell, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
     Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
+    Gavel, Plus, Pencil, X, Check, TriangleAlert,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabId = 'identity' | 'security' | 'communication' | 'modules';
+type TabId = 'identity' | 'security' | 'communication' | 'modules' | 'penalties';
 
 interface SecurityPolicy {
     maxLoginAttempts: number;
@@ -33,6 +36,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] 
     { id: 'security',      label: 'Security',      icon: <Shield size={15} />,    desc: 'Auth, passwords & limits' },
     { id: 'communication', label: 'Communication', icon: <Bell size={15} />,      desc: 'Email sender settings'    },
     { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
+    { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
 ];
 
 const MODULE_CONFIG: Record<string, { label: string; desc: string; icon: React.ReactNode; cls: { bg: string; ring: string; text: string; icon: string } }> = {
@@ -142,6 +146,14 @@ const SaccoSettingsPage: React.FC = () => {
     const [mods, setMods]         = useState<Record<string, boolean>>({ members: true, loans: false, savings: false, reports: false });
     const [savingMods, setSavingMods] = useState(false);
 
+    // ── Penalties state ─────────────────────────────────────────────────────
+    const [rules, setRules]             = useState<PenaltyRule[]>([]);
+    const [rulesLoading, setRulesLoading] = useState(false);
+    const [editingRule, setEditingRule] = useState<PenaltyRule | null>(null);
+    const [isCreatingRule, setIsCreatingRule] = useState(false);
+    const [ruleForm, setRuleForm]       = useState<Partial<PenaltyRuleRequest>>({});
+    const [savingRule, setSavingRule]   = useState(false);
+
     // ── Load ────────────────────────────────────────────────────────────────
     useEffect(() => {
         settingsApi.getSettings().then(d => {
@@ -174,6 +186,67 @@ const SaccoSettingsPage: React.FC = () => {
     const flash = (ok: boolean, msg: string) => {
         setToast({ ok, msg });
         setTimeout(() => setToast(null), 4000);
+    };
+
+    // Load penalty rules when penalties tab is opened
+    const loadRules = useCallback(async () => {
+        setRulesLoading(true);
+        try { setRules(await penaltyApi.getRules(false)); }
+        catch { flash(false, 'Failed to load penalty rules.'); }
+        finally { setRulesLoading(false); }
+    }, []);
+
+    useEffect(() => {
+        if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
+    }, [tab]); // eslint-disable-line
+
+    const openEditRule = (rule: PenaltyRule) => {
+        setEditingRule(rule);
+        setIsCreatingRule(false);
+        setRuleForm({
+            code: rule.code, name: rule.name, description: rule.description,
+            baseAmountType: rule.baseAmountType, baseAmountValue: rule.baseAmountValue,
+            gracePeriodDays: rule.gracePeriodDays, interestPeriodDays: rule.interestPeriodDays,
+            interestRate: rule.interestRate, interestMode: rule.interestMode, isActive: rule.isActive,
+        });
+    };
+
+    const openCreateRule = () => {
+        setEditingRule(null);
+        setIsCreatingRule(true);
+        setRuleForm({ baseAmountType: 'FIXED', baseAmountValue: 0, gracePeriodDays: 0, interestPeriodDays: 1, interestRate: 0, interestMode: 'NONE', isActive: true });
+    };
+
+    const handleSaveRule = async () => {
+        if (!ruleForm.name || !ruleForm.code) return;
+        setSavingRule(true);
+        try {
+            const payload = ruleForm as PenaltyRuleRequest;
+            if (editingRule) {
+                const updated = await penaltyApi.updateRule(editingRule.id, payload);
+                setRules(prev => prev.map(r => r.id === editingRule.id ? updated : r));
+            } else {
+                const created = await penaltyApi.createRule(payload);
+                setRules(prev => [...prev, created]);
+            }
+            setEditingRule(null);
+            setIsCreatingRule(false);
+            flash(true, editingRule ? 'Penalty rule updated.' : 'Penalty rule created.');
+        } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save rule.')); }
+        finally { setSavingRule(false); }
+    };
+
+    const toggleRuleActive = async (rule: PenaltyRule) => {
+        try {
+            const updated = await penaltyApi.updateRule(rule.id, {
+                code: rule.code, name: rule.name, description: rule.description,
+                baseAmountType: rule.baseAmountType, baseAmountValue: rule.baseAmountValue,
+                gracePeriodDays: rule.gracePeriodDays, interestPeriodDays: rule.interestPeriodDays,
+                interestRate: rule.interestRate, interestMode: rule.interestMode,
+                isActive: !rule.isActive,
+            });
+            setRules(prev => prev.map(r => r.id === rule.id ? updated : r));
+        } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to toggle rule.')); }
     };
 
     const handleImage = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) => {
@@ -475,6 +548,287 @@ const SaccoSettingsPage: React.FC = () => {
                                 <SaveBtn loading={savingMods} label="Save Module Configuration" />
                             </div>
                         </form>
+                    )}
+
+                    {/* ─── PENALTIES TAB ─────────────────────────────── */}
+                    {tab === 'penalties' && (
+                        <div className="space-y-5">
+                            {/* Intro card */}
+                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                                <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-slate-800">Penalty Rules</h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            Define fine amounts for late attendance, absenteeism, missed savings, and loan defaults. Changes take effect on the next evaluation run.
+                                        </p>
+                                    </div>
+                                    <button onClick={openCreateRule}
+                                            className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors shrink-0">
+                                        <Plus size={13} /> New Rule
+                                    </button>
+                                </div>
+
+                                {rulesLoading ? (
+                                    <div className="flex items-center justify-center py-12 gap-2 text-slate-400">
+                                        <Loader2 size={18} className="animate-spin" /><span className="text-sm">Loading rules…</span>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 space-y-6">
+                                        {/* Group rules by category */}
+                                        {[
+                                            { key: 'MEETING', label: 'Meeting Attendance', icon: '📅', desc: 'Fines applied automatically when attendance is recorded.', color: 'blue' },
+                                            { key: 'SAVINGS', label: 'Savings Contributions', icon: '💰', desc: 'Fines for missing mandatory savings within the obligation period.', color: 'emerald' },
+                                            { key: 'LOAN', label: 'Loan Repayments', icon: '🏦', desc: 'Fines applied when a weekly loan installment is underpaid or missed.', color: 'amber' },
+                                        ].map(({ key, label, icon, desc, color }) => {
+                                            const groupRules = rules.filter(r => r.code.startsWith(key));
+                                            const colorMap: Record<string, string> = {
+                                                blue: 'bg-blue-50 border-blue-100 text-blue-700',
+                                                emerald: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+                                                amber: 'bg-amber-50 border-amber-100 text-amber-700',
+                                            };
+                                            return (
+                                                <div key={key}>
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${colorMap[color]}`}>
+                                                            {icon} {label}
+                                                        </span>
+                                                        <div className="flex-1 h-px bg-slate-100" />
+                                                        <span className="text-[10px] text-slate-400">{groupRules.length} rule{groupRules.length !== 1 ? 's' : ''}</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-400 mb-3 ml-1">{desc}</p>
+                                                    {groupRules.length === 0 ? (
+                                                        <p className="text-xs text-slate-400 italic ml-1">No rules defined.</p>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            {groupRules.sort((a, b) => a.code.localeCompare(b.code)).map(rule => (
+                                                                <div key={rule.id}
+                                                                     className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all
+                                                                        ${rule.isActive ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                                                    {/* Active toggle */}
+                                                                    <button type="button" onClick={() => toggleRuleActive(rule)}
+                                                                            className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent
+                                                                            transition-colors cursor-pointer focus:outline-none
+                                                                            ${rule.isActive ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                                                                        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform
+                                                                            ${rule.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                                    </button>
+
+                                                                    {/* Rule info */}
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            <span className="text-sm font-semibold text-slate-800">{rule.name}</span>
+                                                                            {!rule.isActive && <span className="text-[10px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded font-bold">DISABLED</span>}
+                                                                        </div>
+                                                                        {rule.description && (
+                                                                            <p className="text-xs text-slate-500 mt-0.5 truncate max-w-sm">{rule.description}</p>
+                                                                        )}
+                                                                        <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{rule.code}</p>
+                                                                    </div>
+
+                                                                    {/* Fine amount */}
+                                                                    <div className="text-right shrink-0">
+                                                                        <div className="text-sm font-bold text-slate-900">
+                                                                            {rule.baseAmountType === 'PERCENTAGE'
+                                                                                ? `${rule.baseAmountValue}% of shortfall`
+                                                                                : `KES ${rule.baseAmountValue.toLocaleString()}`}
+                                                                        </div>
+                                                                        {rule.interestMode !== 'NONE' && rule.interestRate > 0 && (
+                                                                            <div className="text-[10px] text-amber-600">
+                                                                                +{rule.interestRate}% {rule.interestMode.toLowerCase()} / {rule.interestPeriodDays}d
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Edit button */}
+                                                                    <button onClick={() => openEditRule(rule)}
+                                                                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
+                                                                        <Pencil size={13} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                        {/* Other / custom rules */}
+                                        {(() => {
+                                            const other = rules.filter(r => !['MEETING', 'SAVINGS', 'LOAN'].some(prefix => r.code.startsWith(prefix)));
+                                            if (!other.length) return null;
+                                            return (
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold bg-slate-100 text-slate-600 border-slate-200">
+                                                            ⚙️ Other / Custom
+                                                        </span>
+                                                        <div className="flex-1 h-px bg-slate-100" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {other.map(rule => (
+                                                            <div key={rule.id}
+                                                                 className={`flex items-center gap-4 px-4 py-3 rounded-xl border transition-all
+                                                                    ${rule.isActive ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                                                <button type="button" onClick={() => toggleRuleActive(rule)}
+                                                                        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors cursor-pointer ${rule.isActive ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                                                                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${rule.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                                </button>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="text-sm font-semibold text-slate-800">{rule.name}</div>
+                                                                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{rule.code}</p>
+                                                                </div>
+                                                                <div className="text-sm font-bold text-slate-900 shrink-0">
+                                                                    {rule.baseAmountType === 'PERCENTAGE' ? `${rule.baseAmountValue}%` : `KES ${rule.baseAmountValue.toLocaleString()}`}
+                                                                </div>
+                                                                <button onClick={() => openEditRule(rule)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
+                                                                    <Pencil size={13} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Meeting lateness tiers explainer */}
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                                <TriangleAlert size={14} className="text-blue-500 mt-0.5 shrink-0" />
+                                <div className="text-xs text-blue-700 leading-relaxed">
+                                    <strong>How meeting lateness tiers work:</strong> The system checks the rule code to determine which tier applies.
+                                    <code className="font-mono bg-blue-100 px-1 rounded mx-1">MEETING_LATE_30</code> applies to members arriving within 2 hours,
+                                    <code className="font-mono bg-blue-100 px-1 rounded mx-1">MEETING_LATE_120</code> applies for over 2 hours late, and
+                                    <code className="font-mono bg-blue-100 px-1 rounded mx-1">MEETING_ABSENT</code> applies when a member is marked absent.
+                                    You can add additional tiers using <strong>New Rule</strong> — use the code format <code className="font-mono bg-blue-100 px-1 rounded">MEETING_LATE_&lt;minutes&gt;</code>.
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ─── Edit / Create Rule Modal ───────────────────── */}
+                    {(editingRule || isCreatingRule) && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900">
+                                            {isCreatingRule ? 'Create New Penalty Rule' : `Edit: ${editingRule?.name}`}
+                                        </h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            {isCreatingRule ? 'Define a new fine type.' : `Code: ${editingRule?.code}`}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => { setEditingRule(null); setIsCreatingRule(false); }}
+                                            className="text-slate-400 hover:text-slate-600 p-1"><X size={16} /></button>
+                                </div>
+                                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                                    {/* Code — only editable on create */}
+                                    {isCreatingRule && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Rule Code</label>
+                                            <input type="text" value={ruleForm.code ?? ''} placeholder="e.g. MEETING_LATE_45"
+                                                   onChange={e => setRuleForm(f => ({ ...f, code: e.target.value.toUpperCase().replace(/\s+/g, '_') }))}
+                                                   className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-slate-900" />
+                                            <p className="text-[10px] text-slate-400 mt-1">Unique identifier. Use prefix: MEETING_, SAVINGS_, LOAN_</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Display Name</label>
+                                        <input type="text" value={ruleForm.name ?? ''} placeholder="e.g. Late to Meeting (30 min)"
+                                               onChange={e => setRuleForm(f => ({ ...f, name: e.target.value }))}
+                                               className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Description</label>
+                                        <textarea rows={2} value={ruleForm.description ?? ''} placeholder="When is this rule applied?"
+                                                  onChange={e => setRuleForm(f => ({ ...f, description: e.target.value }))}
+                                                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-slate-900" />
+                                    </div>
+
+                                    {/* Fine type + amount */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Fine Type</label>
+                                            <select value={ruleForm.baseAmountType ?? 'FIXED'}
+                                                    onChange={e => setRuleForm(f => ({ ...f, baseAmountType: e.target.value as AmountType }))}
+                                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white">
+                                                <option value="FIXED">Fixed (KES)</option>
+                                                <option value="PERCENTAGE">% of shortfall</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                                                {ruleForm.baseAmountType === 'PERCENTAGE' ? 'Percentage (%)' : 'Amount (KES)'}
+                                            </label>
+                                            <input type="number" min="0" step="0.01"
+                                                   value={ruleForm.baseAmountValue ?? 0}
+                                                   onChange={e => setRuleForm(f => ({ ...f, baseAmountValue: parseFloat(e.target.value) || 0 }))}
+                                                   className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+                                        </div>
+                                    </div>
+
+                                    {/* Interest (optional) */}
+                                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3">
+                                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Accruing Interest (optional)</p>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label className="block text-[10px] font-semibold text-slate-500 mb-1">Mode</label>
+                                                <select value={ruleForm.interestMode ?? 'NONE'}
+                                                        onChange={e => setRuleForm(f => ({ ...f, interestMode: e.target.value as InterestMode }))}
+                                                        className="w-full px-2 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white">
+                                                    <option value="NONE">None</option>
+                                                    <option value="FLAT">Flat</option>
+                                                    <option value="SIMPLE">Simple</option>
+                                                    <option value="COMPOUND">Compound</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-semibold text-slate-500 mb-1">Rate (%)</label>
+                                                <input type="number" min="0" step="0.01" value={ruleForm.interestRate ?? 0}
+                                                       onChange={e => setRuleForm(f => ({ ...f, interestRate: parseFloat(e.target.value) || 0 }))}
+                                                       disabled={ruleForm.interestMode === 'NONE'}
+                                                       className="w-full px-2 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-40" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-semibold text-slate-500 mb-1">Every (days)</label>
+                                                <input type="number" min="1" value={ruleForm.interestPeriodDays ?? 1}
+                                                       onChange={e => setRuleForm(f => ({ ...f, interestPeriodDays: parseInt(e.target.value) || 1 }))}
+                                                       disabled={ruleForm.interestMode === 'NONE'}
+                                                       className="w-full px-2 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-40" />
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400">Most meeting/savings penalties use None. Loan penalties can compound weekly.</p>
+                                    </div>
+
+                                    {/* Active toggle */}
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-medium text-slate-700">Rule is Active</label>
+                                        <button type="button"
+                                                onClick={() => setRuleForm(f => ({ ...f, isActive: !f.isActive }))}
+                                                className={`relative inline-flex h-5 w-9 rounded-full border-2 border-transparent transition-colors cursor-pointer
+                                                ${ruleForm.isActive ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                                            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform
+                                                ${ruleForm.isActive ? 'translate-x-4' : 'translate-x-0'}`} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 px-6 pb-6">
+                                    <button onClick={() => { setEditingRule(null); setIsCreatingRule(false); }}
+                                            className="flex-1 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        Cancel
+                                    </button>
+                                    <button onClick={handleSaveRule} disabled={savingRule || !ruleForm.name || (isCreatingRule && !ruleForm.code)}
+                                            className="flex-1 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold
+                                                   flex items-center justify-center gap-2 transition-colors disabled:opacity-40">
+                                        {savingRule ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                                        {savingRule ? 'Saving…' : isCreatingRule ? 'Create Rule' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
