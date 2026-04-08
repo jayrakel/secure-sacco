@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database,
+    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Server,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -91,8 +91,9 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             items: [
                 { label: 'Audit Log', path: '/audit/logs', icon: Shield, requiredPermission: 'AUDIT_LOG_READ' },
                 { label: 'Security',  path: '/security',   icon: Shield },
-                { label: 'Settings',  path: '/settings',   icon: Settings, adminOnly: true },
-                { label: 'Migration', path: '/migration', icon: Database, adminOnly: true },
+                { label: 'Settings',              path: '/settings',              icon: Settings, adminOnly: true },
+                { label: 'Migration',             path: '/migration',             icon: Database, adminOnly: true },
+                { label: 'Permissions Registry', path: '/permissions-registry', icon: Server,   adminOnly: true },
             ],
         },
     ];

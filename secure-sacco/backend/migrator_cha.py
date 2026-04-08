@@ -7,9 +7,9 @@ import os
 # ==========================================
 # CONFIGURATION
 # ==========================================
-BASE_URL = "http://localhost:8080/api/v1"
-EMAIL = "jaytechwavesolutions@gmail.com"
-PASSWORD = "Michira._2000"
+BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
+EMAIL = "admin@jaytechwavesolutions.co.ke"
+PASSWORD = "M1chira._2000"
 MEMBER_NUMBER = "BVL-2022-000003"
 
 CSV_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -91,7 +91,7 @@ def disburse_initial_loan():
         "principal": 155752.00,
         "interest": 31150.40,
         "weeklyScheduled": 1797.14,
-        "firstPaymentDate": "2022-09-08", # 28 Days Grace Period
+        "firstPaymentDate": "2022-07-28", # 28 Days Grace Period
         "termWeeks": 104,
         "referenceNumber": "MIG-CHA-L1-DISB"
     }
@@ -113,7 +113,7 @@ def refinance_loan_2():
         "interestOverride": 46444.02,
         "newTermWeeks": 156,
         "referenceNumber": "MIG-CHA-L2-REF",
-        "historicalDateOverride": "2023-09-07",
+        "historicalDateOverride": "2023-08-10",
         "firstPaymentDate": "2023-09-14"
     }
     res = make_safe_request('POST', f"{BASE_URL}/loans/applications/refinance", json=payload, headers=get_headers())
@@ -131,7 +131,7 @@ def restructure_loan_3():
         "interestOverride": 30000.00,
         "newTermWeeks": 156,
         "referenceNumber": "MIG-CHA-L3-REF",
-        "historicalDateOverride": "2024-01-04",
+        "historicalDateOverride": "2023-12-07",
         "firstPaymentDate": "2024-01-11"
     }
     res = make_safe_request('POST', f"{BASE_URL}/loans/applications/refinance", json=payload, headers=get_headers())
