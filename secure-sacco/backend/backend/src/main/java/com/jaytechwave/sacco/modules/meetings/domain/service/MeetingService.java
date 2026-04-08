@@ -255,19 +255,30 @@ public class MeetingService {
         );
     }
 
+    // 🟢 THE FIX: Tiered Lateness Evaluation
     private void generateMeetingPenalties(Meeting meeting) {
-        PenaltyRule lateRule   = penaltyRuleRepository.findByCode("MEETING_LATE")
-                .filter(PenaltyRule::getIsActive).orElse(null);
-        PenaltyRule absentRule = penaltyRuleRepository.findByCode("MEETING_ABSENT")
-                .filter(PenaltyRule::getIsActive).orElse(null);
+        // Fetch Admin-Configurable Penalty Rules for different tiers
+        PenaltyRule late30Rule  = penaltyRuleRepository.findByCode("MEETING_LATE_30").filter(PenaltyRule::getIsActive).orElse(null);
+        PenaltyRule late120Rule = penaltyRuleRepository.findByCode("MEETING_LATE_120").filter(PenaltyRule::getIsActive).orElse(null);
+        PenaltyRule absentRule  = penaltyRuleRepository.findByCode("MEETING_ABSENT").filter(PenaltyRule::getIsActive).orElse(null);
 
         List<MeetingAttendance> attendance = attendanceRepository.findByMeetingId(meeting.getId());
 
         for (MeetingAttendance record : attendance) {
-            if (record.getStatus() == AttendanceStatus.LATE && lateRule != null) {
-                createMeetingPenalty(meeting, record.getMemberId(), lateRule, "MEETING_LATE");
-            } else if (record.getStatus() == AttendanceStatus.ABSENT && absentRule != null) {
+            if (record.getStatus() == AttendanceStatus.ABSENT && absentRule != null) {
                 createMeetingPenalty(meeting, record.getMemberId(), absentRule, "MEETING_ABSENT");
+            }
+            else if (record.getStatus() == AttendanceStatus.LATE) {
+                // Calculate exactly how late they were
+                long minutesLate = java.time.Duration.between(meeting.getStartAt(), record.getRecordedAt()).toMinutes();
+
+                // Apply tier based on interval
+                if (minutesLate >= 120 && late120Rule != null) {
+                    createMeetingPenalty(meeting, record.getMemberId(), late120Rule, "MEETING_LATE_120");
+                }
+                else if (late30Rule != null) { // Default to the smaller fine if between 15-119 mins
+                    createMeetingPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
+                }
             }
         }
     }

@@ -9,9 +9,8 @@ import org.springframework.stereotype.Component;
 /**
  * Scheduled trigger for obligation evaluation.
  *
- * <p>Runs at 01:00 on every Monday (weekly obligations) and at 01:00 on the
- * 1st of every month (monthly obligations). The service itself is idempotent
- * so running both crons on the 1st-of-month Monday is harmless.</p>
+ * <p>Runs daily at 01:00 AM. The evaluation logic inside {@link ObligationPeriodService}
+ * handles checking exact due dates and grace periods dynamically.</p>
  *
  * <p>The actual evaluation logic lives in {@link ObligationPeriodService}
  * so it can be unit-tested and triggered manually via
@@ -24,17 +23,12 @@ public class ObligationEvaluationJob {
 
     private final ObligationPeriodService obligationPeriodService;
 
-    /** Every Monday at 01:00 — catches weekly obligations */
-    @Scheduled(cron = "0 0 1 * * MON")
-    public void evaluateWeekly() {
-        log.info("ObligationEvaluationJob: weekly trigger fired.");
-        runEvaluation();
-    }
-
-    /** 1st of every month at 01:00 — catches monthly obligations */
-    @Scheduled(cron = "0 0 1 1 * *")
-    public void evaluateMonthly() {
-        log.info("ObligationEvaluationJob: monthly trigger fired.");
+    /** * 🟢 THE FIX: Runs EVERY NIGHT at 01:00 AM.
+     * The evaluation logic will now dynamically check if the (DueDate + Grace Period) has passed.
+     */
+    @Scheduled(cron = "0 0 1 * * *")
+    public void evaluateDaily() {
+        log.info("ObligationEvaluationJob: Daily compliance trigger fired.");
         runEvaluation();
     }
 

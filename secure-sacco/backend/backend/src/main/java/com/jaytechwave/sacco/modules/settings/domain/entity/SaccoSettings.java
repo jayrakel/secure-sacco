@@ -26,6 +26,8 @@ public class SaccoSettings {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    // ── Identity ────────────────────────────────────────────────────────────
+
     @Column(name = "sacco_name", nullable = false)
     private String saccoName;
 
@@ -36,17 +38,98 @@ public class SaccoSettings {
     @Builder.Default
     private Integer memberNumberPadLength = 7;
 
-    // Hibernate 6 native JSON mapping
+    @Column(name = "logo_url", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String logoUrl = "";
+
+    @Column(name = "favicon_url", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String faviconUrl = "";
+
+    // ── Financial ────────────────────────────────────────────────────────────
+
+    @Column(name = "registration_fee", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal registrationFee = new BigDecimal("1000.00");
+
+    // ── Communication ────────────────────────────────────────────────────────
+
+    /** Display name in From: header of outgoing emails */
+    @Column(name = "smtp_from_name", nullable = false)
+    @Builder.Default
+    private String smtpFromName = "Secure SACCO";
+
+    /** Support contact shown to members */
+    @Column(name = "support_email", nullable = false)
+    @Builder.Default
+    private String supportEmail = "";
+
+    // ── Security policy ──────────────────────────────────────────────────────
+
+    /** Maximum consecutive failed logins before lockout */
+    @Column(name = "max_login_attempts", nullable = false)
+    @Builder.Default
+    private Integer maxLoginAttempts = 5;
+
+    /** How long (minutes) an account is locked after too many failures */
+    @Column(name = "lockout_duration_minutes", nullable = false)
+    @Builder.Default
+    private Integer lockoutDurationMinutes = 15;
+
+    /**
+     * Idle session timeout in minutes.
+     * Informational — changing this requires a server restart to apply because
+     * Spring Session reads it at startup via application.yml.
+     */
+    @Column(name = "session_timeout_minutes", nullable = false)
+    @Builder.Default
+    private Integer sessionTimeoutMinutes = 30;
+
+    /** Password-reset link validity in minutes */
+    @Column(name = "password_reset_expiry_min", nullable = false)
+    @Builder.Default
+    private Integer passwordResetExpiryMin = 15;
+
+    /** MFA pre-auth token TTL in minutes */
+    @Column(name = "mfa_token_expiry_minutes", nullable = false)
+    @Builder.Default
+    private Integer mfaTokenExpiryMinutes = 5;
+
+    /** Email verification link validity in hours */
+    @Column(name = "email_verify_expiry_hours", nullable = false)
+    @Builder.Default
+    private Integer emailVerifyExpiryHours = 24;
+
+    /** Minimum password length enforced at registration and reset */
+    @Column(name = "min_password_length", nullable = false)
+    @Builder.Default
+    private Integer minPasswordLength = 12;
+
+    /** Max verification requests before rate-limiting triggers */
+    @Column(name = "contact_verify_rate_limit", nullable = false)
+    @Builder.Default
+    private Integer contactVerifyRateLimit = 3;
+
+    /** Sliding window (minutes) for contact-verification rate limiting */
+    @Column(name = "contact_verify_window_min", nullable = false)
+    @Builder.Default
+    private Integer contactVerifyWindowMin = 15;
+
+    // ── Rate limiting ────────────────────────────────────────────────────────
+
+    /** General API rate limit: requests per user per minute */
+    @Column(name = "rate_limit_general_per_min", nullable = false)
+    @Builder.Default
+    private Integer rateLimitGeneralPerMin = 60;
+
+    // ── Feature flags ────────────────────────────────────────────────────────
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "enabled_modules", columnDefinition = "jsonb", nullable = false)
     @Builder.Default
     private Map<String, Boolean> enabledModules = new HashMap<>();
 
-    @Column(name = "logo_url", columnDefinition = "TEXT")
-    private String logoUrl;
-
-    @Column(name = "favicon_url", columnDefinition = "TEXT")
-    private String faviconUrl;
+    // ── Audit ────────────────────────────────────────────────────────────────
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -55,8 +138,4 @@ public class SaccoSettings {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    @Column(name = "registration_fee", nullable = false, precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal registrationFee = new BigDecimal("1000.00");
 }

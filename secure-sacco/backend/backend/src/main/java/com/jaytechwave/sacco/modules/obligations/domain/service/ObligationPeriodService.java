@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.time.DayOfWeek;
 import java.util.List;
@@ -75,7 +76,11 @@ public class ObligationPeriodService {
 
         LocalDate today = LocalDate.now();
         LocalDate periodStart = currentPeriodStart(obligation, today);
-        LocalDate periodEnd   = periodStart.plusDays(obligation.getFrequency() == ObligationFrequency.WEEKLY ? 6 : periodStart.lengthOfMonth() - 1);
+
+        // 🟢 FIX 1: Dynamically set the period end based on frequency so grace periods calculate correctly
+        LocalDate periodEnd = obligation.getFrequency() == ObligationFrequency.WEEKLY
+                ? periodStart.plusDays(6)
+                : periodStart.plusMonths(1).minusDays(1);
 
         // Upsert the period row
         SavingsObligationPeriod period = periodRepository
@@ -116,14 +121,21 @@ public class ObligationPeriodService {
 
     /**
      * Returns the start of the current period window based on frequency and start_date.
+     * 🟢 FIX 2: Replaced the "Monday dictator" logic with code that respects the member's custom start date.
      */
     private LocalDate currentPeriodStart(SavingsObligation obligation, LocalDate today) {
+        LocalDate start = obligation.getStartDate();
+        if (today.isBefore(start)) return start;
+
         if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
-            return today.withDayOfMonth(1);
+            long months = ChronoUnit.MONTHS.between(start, today);
+            LocalDate calcStart = start.plusMonths(months);
+            return calcStart.isAfter(today) ? calcStart.minusMonths(1) : calcStart;
+        } else {
+            long weeks = ChronoUnit.WEEKS.between(start, today);
+            LocalDate calcStart = start.plusWeeks(weeks);
+            return calcStart.isAfter(today) ? calcStart.minusWeeks(1) : calcStart;
         }
-        // WEEKLY: find the Monday of the current week (or the start_date if in first partial week)
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
-        return monday.isBefore(obligation.getStartDate()) ? obligation.getStartDate() : monday;
     }
 
     /**
@@ -148,8 +160,16 @@ public class ObligationPeriodService {
             return;
         }
 
-        Optional<PenaltyRule> ruleOpt = penaltyRuleRepository.findByCode("SAVINGS_MISSED_CONTRIBUTION")
+        // 🟢 FIX 3: Looks for SAVINGS_DEFAULT so the Admin can customize it.
+        // Falls back to the old string so we don't break existing data.
+        Optional<PenaltyRule> ruleOpt = penaltyRuleRepository.findByCode("SAVINGS_DEFAULT")
                 .filter(PenaltyRule::getIsActive);
+
+        if (ruleOpt.isEmpty()) {
+            ruleOpt = penaltyRuleRepository.findByCode("SAVINGS_MISSED_CONTRIBUTION")
+                    .filter(PenaltyRule::getIsActive);
+        }
+
         if (ruleOpt.isEmpty()) {
             log.warn("SAVINGS_MISSED_CONTRIBUTION penalty rule not found or inactive — skipping penalty for period {}",
                     period.getId());

@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.DayOfWeek;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class ObligationService {
     private final MemberRepository                  memberRepository;
     private final ObligationPeriodService           periodService;
 
-    // ── Staff: create obligation ───────────────────────────────────────────────
+    // ── Staff: create ────────────────────────────────────────────────────────
 
     @Transactional
     public ObligationResponse createObligation(CreateObligationRequest request) {
@@ -55,7 +55,24 @@ public class ObligationService {
         return ObligationResponse.from(saved);
     }
 
-    // ── Staff: update status ───────────────────────────────────────────────────
+    // ── Staff: edit obligation terms ──────────────────────────────────────────
+
+    @Transactional
+    public ObligationResponse updateObligation(UUID id, UpdateObligationRequest request) {
+        SavingsObligation obligation = obligationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Obligation not found: " + id));
+
+        if (request.amountDue() != null) obligation.setAmountDue(request.amountDue());
+        if (request.startDate() != null) obligation.setStartDate(request.startDate());
+        if (request.graceDays() != null) obligation.setGraceDays(request.graceDays());
+
+        SavingsObligation saved = obligationRepository.save(obligation);
+        log.info("Updated obligation {} — amountDue={}, startDate={}, graceDays={}",
+                id, obligation.getAmountDue(), obligation.getStartDate(), obligation.getGraceDays());
+        return ObligationResponse.from(saved);
+    }
+
+    // ── Staff: update status (pause / resume) ─────────────────────────────────
 
     @Transactional
     public ObligationResponse updateStatus(UUID obligationId, UpdateObligationStatusRequest request) {
@@ -65,21 +82,26 @@ public class ObligationService {
         return ObligationResponse.from(obligationRepository.save(obligation));
     }
 
+    // ── Staff: lookup by member ───────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<ObligationResponse> getObligationsByMemberId(UUID memberId) {
+        return obligationRepository.findByMemberId(memberId).stream()
+                .map(ObligationResponse::from)
+                .collect(Collectors.toList());
+    }
+
     // ── Staff: compliance report ──────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public Page<ObligationComplianceEntry> getComplianceReport(Pageable pageable) {
-        // Get all obligations with at least one overdue period
         List<Object[]> overdueSummary = periodRepository.findOverdueSummaryPerMember();
-
-        // Build member ID → summary map
         Map<UUID, Object[]> summaryMap = overdueSummary.stream()
                 .collect(Collectors.toMap(row -> (UUID) row[0], row -> row));
 
-        // Fetch all active obligations and map to compliance entries
         List<SavingsObligation> allActive = obligationRepository.findByStatus(ObligationStatus.ACTIVE);
-
         List<ObligationComplianceEntry> entries = new ArrayList<>();
+
         for (SavingsObligation obligation : allActive) {
             Object[] summary = summaryMap.get(obligation.getMemberId());
             long overdueCount    = summary != null ? ((Number) summary[1]).longValue() : 0L;
@@ -87,7 +109,9 @@ public class ObligationService {
 
             Member member = memberRepository.findById(obligation.getMemberId()).orElse(null);
             String memberNumber = member != null ? member.getMemberNumber() : "Unknown";
-            String memberName   = member != null ? member.getFirstName() + " " + member.getLastName() : "Unknown";
+            String memberName   = member != null
+                    ? member.getUser().getFirstName() + " " + member.getUser().getLastName()
+                    : "Unknown";
 
             entries.add(ObligationComplianceEntry.builder()
                     .memberId(obligation.getMemberId())
@@ -101,7 +125,6 @@ public class ObligationService {
                     .build());
         }
 
-        // Manual pagination
         int start = (int) pageable.getOffset();
         int end   = Math.min(start + pageable.getPageSize(), entries.size());
         List<ObligationComplianceEntry> page = start < entries.size() ? entries.subList(start, end) : List.of();
@@ -117,12 +140,9 @@ public class ObligationService {
 
         for (SavingsObligation obligation : obligations) {
             ObligationResponse response = ObligationResponse.from(obligation);
-
-            // Attach current period
             LocalDate periodStart = currentPeriodStart(obligation);
             periodRepository.findByObligationIdAndPeriodStart(obligation.getId(), periodStart)
                     .ifPresent(p -> response.setCurrentPeriod(ObligationPeriodResponse.from(p)));
-
             responses.add(response);
         }
         return responses;
@@ -142,14 +162,22 @@ public class ObligationService {
         return new PageImpl<>(start < all.size() ? all.subList(start, end) : List.of(), pageable, all.size());
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private LocalDate currentPeriodStart(SavingsObligation obligation) {
         LocalDate today = LocalDate.now();
+        LocalDate start = obligation.getStartDate();
+
+        if (today.isBefore(start)) return start;
+
         if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
-            return today.withDayOfMonth(1);
+            long months = ChronoUnit.MONTHS.between(start, today);
+            LocalDate calcStart = start.plusMonths(months);
+            return calcStart.isAfter(today) ? calcStart.minusMonths(1) : calcStart;
+        } else {
+            long weeks = ChronoUnit.WEEKS.between(start, today);
+            LocalDate calcStart = start.plusWeeks(weeks);
+            return calcStart.isAfter(today) ? calcStart.minusWeeks(1) : calcStart;
         }
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
-        return monday.isBefore(obligation.getStartDate()) ? obligation.getStartDate() : monday;
     }
 }

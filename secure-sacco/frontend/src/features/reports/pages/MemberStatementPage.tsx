@@ -101,6 +101,7 @@ export const MemberStatementPage: React.FC = () => {
     const [toDate,   setToDate]   = useState(TODAY);
 
     // Statement
+    const [filterModule, setFilterModule] = useState<'ALL' | Module>('ALL');
     const [statement,  setStatement]  = useState<StatementItemDTO[]>([]);
     const [response,   setResponse]   = useState<StatementResponseDTO | null>(null);
     const [loading,    setLoading]    = useState(false);
@@ -190,6 +191,8 @@ export const MemberStatementPage: React.FC = () => {
 
     const { rows, openingBalance, closingBalance, stats } = useMemo(() => {
         let balance = 0;
+
+        // 1. FIRST, build the enriched array with the running balances
         const enriched: EnrichedRow[] = statement.map(item => {
             const isCredit = CREDIT_TYPES.has(item.type);
             if (item.module === 'SAVINGS') {
@@ -198,6 +201,12 @@ export const MemberStatementPage: React.FC = () => {
             return { ...item, runningBalance: balance, isCredit };
         });
 
+        // 2. THEN, filter the enriched array based on the user's selection
+        const filteredRows = filterModule === 'ALL'
+            ? enriched
+            : enriched.filter(r => r.module === filterModule);
+
+        // 3. Calculate stats
         const statsObj = response?.summary ? {
             savingsDeposits: response.summary.savingsDeposited,
             savingsWithdrawals: response.summary.savingsWithdrawn,
@@ -213,13 +222,14 @@ export const MemberStatementPage: React.FC = () => {
             penaltiesCharged: 0, penaltiesPaid: 0,
         };
 
+        // 4. Return the filtered rows to the table!
         return {
-            rows: enriched,
+            rows: filteredRows,
             openingBalance: 0,
             closingBalance: balance,
             stats: statsObj,
         };
-    }, [statement, response]);
+    }, [statement, response, filterModule]);
 
     const handleExportCSV = () => {
         const header = 'Date,Module,Type,Reference,Description,Debit,Credit,Balance\n';
@@ -434,6 +444,29 @@ export const MemberStatementPage: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* 👇 ADD THIS NEW FILTER SECTION 👇 */}
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                            Statement Type
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {(['ALL', 'SAVINGS', 'LOANS', 'PENALTIES'] as const).map(mod => (
+                                <button
+                                    key={mod}
+                                    onClick={() => setFilterModule(mod)}
+                                    className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-colors ${
+                                        filterModule === mod
+                                            ? 'bg-slate-900 text-white border-slate-900'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {mod === 'ALL' ? 'Consolidated (All)' : mod}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    {/* 👆 END FILTER SECTION 👆 */}
+
                     <div className="flex justify-end border-t border-slate-100 pt-4">
                         <button
                             onClick={fetchStatement}
@@ -474,7 +507,9 @@ export const MemberStatementPage: React.FC = () => {
                                     <DynamicLogo size={48} />
                                     <div>
                                         <div className="text-white font-bold text-xl tracking-tight leading-none">{saccoName}</div>
-                                        <div className="text-slate-400 text-xs mt-1 uppercase tracking-widest">Account Statement</div>
+                                        <div className="text-slate-400 text-xs mt-1 uppercase tracking-widest">
+                                            {filterModule === 'ALL' ? 'Account Statement' : `${filterModule} Statement`}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="text-right text-xs text-slate-400 space-y-1">
@@ -743,7 +778,9 @@ export const MemberStatementPage: React.FC = () => {
                                 <DynamicLogo size={64} />
                                 <div>
                                     <h1 className="text-3xl font-extrabold uppercase tracking-widest text-slate-900 mb-1">{saccoName}</h1>
-                                    <p className="text-sm font-sans text-slate-600 font-semibold tracking-widest">OFFICIAL STATEMENT OF ACCOUNT</p>
+                                    <p className="text-sm font-sans text-slate-600 font-semibold tracking-widest">
+                                        OFFICIAL {filterModule === 'ALL' ? 'STATEMENT OF ACCOUNT' : `${filterModule} STATEMENT`}
+                                    </p>
                                 </div>
                             </div>
                             <div className="text-right text-xs font-sans">

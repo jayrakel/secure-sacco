@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.settings.domain.service;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.settings.api.dto.SaccoSettingsDTOs.*;
 import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.repository.SaccoSettingsRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,8 @@ public class SaccoSettingsService {
     private final SaccoSettingsRepository settingsRepository;
     private final SecurityAuditService securityAuditService;
 
+    // ── Read ──────────────────────────────────────────────────────────────────
+
     @Transactional(readOnly = true)
     public SaccoSettings getSettings() {
         return settingsRepository.findAll().stream()
@@ -29,13 +32,17 @@ public class SaccoSettingsService {
         try {
             return settingsRepository.count() > 0;
         } catch (Exception e) {
-            // If there's a database error, assume not initialized
             return false;
         }
     }
 
+    // ── One-time initialization ───────────────────────────────────────────────
+
     @Transactional
-    public SaccoSettings initializeSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee, String logoUrl, String faviconUrl) {
+    public SaccoSettings initializeSettings(
+            String saccoName, String prefix, int padLength,
+            BigDecimal registrationFee, String logoUrl, String faviconUrl) {
+
         if (isInitialized()) {
             throw new IllegalStateException("SACCO settings are already initialized. Use update instead.");
         }
@@ -52,9 +59,23 @@ public class SaccoSettingsService {
                 .memberNumberPrefix(prefix.toUpperCase())
                 .memberNumberPadLength(padLength)
                 .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00"))
-                .logoUrl(logoUrl)
-                .faviconUrl(faviconUrl)
+                .logoUrl(logoUrl != null ? logoUrl : "")
+                .faviconUrl(faviconUrl != null ? faviconUrl : "")
                 .enabledModules(initialModules)
+                // Security / policy defaults
+                .maxLoginAttempts(5)
+                .lockoutDurationMinutes(15)
+                .sessionTimeoutMinutes(30)
+                .passwordResetExpiryMin(15)
+                .mfaTokenExpiryMinutes(5)
+                .emailVerifyExpiryHours(24)
+                .minPasswordLength(12)
+                .contactVerifyRateLimit(3)
+                .contactVerifyWindowMin(15)
+                .rateLimitGeneralPerMin(60)
+                // Communication defaults
+                .smtpFromName("Secure SACCO")
+                .supportEmail("")
                 .build();
 
         SaccoSettings saved = settingsRepository.save(settings);
@@ -68,56 +89,132 @@ public class SaccoSettingsService {
         return saved;
     }
 
+    // ── Identity update ───────────────────────────────────────────────────────
+
     @Transactional
-    public SaccoSettings updateCoreSettings(String saccoName, String prefix, int padLength, BigDecimal registrationFee, String logoUrl, String faviconUrl) {
-        SaccoSettings settings = getSettings();
+    public SaccoSettings updateCoreSettings(
+            String saccoName, String prefix, int padLength,
+            BigDecimal registrationFee, String logoUrl, String faviconUrl) {
 
-        if (prefix == null || prefix.length() != 3) {
+        SaccoSettings s = getSettings();
+
+        if (prefix == null || prefix.length() != 3)
             throw new IllegalArgumentException("Prefix must be exactly 3 characters.");
-        }
-        if (padLength < 1) {
+        if (padLength < 1)
             throw new IllegalArgumentException("Pad length must be at least 1.");
-        }
-        if (registrationFee != null && registrationFee.compareTo(BigDecimal.ZERO) < 0) {
+        if (registrationFee != null && registrationFee.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalArgumentException("Registration fee cannot be negative.");
-        }
 
-        settings.setSaccoName(saccoName);
-        settings.setMemberNumberPrefix(prefix.toUpperCase());
-        settings.setMemberNumberPadLength(padLength);
+        s.setSaccoName(saccoName);
+        s.setMemberNumberPrefix(prefix.toUpperCase());
+        s.setMemberNumberPadLength(padLength);
+        if (registrationFee != null) s.setRegistrationFee(registrationFee);
+        s.setLogoUrl(logoUrl != null ? logoUrl : "");
+        s.setFaviconUrl(faviconUrl != null ? faviconUrl : "");
 
-        if (registrationFee != null) {
-            settings.setRegistrationFee(registrationFee);
-        }
-
-        // Update the branding URLs
-        settings.setLogoUrl(logoUrl);
-        settings.setFaviconUrl(faviconUrl);
-
-        SaccoSettings saved = settingsRepository.save(settings);
+        SaccoSettings saved = settingsRepository.save(s);
 
         securityAuditService.logEvent(
-                "SETTINGS_UPDATED",
-                "SACCO_SETTINGS",
-                "Core settings updated — name: " + saccoName + ", prefix: " + prefix
-                        + ", padLength: " + padLength + ", regFee: " + registrationFee
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
+                "Core identity updated — name: " + saccoName + ", prefix: " + prefix
         );
-
         return saved;
     }
 
+    // ── Security policy update ────────────────────────────────────────────────
+
     @Transactional
-    public SaccoSettings updateFeatureFlags(Map<String, Boolean> enabledModules) {
-        SaccoSettings settings = getSettings();
-        settings.setEnabledModules(enabledModules);
-        SaccoSettings saved = settingsRepository.save(settings);
+    public SaccoSettings updateSecurityPolicy(UpdateSecurityPolicyRequest req) {
+        SaccoSettings s = getSettings();
+
+        s.setMaxLoginAttempts(req.getMaxLoginAttempts());
+        s.setLockoutDurationMinutes(req.getLockoutDurationMinutes());
+        s.setSessionTimeoutMinutes(req.getSessionTimeoutMinutes());
+        s.setPasswordResetExpiryMin(req.getPasswordResetExpiryMin());
+        s.setMfaTokenExpiryMinutes(req.getMfaTokenExpiryMinutes());
+        s.setEmailVerifyExpiryHours(req.getEmailVerifyExpiryHours());
+        s.setMinPasswordLength(req.getMinPasswordLength());
+        s.setContactVerifyRateLimit(req.getContactVerifyRateLimit());
+        s.setContactVerifyWindowMin(req.getContactVerifyWindowMin());
+        s.setRateLimitGeneralPerMin(req.getRateLimitGeneralPerMin());
+
+        SaccoSettings saved = settingsRepository.save(s);
 
         securityAuditService.logEvent(
-                "SETTINGS_UPDATED",
-                "SACCO_SETTINGS",
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
+                "Security policy updated — maxAttempts: " + req.getMaxLoginAttempts()
+                        + ", lockout: " + req.getLockoutDurationMinutes() + " min"
+                        + ", minPwdLen: " + req.getMinPasswordLength()
+        );
+        return saved;
+    }
+
+    // ── Communication update ──────────────────────────────────────────────────
+
+    @Transactional
+    public SaccoSettings updateCommunication(UpdateCommunicationRequest req) {
+        SaccoSettings s = getSettings();
+        s.setSmtpFromName(req.getSmtpFromName());
+        s.setSupportEmail(req.getSupportEmail() != null ? req.getSupportEmail() : "");
+        SaccoSettings saved = settingsRepository.save(s);
+
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
+                "Communication settings updated — fromName: " + req.getSmtpFromName()
+        );
+        return saved;
+    }
+
+    // ── Feature flags update ──────────────────────────────────────────────────
+
+    @Transactional
+    public SaccoSettings updateFeatureFlags(Map<String, Boolean> enabledModules) {
+        SaccoSettings s = getSettings();
+        s.setEnabledModules(enabledModules);
+        SaccoSettings saved = settingsRepository.save(s);
+
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
                 "Feature flags updated: " + enabledModules
         );
-
         return saved;
+    }
+
+    // ── Convenience getters used by security services ─────────────────────────
+
+    public int getMaxLoginAttempts() {
+        try { return getSettings().getMaxLoginAttempts(); } catch (Exception e) { return 5; }
+    }
+
+    public int getLockoutDurationMinutes() {
+        try { return getSettings().getLockoutDurationMinutes(); } catch (Exception e) { return 15; }
+    }
+
+    public int getPasswordResetExpiryMin() {
+        try { return getSettings().getPasswordResetExpiryMin(); } catch (Exception e) { return 15; }
+    }
+
+    public int getMfaTokenExpiryMinutes() {
+        try { return getSettings().getMfaTokenExpiryMinutes(); } catch (Exception e) { return 5; }
+    }
+
+    public int getEmailVerifyExpiryHours() {
+        try { return getSettings().getEmailVerifyExpiryHours(); } catch (Exception e) { return 24; }
+    }
+
+    public int getMinPasswordLength() {
+        try { return getSettings().getMinPasswordLength(); } catch (Exception e) { return 12; }
+    }
+
+    public int getContactVerifyRateLimit() {
+        try { return getSettings().getContactVerifyRateLimit(); } catch (Exception e) { return 3; }
+    }
+
+    public int getContactVerifyWindowMin() {
+        try { return getSettings().getContactVerifyWindowMin(); } catch (Exception e) { return 15; }
+    }
+
+    public int getRateLimitGeneralPerMin() {
+        try { return getSettings().getRateLimitGeneralPerMin(); } catch (Exception e) { return 60; }
     }
 }
