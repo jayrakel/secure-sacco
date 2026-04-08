@@ -41,8 +41,8 @@ public class SaccoSettingsController {
                     "prefix", settings.getMemberNumberPrefix(),
                     "padLength", settings.getMemberNumberPadLength(),
                     "registrationFee", settings.getRegistrationFee(),
-                    "logoUrl", settings.getLogoUrl(),
-                    "faviconUrl", settings.getFaviconUrl(),
+                    "logoUrl", settings.getLogoUrl() != null ? settings.getLogoUrl() : "",
+                    "faviconUrl", settings.getFaviconUrl() != null ? settings.getFaviconUrl() : "",
                     "enabledModules", settings.getEnabledModules()
             ));
         } catch (Exception e) {

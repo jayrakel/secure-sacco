@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom'; // <-- ADDED IMPORT
 import { savingsApi, type StatementTransactionResponse } from '../../savings/api/savings-api';
 import { loanApi, type LoanApplication, type LoanSummary } from '../../loans/api/loan-api';
 import { penaltyApi, type PenaltySummary } from '../../penalties/api/penalty-api';
@@ -165,14 +166,27 @@ const MemberPersonalReportsPage: React.FC = () => {
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-12">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <FileText className="text-slate-600" size={22} />
-                    My Reports
-                </h1>
-                <p className="text-sm text-slate-400 mt-0.5">
-                    Your personal savings statement, loan history, and penalty records.
-                </p>
+
+            {/* ── UPDATED HEADER WITH BUTTON ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <FileText className="text-slate-600" size={22} />
+                        My Reports
+                    </h1>
+                    <p className="text-sm text-slate-400 mt-0.5">
+                        Your personal savings statement, loan history, and penalty records.
+                    </p>
+                </div>
+
+                {/* ── NEW DOWNLOAD BUTTON ── */}
+                <Link
+                    to="/reports/statements"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-colors shadow-sm shrink-0"
+                >
+                    <Download size={16} />
+                    Download Official Statement
+                </Link>
             </div>
 
             <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">

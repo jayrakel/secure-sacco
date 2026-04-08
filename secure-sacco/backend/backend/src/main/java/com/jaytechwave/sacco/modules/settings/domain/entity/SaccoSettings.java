@@ -42,11 +42,13 @@ public class SaccoSettings {
     @Builder.Default
     private Map<String, Boolean> enabledModules = new HashMap<>();
 
-    @Column(name = "logo_url", columnDefinition = "TEXT")
-    private String logoUrl;
+    @Column(name = "logo_url", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String logoUrl = "";
 
-    @Column(name = "favicon_url", columnDefinition = "TEXT")
-    private String faviconUrl;
+    @Column(name = "favicon_url", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String faviconUrl = "";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
