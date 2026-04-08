@@ -5,16 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance AdminObligationsSection with type safety by updating memberData type">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/SessionInvalidationService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/core/api/time-travel-api.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/TimeMachinePage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V57__add_admin_permissions.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/api/migration-api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/roles/service/RoleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/roles/service/RoleService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/domain/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/domain/service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/audit/api/controller/AuditController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/audit/api/controller/AuditController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/api/controller/PenaltyRuleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/api/controller/PenaltyRuleController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/penalties/api/penalty-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/penalties/api/penalty-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/RolesPermissionsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/RolesPermissionsPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/layouts/DashboardLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/layouts/DashboardLayout.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -361,6 +363,9 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migration\pages" />
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migration\api" />
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migrations\pages" />
       <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\docs" />
       <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\backend" />
     </key>

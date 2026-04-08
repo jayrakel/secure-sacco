@@ -38,10 +38,10 @@ import MeetingsManagementPage from './features/meetings/pages/MeetingsManagement
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import MigrationPage from './features/migration/pages/MigrationPage';
 import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
 import SupportPage from './features/legal/pages/SupportPage';
-import TimeMachinePage from './features/settings/pages/TimeMachinePage'; // 🟢 NEW: Time Machine Import
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -277,6 +277,13 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
+                                {/* Historical data migration — SYSTEM_ADMIN only */}
+                                <Route path="/migration" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <MigrationPage />
+                                    </ProtectedRoute>
+                                } />
+
                                 <Route path="/security" element={
                                     <ProtectedRoute>
                                         <SecuritySettingsPage />
@@ -293,13 +300,6 @@ function App() {
                                         }>
                                             <SaccoSettingsPage />
                                         </HasPermission>
-                                    </ProtectedRoute>
-                                } />
-
-                                {/* 🟢 NEW: Time Machine Route */}
-                                <Route path="/admin/time-machine" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
-                                        <TimeMachinePage />
                                     </ProtectedRoute>
                                 } />
 

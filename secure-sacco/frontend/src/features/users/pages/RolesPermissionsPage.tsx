@@ -1,351 +1,534 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { roleApi, type Role, type Permission } from '../api/role-api';
-import { Shield, Plus, Loader2, Save, AlertTriangle, ShieldCheck, X, ChevronDown, CheckCircle } from 'lucide-react';
+import {
+    Shield, Plus, Loader2, Save, AlertTriangle, Lock, Check,
+    Users, Coins, PiggyBank, BarChart3, CalendarDays, UserCheck,
+    FileKey, Settings2, Eye, ShieldAlert, RefreshCw, X,
+    ChevronRight, AlertCircle,
+} from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
+// ─── Permission metadata ───────────────────────────────────────────────────────
+// Maps every permission code → human label + description + UI surface it unlocks.
+
+interface PermMeta {
+    label: string;
+    desc: string;
+    unlocks: string;
+    group: string;
+    groupIcon: React.ReactNode;
+    groupColor: string;
+}
+
+const PERM_META: Record<string, PermMeta> = {
+    // Members
+    MEMBERS_READ:         { label: 'View Members',             desc: 'Browse the member directory and view profiles.',              unlocks: 'Members page in sidebar',                   group: 'Members',   groupIcon: <Users size={13} />,       groupColor: 'blue'    },
+    MEMBERS_WRITE:        { label: 'Create & Edit Members',    desc: 'Register new members and update existing profiles.',          unlocks: 'Members → Create / Edit buttons',           group: 'Members',   groupIcon: <Users size={13} />,       groupColor: 'blue'    },
+    MEMBER_READ:          { label: 'Member Profile Detail',    desc: 'View individual member profile data.',                       unlocks: 'Member profile modal',                      group: 'Members',   groupIcon: <Users size={13} />,       groupColor: 'blue'    },
+    MEMBER_CREATE:        { label: 'Register Member',          desc: 'Create new member records.',                                 unlocks: 'Create Member button',                      group: 'Members',   groupIcon: <Users size={13} />,       groupColor: 'blue'    },
+    MEMBER_UPDATE:        { label: 'Edit Member',              desc: 'Modify existing member records.',                            unlocks: 'Edit Member button',                        group: 'Members',   groupIcon: <Users size={13} />,       groupColor: 'blue'    },
+    MEMBER_STATUS_CHANGE: { label: 'Change Member Status',     desc: 'Suspend, reactivate, or mark members inactive.',            unlocks: 'Members → status change controls',          group: 'Members',   groupIcon: <Users size={13} />,       groupColor: 'blue'    },
+    // Users
+    USER_READ:            { label: 'View Users',               desc: 'Access the Users management page and see account list.',      unlocks: 'Users page in sidebar',                     group: 'Users',     groupIcon: <UserCheck size={13} />,   groupColor: 'indigo'  },
+    USER_CREATE:          { label: 'Create Users',             desc: 'Create new login accounts and assign them to members.',      unlocks: 'Users → Create User button',                group: 'Users',     groupIcon: <UserCheck size={13} />,   groupColor: 'indigo'  },
+    USER_UPDATE:          { label: 'Edit Users',               desc: 'Update user account details and reset passwords.',           unlocks: 'Users → Edit User button',                  group: 'Users',     groupIcon: <UserCheck size={13} />,   groupColor: 'indigo'  },
+    // Roles
+    ROLE_READ:            { label: 'View Roles',               desc: 'Access the Roles & Permissions management page.',            unlocks: 'Roles & Permissions page in sidebar',        group: 'Roles',     groupIcon: <FileKey size={13} />,     groupColor: 'violet'  },
+    ROLE_CREATE:          { label: 'Create Roles',             desc: 'Define new security roles.',                                 unlocks: 'Roles → Add New Role button',               group: 'Roles',     groupIcon: <FileKey size={13} />,     groupColor: 'violet'  },
+    ROLE_UPDATE:          { label: 'Edit Role Permissions',    desc: 'Assign and remove permissions from existing roles.',         unlocks: 'Roles → toggle permissions + save',         group: 'Roles',     groupIcon: <FileKey size={13} />,     groupColor: 'violet'  },
+    // Loans
+    LOANS_READ:              { label: 'View Loans',               desc: 'View all loan applications and their status.',            unlocks: 'Loans page in sidebar',                     group: 'Loans',     groupIcon: <Coins size={13} />,       groupColor: 'amber'   },
+    LOANS_APPROVE:           { label: 'Verify Loans',             desc: 'First-level loans officer verification.',                 unlocks: 'Loans → Verify button',                     group: 'Loans',     groupIcon: <Coins size={13} />,       groupColor: 'amber'   },
+    LOANS_COMMITTEE_APPROVE: { label: 'Committee Approve Loans',  desc: 'Committee-level approval of verified loans.',             unlocks: 'Loans → Committee Approve button',          group: 'Loans',     groupIcon: <Coins size={13} />,       groupColor: 'amber'   },
+    LOANS_DISBURSE:          { label: 'Disburse Loans',           desc: 'Disburse committee-approved loans to members.',           unlocks: 'Loans → Disburse button',                   group: 'Loans',     groupIcon: <Coins size={13} />,       groupColor: 'amber'   },
+    // Savings
+    SAVINGS_READ:                { label: 'View Savings',          desc: 'View savings accounts and transaction history.',          unlocks: 'Savings page in sidebar',                   group: 'Savings',   groupIcon: <PiggyBank size={13} />,   groupColor: 'emerald' },
+    SAVINGS_MANUAL_POST:         { label: 'Post Manual Transactions', desc: 'Record cash deposits and withdrawals.',               unlocks: 'Savings → Deposit / Withdraw buttons',      group: 'Savings',   groupIcon: <PiggyBank size={13} />,   groupColor: 'emerald' },
+    SAVINGS_OBLIGATIONS_MANAGE:  { label: 'Manage Savings Compliance', desc: 'Create and edit member savings obligations.',        unlocks: 'Savings Compliance page in sidebar',         group: 'Savings',   groupIcon: <PiggyBank size={13} />,   groupColor: 'emerald' },
+    SAVINGS_OBLIGATIONS_READ:    { label: 'View Own Obligations',  desc: 'Member can view their own savings obligations.',         unlocks: 'My Account → savings obligation card',      group: 'Savings',   groupIcon: <PiggyBank size={13} />,   groupColor: 'emerald' },
+    // Reports
+    REPORTS_READ:         { label: 'View Reports',             desc: 'Access financial reports, statements and analytics.',        unlocks: 'Reports in sidebar + all report pages',     group: 'Reports',   groupIcon: <BarChart3 size={13} />,   groupColor: 'rose'    },
+    GL_TRIAL_BALANCE:     { label: 'Trial Balance',            desc: 'View the general ledger trial balance.',                    unlocks: 'Accounting → Trial Balance',                group: 'Reports',   groupIcon: <BarChart3 size={13} />,   groupColor: 'rose'    },
+    // Meetings
+    MEETINGS_READ:        { label: 'View Meetings',            desc: 'View the meetings calendar and schedule.',                  unlocks: 'Meetings page in sidebar',                  group: 'Meetings',  groupIcon: <CalendarDays size={13} />, groupColor: 'cyan'    },
+    MEETINGS_MANAGE:      { label: 'Manage Meetings',          desc: 'Create, edit and cancel meetings.',                         unlocks: 'Meetings → Create Meeting, edit',           group: 'Meetings',  groupIcon: <CalendarDays size={13} />, groupColor: 'cyan'    },
+    ATTENDANCE_RECORD:    { label: 'Record Attendance',        desc: 'Mark member presence at meetings.',                         unlocks: 'Meetings → Take Attendance button',         group: 'Meetings',  groupIcon: <CalendarDays size={13} />, groupColor: 'cyan'    },
+    // Penalties
+    PENALTIES_WAIVE_ADJUST: { label: 'Waive / Adjust Penalties', desc: 'Waive or reduce penalties on member accounts.',          unlocks: 'Penalties → Waive button',                  group: 'Penalties', groupIcon: <AlertCircle size={13} />, groupColor: 'orange'  },
+    // Sessions
+    SESSION_READ:         { label: 'View Sessions',            desc: 'See all active user sessions.',                             unlocks: 'Security page → active sessions list',      group: 'Sessions',  groupIcon: <Eye size={13} />,          groupColor: 'slate'   },
+    SESSION_REVOKE:       { label: 'Terminate Sessions',       desc: 'Force-logout users by revoking their sessions.',            unlocks: 'Security page → Terminate button',          group: 'Sessions',  groupIcon: <Eye size={13} />,          groupColor: 'slate'   },
+    // Admin tools
+    AUDIT_LOG_READ:          { label: 'View Audit Log',          desc: 'Read the full security and operations audit trail.',        unlocks: 'Audit Log page in sidebar',                  group: 'Admin',     groupIcon: <ShieldAlert size={13} />, groupColor: 'red'     },
+    PENALTIES_MANAGE_RULES:  { label: 'Manage Penalty Rules',    desc: 'Create and edit penalty fine amounts and thresholds.',      unlocks: 'Settings → Penalties tab',                   group: 'Admin',     groupIcon: <ShieldAlert size={13} />, groupColor: 'red'     },
+};
+
+const GROUP_ORDER = ['Members', 'Users', 'Roles', 'Loans', 'Savings', 'Reports', 'Meetings', 'Penalties', 'Sessions', 'Admin'];
+
+const CLR: Record<string, { bg: string; border: string; text: string; badge: string; sw: string }> = {
+    blue:    { bg: 'bg-blue-50',    border: 'border-blue-200',    text: 'text-blue-700',    badge: 'bg-blue-100 text-blue-700 border-blue-200',    sw: 'bg-blue-500'    },
+    indigo:  { bg: 'bg-indigo-50',  border: 'border-indigo-200',  text: 'text-indigo-700',  badge: 'bg-indigo-100 text-indigo-700 border-indigo-200',  sw: 'bg-indigo-500'  },
+    violet:  { bg: 'bg-violet-50',  border: 'border-violet-200',  text: 'text-violet-700',  badge: 'bg-violet-100 text-violet-700 border-violet-200',  sw: 'bg-violet-500'  },
+    amber:   { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-700',   badge: 'bg-amber-100 text-amber-700 border-amber-200',   sw: 'bg-amber-500'   },
+    emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', sw: 'bg-emerald-500' },
+    rose:    { bg: 'bg-rose-50',    border: 'border-rose-200',    text: 'text-rose-700',    badge: 'bg-rose-100 text-rose-700 border-rose-200',    sw: 'bg-rose-500'    },
+    cyan:    { bg: 'bg-cyan-50',    border: 'border-cyan-200',    text: 'text-cyan-700',    badge: 'bg-cyan-100 text-cyan-700 border-cyan-200',    sw: 'bg-cyan-500'    },
+    orange:  { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  badge: 'bg-orange-100 text-orange-700 border-orange-200',  sw: 'bg-orange-500'  },
+    slate:   { bg: 'bg-slate-50',   border: 'border-slate-200',   text: 'text-slate-700',   badge: 'bg-slate-100 text-slate-600 border-slate-200',   sw: 'bg-slate-500'   },
+    red:     { bg: 'bg-red-50',     border: 'border-red-200',     text: 'text-red-700',     badge: 'bg-red-100 text-red-700 border-red-200',         sw: 'bg-red-500'     },
+};
+
+// ── Toggle switch ─────────────────────────────────────────────────────────────
+const Toggle: React.FC<{ on: boolean; onChange: () => void; disabled?: boolean; sw: string }> = ({ on, onChange, disabled = false, sw }) => (
+    <button
+        type="button" role="switch" aria-checked={on} disabled={disabled}
+        onClick={e => { e.stopPropagation(); onChange(); }}
+        className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent
+            transition-colors duration-200 ease-in-out focus:outline-none
+            ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+            ${on ? sw : 'bg-slate-200'}`}
+    >
+        <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm
+            transform transition-transform duration-200 ease-in-out ${on ? 'translate-x-4' : 'translate-x-0'}`} />
+    </button>
+);
+
+// ── Role color map ────────────────────────────────────────────────────────────
+const ROLE_CLR: Record<string, string> = {
+    SYSTEM_ADMIN: 'border-red-200 bg-red-50 text-red-700',
+    CHAIRPERSON: 'border-violet-200 bg-violet-50 text-violet-700',
+    DEPUTY_CHAIRPERSON: 'border-violet-200 bg-violet-50 text-violet-600',
+    TREASURER: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    DEPUTY_TREASURER: 'border-emerald-200 bg-emerald-50 text-emerald-600',
+    SECRETARY: 'border-blue-200 bg-blue-50 text-blue-700',
+    DEPUTY_SECRETARY: 'border-blue-200 bg-blue-50 text-blue-600',
+    ACCOUNTANT: 'border-amber-200 bg-amber-50 text-amber-700',
+    DEPUTY_ACCOUNTANT: 'border-amber-200 bg-amber-50 text-amber-600',
+    CASHIER: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+    DEPUTY_CASHIER: 'border-cyan-200 bg-cyan-50 text-cyan-600',
+    LOAN_OFFICER: 'border-orange-200 bg-orange-50 text-orange-700',
+    DEPUTY_LOAN_OFFICER: 'border-orange-200 bg-orange-50 text-orange-600',
+};
+
+// ─── Principal → Deputy sync map ─────────────────────────────────────────────
+// When an admin saves permissions for a principal role, the deputy role is
+// automatically synced to the SAME permission set with a second silent API call.
+// This means you only ever need to configure the principal — deputies follow.
+const DEPUTY_SYNC: Record<string, string> = {
+    CHAIRPERSON:  'DEPUTY_CHAIRPERSON',
+    TREASURER:    'DEPUTY_TREASURER',
+    SECRETARY:    'DEPUTY_SECRETARY',
+    ACCOUNTANT:   'DEPUTY_ACCOUNTANT',
+    CASHIER:      'DEPUTY_CASHIER',
+    LOAN_OFFICER: 'DEPUTY_LOAN_OFFICER',
+};
+
+// ─── Main page component ──────────────────────────────────────────────────────
+
 export default function RolesPermissionsPage() {
-    const [roles, setRoles] = useState<Role[]>([]);
-    const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+    const [roles, setRoles]         = useState<Role[]>([]);
+    const [allPerms, setAllPerms]   = useState<Permission[]>([]);
+    const [loading, setLoading]     = useState(true);
+    const [error, setError]         = useState('');
 
-    const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-    const [editedPermissionIds, setEditedPermissionIds] = useState<string[]>([]);
-    const [isSaving, setIsSaving] = useState(false);
-    const [showRoleList, setShowRoleList] = useState(false); // mobile toggle
+    const [selectedRole, setSelected] = useState<Role | null>(null);
+    const [editedIds, setEditedIds]   = useState<Set<string>>(new Set());
+    const [saving, setSaving]         = useState(false);
+    const [savedResult, setSavedResult] = useState<'ok' | 'err' | null>(null);
+    const [savedMsg, setSavedMsg]     = useState('');
+    const [syncedDeputy, setSyncedDeputy] = useState<string | null>(null);
 
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [newRoleName, setNewRoleName] = useState('');
-    const [newRoleDesc, setNewRoleDesc] = useState('');
-    const [isCreating, setIsCreating] = useState(false);
+    const [createOpen, setCreateOpen] = useState(false);
+    const [newName, setNewName]       = useState('');
+    const [newDesc, setNewDesc]       = useState('');
+    const [creating, setCreating]     = useState(false);
+    const [search, setSearch]         = useState('');
 
-    const handleSelectRole = useCallback((role: Role) => {
-        setSelectedRole(role);
-        setEditedPermissionIds(role.permissions.map((p) => p.id));
-        setShowRoleList(false); // close mobile dropdown after selecting
+    const selectRole = useCallback((role: Role) => {
+        setSelected(role);
+        setEditedIds(new Set(role.permissions.map(p => p.id)));
+        setSavedResult(null);
     }, []);
 
-    const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        setError('');
+    const load = useCallback(async () => {
+        setLoading(true);
         try {
-            const [rolesData, permsData] = await Promise.all([
-                roleApi.getAllRoles(),
-                roleApi.getAllPermissions(),
-            ]);
-            setRoles(rolesData);
-            setAllPermissions(permsData);
-            if (rolesData.length > 0) handleSelectRole(rolesData[0]);
-        } catch (error: unknown) {
-            setError(getApiErrorMessage(error, 'Failed to load roles and permissions.'));
-        } finally {
-            setIsLoading(false);
-        }
-    }, [handleSelectRole]);
+            const [r, p] = await Promise.all([roleApi.getAllRoles(), roleApi.getAllPermissions()]);
+            setRoles(r); setAllPerms(p);
+            if (r.length > 0) selectRole(r[0]);
+        } catch (e) { setError(getApiErrorMessage(e, 'Failed to load.')); }
+        finally { setLoading(false); }
+    }, [selectRole]);
 
-    useEffect(() => { void fetchData(); }, [fetchData]);
+    useEffect(() => { void load(); }, [load]);
 
-    const handleTogglePermission = (permissionId: string) => {
+    const toggle = (id: string) => {
         if (selectedRole?.name === 'SYSTEM_ADMIN') return;
-        setEditedPermissionIds((prev) =>
-            prev.includes(permissionId) ? prev.filter((id) => id !== permissionId) : [...prev, permissionId]
-        );
+        setEditedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+        setSavedResult(null);
     };
 
-    const handleSavePermissions = async () => {
+    const save = async () => {
         if (!selectedRole) return;
-        setIsSaving(true);
-        setSuccessMessage('');
+        setSaving(true);
+        setSyncedDeputy(null);
         try {
-            const result = await roleApi.updateRolePermissions(selectedRole.id, editedPermissionIds);
-            const updatedPermissions = allPermissions.filter((p) => editedPermissionIds.includes(p.id));
-            const updatedRole: Role = { ...selectedRole, permissions: updatedPermissions };
-            setRoles((prev) => prev.map((r) => (r.id === selectedRole.id ? updatedRole : r)));
-            setSelectedRole(updatedRole);
+            const permIds = [...editedIds];
 
-            // Show notification about affected users and re-login requirement
-            const affectedUsers = (result as any)?.affectedUsers || 0;
-            const message = affectedUsers > 0
-                ? `✅ Permissions updated successfully! ${affectedUsers} user(s) will need to re-authenticate on their next action.`
-                : '✅ Permissions updated successfully!';
-            setSuccessMessage(message);
+            // 1. Save the principal role
+            await roleApi.updateRolePermissions(selectedRole.id, permIds);
+            const updated: Role = { ...selectedRole, permissions: allPerms.filter(p => editedIds.has(p.id)) };
+            setRoles(prev => prev.map(r => r.id === selectedRole.id ? updated : r));
+            setSelected(updated);
 
-            // Auto-clear success message after 6 seconds
-            setTimeout(() => setSuccessMessage(''), 6000);
-        } catch (error: unknown) {
-            alert(getApiErrorMessage(error, 'Failed to update permissions.'));
-        } finally {
-            setIsSaving(false);
-        }
+            // 2. Auto-sync deputy if this is a principal role
+            const deputyName = DEPUTY_SYNC[selectedRole.name];
+            let deputySynced = false;
+            if (deputyName) {
+                const deputyRole = roles.find(r => r.name === deputyName);
+                if (deputyRole) {
+                    await roleApi.updateRolePermissions(deputyRole.id, permIds);
+                    // Update deputy in local state too
+                    const updatedDeputy: Role = { ...deputyRole, permissions: allPerms.filter(p => editedIds.has(p.id)) };
+                    setRoles(prev => prev.map(r => r.id === deputyRole.id ? updatedDeputy : r));
+                    setSyncedDeputy(deputyName.replace(/_/g, ' '));
+                    deputySynced = true;
+                }
+            }
+
+            setSavedResult('ok');
+            setSavedMsg(
+                deputySynced
+                    ? `${selectedRole.name.replace(/_/g, ' ')} saved and ${deputyName!.replace(/_/g, ' ')} automatically synced.`
+                    : `${selectedRole.name.replace(/_/g, ' ')} permissions updated.`
+            );
+        } catch (e) { setSavedResult('err'); setSavedMsg(getApiErrorMessage(e, 'Save failed.')); }
+        finally { setSaving(false); }
     };
 
-    const handleCreateRole = async (e: React.FormEvent) => {
+    const createRole = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newRoleName.trim()) return;
-        setIsCreating(true);
+        setCreating(true);
         try {
-            const newRole = await roleApi.createRole({
-                name: newRoleName.toUpperCase().replace(/\s+/g, '_'),
-                description: newRoleDesc,
-                permissionIds: [],
-            });
-            setRoles((prev) => [...prev, newRole]);
-            setIsCreateModalOpen(false);
-            setNewRoleName('');
-            setNewRoleDesc('');
-            handleSelectRole(newRole);
-        } catch (error: unknown) {
-            alert(getApiErrorMessage(error, 'Failed to create role.'));
-        } finally {
-            setIsCreating(false);
-        }
+            const role = await roleApi.createRole({ name: newName.toUpperCase().replace(/\s+/g, '_'), description: newDesc, permissionIds: [] });
+            setRoles(prev => [...prev, role]);
+            setCreateOpen(false); setNewName(''); setNewDesc('');
+            selectRole(role);
+        } catch (e) { alert(getApiErrorMessage(e, 'Failed to create role.')); }
+        finally { setCreating(false); }
     };
 
-    const groupedPermissions = allPermissions.reduce((acc, perm) => {
-        const group = perm.code.split('_')[0];
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(perm);
-        return acc;
-    }, {} as Record<string, Permission[]>);
+    const grouped = React.useMemo(() => {
+        const q = search.toLowerCase();
+        const out: Record<string, Permission[]> = {};
+        for (const p of allPerms) {
+            const m = PERM_META[p.code];
+            if (!m) continue;
+            if (q && !m.label.toLowerCase().includes(q) && !m.group.toLowerCase().includes(q) && !p.code.toLowerCase().includes(q)) continue;
+            if (!out[m.group]) out[m.group] = [];
+            out[m.group].push(p);
+        }
+        return out;
+    }, [allPerms, search]);
 
-    const hasChanges =
-        selectedRole &&
-        (selectedRole.permissions.length !== editedPermissionIds.length ||
-            !selectedRole.permissions.every((p) => editedPermissionIds.includes(p.id)));
+    const isAdmin    = selectedRole?.name === 'SYSTEM_ADMIN';
+    const hasChanges = !!selectedRole && (
+        selectedRole.permissions.length !== editedIds.size ||
+        !selectedRole.permissions.every(p => editedIds.has(p.id))
+    );
 
-    const isSystemAdmin = selectedRole?.name === 'SYSTEM_ADMIN';
-
-    if (isLoading) {
-        return (
-            <div className="p-12 flex flex-col items-center justify-center text-slate-500">
-                <Loader2 className="animate-spin mb-4 text-emerald-600" size={40} />
-                <p>Loading security matrices...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return <div className="p-4 sm:p-6 text-red-600 bg-red-50 rounded-xl m-4 sm:m-6 font-medium">{error}</div>;
-    }
+    if (loading) return (
+        <div className="flex items-center justify-center h-64 gap-3 text-slate-400">
+            <Loader2 className="animate-spin" size={28} /><span className="text-sm">Loading roles…</span>
+        </div>
+    );
+    if (error) return <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>;
 
     return (
-        <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        <div className="h-full flex flex-col overflow-hidden">
 
-            {/* ── Header ── */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0 bg-white">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Roles & Permissions</h1>
-                    <p className="text-slate-500 text-sm mt-1">Configure system access levels and granular permissions.</p>
+                    <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <Shield size={18} className="text-slate-500" /> Roles & Permissions
+                    </h1>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                        Grant or revoke permissions per role. Changes take effect immediately on next session load — no restart required.
+                    </p>
                 </div>
-                <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="bg-slate-900 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 text-sm"
-                >
-                    <Plus size={16} /> Add New Role
+                <button onClick={() => setCreateOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition-colors">
+                    <Plus size={14} /> New Role
                 </button>
             </div>
 
-            {/* ── Success Message ── */}
-            {successMessage && (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm flex items-center gap-3">
-                    <CheckCircle size={18} className="shrink-0 text-emerald-600" />
-                    <span>{successMessage}</span>
+            {/* Save banner */}
+            {savedResult && (
+                <div className={`mx-6 mt-3 flex items-start gap-3 px-4 py-3 rounded-lg border text-sm shrink-0
+                    ${savedResult === 'ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                    {savedResult === 'ok'
+                        ? <Check size={14} className="shrink-0 mt-0.5 text-emerald-600" />
+                        : <AlertTriangle size={14} className="shrink-0 mt-0.5 text-red-500" />}
+                    <span className="flex-1 text-xs">{savedMsg}</span>
+                    {savedResult === 'ok' && syncedDeputy && (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold shrink-0 flex items-center gap-1">
+                            <RefreshCw size={9} /> {syncedDeputy} synced
+                        </span>
+                    )}
+                    <button onClick={() => setSavedResult(null)} className="opacity-40 hover:opacity-100"><X size={13} /></button>
                 </div>
             )}
 
-            {/* ── Mobile: role selector dropdown ── */}
-            <div className="md:hidden">
-                <button
-                    onClick={() => setShowRoleList(!showRoleList)}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm text-sm font-semibold text-slate-700"
-                >
-                    <div className="flex items-center gap-2">
-                        <Shield size={15} className={selectedRole?.name === 'SYSTEM_ADMIN' ? 'text-red-500' : 'text-emerald-600'} />
-                        {selectedRole ? selectedRole.name.replace(/_/g, ' ') : 'Select a role'}
-                    </div>
-                    <ChevronDown size={16} className={`transition-transform ${showRoleList ? 'rotate-180' : ''}`} />
-                </button>
+            {/* Body: two columns */}
+            <div className="flex flex-1 min-h-0">
 
-                {showRoleList && (
-                    <div className="mt-2 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-                        {roles.map((role) => (
-                            <button
-                                key={role.id}
-                                onClick={() => handleSelectRole(role)}
-                                className={`w-full text-left px-4 py-3 text-sm flex items-center gap-2 border-b border-slate-100 last:border-0 transition-colors ${
-                                    selectedRole?.id === role.id ? 'bg-emerald-50 text-emerald-700 font-semibold' : 'hover:bg-slate-50'
-                                }`}
-                            >
-                                <Shield size={14} className={role.name === 'SYSTEM_ADMIN' ? 'text-red-500' : 'text-emerald-600'} />
-                                {role.name.replace(/_/g, ' ')}
-                            </button>
-                        ))}
+                {/* Left: role list */}
+                <aside className="w-60 shrink-0 border-r border-slate-100 flex flex-col bg-white">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-4 pt-3 pb-2">System Roles</p>
+                    <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
+                        {roles.map(role => {
+                            const selected = selectedRole?.id === role.id;
+                            const clr      = ROLE_CLR[role.name] ?? 'border-slate-200 bg-slate-50 text-slate-700';
+                            return (
+                                <button key={role.id} onClick={() => selectRole(role)}
+                                        className={`w-full text-left px-3 py-2.5 rounded-lg border transition-all
+                                        ${selected ? clr + ' shadow-sm' : 'border-transparent text-slate-700 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            {role.name === 'SYSTEM_ADMIN'
+                                                ? <Lock size={12} className="text-red-500 shrink-0" />
+                                                : <Shield size={12} className="text-slate-400 shrink-0" />}
+                                            <span className="text-xs font-semibold truncate">{role.name.replace(/_/g, ' ')}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {/* Show sync icon on principal roles */}
+                                            {DEPUTY_SYNC[role.name] && (
+                                                <span
+                                                    title={`Saves auto-sync to ${DEPUTY_SYNC[role.name]?.replace(/_/g, ' ')}`}
+                                                    className={`${selected ? 'text-current opacity-60' : 'text-emerald-500 opacity-70'} cursor-help`}
+                                                >
+                                                    <RefreshCw size={9} />
+                                                </span>
+                                            )}
+                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded
+                                                ${selected ? 'bg-white/70' : 'bg-slate-100 text-slate-500'}`}>
+                                                {role.permissions.length}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {role.description && (
+                                        <p className="text-[10px] text-slate-400 mt-0.5 truncate pl-[17px]">{role.description}</p>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </aside>
+
+                {/* Right: permission editor */}
+                {selectedRole ? (
+                    <div className="flex-1 min-w-0 flex flex-col bg-slate-50/30">
+
+                        {/* Panel header */}
+                        <div className="flex items-center gap-3 justify-between px-6 py-3.5 border-b border-slate-100 bg-white shrink-0">
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+                                    {selectedRole.name.replace(/_/g, ' ')}
+                                    {isAdmin && (
+                                        <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                            <Lock size={8} /> Immutable
+                                        </span>
+                                    )}
+                                    {!isAdmin && hasChanges && (
+                                        <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                            <AlertCircle size={8} /> Unsaved changes
+                                        </span>
+                                    )}
+                                </h2>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                    {editedIds.size} permission{editedIds.size !== 1 ? 's' : ''} active
+                                    {!isAdmin && ' · Click any card to toggle'}
+                                </p>
+                                {/* Deputy sync notice */}
+                                {DEPUTY_SYNC[selectedRole.name] && (
+                                    <p className="text-[11px] text-emerald-600 mt-0.5 flex items-center gap-1">
+                                        <RefreshCw size={10} className="shrink-0" />
+                                        Saving will automatically sync&nbsp;
+                                        <strong>{DEPUTY_SYNC[selectedRole.name]?.replace(/_/g, ' ')}</strong>
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <input value={search} onChange={e => setSearch(e.target.value)}
+                                       placeholder="Search…"
+                                       className="text-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700
+                                               placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 w-36" />
+                                <button onClick={save} disabled={!hasChanges || saving || isAdmin}
+                                        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all
+                                        ${hasChanges && !isAdmin
+                                            ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-sm'
+                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}>
+                                    {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                                    {saving ? 'Saving…' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* System admin warning */}
+                        {isAdmin && (
+                            <div className="mx-6 mt-4 p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-xs text-red-700 shrink-0">
+                                <ShieldAlert size={14} className="mt-0.5 shrink-0 text-red-500" />
+                                <strong>SYSTEM_ADMIN</strong>&nbsp;has implicit access to everything and cannot be restricted.
+                            </div>
+                        )}
+
+                        {/* Permission groups */}
+                        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-7">
+                            {GROUP_ORDER.filter(g => grouped[g]?.length).map(gName => {
+                                const perms  = grouped[gName];
+                                const meta0  = PERM_META[perms[0].code];
+                                const color  = meta0?.groupColor ?? 'slate';
+                                const c      = CLR[color] ?? CLR.slate;
+                                const active = perms.filter(p => editedIds.has(p.id)).length;
+
+                                return (
+                                    <div key={gName}>
+                                        {/* Group header */}
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold ${c.badge}`}>
+                                                {meta0?.groupIcon} {gName}
+                                            </span>
+                                            <div className="flex-1 h-px bg-slate-200" />
+                                            <span className="text-[10px] text-slate-400">{active}/{perms.length} active</span>
+                                        </div>
+
+                                        {/* Cards grid */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                            {perms.map(perm => {
+                                                const m   = PERM_META[perm.code];
+                                                const on  = editedIds.has(perm.id);
+                                                return (
+                                                    <div key={perm.id}
+                                                         onClick={() => !isAdmin && toggle(perm.id)}
+                                                         className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all
+                                                            ${isAdmin ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}
+                                                            ${on ? `${c.bg} ${c.border}` : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'}`}>
+                                                        <div className="pt-0.5">
+                                                            <Toggle on={on} onChange={() => toggle(perm.id)} disabled={isAdmin} sw={c.sw} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className={`text-xs font-bold ${on ? c.text : 'text-slate-700'}`}>
+                                                                {m?.label ?? perm.code}
+                                                            </div>
+                                                            <div className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                                                {m?.desc ?? perm.description}
+                                                            </div>
+                                                            {m?.unlocks && (
+                                                                <div className={`flex items-center gap-1 mt-1.5 text-[10px] font-medium
+                                                                    ${on ? c.text : 'text-slate-400'}`}>
+                                                                    <ChevronRight size={10} className="shrink-0" />
+                                                                    {m.unlocks}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* Unmapped permissions */}
+                            {(() => {
+                                const unknown = allPerms.filter(p => !PERM_META[p.code]);
+                                if (!unknown.length) return null;
+                                return (
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold bg-slate-100 text-slate-600 border-slate-200">
+                                                <Settings2 size={12} /> Other
+                                            </span>
+                                            <div className="flex-1 h-px bg-slate-200" />
+                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+                                            {unknown.map(p => {
+                                                const on = editedIds.has(p.id);
+                                                return (
+                                                    <div key={p.id} onClick={() => !isAdmin && toggle(p.id)}
+                                                         className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all
+                                                            ${on ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300'}`}>
+                                                        <div className="pt-0.5"><Toggle on={on} onChange={() => toggle(p.id)} disabled={isAdmin} sw={CLR.slate.sw} /></div>
+                                                        <div><div className="text-xs font-bold text-slate-700">{p.code}</div>{p.description && <div className="text-[11px] text-slate-500 mt-0.5">{p.description}</div>}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {!Object.keys(grouped).length && search && (
+                                <div className="text-center py-12 text-slate-400 text-sm">
+                                    No permissions match &ldquo;{search}&rdquo;
+                                </div>
+                            )}
+
+                            {/* Refresh note */}
+                            <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                <RefreshCw size={13} className="text-blue-500 mt-0.5 shrink-0" />
+                                <p className="text-xs text-blue-700 leading-relaxed">
+                                    <strong>How changes propagate:</strong> Permissions are saved to the database immediately.
+                                    {DEPUTY_SYNC[selectedRole.name] && (
+                                        <> Saving <strong>{selectedRole.name.replace(/_/g, ' ')}</strong> will
+                                            automatically sync <strong>{DEPUTY_SYNC[selectedRole.name]?.replace(/_/g, ' ')}</strong> in
+                                            the same operation — no second save needed.</>
+                                    )}
+                                    {' '}Users see updated sidebar links and controls on their next page refresh or login.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-slate-400">
+                        <div className="text-center">
+                            <Shield size={36} className="mx-auto mb-3 opacity-20" />
+                            <p className="text-sm">Select a role to configure its permissions</p>
+                        </div>
                     </div>
                 )}
             </div>
 
-            {/* ── Desktop: two-column layout / Mobile: stacked ── */}
-            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
-
-                {/* Roles list — hidden on mobile (use dropdown above) */}
-                <div className="hidden md:flex w-72 bg-white rounded-2xl border border-slate-200 shadow-sm flex-col overflow-hidden shrink-0">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50 font-bold text-slate-700 text-sm">
-                        System Roles
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                        {roles.map((role) => (
-                            <button
-                                key={role.id}
-                                onClick={() => handleSelectRole(role)}
-                                className={`w-full text-left p-3 rounded-xl transition border-2 ${
-                                    selectedRole?.id === role.id
-                                        ? 'border-emerald-500 bg-emerald-50/50'
-                                        : 'border-transparent hover:bg-slate-50'
-                                }`}
-                            >
-                                <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    <Shield size={14} className={role.name === 'SYSTEM_ADMIN' ? 'text-red-500' : 'text-emerald-600'} />
-                                    {role.name.replace(/_/g, ' ')}
-                                </div>
-                                {role.description && (
-                                    <div className="text-xs text-slate-500 mt-1 line-clamp-1">{role.description}</div>
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Permissions panel */}
-                <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden min-w-0">
-                    {selectedRole ? (
-                        <>
-                            {/* Panel header */}
-                            <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row justify-between gap-3 sm:items-center">
-                                <div>
-                                    <h2 className="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2 flex-wrap">
-                                        {selectedRole.name.replace(/_/g, ' ')} Matrix
-                                        {isSystemAdmin && (
-                                            <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                                                <AlertTriangle size={12} /> Immutable
-                                            </span>
-                                        )}
-                                    </h2>
-                                    <p className="text-slate-500 text-xs sm:text-sm mt-1">Select the permissions granted to this role.</p>
-                                </div>
-                                <button
-                                    onClick={handleSavePermissions}
-                                    disabled={!hasChanges || isSaving || isSystemAdmin}
-                                    className={`self-start sm:self-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold transition flex items-center gap-2 text-sm ${
-                                        hasChanges && !isSystemAdmin
-                                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
-                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                    }`}
-                                >
-                                    {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                                    Save Changes
-                                </button>
-                            </div>
-
-                            {/* Permissions grid */}
-                            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                                {isSystemAdmin && (
-                                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-start gap-3 text-sm">
-                                        <ShieldCheck className="mt-0.5 shrink-0" size={18} />
-                                        <p>
-                                            The <strong>SYSTEM_ADMIN</strong> role is a master role with implicit access to all operations.
-                                            Its permissions cannot be modified to prevent system lockouts.
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className="space-y-6 sm:space-y-8">
-                                    {Object.entries(groupedPermissions).map(([group, perms]) => (
-                                        <div key={group}>
-                                            <h3 className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 sm:mb-4 pb-2 border-b border-slate-100">
-                                                {group} Management
-                                            </h3>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                                                {perms.map((perm) => (
-                                                    <label
-                                                        key={perm.id}
-                                                        className={`flex items-start gap-3 p-3 rounded-xl border transition ${
-                                                            isSystemAdmin ? 'opacity-60 cursor-not-allowed bg-slate-50' : 'cursor-pointer hover:border-emerald-300'
-                                                        } ${
-                                                            editedPermissionIds.includes(perm.id) ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-100'
-                                                        }`}
-                                                    >
-                                                        <div className="mt-0.5">
-                                                            <input
-                                                                type="checkbox"
-                                                                disabled={isSystemAdmin}
-                                                                checked={editedPermissionIds.includes(perm.id)}
-                                                                onChange={() => handleTogglePermission(perm.id)}
-                                                                className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 disabled:opacity-50"
-                                                            />
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <div className="font-bold text-slate-700 text-xs sm:text-sm break-all">{perm.code}</div>
-                                                            <div className="text-xs text-slate-500 mt-0.5">{perm.description}</div>
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 flex items-center justify-center text-slate-400 p-12">
-                            Select a role to view its permissions
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {/* Create Role Modal */}
-            {isCreateModalOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
-                        <button
-                            onClick={() => setIsCreateModalOpen(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 bg-slate-50 rounded-full"
-                        >
-                            <X size={20} />
-                        </button>
-
-                        <h3 className="text-xl font-bold text-slate-800 mb-1">Create New Role</h3>
-                        <p className="text-slate-500 text-sm mb-6">Define a new security profile for the SACCO.</p>
-
-                        <form onSubmit={handleCreateRole} className="space-y-4">
+            {createOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Role Name</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="e.g. HR_MANAGER"
-                                    className="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none uppercase text-sm"
-                                    value={newRoleName}
-                                    onChange={(e) => setNewRoleName(e.target.value)}
-                                />
+                                <h3 className="font-bold text-slate-900 text-sm">Create New Role</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">Define a new access profile for the SACCO.</p>
+                            </div>
+                            <button onClick={() => setCreateOpen(false)} className="text-slate-400 hover:text-slate-600 p-1"><X size={16} /></button>
+                        </div>
+                        <form onSubmit={createRole} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Role Name</label>
+                                <input type="text" required placeholder="e.g. HR_MANAGER"
+                                       className="w-full border border-slate-200 px-3 py-2.5 rounded-lg text-sm uppercase focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                       value={newName} onChange={e => setNewName(e.target.value)} />
+                                <p className="text-[10px] text-slate-400 mt-1">Stored uppercase with underscores.</p>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
-                                <textarea
-                                    rows={3}
-                                    placeholder="What can this role do?"
-                                    className="w-full border border-slate-300 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none text-sm"
-                                    value={newRoleDesc}
-                                    onChange={(e) => setNewRoleDesc(e.target.value)}
-                                />
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">Description</label>
+                                <textarea rows={3} placeholder="Describe what this role can do…"
+                                          className="w-full border border-slate-200 px-3 py-2.5 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                          value={newDesc} onChange={e => setNewDesc(e.target.value)} />
                             </div>
-                            <button
-                                type="submit"
-                                disabled={isCreating}
-                                className="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 mt-2"
-                            >
-                                {isCreating ? <Loader2 className="animate-spin" size={18} /> : 'Create Role'}
+                            <button type="submit" disabled={creating || !newName.trim()}
+                                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50">
+                                {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                {creating ? 'Creating…' : 'Create Role'}
                             </button>
                         </form>
                     </div>
