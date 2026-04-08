@@ -5,6 +5,7 @@ import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
     ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X,
+    Clock // 🟢 NEW: Added the Clock icon for the Time Machine
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -92,6 +93,8 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Audit Log', path: '/audit/logs', icon: Shield, adminOnly: true },
                 { label: 'Security',  path: '/security',   icon: Shield },
                 { label: 'Settings',  path: '/settings',   icon: Settings, adminOnly: true },
+                // 🟢 NEW: Added the Time Machine link here, restricted to System Admins!
+                { label: 'Time Machine', path: '/admin/time-machine', icon: Clock, adminOnly: true },
             ],
         },
     ];
@@ -190,7 +193,6 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                             key={settings.logoUrl}
                             src={settings.logoUrl}
                             alt="Logo"
-                            // 👇 Updated scaling logic here 👇
                             className={`object-contain shrink-0 drop-shadow-sm transition-all duration-300 ${isCollapsed ? 'w-8 h-8 rounded-lg' : 'h-8 w-auto max-w-[160px]'}`}
                         />
                     ) : (

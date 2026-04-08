@@ -28,6 +28,7 @@ const PAGE_LABELS: Record<string, string> = {
     '/audit/logs':                 'Security Audit Log',
     '/security':                   'Security Settings',
     '/settings':                   'Platform Settings',
+    '/admin/time-machine':            'System Time Machine',
 };
 
 export const DashboardLayout = () => {

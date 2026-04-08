@@ -4,8 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance AdminObligationsSection with type safety by updating memberData type">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/security/SessionInvalidationService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/core/api/time-travel-api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/TimeMachinePage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/roles/service/RoleService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/roles/service/RoleService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/domain/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/domain/service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/layouts/DashboardLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/layouts/DashboardLayout.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -451,15 +460,7 @@
       <workItem from="1775309966859" duration="41932000" />
       <workItem from="1775414197404" duration="24385000" />
       <workItem from="1775479161613" duration="273000" />
-      <workItem from="1775624552521" duration="12065000" />
-    </task>
-    <task id="LOCAL-00019" summary="fix: improve journal entries API response parsing for safer type handling">
-      <option name="closed" value="true" />
-      <created>1774539619456</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1774539619456</updated>
+      <workItem from="1775624552521" duration="14858000" />
     </task>
     <task id="LOCAL-00020" summary="fix: update nginx API proxy to route /api requests directly to backend root and clarify config comments">
       <option name="closed" value="true" />
@@ -845,7 +846,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775637347617</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="feat: enhance AdminObligationsSection with type safety by updating memberData type">
+      <option name="closed" value="true" />
+      <created>1775637781056</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1775637781056</updated>
+    </task>
+    <option name="localTasksCounter" value="69" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -866,7 +875,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
     <MESSAGE value="feat: add refinance loan functionality and historical penalty migration support" />
     <MESSAGE value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
     <MESSAGE value="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration" />
@@ -891,7 +899,8 @@
     <MESSAGE value="feat: add update obligation API and security policy fields to settings" />
     <MESSAGE value="feat: implement update obligation functionality with dynamic password validation and new obligations tab" />
     <MESSAGE value="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage" />
+    <MESSAGE value="feat: enhance AdminObligationsSection with type safety by updating memberData type" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance AdminObligationsSection with type safety by updating memberData type" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

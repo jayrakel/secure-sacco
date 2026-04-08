@@ -41,6 +41,7 @@ import AuditLogPage from './features/audit/pages/AuditLogPage';
 import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
 import SupportPage from './features/legal/pages/SupportPage';
+import TimeMachinePage from './features/settings/pages/TimeMachinePage'; // 🟢 NEW: Time Machine Import
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -292,6 +293,13 @@ function App() {
                                         }>
                                             <SaccoSettingsPage />
                                         </HasPermission>
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* 🟢 NEW: Time Machine Route */}
+                                <Route path="/admin/time-machine" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <TimeMachinePage />
                                     </ProtectedRoute>
                                 } />
 
