@@ -55,8 +55,12 @@ public class RoleController {
     @PreAuthorize("hasAuthority('ROLE_UPDATE')")
     @PutMapping("/{id}/permissions")
     public ResponseEntity<?> updateRolePermissions(@PathVariable UUID id, @Valid @RequestBody UpdateRolePermissionsRequest request) {
+        long affectedUsers = roleService.countUsersWithRole(id);
         roleService.updateRolePermissions(id, request.getPermissionIds());
-        return ResponseEntity.ok(Map.of("message", "Role permissions updated successfully"));
+        return ResponseEntity.ok(Map.of(
+                "message", "Role permissions updated successfully. " + affectedUsers + " user(s) will need to re-authenticate.",
+                "affectedUsers", affectedUsers
+        ));
     }
 
     @Operation(summary = "Delete role")

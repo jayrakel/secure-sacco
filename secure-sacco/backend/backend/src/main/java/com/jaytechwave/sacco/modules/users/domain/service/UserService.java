@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.users.domain.service;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.service.PasswordValidator;
+import com.jaytechwave.sacco.modules.core.security.SessionInvalidationService;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import com.jaytechwave.sacco.modules.users.api.dto.UserDTOs.*;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
@@ -31,6 +32,7 @@ public class UserService {
     private final PasswordValidator passwordValidator;
     private final SecurityAuditService securityAuditService;
     private final CacheManager cacheManager;
+    private final SessionInvalidationService sessionInvalidationService;
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
@@ -114,6 +116,11 @@ public class UserService {
         user.setStatus(newStatus);
         userRepository.save(user);
 
+        // If user is being disabled or locked, invalidate all their sessions immediately
+        if (newStatus == UserStatus.DISABLED || newStatus == UserStatus.LOCKED) {
+            sessionInvalidationService.invalidateAllUserSessions(user.getEmail());
+        }
+
         securityAuditService.logEvent(
                 "USER_STATUS_UPDATED",
                 user.getEmail(),
@@ -131,10 +138,9 @@ public class UserService {
         user.setRoles(roles);
         userRepository.save(user);
 
-        // ✅ CRITICAL: Clear user cache so authorities are reloaded on next auth
-        if (cacheManager.getCache("userCache") != null) {
-            cacheManager.getCache("userCache").clear();
-        }
+        // ✅ CRITICAL: Invalidate user's sessions so authorities are reloaded on next auth
+        // This forces the user to re-authenticate with their updated permissions
+        sessionInvalidationService.invalidateAllUserSessions(user.getEmail());
 
         securityAuditService.logEvent(
                 "USER_ROLES_UPDATED",

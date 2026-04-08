@@ -46,4 +46,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * Used for system-admin lookup (there should only ever be one).
      */
     Optional<User> findFirstByRolesName(String roleName);
+
+    /**
+     * Count how many users have a specific role.
+     * Used when changing role permissions to determine how many sessions will be affected.
+     */
+    long countByRolesId(UUID roleId);
 }

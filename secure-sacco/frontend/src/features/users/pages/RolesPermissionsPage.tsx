@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { roleApi, type Role, type Permission } from '../api/role-api';
-import { Shield, Plus, Loader2, Save, AlertTriangle, ShieldCheck, X, ChevronDown } from 'lucide-react';
+import { Shield, Plus, Loader2, Save, AlertTriangle, ShieldCheck, X, ChevronDown, CheckCircle } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 export default function RolesPermissionsPage() {
@@ -8,6 +8,7 @@ export default function RolesPermissionsPage() {
     const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [editedPermissionIds, setEditedPermissionIds] = useState<string[]>([]);
@@ -55,13 +56,23 @@ export default function RolesPermissionsPage() {
     const handleSavePermissions = async () => {
         if (!selectedRole) return;
         setIsSaving(true);
+        setSuccessMessage('');
         try {
-            await roleApi.updateRolePermissions(selectedRole.id, editedPermissionIds);
+            const result = await roleApi.updateRolePermissions(selectedRole.id, editedPermissionIds);
             const updatedPermissions = allPermissions.filter((p) => editedPermissionIds.includes(p.id));
             const updatedRole: Role = { ...selectedRole, permissions: updatedPermissions };
             setRoles((prev) => prev.map((r) => (r.id === selectedRole.id ? updatedRole : r)));
             setSelectedRole(updatedRole);
-            alert('Permissions updated successfully!');
+
+            // Show notification about affected users and re-login requirement
+            const affectedUsers = (result as any)?.affectedUsers || 0;
+            const message = affectedUsers > 0
+                ? `✅ Permissions updated successfully! ${affectedUsers} user(s) will need to re-authenticate on their next action.`
+                : '✅ Permissions updated successfully!';
+            setSuccessMessage(message);
+
+            // Auto-clear success message after 6 seconds
+            setTimeout(() => setSuccessMessage(''), 6000);
         } catch (error: unknown) {
             alert(getApiErrorMessage(error, 'Failed to update permissions.'));
         } finally {
@@ -134,6 +145,14 @@ export default function RolesPermissionsPage() {
                     <Plus size={16} /> Add New Role
                 </button>
             </div>
+
+            {/* ── Success Message ── */}
+            {successMessage && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm flex items-center gap-3">
+                    <CheckCircle size={18} className="shrink-0 text-emerald-600" />
+                    <span>{successMessage}</span>
+                </div>
+            )}
 
             {/* ── Mobile: role selector dropdown ── */}
             <div className="md:hidden">
