@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom'; // <-- ADDED IMPORT
+import { Link } from 'react-router-dom';
 import { savingsApi, type StatementTransactionResponse } from '../../savings/api/savings-api';
 import { loanApi, type LoanApplication, type LoanSummary } from '../../loans/api/loan-api';
 import { penaltyApi, type PenaltySummary } from '../../penalties/api/penalty-api';
 import {
     PiggyBank, Coins, AlertCircle, Download, RefreshCw,
     Loader2, ArrowDownLeft, ArrowUpCircle, Calendar,
-    ChevronDown, ChevronUp, FileText,
+    ChevronDown, ChevronUp, FileText, ShieldCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
+
+// 🟢 NEW: Import the Read-Only Member Obligations Section
+import { MemberObligationsSection } from '../../obligations/components/MemberObligationsSection';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n: number) =>
@@ -24,7 +27,8 @@ const monthStart = () => {
 };
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
-type Tab = 'savings' | 'loans' | 'penalties';
+// 🟢 NEW: Added 'obligations' to the Tab type
+type Tab = 'savings' | 'loans' | 'penalties' | 'obligations';
 
 type LoanDetailItem = {
     label: string;
@@ -38,6 +42,8 @@ const TABS: { id: Tab; label: string; icon: React.ElementType; color: string }[]
     { id: 'savings', label: 'Savings Statement', icon: PiggyBank, color: 'text-emerald-600' },
     { id: 'loans', label: 'Loan History', icon: Coins, color: 'text-violet-600' },
     { id: 'penalties', label: 'Outstanding Penalties', icon: AlertCircle, color: 'text-rose-600' },
+    // 🟢 NEW: Added the Obligations Tab
+    { id: 'obligations', label: 'My Obligations', icon: ShieldCheck, color: 'text-blue-600' },
 ];
 
 const LOAN_STATUS: Record<string, { badge: string; dot: string; label: string }> = {
@@ -51,7 +57,6 @@ const LOAN_STATUS: Record<string, { badge: string; dot: string; label: string }>
     CLOSED: { badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400', label: 'Closed' },
 };
 
-// /penalties/my only returns OPEN status items — no other statuses will ever appear
 const PENALTY_STATUS: Record<string, string> = {
     OPEN: 'bg-rose-100 text-rose-800',
 };
@@ -167,7 +172,7 @@ const MemberPersonalReportsPage: React.FC = () => {
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-12">
 
-            {/* ── UPDATED HEADER WITH BUTTON ── */}
+            {/* ── HEADER ── */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -179,7 +184,6 @@ const MemberPersonalReportsPage: React.FC = () => {
                     </p>
                 </div>
 
-                {/* ── NEW DOWNLOAD BUTTON ── */}
                 <Link
                     to="/reports/statements"
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-colors shadow-sm shrink-0"
@@ -189,7 +193,8 @@ const MemberPersonalReportsPage: React.FC = () => {
                 </Link>
             </div>
 
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+            {/* ── TABS ── */}
+            <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-xl w-fit">
                 {TABS.map((tab) => (
                     <button
                         key={tab.id}
@@ -206,6 +211,15 @@ const MemberPersonalReportsPage: React.FC = () => {
                 ))}
             </div>
 
+            {/* ── 🟢 NEW: OBLIGATIONS TAB CONTENT ── */}
+            {activeTab === 'obligations' && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                    {/* The component handles its own data fetching, loading states, and layout! */}
+                    <MemberObligationsSection />
+                </div>
+            )}
+
+            {/* ── SAVINGS TAB ── */}
             {activeTab === 'savings' && (
                 <div className="space-y-4">
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-wrap items-end gap-3">
@@ -400,6 +414,7 @@ const MemberPersonalReportsPage: React.FC = () => {
                 </div>
             )}
 
+            {/* ── LOANS TAB ── */}
             {activeTab === 'loans' && (
                 <div className="space-y-3">
                     {loansLoading ? (
@@ -551,6 +566,7 @@ const MemberPersonalReportsPage: React.FC = () => {
                 </div>
             )}
 
+            {/* ── PENALTIES TAB ── */}
             {activeTab === 'penalties' && (
                 <div className="space-y-4">
                     {!penaltiesLoading && penalties.length > 0 && (

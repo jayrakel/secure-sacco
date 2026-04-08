@@ -36,6 +36,20 @@ public class ObligationDTOs {
         private int graceDays = 0;
     }
 
+    /**
+     * Partial update — all fields are optional so callers only send what they want to change.
+     * Uses a record (immutable) consistent with the rest of the codebase's DTO style.
+     */
+    public record UpdateObligationRequest(
+            @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
+            BigDecimal amountDue,
+
+            LocalDate startDate,
+
+            @Min(value = 0, message = "Grace days cannot be negative")
+            Integer graceDays
+    ) {}
+
     @Data
     public static class UpdateObligationStatusRequest {
         @NotNull(message = "Status is required")
