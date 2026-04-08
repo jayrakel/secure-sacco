@@ -57,6 +57,13 @@ export interface CreateObligationRequest {
     graceDays?: number;
 }
 
+// 🟢 NEW: Interface for the Edit payload (all fields optional since it's a partial update)
+export interface UpdateObligationRequest {
+    amountDue?: number;
+    startDate?: string;
+    graceDays?: number;
+}
+
 export const obligationsApi = {
     // ── Member ───────────────────────────────────────────────
     getMyObligations: async (): Promise<ObligationResponse[]> => {
@@ -80,8 +87,25 @@ export const obligationsApi = {
         return res.data;
     },
 
+    // 🟢 NEW: The PUT request to edit the exact parameters of the contract
+    updateObligation: async (id: string, data: UpdateObligationRequest): Promise<ObligationResponse> => {
+        const res = await apiClient.put(`/obligations/${id}`, data);
+        return res.data;
+    },
+
     updateStatus: async (id: string, status: ObligationStatus): Promise<ObligationResponse> => {
         const res = await apiClient.patch(`/obligations/${id}/status`, { status });
+        return res.data;
+    },
+
+    // Inside obligation-api.ts (under the Staff section)
+    getObligationsByMemberId: async (memberId: string): Promise<ObligationResponse[]> => {
+        const res = await apiClient.get(`/obligations/member/${memberId}`);
+        return res.data;
+    },
+
+    getHistoryByMemberId: async (memberId: string, page = 0, size = 20): Promise<PagedResponse<ObligationPeriodResponse>> => {
+        const res = await apiClient.get(`/obligations/member/${memberId}/history`, { params: { page, size } });
         return res.data;
     },
 

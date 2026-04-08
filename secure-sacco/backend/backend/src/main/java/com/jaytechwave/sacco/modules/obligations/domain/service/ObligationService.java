@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.DayOfWeek;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +53,19 @@ public class ObligationService {
         log.info("Created savings obligation {} for member {} ({} @ {})",
                 saved.getId(), saved.getMemberId(), saved.getFrequency(), saved.getAmountDue());
         return ObligationResponse.from(saved);
+    }
+
+    @Transactional
+    public ObligationResponse updateObligation(UUID id, UpdateObligationRequest request) {
+        SavingsObligation obligation = obligationRepository.findById(id).orElseThrow();
+
+        // Allow updating amount, start date, and grace period
+        if (request.amountDue() != null) obligation.setAmountDue(request.amountDue());
+        if (request.startDate() != null) obligation.setStartDate(request.startDate());
+        if (request.graceDays() != null) obligation.setGraceDays(request.graceDays());
+
+        // 🟢 FIX 1: Use ObligationResponse.from() instead of mapToResponse()
+        return ObligationResponse.from(obligationRepository.save(obligation));
     }
 
     // ── Staff: update status ───────────────────────────────────────────────────
@@ -144,12 +157,24 @@ public class ObligationService {
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * 🟢 FIX 2: Replaced the Monday-Dictator logic with the exact dynamic start
+     * date logic we used in ObligationPeriodService!
+     */
     private LocalDate currentPeriodStart(SavingsObligation obligation) {
         LocalDate today = LocalDate.now();
+        LocalDate start = obligation.getStartDate();
+
+        if (today.isBefore(start)) return start;
+
         if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
-            return today.withDayOfMonth(1);
+            long months = ChronoUnit.MONTHS.between(start, today);
+            LocalDate calcStart = start.plusMonths(months);
+            return calcStart.isAfter(today) ? calcStart.minusMonths(1) : calcStart;
+        } else {
+            long weeks = ChronoUnit.WEEKS.between(start, today);
+            LocalDate calcStart = start.plusWeeks(weeks);
+            return calcStart.isAfter(today) ? calcStart.minusWeeks(1) : calcStart;
         }
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
-        return monday.isBefore(obligation.getStartDate()) ? obligation.getStartDate() : monday;
     }
 }

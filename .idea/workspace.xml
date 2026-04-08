@@ -4,27 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/COMPLETE_FIX_SUMMARY.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/CORRECTED_DEPLOYMENT.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/MIGRATION_BEST_PRACTICES.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/NULL_VALUE_FIX.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/QUICK_FIX_CARD.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/STAGING_DIAGNOSTIC.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/STAGING_IMMEDIATE_FIX.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/STAGING_RESOLUTION_GUIDE.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/STAGING_TROUBLESHOOTING.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V54__fix_branding_urls_null_values.sql" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add update obligation API and security policy fields to settings">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V56__add_security_policy_to_settings.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/AdminObligationsSection.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/job/ObligationEvaluationJob.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/job/ObligationEvaluationJob.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationPeriodService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationPeriodService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/LoginAttemptService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/LoginAttemptService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MfaService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/MfaService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/PasswordResetService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/PasswordResetService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/setup/ContactVerificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/setup/ContactVerificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/controller/SaccoSettingsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/controller/SaccoSettingsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/dto/SaccoSettingsDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/dto/SaccoSettingsDTOs.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/entity/SaccoSettings.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/entity/SaccoSettings.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V51__add_branding_urls_to_settings.sql" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V51__add_branding_urls_to_settings.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/MemberPersonalReportsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/MemberPersonalReportsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/MemberStatementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/MemberStatementPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/service/SaccoSettingsService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/service/SaccoSettingsService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/api/obligation-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/api/obligation-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/CreateObligationModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/CreateObligationModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/MemberObligationsSection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/MemberObligationsSection.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/api/settings-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/api/settings-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -470,15 +468,7 @@
       <workItem from="1775309966859" duration="41932000" />
       <workItem from="1775414197404" duration="24385000" />
       <workItem from="1775479161613" duration="273000" />
-      <workItem from="1775624552521" duration="1698000" />
-    </task>
-    <task id="LOCAL-00015" summary="fix: set session cookie domain for cross-subdomain auth on staging">
-      <option name="closed" value="true" />
-      <created>1774531000005</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1774531000005</updated>
+      <workItem from="1775624552521" duration="6375000" />
     </task>
     <task id="LOCAL-00016" summary="fix: proxy API requests through nginx and update API base URL handling for staging">
       <option name="closed" value="true" />
@@ -864,7 +854,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775435345229</updated>
     </task>
-    <option name="localTasksCounter" value="64" />
+    <task id="LOCAL-00064" summary="feat: fix 500 error on settings endpoint by ensuring branding URLs are never NULL">
+      <option name="closed" value="true" />
+      <created>1775626798909</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1775626798911</updated>
+    </task>
+    <option name="localTasksCounter" value="65" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -885,8 +883,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
-    <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
     <MESSAGE value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
     <MESSAGE value="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations" />
     <MESSAGE value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
@@ -910,7 +906,9 @@
     <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
     <MESSAGE value="feat: enhance Trusted Types handling with improved TypeScript interface" />
     <MESSAGE value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
+    <MESSAGE value="feat: fix 500 error on settings endpoint by ensuring branding URLs are never NULL" />
+    <MESSAGE value="feat: add update obligation API and security policy fields to settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add update obligation API and security policy fields to settings" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

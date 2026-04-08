@@ -25,101 +25,140 @@ public class SaccoSettingsController {
 
     private final SaccoSettingsService settingsService;
     private final SecurityAuditService auditService;
-    private final PrefixGeneratorService prefixGeneratorService; // Injected generator
+    private final PrefixGeneratorService prefixGeneratorService;
 
-    @Operation(summary = "Get SACCO settings")
+    // ── GET ───────────────────────────────────────────────────────────────────
+
+    @Operation(summary = "Get all SACCO settings")
     @GetMapping
     public ResponseEntity<?> getSettings() {
         try {
             if (!settingsService.isInitialized()) {
                 return ResponseEntity.ok(Map.of("initialized", false));
             }
-            SaccoSettings settings = settingsService.getSettings();
-            return ResponseEntity.ok(Map.of(
-                    "initialized", true,
-                    "saccoName", settings.getSaccoName(),
-                    "prefix", settings.getMemberNumberPrefix(),
-                    "padLength", settings.getMemberNumberPadLength(),
-                    "registrationFee", settings.getRegistrationFee(),
-                    "logoUrl", settings.getLogoUrl() != null ? settings.getLogoUrl() : "",
-                    "faviconUrl", settings.getFaviconUrl() != null ? settings.getFaviconUrl() : "",
-                    "enabledModules", settings.getEnabledModules()
+            SaccoSettings s = settingsService.getSettings();
+            return ResponseEntity.ok(Map.ofEntries(
+                    // Meta
+                    Map.entry("initialized", true),
+                    // Identity
+                    Map.entry("saccoName",      s.getSaccoName()),
+                    Map.entry("prefix",         s.getMemberNumberPrefix()),
+                    Map.entry("padLength",      s.getMemberNumberPadLength()),
+                    Map.entry("registrationFee",s.getRegistrationFee()),
+                    Map.entry("logoUrl",        s.getLogoUrl()     != null ? s.getLogoUrl()     : ""),
+                    Map.entry("faviconUrl",     s.getFaviconUrl()  != null ? s.getFaviconUrl()  : ""),
+                    // Communication
+                    Map.entry("smtpFromName",   s.getSmtpFromName()  != null ? s.getSmtpFromName()  : "Secure SACCO"),
+                    Map.entry("supportEmail",   s.getSupportEmail()  != null ? s.getSupportEmail()  : ""),
+                    // Security policy
+                    Map.entry("maxLoginAttempts",        s.getMaxLoginAttempts()),
+                    Map.entry("lockoutDurationMinutes",  s.getLockoutDurationMinutes()),
+                    Map.entry("sessionTimeoutMinutes",   s.getSessionTimeoutMinutes()),
+                    Map.entry("passwordResetExpiryMin",  s.getPasswordResetExpiryMin()),
+                    Map.entry("mfaTokenExpiryMinutes",   s.getMfaTokenExpiryMinutes()),
+                    Map.entry("emailVerifyExpiryHours",  s.getEmailVerifyExpiryHours()),
+                    Map.entry("minPasswordLength",       s.getMinPasswordLength()),
+                    Map.entry("contactVerifyRateLimit",  s.getContactVerifyRateLimit()),
+                    Map.entry("contactVerifyWindowMin",  s.getContactVerifyWindowMin()),
+                    Map.entry("rateLimitGeneralPerMin",  s.getRateLimitGeneralPerMin()),
+                    // Modules
+                    Map.entry("enabledModules", s.getEnabledModules())
             ));
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
-                    "initialized", false,
-                    "error", "Failed to retrieve settings: " + e.getMessage()
-            ));
+            return ResponseEntity.ok(Map.of("initialized", false, "error", "Failed to retrieve settings: " + e.getMessage()));
         }
     }
 
-    // --- NEW: Generate Prefix Preview ---
-    @Operation(summary = "Preview member number prefix")
+    @Operation(summary = "Preview member number prefix auto-generation")
     @GetMapping("/generate-prefix")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<?> generatePrefixPreview(@RequestParam String name) {
-        String generatedPrefix = prefixGeneratorService.generate(name);
-        return ResponseEntity.ok(Map.of("prefix", generatedPrefix));
+        return ResponseEntity.ok(Map.of("prefix", prefixGeneratorService.generate(name)));
     }
 
-    @Operation(summary = "Initialize SACCO settings", description = "One-time setup of core SACCO configuration. Requires SYSTEM_ADMIN.")
+    // ── Identity ──────────────────────────────────────────────────────────────
+
+    @Operation(summary = "Initialize SACCO (one-time setup)")
     @PostMapping("/initialize")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<?> initializeSettings(@Valid @RequestBody InitializeRequest request, Authentication auth, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> initializeSettings(
+            @Valid @RequestBody InitializeRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
         try {
-            // Pass the new registrationFee parameter
             SaccoSettings settings = settingsService.initializeSettings(
-                    request.getSaccoName(),
-                    request.getPrefix(),
-                    request.getPadLength(),
-                    request.getRegistrationFee(), // <--- ADDED
-                    request.getLogoUrl(),
-                    request.getFaviconUrl()
-            );
-
-            auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_INITIALIZED", "Global Settings", getClientIP(httpRequest), "SACCO core settings initialized.");
-
+                    req.getSaccoName(), req.getPrefix(), req.getPadLength(),
+                    req.getRegistrationFee(), req.getLogoUrl(), req.getFaviconUrl());
+            auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_INITIALIZED",
+                    "Global Settings", getClientIP(httpReq), "SACCO core settings initialized.");
             return ResponseEntity.ok(settings);
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    @Operation(summary = "Update core settings")
+    @Operation(summary = "Update SACCO identity & financial settings")
     @PutMapping
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<?> updateCoreSettings(@Valid @RequestBody UpdateCoreRequest request, Authentication auth, HttpServletRequest httpRequest) {
-        // Pass the new registrationFee parameter
+    public ResponseEntity<?> updateCoreSettings(
+            @Valid @RequestBody UpdateCoreRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
         SaccoSettings settings = settingsService.updateCoreSettings(
-                request.getSaccoName(),
-                request.getPrefix(),
-                request.getPadLength(),
-                request.getRegistrationFee(), // <--- ADDED
-                request.getLogoUrl(),
-                request.getFaviconUrl()
-        );
-
-        auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_UPDATED", "Global Settings", getClientIP(httpRequest), "Updated core SACCO settings.");
-
+                req.getSaccoName(), req.getPrefix(), req.getPadLength(),
+                req.getRegistrationFee(), req.getLogoUrl(), req.getFaviconUrl());
+        auditService.logEventWithActorAndIp(auth.getName(), "SETTINGS_UPDATED",
+                "Global Settings", getClientIP(httpReq), "Updated core SACCO settings.");
         return ResponseEntity.ok(Map.of("message", "Settings updated successfully", "settings", settings));
     }
+
+    // ── Security policy ───────────────────────────────────────────────────────
+
+    @Operation(summary = "Update security policy settings",
+            description = "Controls login lockout, session lifetime, password rules, token TTLs and rate limits.")
+    @PutMapping("/security")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<?> updateSecurityPolicy(
+            @Valid @RequestBody UpdateSecurityPolicyRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
+        SaccoSettings settings = settingsService.updateSecurityPolicy(req);
+        auditService.logEventWithActorAndIp(auth.getName(), "SECURITY_POLICY_UPDATED",
+                "Global Settings", getClientIP(httpReq), "Security policy updated.");
+        return ResponseEntity.ok(Map.of("message", "Security policy updated.", "settings", settings));
+    }
+
+    // ── Communication ─────────────────────────────────────────────────────────
+
+    @Operation(summary = "Update communication / email settings")
+    @PutMapping("/communication")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<?> updateCommunication(
+            @Valid @RequestBody UpdateCommunicationRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
+        SaccoSettings settings = settingsService.updateCommunication(req);
+        auditService.logEventWithActorAndIp(auth.getName(), "COMMUNICATION_SETTINGS_UPDATED",
+                "Global Settings", getClientIP(httpReq), "Communication settings updated.");
+        return ResponseEntity.ok(Map.of("message", "Communication settings updated.", "settings", settings));
+    }
+
+    // ── Feature flags ─────────────────────────────────────────────────────────
 
     @Operation(summary = "Update feature flags", description = "Enable or disable SACCO modules.")
     @PutMapping("/flags")
     @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<?> updateFeatureFlags(@Valid @RequestBody UpdateFlagsRequest request, Authentication auth, HttpServletRequest httpRequest) {
-        SaccoSettings settings = settingsService.updateFeatureFlags(request.getFlags());
-
-        auditService.logEventWithActorAndIp(auth.getName(), "FEATURE_FLAGS_UPDATED", "Global Settings", getClientIP(httpRequest), "Updated module feature flags.");
-
-        return ResponseEntity.ok(Map.of("message", "Feature flags updated successfully", "flags", settings.getEnabledModules()));
+    public ResponseEntity<?> updateFeatureFlags(
+            @Valid @RequestBody UpdateFlagsRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
+        SaccoSettings settings = settingsService.updateFeatureFlags(req.getFlags());
+        auditService.logEventWithActorAndIp(auth.getName(), "FEATURE_FLAGS_UPDATED",
+                "Global Settings", getClientIP(httpReq), "Module feature flags updated.");
+        return ResponseEntity.ok(Map.of("message", "Feature flags updated.", "flags", settings.getEnabledModules()));
     }
 
+    // ── Util ──────────────────────────────────────────────────────────────────
+
     private String getClientIP(HttpServletRequest request) {
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null || xfHeader.isEmpty() || !xfHeader.contains(request.getRemoteAddr())) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf == null || xf.isEmpty() || !xf.contains(request.getRemoteAddr()))
             return request.getRemoteAddr();
-        }
-        return xfHeader.split(",")[0];
+        return xf.split(",")[0];
     }
 }
