@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Database, UserPlus, PiggyBank, ArrowDownLeft, Banknote,
-    RotateCcw, AlertTriangle, CheckCircle2, Clock, ChevronDown,
-    ChevronUp, Trash2, Copy, Loader2, Play, RefreshCw, X,
+    RotateCcw, AlertTriangle, Clock, ChevronDown,
+    ChevronUp, Trash2, Copy, Loader2, Play, X,
     TrendingUp, Zap,
 } from 'lucide-react';
 import { migrationApi } from '../api/migration-api';
@@ -249,7 +249,7 @@ const MemberSelect: React.FC<MemberSelectProps> = ({
 
 // ─── Log display ──────────────────────────────────────────────────────────────
 
-const LogPanel: React.FC<{ entries: LogEntry[]; onClear: () => void }> = ({ entries, onClear }) => {
+const LogPanel: React.FC<{ entries: LogEntry[] }> = ({ entries }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -609,11 +609,14 @@ const MigrationPage: React.FC = () => {
 
         // Load ALL members once — with 10 members this is the right approach:
         // instant client-side filtering, no debounce, no empty-dropdown issues
-        setMembersLoading(true);
         memberApi.getMembers(undefined, undefined, 0, 100)
-            .then(page => setAllMembers(page.content ?? []))
-            .catch(() => {})
-            .finally(() => setMembersLoading(false));
+            .then(page => {
+                setAllMembers(page.content ?? []);
+                setMembersLoading(false);
+            })
+            .catch(() => {
+                setMembersLoading(false);
+            });
     }, []);
 
     const addLog = useCallback((level: LogLevel, action: string, detail: string) => {

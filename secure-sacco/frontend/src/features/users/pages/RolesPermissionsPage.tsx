@@ -164,7 +164,15 @@ export default function RolesPermissionsPage() {
 
     const toggle = (id: string) => {
         if (selectedRole?.name === 'SYSTEM_ADMIN') return;
-        setEditedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+        setEditedIds(prev => {
+            const s = new Set(prev);
+            if (s.has(id)) {
+                s.delete(id);
+            } else {
+                s.add(id);
+            }
+            return s;
+        });
         setSavedResult(null);
     };
 
