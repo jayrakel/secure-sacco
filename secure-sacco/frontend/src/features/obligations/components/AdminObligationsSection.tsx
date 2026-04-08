@@ -7,7 +7,7 @@ import { CreateObligationModal } from './CreateObligationModal';
 
 interface Props {
     memberId: string; // 🟢 Required: Admin must specify whose profile they are viewing
-    memberData?: any; // Optional: Pass the full member object to prefill the modal
+    memberData?: Record<string, unknown>; // Optional: Pass the full member object to prefill the modal
 }
 
 export const AdminObligationsSection: React.FC<Props> = ({ memberId, memberData }) => {

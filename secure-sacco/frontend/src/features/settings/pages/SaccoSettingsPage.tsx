@@ -166,7 +166,7 @@ const SaccoSettingsPage: React.FC = () => {
     useEffect(() => {
         if (prefixManual || saccoName.trim().length < 2) return;
         const id = setTimeout(async () => {
-            try { const d = await settingsApi.generatePrefix(saccoName); setPrefix(d.prefix); } catch {}
+            try { const d = await settingsApi.generatePrefix(saccoName); setPrefix(d.prefix); } catch (error) { console.error('Failed to generate prefix:', error); }
         }, 500);
         return () => clearTimeout(id);
     }, [saccoName, prefixManual]);
