@@ -4,36 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V60__add_accounting_permissions.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/components/LoanDetailModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/penalties/pages/StaffPenaltiesPage.tsx" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance loan application details with member information and update penalty management endpoints">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_ARCHITECTURE.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_AUDIT.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_INDEX.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_MANIFEST.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_ONE_PAGE.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_QUICK_REF.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_STEP_BY_STEP.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/PERMISSION_REGISTRY_SUMMARY.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/api/controller/AccountController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/api/controller/AccountController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/api/controller/JournalEntryController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/api/controller/JournalEntryController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/controller/LoanApplicationController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/api/dto/LoanDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/loans/domain/service/LoanApplicationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/api/controller/PenaltyController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/api/controller/PenaltyController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/reports/domain/service/ReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/reports/domain/service/ReportService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/DashboardRouter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/DashboardRouter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/api/loan-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/api/loan-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/components/LoanDetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/components/LoanDetailModal.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/pages/LoanManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/pages/LoanManagementPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/penalties/api/penalty-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/penalties/api/penalty-api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/DailyCollectionsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/reports/pages/DailyCollectionsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/PermissionsRegistryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/PermissionsRegistryPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/RolesPermissionsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/RolesPermissionsPage.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
@@ -487,15 +464,7 @@
       <workItem from="1775479161613" duration="273000" />
       <workItem from="1775624552521" duration="14858000" />
       <workItem from="1775710647320" duration="45000" />
-      <workItem from="1775711110771" duration="14186000" />
-    </task>
-    <task id="LOCAL-00025" summary="chore: add migration HTTP request logs, cookies, and response samples for historical savings import">
-      <option name="closed" value="true" />
-      <created>1774596751564</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1774596751564</updated>
+      <workItem from="1775711110771" duration="15567000" />
     </task>
     <task id="LOCAL-00026" summary="chore: migrate outgoing email configuration to use Resend API and update deployment scripts">
       <option name="closed" value="true" />
@@ -881,7 +850,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775715780296</updated>
     </task>
-    <option name="localTasksCounter" value="74" />
+    <task id="LOCAL-00074" summary="feat: enhance loan application details with member information and update penalty management endpoints">
+      <option name="closed" value="true" />
+      <created>1775733371309</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1775733371310</updated>
+    </task>
+    <option name="localTasksCounter" value="75" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -902,7 +879,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: update loan refinancing logic and adjust loan term duration in test configurations" />
     <MESSAGE value="feat: implement migration scripts for loan processing and data handling" />
     <MESSAGE value="feat: enhance loan application processing with grace period adjustments and historical date backdating" />
     <MESSAGE value="feat: implement time travel feature and fix loan schedule status discrepancies" />
@@ -927,7 +903,8 @@
     <MESSAGE value="feat: remove clear log functionality from LogPanel in MigrationPage" />
     <MESSAGE value="feat: add Permissions Registry page and update sidebar navigation" />
     <MESSAGE value="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access" />
+    <MESSAGE value="feat: enhance loan application details with member information and update penalty management endpoints" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance loan application details with member information and update penalty management endpoints" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

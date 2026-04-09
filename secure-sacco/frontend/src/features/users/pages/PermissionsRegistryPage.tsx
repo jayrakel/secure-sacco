@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { roleApi, type Role, type Permission } from '../api/role-api';
 import {
     Lock, Shield, Users, Coins, PiggyBank, BarChart3, CalendarDays,
-    AlertCircle, Eye, FileKey, UserCheck, Database, Loader2,
+    AlertCircle, Eye, FileKey, UserCheck, Loader2,
     Search, Plus, ChevronDown, ChevronRight, Check, X,
     Info, Grid3x3, List, Zap, LayoutGrid,
 } from 'lucide-react';

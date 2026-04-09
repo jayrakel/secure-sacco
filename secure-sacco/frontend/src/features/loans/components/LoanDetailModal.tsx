@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, FileText, User, Calendar, DollarSign, AlertCircle, CheckCircle, Clock, Wallet, Percent, TrendingUp } from 'lucide-react';
+import { X, FileText, User, Calendar, DollarSign, AlertCircle, CheckCircle, Clock, Wallet, TrendingUp } from 'lucide-react';
 import type { LoanApplication } from '../api/loan-api';
 
 interface LoanDetailModalProps {

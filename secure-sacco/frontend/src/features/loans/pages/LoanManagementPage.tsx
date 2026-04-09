@@ -5,7 +5,7 @@ import { CommitteeApproveModal } from '../components/CommitteeApproveModal';
 import { DisburseLoanModal } from '../components/DisburseLoanModal';
 import { LoanDetailModal } from '../components/LoanDetailModal';
 import HasPermission from '../../../shared/components/HasPermission';
-import { Coins, Search, RefreshCw, Loader2, AlertCircle, X, Filter, Eye, TrendingUp, Users, Calendar } from 'lucide-react';
+import { Coins, Search, RefreshCw, Loader2, AlertCircle, X, Eye, TrendingUp, Users, Calendar } from 'lucide-react';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { badge: string; label: string; color: string }> = {
@@ -128,14 +128,13 @@ export default function LoanManagementPage() {
         return rows;
     }, [applications, statusFilter, search]);
 
-    // Count per status for the filter bar
-    const statusCounts = useMemo(() => {
-        const counts: Record<string, number> = {};
-        for (const a of applications) counts[a.status] = (counts[a.status] ?? 0) + 1;
-        return counts;
-    }, [applications]);
+     // Count per status for the filter bar
+     useMemo(() => {
+         const counts: Record<string, number> = {};
+         for (const a of applications) counts[a.status] = (counts[a.status] ?? 0) + 1;
+         return counts;
+     }, [applications]);
 
-    const actionableStatuses = ['PENDING_VERIFICATION', 'VERIFIED', 'APPROVED'];
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto pb-12">

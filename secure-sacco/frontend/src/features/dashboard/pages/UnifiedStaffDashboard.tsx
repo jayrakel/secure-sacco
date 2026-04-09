@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { dashboardApi, type StaffDashboardDTO } from '../api/dashboard-api';
 import {
-    Users, Wallet, Coins, PiggyBank, BarChart3, CalendarClock,
+    Users, Wallet, Coins, PiggyBank, CalendarClock,
     AlertTriangle, TrendingDown, Banknote, ShieldAlert, Receipt,
     ClipboardList, RefreshCw, CheckCircle2, CalendarDays,
-    ArrowRight, Loader2, Scale,
+    ArrowRight, Scale,
 } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

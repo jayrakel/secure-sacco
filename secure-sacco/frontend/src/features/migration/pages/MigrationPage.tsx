@@ -4,7 +4,7 @@ import {
     RotateCcw, AlertTriangle, Clock, ChevronDown,
     ChevronUp, Trash2, Copy, Loader2, Play, X,
     TrendingUp, Zap, GitMerge, FileSpreadsheet, Upload,
-    CheckCircle2, AlertCircle, RefreshCw,
+    CheckCircle2, RefreshCw,
 } from 'lucide-react';
 import { migrationApi } from '../api/migration-api';
 import type { LoanRefinanceRequest } from '../api/migration-api';
@@ -753,7 +753,7 @@ const ExcelImportForm: React.FC<{
         reader.onload = async (ev) => {
             try {
                 // Dynamically import xlsx — add 'xlsx' to package.json if not present
-                const XLSX = await import('xlsx' as never) as { read: Function; utils: { sheet_to_json: Function } };
+                const XLSX = await import('xlsx' as never) as { read: (data: Uint8Array, opts: object) => object; utils: { sheet_to_json: (sheet: object, opts: object) => object[] } };
                 const data = new Uint8Array(ev.target!.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
 
