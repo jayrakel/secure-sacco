@@ -4,8 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update XLSX import type definitions for improved type safety in MigrationPage">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -456,15 +458,7 @@
       <workItem from="1775479161613" duration="273000" />
       <workItem from="1775624552521" duration="14858000" />
       <workItem from="1775710647320" duration="45000" />
-      <workItem from="1775711110771" duration="16586000" />
-    </task>
-    <task id="LOCAL-00028" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
-      <option name="closed" value="true" />
-      <created>1774599579543</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1774599579543</updated>
+      <workItem from="1775711110771" duration="17776000" />
     </task>
     <task id="LOCAL-00029" summary="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API">
       <option name="closed" value="true" />
@@ -850,7 +844,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775737471249</updated>
     </task>
-    <option name="localTasksCounter" value="77" />
+    <task id="LOCAL-00077" summary="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety">
+      <option name="closed" value="true" />
+      <created>1775739759238</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1775739759238</updated>
+    </task>
+    <option name="localTasksCounter" value="78" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -871,7 +873,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: implement time travel feature and fix loan schedule status discrepancies" />
     <MESSAGE value="feat: enable time travel feature and configure migration settings in application.yml" />
     <MESSAGE value="feat: enhance member statement retrieval with summary details and historical date handling" />
     <MESSAGE value="feat: add loan product seeder and update session cookies for staging environment" />
@@ -896,7 +897,8 @@
     <MESSAGE value="feat: enhance loan application details with member information and update penalty management endpoints" />
     <MESSAGE value="feat: streamline icon imports and optimize status count calculation in loan management components" />
     <MESSAGE value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
+    <MESSAGE value="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
