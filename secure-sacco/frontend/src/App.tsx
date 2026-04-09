@@ -38,6 +38,7 @@ import MeetingsManagementPage from './features/meetings/pages/MeetingsManagement
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import StaffPenaltiesPage from './features/penalties/pages/StaffPenaltiesPage';
 import PermissionsRegistryPage from './features/users/pages/PermissionsRegistryPage';
 import MigrationPage from './features/migration/pages/MigrationPage';
 import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
@@ -160,13 +161,13 @@ function App() {
                                 } />
 
                                 <Route path="/accounting/accounts" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['ACCOUNTING_READ']}>
                                         <ChartOfAccountsPage />
                                     </ProtectedRoute>
                                 } />
 
                                 <Route path="/accounting/journals" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['ACCOUNTING_READ']}>
                                         <JournalEntriesPage />
                                     </ProtectedRoute>
                                 } />
@@ -178,7 +179,7 @@ function App() {
                                 } />
 
                                 <Route path="/accounting/gl-posting" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['ACCOUNTING_JOURNAL_POST']}>
                                         <ManualGlPostingPage />
                                     </ProtectedRoute>
                                 } />
@@ -271,17 +272,24 @@ function App() {
                                 } />
 
 
+                                {/* Staff Penalty Management */}
+                                <Route path="/staff/penalties" element={
+                                    <ProtectedRoute requiredPermissions={['PENALTIES_WAIVE_ADJUST']}>
+                                        <StaffPenaltiesPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Permissions Registry */}
+                                <Route path="/permissions-registry" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <PermissionsRegistryPage />
+                                    </ProtectedRoute>
+                                } />
+
                                 {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
                                 <Route path="/audit/logs" element={
                                     <ProtectedRoute requiredPermissions={['AUDIT_LOG_READ']}>
                                         <AuditLogPage />
-                                    </ProtectedRoute>
-                                } />
-
-                                {/* Permissions Registry — SYSTEM_ADMIN only */}
-                                <Route path="/permissions-registry" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
-                                        <PermissionsRegistryPage />
                                     </ProtectedRoute>
                                 } />
 

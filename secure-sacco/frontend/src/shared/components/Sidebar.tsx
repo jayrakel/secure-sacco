@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Server,
+    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -67,22 +67,16 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings', requiredPermission: 'SAVINGS_READ' },
                 { label: 'Savings Compliance', path: '/savings/obligations', icon: ShieldCheck, module: 'savings', requiredPermission: 'SAVINGS_OBLIGATIONS_MANAGE' },
                 { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
+                { label: 'Penalties', path: '/staff/penalties', icon: AlertCircle, requiredPermission: 'PENALTIES_WAIVE_ADJUST' },
             ],
         },
         {
             sectionLabel: 'Finance',
             items: [
-                {
-                    label: 'Accounting',
-                    icon: Calculator,
-                    adminOnly: true,
-                    subItems: [
-                        { label: 'Chart of Accounts', path: '/accounting/accounts',      icon: BookOpen, adminOnly: true },
-                        { label: 'Journal Entries',   path: '/accounting/journals',      icon: FileText, adminOnly: true },
-                        { label: 'Manual GL Posting', path: '/accounting/gl-posting',    icon: PenLine,  adminOnly: true },
-                    ],
-                },
-                { label: 'Trial Balance', path: '/accounting/trial-balance', icon: Scale, requiredPermission: 'GL_TRIAL_BALANCE' },
+                { label: 'Chart of Accounts', path: '/accounting/accounts',      icon: BookOpen, requiredPermission: 'ACCOUNTING_READ' },
+                { label: 'Journal Entries',   path: '/accounting/journals',      icon: FileText, requiredPermission: 'ACCOUNTING_READ' },
+                { label: 'Manual GL Posting', path: '/accounting/gl-posting',    icon: PenLine,  requiredPermission: 'ACCOUNTING_JOURNAL_POST' },
+                { label: 'Trial Balance',     path: '/accounting/trial-balance', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
                 { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
             ],
         },
@@ -93,7 +87,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Security',  path: '/security',   icon: Shield },
                 { label: 'Settings',  path: '/settings',   icon: Settings, requiredPermission: 'PENALTIES_MANAGE_RULES' },
                 { label: 'Migration',             path: '/migration',             icon: Database, requiredPermission: 'DATA_MIGRATION' },
-                { label: 'Permissions Registry', path: '/permissions-registry', icon: Server,   adminOnly: true },
+                { label: 'Permissions Registry', path: '/permissions-registry', icon: Shield,   adminOnly: true },
             ],
         },
     ];

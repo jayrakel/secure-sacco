@@ -98,7 +98,7 @@ public class LoanApplicationController {
 
     @Operation(summary = "Get all loan applications", description = "Returns all applications. Requires loan officer or approver permission.")
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'ROLE_LOANS_OFFICER', 'ROLE_TREASURER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")
     public ResponseEntity<PagedResponse<LoanApplicationResponse>> getAllApplications(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PageSizeValidator.validated(pageable);
@@ -108,7 +108,7 @@ public class LoanApplicationController {
 
     @Operation(summary = "Get applications queue by status", description = "Returns applications filtered by status (e.g. PENDING_APPROVAL, VERIFIED).")
     @GetMapping("/queue/{status}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'ROLE_LOANS_OFFICER', 'ROLE_TREASURER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")
     public ResponseEntity<PagedResponse<LoanApplicationResponse>> getApplicationsByStatus(
             @PathVariable LoanStatus status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {

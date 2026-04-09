@@ -350,27 +350,51 @@ public class ReportService {
         DailyCollectionDTO dto = new DailyCollectionDTO();
         dto.setDate(targetDate);
 
-        // 1. Group by Payment Method (MPESA, BANK_TRANSFER, etc.)
+        // 🟢 THE FIX: Include BOTH M-Pesa payments AND loan repayments (including historical migrations)
+
+        // 1. Group by Payment Method (MPESA, BANK_TRANSFER, MANUAL_ENTRY, etc.)
         String channelSql = """
                 SELECT payment_method, SUM(amount) AS total
-                FROM payments
-                WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                FROM (
+                    -- M-Pesa and other payment gateway transactions
+                    SELECT payment_method, amount
+                    FROM payments
+                    WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                    
+                    UNION ALL
+                    
+                    -- Manual loan repayments (includes historical data migrations)
+                    SELECT 'MANUAL_ENTRY' AS payment_method, amount
+                    FROM loan_repayments
+                    WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                ) AS combined
                 GROUP BY payment_method
                 """;
         jdbcTemplate.query(channelSql, rs -> {
             dto.getByChannel().put(rs.getString("payment_method"), rs.getBigDecimal("total"));
-        }, targetDate);
+        }, targetDate, targetDate);
 
-        // 2. Group by Payment Type (C2B, STK_PUSH, B2C, etc.)
+        // 2. Group by Payment Type (C2B, STK_PUSH, B2C, LOAN_REPAYMENT, etc.)
         String typeSql = """
                 SELECT payment_type, SUM(amount) AS total
-                FROM payments
-                WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                FROM (
+                    -- M-Pesa and other payment gateway transactions
+                    SELECT payment_type, amount
+                    FROM payments
+                    WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                    
+                    UNION ALL
+                    
+                    -- Manual loan repayments (includes historical data migrations)
+                    SELECT 'LOAN_REPAYMENT' AS payment_type, amount
+                    FROM loan_repayments
+                    WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+                ) AS combined
                 GROUP BY payment_type
                 """;
         jdbcTemplate.query(typeSql, rs -> {
             dto.getByType().put(rs.getString("payment_type"), rs.getBigDecimal("total"));
-        }, targetDate);
+        }, targetDate, targetDate);
 
         // 3. Calculate Grand Total
         BigDecimal grandTotal = dto.getByChannel().values().stream()
@@ -388,22 +412,48 @@ public class ReportService {
                 ? java.time.LocalDate.now().toString()
                 : dateStr;
 
+        // 🟢 THE FIX: Include BOTH M-Pesa payments AND loan repayments (including historical migrations)
         String sql = """
-                SELECT
-                    id,
-                    transaction_ref,
-                    internal_ref,
-                    amount,
-                    payment_method,
-                    payment_type,
-                    account_reference,
-                    sender_name,
-                    sender_phone_number,
-                    status,
-                    created_at
-                FROM payments
-                WHERE CAST(created_at AS DATE) = CAST(? AS DATE)
-                  AND status = 'COMPLETED'
+                SELECT * FROM (
+                    -- M-Pesa and other payment gateway transactions
+                    SELECT
+                        id,
+                        transaction_ref,
+                        internal_ref,
+                        amount,
+                        payment_method,
+                        payment_type,
+                        account_reference,
+                        sender_name,
+                        sender_phone_number,
+                        status,
+                        created_at
+                    FROM payments
+                    WHERE CAST(created_at AS DATE) = CAST(? AS DATE)
+                      AND status = 'COMPLETED'
+                    
+                    UNION ALL
+                    
+                    -- Manual loan repayments (includes historical data migrations)
+                    SELECT
+                        lr.id,
+                        NULL AS transaction_ref,
+                        lr.receipt_number AS internal_ref,
+                        lr.amount,
+                        'MANUAL_ENTRY' AS payment_method,
+                        'LOAN_REPAYMENT' AS payment_type,
+                        COALESCE(m.member_number, CAST(la.member_id AS varchar)) AS account_reference,
+                        COALESCE(u.first_name || ' ' || u.last_name, 'Manual Entry') AS sender_name,
+                        NULL AS sender_phone_number,
+                        lr.status,
+                        lr.created_at
+                    FROM loan_repayments lr
+                    JOIN loan_applications la ON lr.loan_application_id = la.id
+                    JOIN members m ON la.member_id = m.id
+                    LEFT JOIN users u ON m.id = u.member_id
+                    WHERE CAST(lr.created_at AS DATE) = CAST(? AS DATE)
+                      AND lr.status = 'COMPLETED'
+                ) AS combined
                 ORDER BY created_at DESC
                 """;
 
@@ -425,7 +475,7 @@ public class ReportService {
                         .format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
             return dto;
-        }, targetDate);
+        }, targetDate, targetDate);
     }
 
     @Transactional(readOnly = true)

@@ -4,7 +4,7 @@ import {
     Shield, Plus, Loader2, Save, AlertTriangle, Lock, Check,
     Users, Coins, PiggyBank, BarChart3, CalendarDays, UserCheck,
     FileKey, Settings2, Eye, ShieldAlert, RefreshCw, X,
-    ChevronRight, AlertCircle,
+    ChevronRight, AlertCircle, Scale,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -48,7 +48,10 @@ const PERM_META: Record<string, PermMeta> = {
     SAVINGS_OBLIGATIONS_READ:    { label: 'View Own Obligations',  desc: 'Member can view their own savings obligations.',         unlocks: 'My Account → savings obligation card',      group: 'Savings',   groupIcon: <PiggyBank size={13} />,   groupColor: 'emerald' },
     // Reports
     REPORTS_READ:         { label: 'View Reports',             desc: 'Access financial reports, statements and analytics.',        unlocks: 'Reports in sidebar + all report pages',     group: 'Reports',   groupIcon: <BarChart3 size={13} />,   groupColor: 'rose'    },
-    GL_TRIAL_BALANCE:     { label: 'Trial Balance',            desc: 'View the general ledger trial balance.',                    unlocks: 'Accounting → Trial Balance',                group: 'Reports',   groupIcon: <BarChart3 size={13} />,   groupColor: 'rose'    },
+    ACCOUNTING_READ:         { label: 'View Accounting',          desc: 'View chart of accounts and all journal entries.',          unlocks: 'Chart of Accounts + Journal Entries pages',    group: 'Accounting', groupIcon: <Scale size={13} />, groupColor: 'sky' },
+    ACCOUNTING_WRITE:        { label: 'Manage Accounts',          desc: 'Create and edit GL accounts in the chart of accounts.',   unlocks: 'Create/Edit buttons on Chart of Accounts',     group: 'Accounting', groupIcon: <Scale size={13} />, groupColor: 'sky' },
+    ACCOUNTING_JOURNAL_POST: { label: 'Post Journal Entries',     desc: 'Post manual journal entries to the general ledger.',      unlocks: 'Manual GL Posting page',                       group: 'Accounting', groupIcon: <Scale size={13} />, groupColor: 'sky' },
+    GL_TRIAL_BALANCE:        { label: 'View Trial Balance',        desc: 'View the general ledger trial balance report.',           unlocks: 'Trial Balance page',                           group: 'Accounting', groupIcon: <Scale size={13} />, groupColor: 'sky' },
     // Meetings
     MEETINGS_READ:        { label: 'View Meetings',            desc: 'View the meetings calendar and schedule.',                  unlocks: 'Meetings page in sidebar',                  group: 'Meetings',  groupIcon: <CalendarDays size={13} />, groupColor: 'cyan'    },
     MEETINGS_MANAGE:      { label: 'Manage Meetings',          desc: 'Create, edit and cancel meetings.',                         unlocks: 'Meetings → Create Meeting, edit',           group: 'Meetings',  groupIcon: <CalendarDays size={13} />, groupColor: 'cyan'    },
@@ -64,7 +67,7 @@ const PERM_META: Record<string, PermMeta> = {
     DATA_MIGRATION:          { label: 'Historical Data Migration', desc: 'Import historical member, savings, loan and penalty data.', unlocks: 'Migration page in sidebar',                  group: 'Admin',     groupIcon: <ShieldAlert size={13} />, groupColor: 'red'     },
 };
 
-const GROUP_ORDER = ['Members', 'Users', 'Roles', 'Loans', 'Savings', 'Reports', 'Meetings', 'Penalties', 'Sessions', 'Admin'];
+const GROUP_ORDER = ['Members', 'Users', 'Roles', 'Loans', 'Savings', 'Accounting', 'Reports', 'Meetings', 'Penalties', 'Sessions', 'Admin'];
 
 const CLR: Record<string, { bg: string; border: string; text: string; badge: string; sw: string }> = {
     blue:    { bg: 'bg-blue-50',    border: 'border-blue-200',    text: 'text-blue-700',    badge: 'bg-blue-100 text-blue-700 border-blue-200',    sw: 'bg-blue-500'    },
@@ -77,6 +80,7 @@ const CLR: Record<string, { bg: string; border: string; text: string; badge: str
     orange:  { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  badge: 'bg-orange-100 text-orange-700 border-orange-200',  sw: 'bg-orange-500'  },
     slate:   { bg: 'bg-slate-50',   border: 'border-slate-200',   text: 'text-slate-700',   badge: 'bg-slate-100 text-slate-600 border-slate-200',   sw: 'bg-slate-500'   },
     red:     { bg: 'bg-red-50',     border: 'border-red-200',     text: 'text-red-700',     badge: 'bg-red-100 text-red-700 border-red-200',         sw: 'bg-red-500'     },
+    sky:     { bg: 'bg-sky-50',     border: 'border-sky-200',     text: 'text-sky-700',     badge: 'bg-sky-100 text-sky-700 border-sky-200',         sw: 'bg-sky-500'     },
 };
 
 // ── Toggle switch ─────────────────────────────────────────────────────────────

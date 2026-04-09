@@ -4,7 +4,7 @@ import {
     Lock, Shield, Users, Coins, PiggyBank, BarChart3, CalendarDays,
     AlertCircle, Eye, FileKey, UserCheck, Database, Loader2,
     Search, Plus, ChevronDown, ChevronRight, Check, X,
-    Info, Grid3x3, List, Zap, Server,
+    Info, Grid3x3, List, Zap, LayoutGrid,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -185,7 +185,7 @@ const GATE_CONFIG: Record<GateType, { label: string; cls: string; icon: React.Re
     PERMISSION:    { label: 'Permission',    cls: 'bg-violet-100 text-violet-700 border-violet-200',icon: <FileKey size={10} />},
     AUTHENTICATED: { label: 'Any User',     cls: 'bg-slate-100 text-slate-600 border-slate-200',  icon: <Zap size={10} />    },
     MEMBER_ONLY:   { label: 'Member Only',  cls: 'bg-cyan-100 text-cyan-700 border-cyan-200',     icon: <Users size={10} />  },
-    PUBLIC:        { label: 'Public',       cls: 'bg-green-100 text-green-700 border-green-200',  icon: <Server size={10} /> },
+    PUBLIC:        { label: 'Public',       cls: 'bg-green-100 text-green-700 border-green-200',  icon: <LayoutGrid size={10} /> },
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -278,7 +278,7 @@ export default function PermissionsRegistryPage() {
                 <div className="flex items-center justify-between gap-4">
                     <div>
                         <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <Server size={18} className="text-slate-500" /> Permissions Registry
+                            <LayoutGrid size={18} className="text-slate-500" /> Permissions Registry
                         </h1>
                         <p className="text-xs text-slate-500 mt-0.5">
                             Every operation in the system · {totalOps} total · {permGated} permission-gated · {perms.length} permissions defined

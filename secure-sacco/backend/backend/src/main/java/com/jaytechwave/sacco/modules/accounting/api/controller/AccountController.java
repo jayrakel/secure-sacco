@@ -18,20 +18,23 @@ public class AccountController {
 
     private final AccountService accountService;
 
+    /** Create a new GL account. Requires ACCOUNTING_WRITE. */
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')") // Usually only admins create accounts
+    @PreAuthorize("hasAnyAuthority('ACCOUNTING_WRITE', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         return ResponseEntity.ok(accountService.createAccount(request));
     }
 
+    /** List all GL accounts. Requires ACCOUNTING_READ. */
     @GetMapping
-    @PreAuthorize("isAuthenticated()") // TBD: Add specific 'ACCOUNTING_READ' permission later
+    @PreAuthorize("hasAnyAuthority('ACCOUNTING_READ', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<List<AccountResponse>> getAllAccounts() {
         return ResponseEntity.ok(accountService.getAllAccounts());
     }
 
+    /** Edit a GL account. Requires ACCOUNTING_WRITE. */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ACCOUNTING_WRITE', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<AccountResponse> updateAccount(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAccountRequest request) {

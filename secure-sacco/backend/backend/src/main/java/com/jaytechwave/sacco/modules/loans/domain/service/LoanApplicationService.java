@@ -525,11 +525,19 @@ public class LoanApplicationService {
     // --- MAPPERS ---
 
     private LoanApplicationResponse mapToResponse(LoanApplication application) {
+        // Fetch member info
+        Member member = memberRepository.findById(application.getMemberId()).orElse(null);
+        String memberNumber = member != null ? member.getMemberNumber() : "";
+        String memberName = member != null ? member.getFirstName() + " " + member.getLastName() : "";
+
         return new LoanApplicationResponse(
                 application.getId(),
                 application.getMemberId(),
+                memberNumber,
+                memberName,
                 application.getLoanProduct().getId(),
                 application.getLoanProduct().getName(),
+                application.getLoanProduct().getInterestRate(),
                 application.getTermWeeks(),
                 application.getLoanProduct().getGracePeriodDays(),
                 application.getPrincipalAmount(),
