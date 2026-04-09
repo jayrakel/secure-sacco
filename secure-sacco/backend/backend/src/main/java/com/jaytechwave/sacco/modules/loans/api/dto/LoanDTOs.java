@@ -77,8 +77,11 @@ public class LoanDTOs {
     public record LoanApplicationResponse(
             UUID id,
             UUID memberId,
+            String memberNumber,
+            String memberName,
             UUID productId,
             String productName,
+            BigDecimal interestRate,
             Integer termWeeks,
             Integer gracePeriodDays,
             BigDecimal principalAmount,

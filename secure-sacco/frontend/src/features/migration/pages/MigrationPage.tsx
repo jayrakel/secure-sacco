@@ -3,14 +3,17 @@ import {
     Database, UserPlus, PiggyBank, ArrowDownLeft, Banknote,
     RotateCcw, AlertTriangle, Clock, ChevronDown,
     ChevronUp, Trash2, Copy, Loader2, Play, X,
-    TrendingUp, Zap,
+    TrendingUp, Zap, GitMerge, FileSpreadsheet, Upload,
+    CheckCircle2, RefreshCw,
 } from 'lucide-react';
 import { migrationApi } from '../api/migration-api';
+import type { LoanRefinanceRequest } from '../api/migration-api';
 import { loanApi } from '../../loans/api/loan-api';
 import { memberApi } from '../../members/api/member-api';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 import type { LoanProduct } from '../../loans/api/loan-api';
 import type { Member } from '../../members/api/member-api';
+import type * as XLSX from 'xlsx';
 
 // ─── Log entry ────────────────────────────────────────────────────────────────
 
@@ -26,16 +29,18 @@ interface LogEntry {
 
 // ─── Tab definition ───────────────────────────────────────────────────────────
 
-type TabId = 'member' | 'savings' | 'withdrawal' | 'loan-disburse' | 'loan-repay' | 'penalty' | 'cron';
+type TabId = 'member' | 'savings' | 'withdrawal' | 'loan-disburse' | 'loan-repay' | 'loan-refinance' | 'penalty' | 'cron' | 'excel';
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] = [
-    { id: 'member',        label: 'Member',         icon: <UserPlus size={15} />,      desc: 'Register historical member'   },
-    { id: 'savings',       label: 'Savings',         icon: <PiggyBank size={15} />,    desc: 'Post savings deposit'         },
-    { id: 'withdrawal',    label: 'Withdrawal',      icon: <ArrowDownLeft size={15} />,desc: 'Post savings withdrawal'      },
-    { id: 'loan-disburse', label: 'Loan Disburse',   icon: <Banknote size={15} />,     desc: 'Disburse historical loan'     },
-    { id: 'loan-repay',    label: 'Loan Repayment',  icon: <RotateCcw size={15} />,   desc: 'Post weekly repayment'        },
-    { id: 'penalty',       label: 'Penalty',         icon: <AlertTriangle size={15} />,desc: 'Apply historical penalty'     },
-    { id: 'cron',          label: 'Evaluate',        icon: <Zap size={15} />,          desc: 'Run penalty evaluation'       },
+    { id: 'member',         label: 'Member',          icon: <UserPlus size={15} />,       desc: 'Register historical member'   },
+    { id: 'savings',        label: 'Savings',          icon: <PiggyBank size={15} />,      desc: 'Post savings deposit'         },
+    { id: 'withdrawal',     label: 'Withdrawal',       icon: <ArrowDownLeft size={15} />,  desc: 'Post savings withdrawal'      },
+    { id: 'loan-disburse',  label: 'Loan Disburse',    icon: <Banknote size={15} />,       desc: 'Disburse historical loan'     },
+    { id: 'loan-repay',     label: 'Loan Repayment',   icon: <RotateCcw size={15} />,     desc: 'Post weekly repayment'        },
+    { id: 'loan-refinance', label: 'Refinance',        icon: <GitMerge size={15} />,       desc: 'Refinance / restructure loan' },
+    { id: 'penalty',        label: 'Penalty',          icon: <AlertTriangle size={15} />,  desc: 'Apply historical penalty'     },
+    { id: 'cron',           label: 'Evaluate',         icon: <Zap size={15} />,            desc: 'Run penalty evaluation'       },
+    { id: 'excel',          label: 'Excel Import',     icon: <FileSpreadsheet size={15} />,desc: 'Bulk import from spreadsheet' },
 ];
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
@@ -593,6 +598,345 @@ const CronForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: string) 
     );
 };
 
+// ─── Loan Refinance / Restructure Form ───────────────────────────────────────
+
+const LoanRefinanceForm: React.FC<{
+    onLog: (l: LogLevel, action: string, detail: string) => void;
+    allMembers: Member[];
+    products: LoanProduct[];
+}> = ({ onLog, allMembers, products }) => {
+    const [memberNumber, setMemberNumber] = useState('');
+    const [loanId, setLoanId]             = useState('');
+    const [lookingUp, setLookingUp]       = useState(false);
+    const [loanLookupDone, setLoanLookupDone] = useState(false);
+    const [form, setForm] = useState({
+        loanProductCode: '',
+        topUpAmount: '0',
+        interestOverride: '',
+        newTermWeeks: '',
+        referenceNumber: '',
+        historicalDateOverride: '',
+    });
+    const [loading, setLoading] = useState(false);
+    const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+    const handleLookup = async () => {
+        if (!memberNumber) return;
+        setLookingUp(true);
+        setLoanId('');
+        setLoanLookupDone(false);
+        try {
+            const res = await migrationApi.getActiveLoanId(memberNumber);
+            setLoanId(res.id);
+            setLoanLookupDone(true);
+            onLog('info', 'LOAN FOUND', `Member ${memberNumber} → Loan ID: ${res.id}`);
+        } catch (err) {
+            onLog('error', 'LOAN LOOKUP FAILED', getApiErrorMessage(err, 'No active loan found for member'));
+        } finally {
+            setLookingUp(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!loanId) return;
+        setLoading(true);
+        try {
+            const payload: LoanRefinanceRequest = {
+                oldLoanId: loanId,
+                loanProductCode: form.loanProductCode,
+                topUpAmount: parseFloat(form.topUpAmount) || 0,
+                newTermWeeks: parseInt(form.newTermWeeks),
+                referenceNumber: form.referenceNumber,
+            };
+            if (form.interestOverride) payload.interestOverride = parseFloat(form.interestOverride);
+            if (form.historicalDateOverride) payload.historicalDateOverride = form.historicalDateOverride;
+
+            const res = await migrationApi.refinanceLoan(payload);
+            onLog('success', 'LOAN REFINANCED', `Member ${memberNumber} · Old: ${loanId.slice(0,8)}… · New ID: ${res.id}`);
+            setLoanId(''); setLoanLookupDone(false);
+            setForm({ loanProductCode: form.loanProductCode, topUpAmount: '0', interestOverride: '', newTermWeeks: '', referenceNumber: '', historicalDateOverride: '' });
+        } catch (err) {
+            onLog('error', 'REFINANCE FAILED', getApiErrorMessage(err, 'Unknown error'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            {/* Step 1: Identify the member and their active loan */}
+            <div className="p-3 rounded-lg bg-amber-400/10 border border-amber-400/30">
+                <p className="text-xs text-amber-300 font-semibold mb-2">Step 1 — Find the member's active loan</p>
+                <MemberSelect value={memberNumber} onChange={v => { setMemberNumber(v); setLoanId(''); setLoanLookupDone(false); }} allMembers={allMembers} />
+                <button type="button" onClick={handleLookup} disabled={!memberNumber || lookingUp}
+                        className="mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-lg
+                               bg-zinc-700 hover:bg-zinc-600 text-zinc-100 text-sm font-semibold
+                               transition-colors disabled:opacity-40">
+                    {lookingUp ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                    {lookingUp ? 'Looking up…' : 'Get Active Loan'}
+                </button>
+                {loanLookupDone && loanId && (
+                    <div className="flex items-center gap-2 mt-2 text-xs text-emerald-400">
+                        <CheckCircle2 size={13} />
+                        <span>Loan ID: <code className="font-mono">{loanId}</code></span>
+                    </div>
+                )}
+            </div>
+
+            {/* Step 2: Enter new loan terms */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className={`space-y-4 transition-opacity ${loanLookupDone ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                    <Field label="Loan Product">
+                        <select required value={form.loanProductCode} onChange={e => set('loanProductCode', e.target.value)} className={inputCls}>
+                            <option value="">— Select product —</option>
+                            {products.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                        </select>
+                    </Field>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <Field label="Top-Up Amount (KES)" hint="0 = pure restructure, no extra cash">
+                            <input type="number" step="0.01" min="0" value={form.topUpAmount} onChange={e => set('topUpAmount', e.target.value)} className={inputCls} placeholder="0.00" />
+                        </Field>
+                        <Field label="Interest Rate Override (%)" hint="Leave blank to use product default">
+                            <input type="number" step="0.01" min="0" value={form.interestOverride} onChange={e => set('interestOverride', e.target.value)} className={inputCls} placeholder="e.g. 10.00" />
+                        </Field>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <Field label="New Term (weeks)">
+                            <input required type="number" min="1" value={form.newTermWeeks} onChange={e => set('newTermWeeks', e.target.value)} className={inputCls} placeholder="52" />
+                        </Field>
+                        <Field label="Reference Number">
+                            <input required value={form.referenceNumber} onChange={e => set('referenceNumber', e.target.value)} className={inputCls} placeholder="REF-REFIN-001" />
+                        </Field>
+                    </div>
+
+                    <Field label="Historical Date Override" hint="Backdates the refinance to this date (leave blank for today)">
+                        <input type="date" value={form.historicalDateOverride} onChange={e => set('historicalDateOverride', e.target.value)} className={inputCls} />
+                    </Field>
+                </div>
+
+                <RunButton loading={loading} label="Execute Refinance" />
+            </form>
+        </div>
+    );
+};
+
+// ─── Excel Import Form ────────────────────────────────────────────────────────
+
+interface ExcelRow { [key: string]: string | number; }
+
+type ExcelSheetType = 'savings' | 'withdrawal' | 'repayment' | 'penalty' | 'skip';
+
+const SHEET_TYPES: { value: ExcelSheetType; label: string }[] = [
+    { value: 'savings',    label: 'Savings Deposits'    },
+    { value: 'withdrawal', label: 'Savings Withdrawals' },
+    { value: 'repayment',  label: 'Loan Repayments'     },
+    { value: 'penalty',    label: 'Penalties'            },
+    { value: 'skip',       label: '— Skip this sheet —' },
+];
+
+const ExcelImportForm: React.FC<{
+    onLog: (l: LogLevel, action: string, detail: string) => void;
+}> = ({ onLog }) => {
+    const [sheets, setSheets]               = useState<{ name: string; rows: ExcelRow[]; type: ExcelSheetType }[]>([]);
+    const [importing, setImporting]         = useState(false);
+    const [progress, setProgress]           = useState<{ current: number; total: number } | null>(null);
+    const [fileName, setFileName]           = useState('');
+    const fileRef                           = useRef<HTMLInputElement>(null);
+
+    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setFileName(file.name);
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+                const xlsx = await import('xlsx');
+                const data = new Uint8Array(ev.target!.result as ArrayBuffer);
+                const workbook: XLSX.WorkBook = xlsx.read(data, { type: 'array', cellDates: true });
+
+                const parsed = workbook.SheetNames.map((name: string) => {
+                    const ws: XLSX.WorkSheet = workbook.Sheets[name];
+                    const rawRows = xlsx.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
+
+                    const rows: ExcelRow[] = rawRows.map((row) => {
+                        const result: ExcelRow = {};
+                        for (const key in row) {
+                            const value = row[key];
+                            result[key] = typeof value === 'string'
+                                ? value
+                                : (typeof value === 'number' ? value : String(value ?? ''));
+                        }
+                        return result;
+                    });
+
+                    // Auto-detect type from sheet name
+                    const lower = name.toLowerCase();
+                    let type: ExcelSheetType = 'skip';
+                    if (lower.includes('saving') || lower.includes('deposit')) type = 'savings';
+                    else if (lower.includes('withdraw')) type = 'withdrawal';
+                    else if (lower.includes('repay') || lower.includes('payment')) type = 'repayment';
+                    else if (lower.includes('penalt') || lower.includes('fine')) type = 'penalty';
+
+                    return { name, rows, type };
+                });
+
+                setSheets(parsed);
+            } catch {
+                onLog('error', 'EXCEL PARSE FAILED', 'Could not read file. Ensure it is a valid .xlsx file and the xlsx package is installed.');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    const setSheetType = (idx: number, type: ExcelSheetType) => {
+        setSheets(prev => prev.map((s, i) => i === idx ? { ...s, type } : s));
+    };
+
+    const totalImportable = sheets.filter(s => s.type !== 'skip').reduce((acc, s) => acc + s.rows.length, 0);
+
+    const handleImport = async () => {
+        setImporting(true);
+        let total = 0;
+        let done = 0;
+
+        // Count total
+        for (const sheet of sheets) if (sheet.type !== 'skip') total += sheet.rows.length;
+        setProgress({ current: 0, total });
+
+        for (const sheet of sheets) {
+            if (sheet.type === 'skip') continue;
+            for (const row of sheet.rows) {
+                done++;
+                setProgress({ current: done, total });
+                try {
+                    const memberNumber = String(row['Member Number'] || row['memberNumber'] || row['member_number'] || '');
+                    const amount = parseFloat(String(row['Amount'] || row['amount'] || '0'));
+                    const date = String(row['Date'] || row['date'] || row['Transaction Date'] || '');
+                    const ref = String(row['Reference'] || row['reference'] || row['Ref'] || `EXCEL-${done}`);
+
+                    if (!memberNumber || !amount || !date) {
+                        onLog('error', `SKIP ROW ${done}`, `Sheet "${sheet.name}" row ${done}: missing memberNumber/amount/date`);
+                        continue;
+                    }
+
+                    if (sheet.type === 'savings') {
+                        const res = await migrationApi.migrateSavings({ memberNumber, amount, referenceNumber: ref, transactionDate: date });
+                        onLog('success', `SAVINGS ${done}/${total}`, `${memberNumber} · KES ${amount} · ${res.transactionReference}`);
+                    } else if (sheet.type === 'withdrawal') {
+                        const res = await migrationApi.migrateWithdrawal({ memberNumber, amount, referenceNumber: ref, transactionDate: date });
+                        onLog('success', `WITHDRAWAL ${done}/${total}`, `${memberNumber} · KES ${amount} · ${res.transactionReference}`);
+                    } else if (sheet.type === 'repayment') {
+                        await migrationApi.migrateLoanRepayment({ memberNumber, amount, transactionDate: date, referenceNumber: ref });
+                        onLog('success', `REPAYMENT ${done}/${total}`, `${memberNumber} · KES ${amount} · ${date}`);
+                    } else if (sheet.type === 'penalty') {
+                        await migrationApi.migrateHistoricalPenalty({ memberNumber, amount, penaltyDate: date, referenceNumber: ref });
+                        onLog('success', `PENALTY ${done}/${total}`, `${memberNumber} · KES ${amount} · ${date}`);
+                    }
+                } catch (err) {
+                    onLog('error', `ROW ${done} FAILED`, getApiErrorMessage(err, 'Unknown error'));
+                }
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+
+        setProgress(null);
+        setImporting(false);
+        onLog('info', 'EXCEL IMPORT COMPLETE', `Processed ${done} rows across ${sheets.filter(s => s.type !== 'skip').length} sheets`);
+    };
+
+    return (
+        <div className="space-y-5">
+            {/* Upload zone */}
+            <div
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-zinc-700 hover:border-amber-400 rounded-xl p-8
+                           flex flex-col items-center gap-3 cursor-pointer transition-colors group">
+                <Upload size={28} className="text-zinc-600 group-hover:text-amber-400 transition-colors" />
+                <div className="text-center">
+                    <p className="text-sm font-semibold text-zinc-300">
+                        {fileName || 'Click to upload Excel file'}
+                    </p>
+                    <p className="text-xs text-zinc-600 mt-1">
+                        .xlsx format · Sheets: Savings, Withdrawals, Repayments, Penalties
+                    </p>
+                </div>
+                <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} />
+            </div>
+
+            {/* Column format guide */}
+            <div className="p-3 rounded-lg bg-zinc-800/60 border border-zinc-700">
+                <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Expected Columns</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-mono">
+                    {[
+                        ['Member Number', 'e.g. BVL-2022-000001'],
+                        ['Amount',        'e.g. 1500.00'],
+                        ['Date',          'e.g. 2022-01-15'],
+                        ['Reference',     'e.g. DEP-001 (optional)'],
+                    ].map(([col, ex]) => (
+                        <div key={col} className="flex gap-2">
+                            <span className="text-amber-400 shrink-0">{col}</span>
+                            <span className="text-zinc-500">{ex}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Sheet configuration */}
+            {sheets.length > 0 && (
+                <div className="space-y-3">
+                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                        Configure Sheets ({sheets.length} detected)
+                    </p>
+                    {sheets.map((sheet, idx) => (
+                        <div key={sheet.name} className="flex items-center gap-3 p-3 bg-zinc-800 border border-zinc-700 rounded-lg">
+                            <FileSpreadsheet size={15} className="text-emerald-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-zinc-200 truncate">{sheet.name}</p>
+                                <p className="text-[10px] text-zinc-500">{sheet.rows.length} rows</p>
+                            </div>
+                            <select value={sheet.type} onChange={e => setSheetType(idx, e.target.value as ExcelSheetType)}
+                                    className="text-xs px-2 py-1.5 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-200 focus:outline-none focus:ring-1 focus:ring-amber-400">
+                                {SHEET_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            </select>
+                        </div>
+                    ))}
+
+                    {/* Progress */}
+                    {progress && (
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs text-zinc-400">
+                                <span>Importing…</span>
+                                <span>{progress.current} / {progress.total}</span>
+                            </div>
+                            <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-amber-400 rounded-full transition-all duration-300"
+                                    style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={handleImport}
+                        disabled={importing || totalImportable === 0}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-lg
+                                   bg-amber-400 hover:bg-amber-300 text-zinc-900 font-bold text-sm
+                                   transition-all disabled:opacity-50 disabled:cursor-not-allowed
+                                   shadow-lg shadow-amber-400/20 active:scale-[0.98]">
+                        {importing ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
+                        {importing ? `Importing ${progress?.current}/${progress?.total}…` : `Import ${totalImportable} rows`}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 const MigrationPage: React.FC = () => {
@@ -728,13 +1072,15 @@ const MigrationPage: React.FC = () => {
                             )}
                         </div>
                         <div className="p-6">
-                            {activeTab === 'member'        && <MemberForm onLog={addLog} />}
-                            {activeTab === 'savings'       && <SavingsForm onLog={addLog} type="savings"    allMembers={allMembers} />}
-                            {activeTab === 'withdrawal'    && <SavingsForm onLog={addLog} type="withdrawal" allMembers={allMembers} />}
-                            {activeTab === 'loan-disburse' && <LoanDisburseForm onLog={addLog} products={products} allMembers={allMembers} />}
-                            {activeTab === 'loan-repay'    && <LoanRepayForm onLog={addLog} allMembers={allMembers} />}
-                            {activeTab === 'penalty'       && <PenaltyForm onLog={addLog} allMembers={allMembers} />}
-                            {activeTab === 'cron'          && <CronForm onLog={addLog} />}
+                            {activeTab === 'member'         && <MemberForm onLog={addLog} />}
+                            {activeTab === 'savings'        && <SavingsForm onLog={addLog} type="savings"    allMembers={allMembers} />}
+                            {activeTab === 'withdrawal'     && <SavingsForm onLog={addLog} type="withdrawal" allMembers={allMembers} />}
+                            {activeTab === 'loan-disburse'  && <LoanDisburseForm onLog={addLog} products={products} allMembers={allMembers} />}
+                            {activeTab === 'loan-repay'     && <LoanRepayForm onLog={addLog} allMembers={allMembers} />}
+                            {activeTab === 'loan-refinance' && <LoanRefinanceForm onLog={addLog} allMembers={allMembers} products={products} />}
+                            {activeTab === 'penalty'        && <PenaltyForm onLog={addLog} allMembers={allMembers} />}
+                            {activeTab === 'cron'           && <CronForm onLog={addLog} />}
+                            {activeTab === 'excel'          && <ExcelImportForm onLog={addLog} />}
                         </div>
                     </div>
 

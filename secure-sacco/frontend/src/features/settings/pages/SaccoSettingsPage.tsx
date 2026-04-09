@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { settingsApi } from '../api/settings-api';
+import { useAuth } from '../../auth/context/AuthProvider';
 import type { SaccoSettings } from '../api/settings-api';
 import { penaltyApi } from '../../penalties/api/penalty-api';
 import type { PenaltyRule, PenaltyRuleRequest, AmountType, InterestMode } from '../../penalties/api/penalty-api';
@@ -110,7 +111,10 @@ const InfoBanner: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const SaccoSettingsPage: React.FC = () => {
     const { refreshSettings } = useSettings();
-    const [tab, setTab]       = useState<TabId>('identity');
+    const { user } = useAuth();
+    const isSystemAdmin = user?.roles?.includes('ROLE_SYSTEM_ADMIN') ?? false;
+    // Non-SYSTEM_ADMIN users who have PENALTIES_MANAGE_RULES only see the Penalties tab
+    const [tab, setTab]       = useState<TabId>(isSystemAdmin ? 'identity' : 'penalties');
     const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState<SaccoSettings | null>(null);
     const [toast, setToast]   = useState<{ ok: boolean; msg: string } | null>(null);
@@ -320,13 +324,13 @@ const SaccoSettingsPage: React.FC = () => {
                 {/* ── Sidebar nav ─────────────────────────────────────── */}
                 <nav className="w-52 shrink-0 sticky top-6">
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        {TABS.map((t, i) => {
+                        {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
                             const active = tab === t.id;
                             const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm);
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
                                         className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-all
-                                        ${i < TABS.length - 1 ? 'border-b border-slate-100' : ''}
+                                        ${i < arr.length - 1 ? 'border-b border-slate-100' : ''}
                                         ${active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
                                     <span className={active ? 'text-slate-300' : 'text-slate-400'}>{t.icon}</span>
                                     <div className="flex-1 min-w-0">

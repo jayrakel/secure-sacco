@@ -123,10 +123,10 @@ const QuickAction: React.FC<{
 const AdminDashboardPage: React.FC = () => {
     const { user } = useAuth();
 
-    // Roles that are allowed to see this dashboard (mirrors REPORTS_READ permission)
-    const hasAccess =
-        (user?.permissions?.includes('REPORTS_READ') ?? false) ||
-        (user?.roles?.some(r => ['ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_MANAGER'].includes(r)) ?? false);
+    // Any authenticated staff user (i.e. not exclusively ROLE_MEMBER) gets the admin
+    // dashboard. SYSTEM_ADMIN always qualifies. The old guard checked ROLE_ADMIN /
+    // ROLE_STAFF / ROLE_MANAGER which don't exist in this system.
+    const hasAccess = user?.roles?.some(r => r !== 'ROLE_MEMBER') ?? false;
 
     const [data,        setData]        = useState<StaffDashboardDTO | null>(null);
     const [loading,     setLoading]     = useState(true);
@@ -345,9 +345,9 @@ const AdminDashboardPage: React.FC = () => {
                     Quick Actions
                 </p>
                 <div className="flex flex-wrap gap-3">
-                    <QuickAction label="New Member"            icon={UserPlus}      to="/members?action=new" />
-                    <QuickAction label="View Arrears Report"   icon={FileBarChart2} to="/reports/arrears" />
-                    <QuickAction label="View Daily Collections" icon={Receipt}      to="/reports/collections" />
+                    <QuickAction label="New Member"             icon={UserPlus}      to="/members" />
+                    <QuickAction label="View Arrears Report"    icon={FileBarChart2} to="/reports/arrears" />
+                    <QuickAction label="Daily Collections"      icon={Receipt}       to="/reports/collections" />
                 </div>
             </section>
         </div>
