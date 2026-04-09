@@ -13,6 +13,7 @@ import { memberApi } from '../../members/api/member-api';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 import type { LoanProduct } from '../../loans/api/loan-api';
 import type { Member } from '../../members/api/member-api';
+import type * as XLSX from 'xlsx';
 
 // ─── Log entry ────────────────────────────────────────────────────────────────
 
@@ -752,13 +753,13 @@ const ExcelImportForm: React.FC<{
         const reader = new FileReader();
         reader.onload = async (ev) => {
             try {
-                const XLSX = (await import('xlsx')) as typeof import('xlsx');
+                const xlsx = await import('xlsx');
                 const data = new Uint8Array(ev.target!.result as ArrayBuffer);
-                const workbook: XLSX.WorkBook = XLSX.read(data, { type: 'array', cellDates: true });
+                const workbook: XLSX.WorkBook = xlsx.read(data, { type: 'array', cellDates: true });
 
                 const parsed = workbook.SheetNames.map((name: string) => {
                     const ws: XLSX.WorkSheet = workbook.Sheets[name];
-                    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
+                    const rawRows = xlsx.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
 
                     const rows: ExcelRow[] = rawRows.map((row) => {
                         const result: ExcelRow = {};

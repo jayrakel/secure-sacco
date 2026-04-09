@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: refine XLSX import type definitions in MigrationPage for improved type safety">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -458,15 +457,7 @@
       <workItem from="1775479161613" duration="273000" />
       <workItem from="1775624552521" duration="14858000" />
       <workItem from="1775710647320" duration="45000" />
-      <workItem from="1775711110771" duration="17776000" />
-    </task>
-    <task id="LOCAL-00029" summary="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API">
-      <option name="closed" value="true" />
-      <created>1774600869077</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1774600869077</updated>
+      <workItem from="1775711110771" duration="18072000" />
     </task>
     <task id="LOCAL-00030" summary="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter">
       <option name="closed" value="true" />
@@ -852,7 +843,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775739759238</updated>
     </task>
-    <option name="localTasksCounter" value="78" />
+    <task id="LOCAL-00078" summary="feat: refine XLSX import type definitions in MigrationPage for improved type safety">
+      <option name="closed" value="true" />
+      <created>1775740709600</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1775740709604</updated>
+    </task>
+    <option name="localTasksCounter" value="79" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -873,7 +872,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: enable time travel feature and configure migration settings in application.yml" />
     <MESSAGE value="feat: enhance member statement retrieval with summary details and historical date handling" />
     <MESSAGE value="feat: add loan product seeder and update session cookies for staging environment" />
     <MESSAGE value="feat: update outstanding penalties display to handle null values gracefully" />
@@ -898,7 +896,8 @@
     <MESSAGE value="feat: streamline icon imports and optimize status count calculation in loan management components" />
     <MESSAGE value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
     <MESSAGE value="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety" />
+    <MESSAGE value="feat: refine XLSX import type definitions in MigrationPage for improved type safety" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: refine XLSX import type definitions in MigrationPage for improved type safety" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
