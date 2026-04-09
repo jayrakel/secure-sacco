@@ -753,7 +753,10 @@ const ExcelImportForm: React.FC<{
         reader.onload = async (ev) => {
             try {
                 // Dynamically import xlsx — add 'xlsx' to package.json if not present
-                const XLSX = await import('xlsx' as never) as { read: (data: Uint8Array, opts: object) => object; utils: { sheet_to_json: (sheet: object, opts: object) => object[] } };
+                const XLSX = await import('xlsx' as never) as {
+                    read: (data: Uint8Array, opts: object) => { SheetNames: string[]; Sheets: Record<string, object> };
+                    utils: { sheet_to_json: (sheet: object, opts: object) => ExcelRow[] };
+                };
                 const data = new Uint8Array(ev.target!.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
 
