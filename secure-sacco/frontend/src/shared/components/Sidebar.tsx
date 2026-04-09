@@ -79,10 +79,10 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                     subItems: [
                         { label: 'Chart of Accounts', path: '/accounting/accounts',      icon: BookOpen, adminOnly: true },
                         { label: 'Journal Entries',   path: '/accounting/journals',      icon: FileText, adminOnly: true },
-                        { label: 'Trial Balance',     path: '/accounting/trial-balance', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
                         { label: 'Manual GL Posting', path: '/accounting/gl-posting',    icon: PenLine,  adminOnly: true },
                     ],
                 },
+                { label: 'Trial Balance', path: '/accounting/trial-balance', icon: Scale, requiredPermission: 'GL_TRIAL_BALANCE' },
                 { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
             ],
         },
@@ -91,8 +91,8 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             items: [
                 { label: 'Audit Log', path: '/audit/logs', icon: Shield, requiredPermission: 'AUDIT_LOG_READ' },
                 { label: 'Security',  path: '/security',   icon: Shield },
-                { label: 'Settings',              path: '/settings',              icon: Settings, adminOnly: true },
-                { label: 'Migration',             path: '/migration',             icon: Database, adminOnly: true },
+                { label: 'Settings',  path: '/settings',   icon: Settings, requiredPermission: 'PENALTIES_MANAGE_RULES' },
+                { label: 'Migration',             path: '/migration',             icon: Database, requiredPermission: 'DATA_MIGRATION' },
                 { label: 'Permissions Registry', path: '/permissions-registry', icon: Server,   adminOnly: true },
             ],
         },

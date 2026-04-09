@@ -61,6 +61,7 @@ const PERM_META: Record<string, PermMeta> = {
     // Admin tools
     AUDIT_LOG_READ:          { label: 'View Audit Log',          desc: 'Read the full security and operations audit trail.',        unlocks: 'Audit Log page in sidebar',                  group: 'Admin',     groupIcon: <ShieldAlert size={13} />, groupColor: 'red'     },
     PENALTIES_MANAGE_RULES:  { label: 'Manage Penalty Rules',    desc: 'Create and edit penalty fine amounts and thresholds.',      unlocks: 'Settings → Penalties tab',                   group: 'Admin',     groupIcon: <ShieldAlert size={13} />, groupColor: 'red'     },
+    DATA_MIGRATION:          { label: 'Historical Data Migration', desc: 'Import historical member, savings, loan and penalty data.', unlocks: 'Migration page in sidebar',                  group: 'Admin',     groupIcon: <ShieldAlert size={13} />, groupColor: 'red'     },
 };
 
 const GROUP_ORDER = ['Members', 'Users', 'Roles', 'Loans', 'Savings', 'Reports', 'Meetings', 'Penalties', 'Sessions', 'Admin'];
@@ -164,15 +165,7 @@ export default function RolesPermissionsPage() {
 
     const toggle = (id: string) => {
         if (selectedRole?.name === 'SYSTEM_ADMIN') return;
-        setEditedIds(prev => {
-            const s = new Set(prev);
-            if (s.has(id)) {
-                s.delete(id);
-            } else {
-                s.add(id);
-            }
-            return s;
-        });
+        setEditedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
         setSavedResult(null);
     };
 

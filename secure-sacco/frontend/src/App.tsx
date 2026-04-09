@@ -39,6 +39,7 @@ import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
 import PermissionsRegistryPage from './features/users/pages/PermissionsRegistryPage';
+import MigrationPage from './features/migration/pages/MigrationPage';
 import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
 import SupportPage from './features/legal/pages/SupportPage';
@@ -271,15 +272,23 @@ function App() {
 
 
                                 {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
+                                <Route path="/audit/logs" element={
+                                    <ProtectedRoute requiredPermissions={['AUDIT_LOG_READ']}>
+                                        <AuditLogPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Permissions Registry — SYSTEM_ADMIN only */}
                                 <Route path="/permissions-registry" element={
                                     <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
                                         <PermissionsRegistryPage />
                                     </ProtectedRoute>
                                 } />
 
-                                <Route path="/audit/logs" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
-                                        <AuditLogPage />
+                                {/* Historical data migration — SYSTEM_ADMIN only */}
+                                <Route path="/migration" element={
+                                    <ProtectedRoute requiredPermissions={['DATA_MIGRATION']}>
+                                        <MigrationPage />
                                     </ProtectedRoute>
                                 } />
 
@@ -292,7 +301,7 @@ function App() {
                                 {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
                                 <Route path="/settings" element={
                                     <ProtectedRoute>
-                                        <HasPermission permission="ROLE_SYSTEM_ADMIN" fallback={
+                                        <HasPermission permissions={['ROLE_SYSTEM_ADMIN', 'PENALTIES_MANAGE_RULES']} fallback={
                                             <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
                                                 Access Denied: You do not have permission to view global settings.
                                             </div>
