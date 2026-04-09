@@ -4,16 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: enhance loan application details with member information and update penalty management endpoints">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update XLSX import type definitions for improved type safety in MigrationPage">
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/components/LoanDetailModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/components/LoanDetailModal.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/pages/LoanManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/loans/pages/LoanManagementPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/migration/pages/MigrationPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/PermissionsRegistryPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/PermissionsRegistryPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/RolesPermissionsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/RolesPermissionsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -464,23 +456,7 @@
       <workItem from="1775479161613" duration="273000" />
       <workItem from="1775624552521" duration="14858000" />
       <workItem from="1775710647320" duration="45000" />
-      <workItem from="1775711110771" duration="15567000" />
-    </task>
-    <task id="LOCAL-00026" summary="chore: migrate outgoing email configuration to use Resend API and update deployment scripts">
-      <option name="closed" value="true" />
-      <created>1774599057416</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1774599057416</updated>
-    </task>
-    <task id="LOCAL-00027" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
-      <option name="closed" value="true" />
-      <created>1774599556031</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1774599556031</updated>
+      <workItem from="1775711110771" duration="16586000" />
     </task>
     <task id="LOCAL-00028" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
       <option name="closed" value="true" />
@@ -858,7 +834,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775733371310</updated>
     </task>
-    <option name="localTasksCounter" value="75" />
+    <task id="LOCAL-00075" summary="feat: streamline icon imports and optimize status count calculation in loan management components">
+      <option name="closed" value="true" />
+      <created>1775737110977</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1775737110979</updated>
+    </task>
+    <task id="LOCAL-00076" summary="feat: update XLSX import type definitions for improved type safety in MigrationPage">
+      <option name="closed" value="true" />
+      <created>1775737471249</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1775737471249</updated>
+    </task>
+    <option name="localTasksCounter" value="77" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -879,8 +871,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat: implement migration scripts for loan processing and data handling" />
-    <MESSAGE value="feat: enhance loan application processing with grace period adjustments and historical date backdating" />
     <MESSAGE value="feat: implement time travel feature and fix loan schedule status discrepancies" />
     <MESSAGE value="feat: enable time travel feature and configure migration settings in application.yml" />
     <MESSAGE value="feat: enhance member statement retrieval with summary details and historical date handling" />
@@ -904,7 +894,9 @@
     <MESSAGE value="feat: add Permissions Registry page and update sidebar navigation" />
     <MESSAGE value="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access" />
     <MESSAGE value="feat: enhance loan application details with member information and update penalty management endpoints" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: enhance loan application details with member information and update penalty management endpoints" />
+    <MESSAGE value="feat: streamline icon imports and optimize status count calculation in loan management components" />
+    <MESSAGE value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

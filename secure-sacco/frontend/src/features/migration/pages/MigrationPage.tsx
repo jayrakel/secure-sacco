@@ -754,15 +754,22 @@ const ExcelImportForm: React.FC<{
             try {
                 // Dynamically import xlsx — add 'xlsx' to package.json if not present
                 const XLSX = await import('xlsx' as never) as {
-                    read: (data: Uint8Array, opts: object) => { SheetNames: string[]; Sheets: Record<string, object> };
-                    utils: { sheet_to_json: (sheet: object, opts: object) => ExcelRow[] };
+                    read: (data: Uint8Array, opts: { type: string; cellDates: boolean }) => { SheetNames: string[]; Sheets: Record<string, unknown> };
+                    utils: { sheet_to_json: (sheet: unknown, opts: { defval: string }) => Array<Record<string, unknown>> };
                 };
                 const data = new Uint8Array(ev.target!.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
 
                 const parsed = workbook.SheetNames.map((name: string) => {
                     const ws = workbook.Sheets[name];
-                    const rows: ExcelRow[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                    const rows: ExcelRow[] = (XLSX.utils.sheet_to_json(ws, { defval: '' }) as Array<Record<string, unknown>>).map((row: Record<string, unknown>) => {
+                        const result: ExcelRow = {};
+                        for (const key in row) {
+                            const value = row[key];
+                            result[key] = typeof value === 'string' ? value : (typeof value === 'number' ? value : String(value ?? ''));
+                        }
+                        return result;
+                    });
                     // Auto-detect type from sheet name
                     const lower = name.toLowerCase();
                     let type: ExcelSheetType = 'skip';
