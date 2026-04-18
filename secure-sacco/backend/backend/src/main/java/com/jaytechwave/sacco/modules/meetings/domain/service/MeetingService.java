@@ -255,6 +255,37 @@ public class MeetingService {
         );
     }
 
+
+    /**
+     * Called by {@link com.jaytechwave.sacco.modules.meetings.job.MeetingAutoCompleteJob}
+     * when a meeting's scheduled end time has passed. Identical to
+     * {@link #completeMeeting(UUID, String, String)} but uses "SYSTEM" as actor.
+     */
+    @Transactional
+    public void autoCompleteMeeting(UUID id) {
+        Meeting meeting = findOrThrow(id);
+
+        // Guard: only complete SCHEDULED meetings (idempotent — safe to call multiple times)
+        if (meeting.getStatus() != MeetingStatus.SCHEDULED) {
+            log.info("autoCompleteMeeting: Meeting {} is already {} — skipping.", id, meeting.getStatus());
+            return;
+        }
+
+        meeting.setStatus(MeetingStatus.COMPLETED);
+        if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now());
+        meetingRepository.save(meeting);
+
+        generateMeetingPenalties(meeting);
+
+        securityAuditService.logEvent(
+                "MEETING_AUTO_COMPLETED",
+                "MEETING-" + id,
+                "Meeting auto-completed by scheduler: " + meeting.getTitle()
+        );
+
+        log.info("Meeting {} auto-completed by scheduler. Penalties generated.", id);
+    }
+
     // 🟢 THE FIX: Tiered Lateness Evaluation
     private void generateMeetingPenalties(Meeting meeting) {
         // Fetch Admin-Configurable Penalty Rules for different tiers
