@@ -262,4 +262,34 @@ public class UserService {
         if (phone == null || phone.isBlank()) return null;
         return phone.trim();
     }
+    /** Admin-initiated email change. Invalidates the user's existing sessions. */
+    @Transactional
+    public void changeUserEmail(UUID id, String rawNewEmail) {
+        User user = getUserEntityById(id);
+
+        String normalized = normalizeEmail(rawNewEmail);
+
+        if (normalized.equalsIgnoreCase(user.getEmail())) {
+            throw new IllegalArgumentException("New email is the same as the current email.");
+        }
+
+        if (userRepository.existsByEmail(normalized)) {
+            throw new IllegalArgumentException("This email address is already in use by another account.");
+        }
+
+        String oldEmail = user.getEmail();
+        user.setEmail(normalized);
+        user.setEmailVerified(false); // Must re-verify after email change
+        userRepository.save(user);
+
+        // Invalidate all sessions so the user is forced to log in with the new email
+        sessionInvalidationService.invalidateAllUserSessions(oldEmail);
+
+        securityAuditService.logEvent(
+                "ADMIN_EMAIL_CHANGED",
+                oldEmail,
+                String.format("Email changed to: %s", normalized)
+        );
+    }
+
 }

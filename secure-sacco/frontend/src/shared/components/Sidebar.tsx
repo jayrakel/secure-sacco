@@ -84,7 +84,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'System',
             items: [
                 { label: 'Audit Log', path: '/audit/logs', icon: Shield, requiredPermission: 'AUDIT_LOG_READ' },
-                { label: 'Security',  path: '/security',   icon: Shield },
+                { label: 'My Profile', path: '/profile',   icon: UserCircle },
                 { label: 'Settings',  path: '/settings',   icon: Settings, requiredPermission: 'PENALTIES_MANAGE_RULES' },
                 { label: 'Migration',             path: '/migration',             icon: Database, requiredPermission: 'DATA_MIGRATION' },
                 { label: 'Permissions Registry', path: '/permissions-registry', icon: Shield,   adminOnly: true },
@@ -112,7 +112,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'Account',
             items: [
                 { label: 'My Reports', path: '/my-reports', icon: BarChart3 },
-                { label: 'Security',   path: '/security',   icon: Shield    },
+                { label: 'My Profile',  path: '/profile',   icon: UserCircle },
             ],
         },
     ];
