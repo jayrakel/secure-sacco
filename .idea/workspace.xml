@@ -4,21 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: refine XLSX import type definitions in MigrationPage for improved type safety">
-      <changelist_data name="jayrakel" email="gesorajonathan@gmail.com" automatic="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/ProfileController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V61__fix_user_status_constraint.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/ProfilePage.tsx" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add profile management page and API for user profile updates">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/job/MeetingAttendanceSeedJob.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/job/MeetingAutoCompleteJob.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V62__add_attendance_seeded_to_meetings.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/api/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/api/controller/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/domain/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/users/domain/service/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-dev.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-dev.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/api/user-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/api/user-api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/UserListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/users/pages/UserListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/entity/Meeting.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/entity/Meeting.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/repository/MeetingRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/repository/MeetingRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/members/domain/repository/MemberRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/members/domain/repository/MemberRepository.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -473,23 +468,7 @@
       <workItem from="1775744001047" duration="365000" />
       <workItem from="1775744784286" duration="4624000" />
       <workItem from="1776005299553" duration="3171000" />
-      <workItem from="1776496758008" duration="452000" />
-    </task>
-    <task id="LOCAL-00030" summary="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter">
-      <option name="closed" value="true" />
-      <created>1774605433136</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1774605433136</updated>
-    </task>
-    <task id="LOCAL-00031" summary="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue">
-      <option name="closed" value="true" />
-      <created>1774605739606</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1774605739606</updated>
+      <workItem from="1776496758008" duration="3036000" />
     </task>
     <task id="LOCAL-00032" summary="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode">
       <option name="closed" value="true" />
@@ -867,7 +846,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775740709604</updated>
     </task>
-    <option name="localTasksCounter" value="79" />
+    <task id="LOCAL-00079" summary="feat: add profile management page and API for user profile updates">
+      <option name="closed" value="true" />
+      <created>1776497792895</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1776497792897</updated>
+    </task>
+    <task id="LOCAL-00080" summary="feat: add profile management page and API for user profile updates">
+      <option name="closed" value="true" />
+      <created>1776498268555</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1776498268555</updated>
+    </task>
+    <option name="localTasksCounter" value="81" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -889,7 +884,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: enhance member statement retrieval with summary details and historical date handling" />
     <MESSAGE value="feat: add loan product seeder and update session cookies for staging environment" />
     <MESSAGE value="feat: update outstanding penalties display to handle null values gracefully" />
     <MESSAGE value="feat: update loan portfolio calculation to include outstanding interest" />
@@ -914,7 +908,8 @@
     <MESSAGE value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
     <MESSAGE value="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety" />
     <MESSAGE value="feat: refine XLSX import type definitions in MigrationPage for improved type safety" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: refine XLSX import type definitions in MigrationPage for improved type safety" />
+    <MESSAGE value="feat: add profile management page and API for user profile updates" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add profile management page and API for user profile updates" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

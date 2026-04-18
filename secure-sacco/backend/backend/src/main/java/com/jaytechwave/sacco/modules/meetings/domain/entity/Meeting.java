@@ -44,6 +44,15 @@ public class Meeting {
     @Builder.Default
     private MeetingStatus status = MeetingStatus.SCHEDULED;
 
+    /**
+     * Set to TRUE by {@code MeetingAttendanceSeedJob} after it has created
+     * ABSENT records for every active member at meeting start time.
+     * Prevents the seed job from re-running on the same meeting every poll.
+     */
+    @Column(name = "attendance_seeded", nullable = false)
+    @Builder.Default
+    private boolean attendanceSeeded = false;
+
     @Column(name = "created_by_user_id")
     private UUID createdByUserId;
 
