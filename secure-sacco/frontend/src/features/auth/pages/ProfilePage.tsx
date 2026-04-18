@@ -4,7 +4,7 @@ import { sessionApi, type SessionResponse } from '../../sessions/api/session-api
 import apiClient from '../../../shared/api/api-client';
 import {
     User, Mail, Phone, Lock, MonitorSmartphone, Shield,
-    ShieldCheck, ShieldAlert, Smartphone, CheckCircle, CheckCircle2,
+    ShieldCheck, ShieldAlert, CheckCircle, CheckCircle2,
     AlertTriangle, Key, XCircle, Loader2, Clock, Trash2,
     Edit3, Save, X, RefreshCw, Eye, EyeOff,
 } from 'lucide-react';
