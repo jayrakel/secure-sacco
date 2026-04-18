@@ -1,20 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { userApi, type User } from '../api/user-api';
+import { userApi, type User, type UpdateUserRequest } from '../api/user-api';
 import { roleApi, type Role } from '../api/role-api';
 import UserSessionsModal from '../../sessions/components/UserSessionsModal';
 import HasPermission from '../../../shared/components/HasPermission';
 import CreateUserModal from '../components/CreateUserModal';
 import {
-    Plus,
-    Edit2,
-    Trash2,
-    Shield,
-    Search,
-    Loader2,
-    ShieldAlert,
-    X,
-    Save,
-    MonitorSmartphone,
+    Plus, Edit2, Trash2, Shield, Search, Loader2, ShieldAlert,
+    X, Save, MonitorSmartphone, Mail, User as UserIcon, Phone,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -32,6 +24,13 @@ export default function UserListPage() {
     const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
     const [isSavingRoles, setIsSavingRoles] = useState(false);
     const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+
+    // Edit user state
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editForm, setEditForm] = useState<UpdateUserRequest & { email: string }>({ firstName: '', lastName: '', phoneNumber: '', email: '' });
+    const [editOriginalEmail, setEditOriginalEmail] = useState('');
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [editError, setEditError] = useState('');
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -54,6 +53,44 @@ export default function UserListPage() {
     useEffect(() => {
         void fetchData();
     }, [fetchData]);
+
+    const openEditModal = (user: User) => {
+        setSelectedUser(user);
+        setEditForm({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phoneNumber: user.phoneNumber ?? '',
+            email: user.email,
+        });
+        setEditOriginalEmail(user.email);
+        setEditError('');
+        setIsEditModalOpen(true);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!selectedUser) return;
+        setIsSavingEdit(true);
+        setEditError('');
+        try {
+            // Update name + phone
+            await userApi.updateUser(selectedUser.id, {
+                firstName: editForm.firstName,
+                lastName: editForm.lastName,
+                phoneNumber: editForm.phoneNumber,
+            });
+            // Update email only if it changed
+            if (editForm.email.trim().toLowerCase() !== editOriginalEmail.toLowerCase()) {
+                await userApi.changeUserEmail(selectedUser.id, editForm.email.trim());
+            }
+            await fetchData();
+            setIsEditModalOpen(false);
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            setEditError(msg ?? 'Failed to update user.');
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
 
     const handleStatusToggle = async (userId: string, currentStatus: string) => {
         try {
@@ -279,11 +316,21 @@ export default function UserListPage() {
 
                                             <HasPermission permission="USER_UPDATE">
                                                 <button
-                                                    onClick={() => openRoleModal(user)}
+                                                    onClick={() => openEditModal(user)}
                                                     className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                                    title="Assign Roles"
+                                                    title="Edit User"
                                                 >
                                                     <Edit2 size={18} />
+                                                </button>
+                                            </HasPermission>
+
+                                            <HasPermission permission="USER_UPDATE">
+                                                <button
+                                                    onClick={() => openRoleModal(user)}
+                                                    className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition"
+                                                    title="Assign Roles"
+                                                >
+                                                    <Shield size={18} />
                                                 </button>
                                             </HasPermission>
 
@@ -395,7 +442,108 @@ export default function UserListPage() {
                     </div>
                 </div>
             )}
-            {/* ADD THIS NEW MODAL RENDER HERE */}
+
+            {isEditModalOpen && selectedUser && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-800">Edit User</h3>
+                                <p className="text-slate-500 text-sm mt-0.5">
+                                    {selectedUser.firstName} {selectedUser.lastName}
+                                </p>
+                            </div>
+                            <button onClick={() => setIsEditModalOpen(false)}
+                                    className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-200 rounded-full transition">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            {editError && (
+                                <div className="px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+                                    {editError}
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                        First Name
+                                    </label>
+                                    <div className="relative">
+                                        <UserIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            value={editForm.firstName}
+                                            onChange={e => setEditForm(f => ({ ...f, firstName: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                        Last Name
+                                    </label>
+                                    <input
+                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        value={editForm.lastName}
+                                        onChange={e => setEditForm(f => ({ ...f, lastName: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                    Login Email
+                                </label>
+                                <div className="relative">
+                                    <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="email"
+                                        className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        value={editForm.email}
+                                        onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                                    />
+                                </div>
+                                {editForm.email.trim().toLowerCase() !== editOriginalEmail.toLowerCase() && (
+                                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                                        ⚠ Changing email will sign the user out of all devices and require re-verification.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                                    Phone Number
+                                </label>
+                                <div className="relative">
+                                    <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="tel"
+                                        className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        value={editForm.phoneNumber ?? ''}
+                                        onChange={e => setEditForm(f => ({ ...f, phoneNumber: e.target.value }))}
+                                        placeholder="+254 700 000 000"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                            <button onClick={() => setIsEditModalOpen(false)}
+                                    className="px-5 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition">
+                                Cancel
+                            </button>
+                            <button onClick={handleSaveEdit} disabled={isSavingEdit || !editForm.firstName || !editForm.lastName || !editForm.email}
+                                    className="bg-slate-900 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-bold transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {isSavingEdit ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isCreateModalOpen && (
                 <CreateUserModal
                     onClose={() => setIsCreateModalOpen(false)}

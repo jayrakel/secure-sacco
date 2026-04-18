@@ -19,6 +19,12 @@ export interface CreateUserRequest {
     roleIds: string[];
 }
 
+export interface UpdateUserRequest {
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string;
+}
+
 export const userApi = {
     getAllUsers: async () => {
         const response = await apiClient.get<User[]>('/users');
@@ -37,6 +43,16 @@ export const userApi = {
 
     deleteUser: async (id: string) => {
         const response = await apiClient.delete(`/users/${id}`);
+        return response.data;
+    },
+
+    updateUser: async (id: string, data: UpdateUserRequest) => {
+        const response = await apiClient.put(`/users/${id}`, data);
+        return response.data;
+    },
+
+    changeUserEmail: async (id: string, newEmail: string) => {
+        const response = await apiClient.patch(`/users/${id}/email`, { newEmail });
         return response.data;
     },
 

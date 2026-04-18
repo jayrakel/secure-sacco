@@ -12,6 +12,7 @@ import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 import ProtectedRoute from "./shared/components/ProtectedRoute";
 import SetupGuard from "./shared/components/SetupGuard";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
+import ProfilePage from "./features/auth/pages/ProfilePage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
@@ -297,6 +298,12 @@ function App() {
                                 <Route path="/migration" element={
                                     <ProtectedRoute requiredPermissions={['DATA_MIGRATION']}>
                                         <MigrationPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/profile" element={
+                                    <ProtectedRoute>
+                                        <ProfilePage />
                                     </ProtectedRoute>
                                 } />
 
