@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.meetings.domain.service;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.*;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.*;
+import com.jaytechwave.sacco.modules.meetings.domain.entity.AttendanceStatus;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingAttendanceRepository;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepository;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
@@ -59,7 +60,8 @@ public class MeetingService {
             String name = m != null ? m.getFirstName() + " " + m.getLastName() : "Unknown";
             String number = m != null ? m.getMemberNumber() : "-";
             return new AttendanceRecordResponse(
-                    a.getId(), meetingId, a.getMemberId(), name, number, a.getStatus(), a.getRecordedAt()
+                    a.getId(), meetingId, a.getMemberId(), name, number, a.getStatus(),
+                    a.getRecordedAt(), a.getArrivedAt()
             );
         }).collect(Collectors.toList());
     }
@@ -163,7 +165,11 @@ public class MeetingService {
                             .build());
             attendance.setStatus(entry.status());
             attendance.setRecordedByUserId(recorder.getId());
-            attendance.setRecordedAt(LocalDateTime.now()); // FIX: Explicitly capture manual recording time
+            // Set arrivedAt only when provided by staff — used for penalty tier calculation.
+            // recordedAt is managed by Hibernate (@CreationTimestamp) and is NOT used for lateness.
+            if (entry.arrivedAt() != null && entry.status() == AttendanceStatus.LATE) {
+                attendance.setArrivedAt(entry.arrivedAt());
+            }
             attendanceRepository.save(attendance);
         }
 
@@ -218,7 +224,7 @@ public class MeetingService {
             String number = m != null ? m.getMemberNumber() : "-";
             return new AttendanceRecordResponse(
                     existing.getId(), meetingId, memberId, name, number,
-                    existing.getStatus(), existing.getRecordedAt()
+                    existing.getStatus(), existing.getRecordedAt(), existing.getArrivedAt()
             );
         }
 
@@ -235,7 +241,7 @@ public class MeetingService {
 
         attendance.setStatus(status);
         attendance.setRecordedByUserId(memberId);
-        attendance.setRecordedAt(now); // FIX: Explicitly capture the exact arrival time, overriding the seed job time
+        attendance.setArrivedAt(now); // Exact moment of self-check-in — used for penalty tier calculation
         attendanceRepository.save(attendance);
 
         Member m = memberRepository.findById(memberId).orElse(null);
@@ -246,7 +252,7 @@ public class MeetingService {
 
         return new AttendanceRecordResponse(
                 attendance.getId(), meetingId, memberId, name, number,
-                status, attendance.getRecordedAt()
+                status, attendance.getRecordedAt(), attendance.getArrivedAt()
         );
     }
 

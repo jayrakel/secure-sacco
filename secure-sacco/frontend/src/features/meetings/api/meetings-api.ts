@@ -26,6 +26,7 @@ export interface AttendanceRecord {
     memberNumber: string;
     status: AttendanceStatus;
     recordedAt: string;
+    arrivedAt: string | null;   // actual arrival time — used for penalty tier, null if not recorded
 }
 
 export interface MyMeetingSummary {
@@ -60,7 +61,7 @@ export const meetingsApi = {
 
     recordAttendance: (
         id: string,
-        records: { memberId: string; status: AttendanceStatus }[]
+        records: { memberId: string; status: AttendanceStatus; arrivedAt?: string }[]
     ): Promise<AttendanceRecord[]> =>
         apiClient.put(`${API}/${id}/attendance`, { records }).then(r => r.data),
 

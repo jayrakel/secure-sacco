@@ -5,9 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingPenaltyService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V63__add_arrived_at_to_meeting_attendance.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/api/dto/MeetingDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/api/dto/MeetingDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/entity/MeetingAttendance.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/entity/MeetingAttendance.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingPenaltyService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingPenaltyService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/meetings/api/meetings-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/meetings/api/meetings-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/meetings/pages/MeetingsManagementPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/meetings/pages/MeetingsManagementPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -341,7 +347,7 @@
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
     "rest.client.default.execution.environment": "stag",
-    "settings.editor.selected.configurable": "vcs.Git",
+    "settings.editor.selected.configurable": "com.github.linearviewer.settings.LinearSettingsConfigurable",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
@@ -463,15 +469,7 @@
       <workItem from="1775744784286" duration="4624000" />
       <workItem from="1776005299553" duration="3171000" />
       <workItem from="1776496758008" duration="3484000" />
-      <workItem from="1776747916275" duration="3722000" />
-    </task>
-    <task id="LOCAL-00034" summary="chore: add project encoding and Maven repository configuration files">
-      <option name="closed" value="true" />
-      <created>1774618353007</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
-      <option name="project" value="LOCAL" />
-      <updated>1774618353007</updated>
+      <workItem from="1776747916275" duration="4712000" />
     </task>
     <task id="LOCAL-00035" summary="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency">
       <option name="closed" value="true" />
@@ -857,7 +855,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776751053210</updated>
     </task>
-    <option name="localTasksCounter" value="83" />
+    <task id="LOCAL-00083" summary="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic">
+      <option name="closed" value="true" />
+      <created>1776752601544</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1776752601545</updated>
+    </task>
+    <option name="localTasksCounter" value="84" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

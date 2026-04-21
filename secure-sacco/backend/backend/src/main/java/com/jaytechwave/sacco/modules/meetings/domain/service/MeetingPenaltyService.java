@@ -76,18 +76,26 @@ public class MeetingPenaltyService {
                     penaltiesCreated++;
 
                 } else if (record.getStatus() == AttendanceStatus.LATE) {
-                    // Calculate minutes late using actual arrival time
-                    LocalDateTime arrivalTime = record.getRecordedAt() != null
-                            ? record.getRecordedAt()
-                            : meeting.getStartAt();
-                    long minutesLate = java.time.Duration.between(meeting.getStartAt(), arrivalTime).toMinutes();
+                    // Use arrivedAt (set by self-check-in or provided by staff).
+                    // recordedAt is admin metadata — never used for penalty calculation.
+                    LocalDateTime arrivedAt = record.getArrivedAt();
 
-                    if (minutesLate >= 120 && late120Rule != null) {
-                        createPenalty(meeting, record.getMemberId(), late120Rule, "MEETING_LATE_120");
-                        penaltiesCreated++;
-                    } else if (late30Rule != null) {
-                        createPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
-                        penaltiesCreated++;
+                    if (arrivedAt == null) {
+                        // Staff marked LATE but didn't provide arrival time.
+                        // Apply the minimum tier (LATE_30) as a safe, fair default.
+                        if (late30Rule != null) {
+                            createPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
+                            penaltiesCreated++;
+                        }
+                    } else {
+                        long minutesLate = java.time.Duration.between(meeting.getStartAt(), arrivedAt).toMinutes();
+                        if (minutesLate >= 120 && late120Rule != null) {
+                            createPenalty(meeting, record.getMemberId(), late120Rule, "MEETING_LATE_120");
+                            penaltiesCreated++;
+                        } else if (late30Rule != null) {
+                            createPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
+                            penaltiesCreated++;
+                        }
                     }
                 }
             } catch (Exception e) {
