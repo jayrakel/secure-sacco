@@ -4,12 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingPenaltyService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/entity/MeetingAttendance.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/entity/MeetingAttendance.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/job/MeetingAttendanceSeedJob.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/job/MeetingAttendanceSeedJob.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -465,15 +463,7 @@
       <workItem from="1775744784286" duration="4624000" />
       <workItem from="1776005299553" duration="3171000" />
       <workItem from="1776496758008" duration="3484000" />
-      <workItem from="1776747916275" duration="2165000" />
-    </task>
-    <task id="LOCAL-00033" summary="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode">
-      <option name="closed" value="true" />
-      <created>1774618260127</created>
-      <option name="number" value="00033" />
-      <option name="presentableId" value="LOCAL-00033" />
-      <option name="project" value="LOCAL" />
-      <updated>1774618260127</updated>
+      <workItem from="1776747916275" duration="3722000" />
     </task>
     <task id="LOCAL-00034" summary="chore: add project encoding and Maven repository configuration files">
       <option name="closed" value="true" />
@@ -859,7 +849,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776500176204</updated>
     </task>
-    <option name="localTasksCounter" value="82" />
+    <task id="LOCAL-00082" summary="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic">
+      <option name="closed" value="true" />
+      <created>1776751053208</created>
+      <option name="number" value="00082" />
+      <option name="presentableId" value="LOCAL-00082" />
+      <option name="project" value="LOCAL" />
+      <updated>1776751053210</updated>
+    </task>
+    <option name="localTasksCounter" value="83" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -881,7 +879,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: update outstanding penalties display to handle null values gracefully" />
     <MESSAGE value="feat: update loan portfolio calculation to include outstanding interest" />
     <MESSAGE value="feat: backdate loan application timestamps for historical accuracy" />
     <MESSAGE value="feat: add branding URL fields and update database schema for logo and favicon" />
@@ -906,7 +903,8 @@
     <MESSAGE value="feat: refine XLSX import type definitions in MigrationPage for improved type safety" />
     <MESSAGE value="feat: add profile management page and API for user profile updates" />
     <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties" />
-    <option name="LAST_COMMIT_MESSAGE" value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties" />
+    <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
