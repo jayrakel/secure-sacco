@@ -54,6 +54,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SERVER_PORT: 8080
+      TZ: Africa/Nairobi
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
 
       #Mail
