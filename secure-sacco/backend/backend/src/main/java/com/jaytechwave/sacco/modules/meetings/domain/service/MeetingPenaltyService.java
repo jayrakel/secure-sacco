@@ -135,7 +135,10 @@ public class MeetingPenaltyService {
 
         UUID accrualId = UUID.randomUUID();
         PenaltyAccrual accrual = PenaltyAccrual.builder()
-                .id(accrualId)
+                // NOTE: Do NOT set .id() here. Setting an ID on a new entity causes
+                // Hibernate to treat it as detached, throwing "detached entity passed
+                // to persist" when the cascade fires. The accrualId UUID is still used
+                // for journalReference and journalEntryService so the link is preserved.
                 .accrualKind(AccrualKind.PRINCIPAL)
                 .amount(amount)
                 .accruedAt(LocalDateTime.now())
