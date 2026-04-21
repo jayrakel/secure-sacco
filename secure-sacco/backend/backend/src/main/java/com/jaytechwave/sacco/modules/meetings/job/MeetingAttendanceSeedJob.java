@@ -15,24 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * Runs every 5 minutes. When a meeting's {@code startAt} time is reached,
- * this job creates an {@code ABSENT} attendance record for every active member
- * who does not yet have one.
- *
- * <p>This ensures that:</p>
- * <ul>
- *   <li>Every active member is accounted for in attendance, even if they
- *       never open the app or self-check-in.</li>
- *   <li>The penalty engine (triggered at completion) has records to process
- *       and can penalise absent members correctly.</li>
- *   <li>Members who self-check-in before or after the seed runs simply get
- *       their record updated from ABSENT → PRESENT or LATE.</li>
- * </ul>
- *
- * <p>The {@code attendanceSeeded} flag prevents repeated seeding on the
- * same meeting across multiple job runs.</p>
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -42,7 +24,6 @@ public class MeetingAttendanceSeedJob {
     private final MeetingAttendanceRepository attendanceRepository;
     private final MemberRepository           memberRepository;
 
-    /** Runs every 5 minutes. */
     @Scheduled(fixedDelay = 300_000)
     @Transactional
     public void seedAttendance() {
@@ -85,13 +66,13 @@ public class MeetingAttendanceSeedJob {
                         .meeting(meeting)
                         .memberId(member.getId())
                         .status(AttendanceStatus.ABSENT)
+                        .recordedAt(LocalDateTime.now()) // FIX: Explicitly set to prevent L1 Cache NPEs in rapid concurrent job runs
                         .build();
                 attendanceRepository.save(record);
                 created++;
             }
         }
 
-        // Mark as seeded so this meeting is not processed again
         meeting.setAttendanceSeeded(true);
         meetingRepository.save(meeting);
 

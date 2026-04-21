@@ -32,7 +32,8 @@ public class MeetingAttendance {
     @Column(name = "recorded_by_user_id")
     private UUID recordedByUserId;
 
+    // FIX: Removed updatable = false to allow actual check-in time updates
     @CreationTimestamp
-    @Column(name = "recorded_at", updatable = false)
+    @Column(name = "recorded_at")
     private LocalDateTime recordedAt;
 }
