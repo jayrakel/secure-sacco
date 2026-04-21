@@ -1,17 +1,14 @@
 package com.jaytechwave.sacco.modules.meetings.domain.service;
 
-import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.*;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.*;
+import com.jaytechwave.sacco.modules.meetings.domain.entity.AttendanceStatus;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingAttendanceRepository;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepository;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.*;
-import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyAccrualRepository;
-import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository;
-import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRuleRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +32,8 @@ public class MeetingService {
     private final MeetingAttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
-    private final PenaltyRepository penaltyRepository;
-    private final PenaltyRuleRepository penaltyRuleRepository;
-    private final PenaltyAccrualRepository penaltyAccrualRepository;
-    private final JournalEntryService journalEntryService;
     private final SecurityAuditService securityAuditService;
+    private final MeetingPenaltyService meetingPenaltyService;
 
     @Transactional(readOnly = true)
     public Page<MeetingSummaryResponse> listAllMeetings(Pageable pageable) {
@@ -66,7 +60,8 @@ public class MeetingService {
             String name = m != null ? m.getFirstName() + " " + m.getLastName() : "Unknown";
             String number = m != null ? m.getMemberNumber() : "-";
             return new AttendanceRecordResponse(
-                    a.getId(), meetingId, a.getMemberId(), name, number, a.getStatus(), a.getRecordedAt()
+                    a.getId(), meetingId, a.getMemberId(), name, number, a.getStatus(),
+                    a.getRecordedAt(), a.getArrivedAt()
             );
         }).collect(Collectors.toList());
     }
@@ -170,7 +165,11 @@ public class MeetingService {
                             .build());
             attendance.setStatus(entry.status());
             attendance.setRecordedByUserId(recorder.getId());
-            attendance.setRecordedAt(LocalDateTime.now()); // FIX: Explicitly capture manual recording time
+            // Set arrivedAt only when provided by staff — used for penalty tier calculation.
+            // recordedAt is managed by Hibernate (@CreationTimestamp) and is NOT used for lateness.
+            if (entry.arrivedAt() != null && entry.status() == AttendanceStatus.LATE) {
+                attendance.setArrivedAt(entry.arrivedAt());
+            }
             attendanceRepository.save(attendance);
         }
 
@@ -193,7 +192,7 @@ public class MeetingService {
         if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now());
         meetingRepository.save(meeting);
 
-        generateMeetingPenalties(meeting);
+        meetingPenaltyService.generatePenalties(meeting);
 
         securityAuditService.logEventWithActorAndIp(email, "MEETING_COMPLETED",
                 "MEETING-" + id, ip, "Meeting completed: " + meeting.getTitle());
@@ -225,7 +224,7 @@ public class MeetingService {
             String number = m != null ? m.getMemberNumber() : "-";
             return new AttendanceRecordResponse(
                     existing.getId(), meetingId, memberId, name, number,
-                    existing.getStatus(), existing.getRecordedAt()
+                    existing.getStatus(), existing.getRecordedAt(), existing.getArrivedAt()
             );
         }
 
@@ -242,7 +241,7 @@ public class MeetingService {
 
         attendance.setStatus(status);
         attendance.setRecordedByUserId(memberId);
-        attendance.setRecordedAt(now); // FIX: Explicitly capture the exact arrival time, overriding the seed job time
+        attendance.setArrivedAt(now); // Exact moment of self-check-in — used for penalty tier calculation
         attendanceRepository.save(attendance);
 
         Member m = memberRepository.findById(memberId).orElse(null);
@@ -253,7 +252,7 @@ public class MeetingService {
 
         return new AttendanceRecordResponse(
                 attendance.getId(), meetingId, memberId, name, number,
-                status, attendance.getRecordedAt()
+                status, attendance.getRecordedAt(), attendance.getArrivedAt()
         );
     }
 
@@ -274,7 +273,7 @@ public class MeetingService {
         if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now());
         meetingRepository.save(meeting);
 
-        generateMeetingPenalties(meeting);
+        meetingPenaltyService.generatePenalties(meeting);
 
         securityAuditService.logEvent(
                 "MEETING_AUTO_COMPLETED",
@@ -285,82 +284,6 @@ public class MeetingService {
         log.info("Meeting {} auto-completed by scheduler. Penalties generated.", id);
     }
 
-    private void generateMeetingPenalties(Meeting meeting) {
-        PenaltyRule late30Rule  = penaltyRuleRepository.findByCode("MEETING_LATE_30").filter(PenaltyRule::getIsActive).orElse(null);
-        PenaltyRule late120Rule = penaltyRuleRepository.findByCode("MEETING_LATE_120").filter(PenaltyRule::getIsActive).orElse(null);
-        PenaltyRule absentRule  = penaltyRuleRepository.findByCode("MEETING_ABSENT").filter(PenaltyRule::getIsActive).orElse(null);
-
-        List<MeetingAttendance> attendance = attendanceRepository.findByMeetingId(meeting.getId());
-
-        for (MeetingAttendance record : attendance) {
-            try {
-                if (record.getStatus() == AttendanceStatus.ABSENT && absentRule != null) {
-                    createMeetingPenalty(meeting, record.getMemberId(), absentRule, "MEETING_ABSENT");
-                }
-                else if (record.getStatus() == AttendanceStatus.LATE) {
-                    // FIX: Null-safety check protecting the transaction from NPEs
-                    LocalDateTime arrivalTime = record.getRecordedAt() != null ? record.getRecordedAt() : meeting.getStartAt();
-                    long minutesLate = java.time.Duration.between(meeting.getStartAt(), arrivalTime).toMinutes();
-
-                    if (minutesLate >= 120 && late120Rule != null) {
-                        createMeetingPenalty(meeting, record.getMemberId(), late120Rule, "MEETING_LATE_120");
-                    }
-                    else if (late30Rule != null) {
-                        createMeetingPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
-                    }
-                }
-            } catch (Exception e) {
-                // FIX: Log individual penalty failures rather than rolling back the entire meeting completion
-                log.error("Failed to evaluate/create penalty for member {} in meeting {}: {}",
-                        record.getMemberId(), meeting.getId(), e.getMessage());
-            }
-        }
-    }
-
-    private void createMeetingPenalty(Meeting meeting, UUID memberId, PenaltyRule rule, String ruleCode) {
-        String idempotencyKey = ruleCode + "-" + meeting.getId() + "-" + memberId;
-        if (penaltyAccrualRepository.existsByIdempotencyKey(idempotencyKey)) {
-            log.info("Idempotency hit: {} penalty already generated for member {} in meeting {}",
-                    ruleCode, memberId, meeting.getId());
-            return;
-        }
-
-        BigDecimal amount = rule.getBaseAmountValue();
-
-        Penalty penalty = Penalty.builder()
-                .memberId(memberId)
-                .referenceType("MEETING")
-                .referenceId(meeting.getId())
-                .penaltyRule(rule)
-                .originalAmount(amount)
-                .outstandingAmount(amount)
-                .status(PenaltyStatus.OPEN)
-                .build();
-
-        UUID accrualId = UUID.randomUUID();
-        PenaltyAccrual accrual = PenaltyAccrual.builder()
-                .id(accrualId)
-                .accrualKind(AccrualKind.PRINCIPAL)
-                .amount(amount)
-                .accruedAt(LocalDateTime.now())
-                .idempotencyKey(idempotencyKey)
-                .journalReference("PENC-" + accrualId)
-                .build();
-
-        penalty.addAccrual(accrual);
-        penaltyRepository.save(penalty);
-
-        journalEntryService.postPenaltyCreation(memberId, amount, accrualId.toString());
-
-        securityAuditService.logEvent(
-                "PENALTY_CREATED",
-                "PENALTY-" + penalty.getId(),
-                ruleCode + " penalty of KES " + amount + " raised for member " + memberId
-                        + " from meeting '" + meeting.getTitle() + "'"
-        );
-
-        log.info("Generated {} penalty of {} KES for member {}", ruleCode, amount, memberId);
-    }
 
     private Meeting findOrThrow(UUID id) {
         return meetingRepository.findById(id)

@@ -32,8 +32,25 @@ public class MeetingAttendance {
     @Column(name = "recorded_by_user_id")
     private UUID recordedByUserId;
 
-    // FIX: Removed updatable = false to allow actual check-in time updates
+    /**
+     * Administrative timestamp — when this record was created or last updated.
+     * Managed by Hibernate. Do NOT use this for penalty tier calculation.
+     */
     @CreationTimestamp
-    @Column(name = "recorded_at")
+    @Column(name = "recorded_at", updatable = false)
     private LocalDateTime recordedAt;
+
+    /**
+     * The actual time the member arrived at the meeting.
+     * This is what the penalty engine uses to determine the lateness tier.
+     *
+     * <ul>
+     *   <li>Self check-in: set to {@code LocalDateTime.now()} at the moment of check-in.</li>
+     *   <li>Manual recording: set by staff if they know when the member arrived.
+     *       If null when status=LATE, the minimum penalty tier is applied.</li>
+     *   <li>ABSENT records: always null.</li>
+     * </ul>
+     */
+    @Column(name = "arrived_at")
+    private LocalDateTime arrivedAt;
 }
