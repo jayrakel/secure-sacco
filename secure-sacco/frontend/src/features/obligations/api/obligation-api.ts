@@ -2,7 +2,14 @@ import apiClient from '../../../shared/api/api-client';
 
 export type ObligationFrequency = 'WEEKLY' | 'MONTHLY';
 export type ObligationStatus    = 'ACTIVE' | 'PAUSED';
-export type PeriodStatus        = 'DUE' | 'COVERED' | 'OVERDUE';
+
+/**
+ * UPCOMING  — savings deadline hasn't arrived yet this period (computed by API, not stored)
+ * DUE       — within the deadline window; member should save now
+ * COVERED   — member has met the required amount for this period
+ * OVERDUE   — deadline passed without full payment; penalty was created
+ */
+export type PeriodStatus = 'UPCOMING' | 'DUE' | 'COVERED' | 'OVERDUE';
 
 export interface ObligationPeriodResponse {
     id: string;
@@ -12,8 +19,18 @@ export interface ObligationPeriodResponse {
     requiredAmount: number;
     paidAmount: number;
     remaining: number;
+    /** Raw DB status — use computedStatus for display */
     status: PeriodStatus;
+    /** Display status — may be UPCOMING even when DB stores DUE */
+    computedStatus: PeriodStatus;
     createdAt: string;
+
+    // ── Penalty linked to this period (present only if OVERDUE with penalty) ─
+    penaltyId?: string;
+    penaltyAmount?: number;
+    penaltyOutstanding?: number;
+    /** 'OPEN' | 'PAID' | 'WAIVED' */
+    penaltyStatus?: string;
 }
 
 export interface ObligationResponse {
@@ -36,6 +53,7 @@ export interface ObligationComplianceEntry {
     amountDue: number;
     totalOverduePeriods: number;
     totalShortfall: number;
+    totalPenalties: number;
     worstStatus: PeriodStatus;
 }
 
@@ -57,7 +75,6 @@ export interface CreateObligationRequest {
     graceDays?: number;
 }
 
-// 🟢 NEW: Interface for the Edit payload (all fields optional since it's a partial update)
 export interface UpdateObligationRequest {
     amountDue?: number;
     startDate?: string;
@@ -87,7 +104,6 @@ export const obligationsApi = {
         return res.data;
     },
 
-    // 🟢 NEW: The PUT request to edit the exact parameters of the contract
     updateObligation: async (id: string, data: UpdateObligationRequest): Promise<ObligationResponse> => {
         const res = await apiClient.put(`/obligations/${id}`, data);
         return res.data;
@@ -98,7 +114,6 @@ export const obligationsApi = {
         return res.data;
     },
 
-    // Inside obligation-api.ts (under the Staff section)
     getObligationsByMemberId: async (memberId: string): Promise<ObligationResponse[]> => {
         const res = await apiClient.get(`/obligations/member/${memberId}`);
         return res.data;

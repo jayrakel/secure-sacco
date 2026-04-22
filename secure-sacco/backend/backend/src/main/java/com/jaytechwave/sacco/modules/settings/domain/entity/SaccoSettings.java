@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,6 +129,34 @@ public class SaccoSettings {
     @Column(name = "enabled_modules", columnDefinition = "jsonb", nullable = false)
     @Builder.Default
     private Map<String, Boolean> enabledModules = new HashMap<>();
+
+    // ── Savings schedule ─────────────────────────────────────────────────────
+
+    /**
+     * The day of the week on which the group is expected to make savings / repayments.
+     * Stored as the DayOfWeek name (e.g., "THURSDAY").
+     */
+    @Column(name = "savings_day", nullable = false, length = 10)
+    @Builder.Default
+    private String savingsDay = "THURSDAY";
+
+    /**
+     * If true, the hard deadline is the day AFTER {@link #savingsDay}.
+     * If false, the deadline is savings_day itself at {@link #savingsDeadlineHour}:{@link #savingsDeadlineMinute}.
+     */
+    @Column(name = "savings_deadline_next_day", nullable = false)
+    @Builder.Default
+    private Boolean savingsDeadlineNextDay = true;
+
+    /** Hour (0-23 in Africa/Nairobi) of the savings deadline. Default: 23. */
+    @Column(name = "savings_deadline_hour", nullable = false)
+    @Builder.Default
+    private Integer savingsDeadlineHour = 23;
+
+    /** Minute (0-59) of the savings deadline. Default: 59. */
+    @Column(name = "savings_deadline_minute", nullable = false)
+    @Builder.Default
+    private Integer savingsDeadlineMinute = 59;
 
     // ── Audit ────────────────────────────────────────────────────────────────
 

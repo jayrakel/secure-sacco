@@ -120,4 +120,35 @@ public class SaccoSettingsDTOs {
         @NotNull(message = "Flags map cannot be null")
         private Map<String, Boolean> flags;
     }
+
+    // ── Savings schedule update ──────────────────────────────────────────────
+
+    @Data
+    public static class UpdateSavingsScheduleRequest {
+
+        /** DayOfWeek name: MONDAY, TUESDAY, …, SUNDAY */
+        @NotBlank(message = "Savings day is required")
+        @Pattern(
+                regexp = "MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY",
+                message = "Must be a valid day of the week (e.g., THURSDAY)"
+        )
+        private String savingsDay;
+
+        /**
+         * If true, the hard deadline is the day AFTER savingsDay.
+         * If false, the deadline is savingsDay itself at the specified time.
+         */
+        @NotNull(message = "savingsDeadlineNextDay is required")
+        private Boolean savingsDeadlineNextDay;
+
+        @NotNull
+        @Min(value = 0, message = "Hour must be 0-23")
+        @Max(value = 23, message = "Hour must be 0-23")
+        private Integer savingsDeadlineHour;
+
+        @NotNull
+        @Min(value = 0, message = "Minute must be 0-59")
+        @Max(value = 59, message = "Minute must be 0-59")
+        private Integer savingsDeadlineMinute;
+    }
 }

@@ -29,6 +29,12 @@ export interface SaccoSettings {
     contactVerifyWindowMin?: number;
     rateLimitGeneralPerMin?: number;
 
+    // Savings schedule
+    savingsDay?: string;
+    savingsDeadlineNextDay?: boolean;
+    savingsDeadlineHour?: number;
+    savingsDeadlineMinute?: number;
+
     // Feature flags
     enabledModules?: Record<string, boolean>;
 }
@@ -66,11 +72,22 @@ export interface UpdateFlagsPayload {
     flags: Record<string, boolean>;
 }
 
+export interface SavingsSchedulePayload {
+    /** DayOfWeek name: MONDAY … SUNDAY */
+    savingsDay: string;
+    /** If true, deadline is the day AFTER savingsDay */
+    savingsDeadlineNextDay: boolean;
+    /** Hour 0-23 in Africa/Nairobi */
+    savingsDeadlineHour: number;
+    /** Minute 0-59 */
+    savingsDeadlineMinute: number;
+}
+
 // ─── API calls ────────────────────────────────────────────────────────────────
 
 export const settingsApi = {
 
-    /** Fetch all settings (identity + security + communication + modules) */
+    /** Fetch all settings (identity + security + communication + savings schedule + modules) */
     getSettings: async (): Promise<SaccoSettings> => {
         const res = await apiClient.get<SaccoSettings>('/settings/sacco');
         return res.data;
@@ -97,6 +114,12 @@ export const settingsApi = {
     /** Update communication / email sender settings */
     updateCommunication: async (payload: CommunicationPayload) => {
         const res = await apiClient.put('/settings/sacco/communication', payload);
+        return res.data;
+    },
+
+    /** Update savings day and deadline time */
+    updateSavingsSchedule: async (payload: SavingsSchedulePayload) => {
+        const res = await apiClient.put('/settings/sacco/savings-schedule', payload);
         return res.data;
     },
 

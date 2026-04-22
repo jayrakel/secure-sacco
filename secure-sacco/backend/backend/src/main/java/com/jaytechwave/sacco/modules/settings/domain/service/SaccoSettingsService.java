@@ -217,4 +217,45 @@ public class SaccoSettingsService {
     public int getRateLimitGeneralPerMin() {
         try { return getSettings().getRateLimitGeneralPerMin(); } catch (Exception e) { return 60; }
     }
+
+    // ── Savings schedule update ───────────────────────────────────────────────
+
+    @Transactional
+    public SaccoSettings updateSavingsSchedule(UpdateSavingsScheduleRequest req) {
+        SaccoSettings s = getSettings();
+        s.setSavingsDay(req.getSavingsDay().toUpperCase());
+        s.setSavingsDeadlineNextDay(req.getSavingsDeadlineNextDay());
+        s.setSavingsDeadlineHour(req.getSavingsDeadlineHour());
+        s.setSavingsDeadlineMinute(req.getSavingsDeadlineMinute());
+        SaccoSettings saved = settingsRepository.save(s);
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
+                "Savings schedule updated — day: " + req.getSavingsDay()
+                        + ", nextDay: " + req.getSavingsDeadlineNextDay()
+                        + ", time: " + req.getSavingsDeadlineHour() + ":" + req.getSavingsDeadlineMinute()
+        );
+        return saved;
+    }
+
+    // ── Savings schedule getters (safe — return defaults on error) ────────────
+
+    public String getSavingsDay() {
+        try { String d = getSettings().getSavingsDay(); return d != null ? d : "THURSDAY"; }
+        catch (Exception e) { return "THURSDAY"; }
+    }
+
+    public boolean isSavingsDeadlineNextDay() {
+        try { Boolean b = getSettings().getSavingsDeadlineNextDay(); return b != null ? b : true; }
+        catch (Exception e) { return true; }
+    }
+
+    public int getSavingsDeadlineHour() {
+        try { Integer h = getSettings().getSavingsDeadlineHour(); return h != null ? h : 23; }
+        catch (Exception e) { return 23; }
+    }
+
+    public int getSavingsDeadlineMinute() {
+        try { Integer m = getSettings().getSavingsDeadlineMinute(); return m != null ? m : 59; }
+        catch (Exception e) { return 59; }
+    }
 }
