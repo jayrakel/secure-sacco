@@ -3,6 +3,8 @@ package com.jaytechwave.sacco.modules.obligations.domain.service;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.obligations.api.dto.ObligationDTOs.*;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository;
 import com.jaytechwave.sacco.modules.obligations.domain.entity.*;
 import com.jaytechwave.sacco.modules.obligations.domain.repository.SavingsObligationPeriodRepository;
 import com.jaytechwave.sacco.modules.obligations.domain.repository.SavingsObligationRepository;
@@ -32,6 +34,7 @@ public class ObligationService {
     private final SavingsObligationPeriodRepository periodRepository;
     private final MemberRepository                  memberRepository;
     private final ObligationPeriodService           periodService;
+    private final PenaltyRepository                 penaltyRepository;
 
     // ── Staff: create ────────────────────────────────────────────────────────
 
@@ -113,6 +116,14 @@ public class ObligationService {
                     ? member.getUser().getFirstName() + " " + member.getUser().getLastName()
                     : "Unknown";
 
+            // Sum open savings penalties for this member
+            BigDecimal totalPenalties = penaltyRepository
+                    .findByMemberIdAndStatus(obligation.getMemberId(), PenaltyStatus.OPEN)
+                    .stream()
+                    .filter(p -> "SAVINGS_OBLIGATION".equals(p.getReferenceType()))
+                    .map(p -> p.getOutstandingAmount())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             entries.add(ObligationComplianceEntry.builder()
                     .memberId(obligation.getMemberId())
                     .memberNumber(memberNumber)
@@ -121,6 +132,7 @@ public class ObligationService {
                     .amountDue(obligation.getAmountDue())
                     .totalOverduePeriods(overdueCount)
                     .totalShortfall(shortfall != null ? shortfall : BigDecimal.ZERO)
+                    .totalPenalties(totalPenalties)
                     .worstStatus(overdueCount > 0 ? PeriodStatus.OVERDUE : PeriodStatus.DUE)
                     .build());
         }
@@ -142,7 +154,12 @@ public class ObligationService {
             ObligationResponse response = ObligationResponse.from(obligation);
             LocalDate periodStart = currentPeriodStart(obligation);
             periodRepository.findByObligationIdAndPeriodStart(obligation.getId(), periodStart)
-                    .ifPresent(p -> response.setCurrentPeriod(ObligationPeriodResponse.from(p)));
+                    .ifPresent(p -> {
+                        ObligationPeriodResponse pr = ObligationPeriodResponse.from(p);
+                        // Enrich with penalty data and UPCOMING/DUE computed status
+                        periodService.enrich(pr, true);
+                        response.setCurrentPeriod(pr);
+                    });
             responses.add(response);
         }
         return responses;
@@ -151,10 +168,15 @@ public class ObligationService {
     @Transactional(readOnly = true)
     public Page<ObligationPeriodResponse> getMyHistory(UUID memberId, Pageable pageable) {
         List<SavingsObligation> obligations = obligationRepository.findByMemberId(memberId);
-        List<ObligationPeriodResponse> all  = obligations.stream()
-                .flatMap(o -> periodRepository.findByObligationId(o.getId()).stream())
-                .sorted((a, b) -> b.getPeriodStart().compareTo(a.getPeriodStart()))
-                .map(ObligationPeriodResponse::from)
+        LocalDate today = LocalDate.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI);
+        List<ObligationPeriodResponse> all = obligations.stream()
+                .flatMap(o -> {
+                    LocalDate currentStart = currentPeriodStart(o);
+                    return periodRepository.findByObligationId(o.getId()).stream()
+                            .sorted((a, b) -> b.getPeriodStart().compareTo(a.getPeriodStart()))
+                            .map(p -> periodService.enrich(ObligationPeriodResponse.from(p),
+                                    p.getPeriodStart().isEqual(currentStart)));
+                })
                 .collect(Collectors.toList());
 
         int start = (int) pageable.getOffset();

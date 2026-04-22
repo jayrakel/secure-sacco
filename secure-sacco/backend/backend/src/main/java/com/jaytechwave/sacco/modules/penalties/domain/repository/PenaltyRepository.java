@@ -4,9 +4,11 @@ import com.jaytechwave.sacco.modules.penalties.domain.entity.Penalty;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -18,4 +20,10 @@ public interface PenaltyRepository extends JpaRepository<Penalty, UUID> {
 
     @Query("SELECT p FROM Penalty p JOIN FETCH p.penaltyRule WHERE p.status = :status")
     List<Penalty> findByStatusWithPenaltyRule(PenaltyStatus status);
+
+    /** Find the penalty raised for a specific obligation period. */
+    Optional<Penalty> findByReferenceTypeAndReferenceId(String referenceType, UUID referenceId);
+
+    /** All open penalties for a member — used in compliance view. */
+    List<Penalty> findByMemberIdAndStatus(UUID memberId, PenaltyStatus status);
 }

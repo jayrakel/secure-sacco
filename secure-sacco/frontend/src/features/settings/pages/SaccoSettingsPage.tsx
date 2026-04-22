@@ -6,7 +6,7 @@ import { penaltyApi } from '../../penalties/api/penalty-api';
 import type { PenaltyRule, PenaltyRuleRequest, AmountType, InterestMode } from '../../penalties/api/penalty-api';
 import { useSettings } from '../context/useSettings';
 import {
-    Building2, Shield, Bell, Zap, ToggleLeft, ToggleRight,
+    Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
     Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
     Gavel, Plus, Pencil, X, Check, TriangleAlert,
@@ -15,7 +15,7 @@ import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabId = 'identity' | 'security' | 'communication' | 'modules' | 'penalties';
+type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'modules' | 'penalties';
 
 interface SecurityPolicy {
     maxLoginAttempts: number;
@@ -36,6 +36,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] 
     { id: 'identity',      label: 'Identity',      icon: <Building2 size={15} />, desc: 'Name, branding & fees'    },
     { id: 'security',      label: 'Security',      icon: <Shield size={15} />,    desc: 'Auth, passwords & limits' },
     { id: 'communication', label: 'Communication', icon: <Bell size={15} />,      desc: 'Email sender settings'    },
+    { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
     { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
     { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
 ];
@@ -146,6 +147,15 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingComm, setSavingComm] = useState(false);
     const [dirtyComm, setDirtyComm]   = useState(false);
 
+    // ── Savings Schedule ─────────────────────────────────────────────────────
+    const DAYS_OF_WEEK = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
+    const [savingsDay,         setSavingsDay]         = useState('THURSDAY');
+    const [deadlineNextDay,    setDeadlineNextDay]    = useState(true);
+    const [deadlineHour,       setDeadlineHour]       = useState(23);
+    const [deadlineMinute,     setDeadlineMinute]     = useState(59);
+    const [savingSched,        setSavingSched]        = useState(false);
+    const [dirtySched,         setDirtySched]         = useState(false);
+
     // ── Modules ─────────────────────────────────────────────────────────────
     const [mods, setMods]         = useState<Record<string, boolean>>({ members: true, loans: false, savings: false, reports: false });
     const [savingMods, setSavingMods] = useState(false);
@@ -174,6 +184,10 @@ const SaccoSettingsPage: React.FC = () => {
                 setSec({ maxLoginAttempts: d.maxLoginAttempts ?? 5, lockoutDurationMinutes: d.lockoutDurationMinutes ?? 15, sessionTimeoutMinutes: d.sessionTimeoutMinutes ?? 30, passwordResetExpiryMin: d.passwordResetExpiryMin ?? 15, mfaTokenExpiryMinutes: d.mfaTokenExpiryMinutes ?? 5, emailVerifyExpiryHours: d.emailVerifyExpiryHours ?? 24, minPasswordLength: d.minPasswordLength ?? 12, contactVerifyRateLimit: d.contactVerifyRateLimit ?? 3, contactVerifyWindowMin: d.contactVerifyWindowMin ?? 15, rateLimitGeneralPerMin: d.rateLimitGeneralPerMin ?? 60 });
                 setFromName(d.smtpFromName || 'Secure SACCO');
                 setSuppEmail(d.supportEmail || '');
+                if (d.savingsDay)           setSavingsDay(d.savingsDay);
+                if (d.savingsDeadlineNextDay !== undefined) setDeadlineNextDay(d.savingsDeadlineNextDay);
+                if (d.savingsDeadlineHour  !== undefined) setDeadlineHour(d.savingsDeadlineHour);
+                if (d.savingsDeadlineMinute !== undefined) setDeadlineMinute(d.savingsDeadlineMinute);
             }
         }).catch(() => flash(false, 'Failed to load settings.')).finally(() => setLoading(false));
     }, []);
@@ -281,6 +295,19 @@ const SaccoSettingsPage: React.FC = () => {
         finally { setSavingSec(false); }
     };
 
+    const handleSched = async (e: React.FormEvent) => {
+        e.preventDefault(); setSavingSched(true);
+        try {
+            await settingsApi.updateSavingsSchedule({
+                savingsDay, savingsDeadlineNextDay: deadlineNextDay,
+                savingsDeadlineHour: deadlineHour, savingsDeadlineMinute: deadlineMinute,
+            });
+            setDirtySched(false);
+            flash(true, 'Savings schedule saved.');
+        } catch { flash(false, 'Failed to save savings schedule.'); }
+        finally { setSavingSched(false); }
+    };
+
     const handleComm = async (e: React.FormEvent) => {
         e.preventDefault(); setSavingComm(true);
         try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
@@ -326,7 +353,7 @@ const SaccoSettingsPage: React.FC = () => {
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                         {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
                             const active = tab === t.id;
-                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm);
+                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched);
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
                                         className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-all
@@ -514,6 +541,105 @@ const SaccoSettingsPage: React.FC = () => {
 
                             <div className="flex justify-end">
                                 <SaveBtn loading={savingComm} dirty={dirtyComm} label="Save Communication Settings" />
+                            </div>
+                        </form>
+                    )}
+
+
+                    {/* SAVINGS SCHEDULE */}
+                    {tab === 'schedule' && (
+                        <form onSubmit={handleSched} className="space-y-5">
+                            <Section
+                                title="Savings Schedule"
+                                desc="Define the day members are expected to make savings / repayments and the hard deadline for the week."
+                            >
+                                <div className="space-y-6">
+                                    {/* Savings day */}
+                                    <Field label="Savings Day" hint="The primary day of the week on which members are expected to contribute.">
+                                        <div className="grid grid-cols-7 gap-1">
+                                            {DAYS_OF_WEEK.map(d => (
+                                                <button
+                                                    key={d} type="button"
+                                                    onClick={() => { setSavingsDay(d); setDirtySched(true); }}
+                                                    className={`py-2 rounded-lg text-xs font-semibold border transition-all ` +
+                                                        (savingsDay === d
+                                                            ? 'bg-slate-900 text-white border-slate-900'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400')}
+                                                >
+                                                    {d.slice(0, 3)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-slate-400 mt-1.5">Selected: <strong>{savingsDay.charAt(0) + savingsDay.slice(1).toLowerCase()}</strong></p>
+                                    </Field>
+
+                                    {/* Deadline day */}
+                                    <Field
+                                        label="Deadline Day"
+                                        hint={deadlineNextDay
+                                            ? `Members have until the day after ${savingsDay.charAt(0) + savingsDay.slice(1).toLowerCase()} to complete payment.`
+                                            : `The deadline is the same day as savings day (${savingsDay.charAt(0) + savingsDay.slice(1).toLowerCase()}).`}
+                                    >
+                                        <div className="flex gap-3">
+                                            {[
+                                                { val: false, label: 'Same day as savings day' },
+                                                { val: true,  label: 'Next day after savings day' },
+                                            ].map(opt => (
+                                                <button
+                                                    key={String(opt.val)} type="button"
+                                                    onClick={() => { setDeadlineNextDay(opt.val); setDirtySched(true); }}
+                                                    className={`flex-1 py-2.5 rounded-lg text-xs font-semibold border transition-all ` +
+                                                        (deadlineNextDay === opt.val
+                                                            ? 'bg-slate-900 text-white border-slate-900'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400')}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </Field>
+
+                                    {/* Deadline time */}
+                                    <Field
+                                        label="Deadline Time (EAT)"
+                                        hint={`Failure to meet the obligation by ${String(deadlineHour).padStart(2,'0')}:${String(deadlineMinute).padStart(2,'0')} will trigger the SAVINGS_MISSED_CONTRIBUTION penalty.`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1">
+                                                <label className="block text-xs text-slate-500 mb-1">Hour (0–23)</label>
+                                                <input
+                                                    type="number" min={0} max={23} value={deadlineHour}
+                                                    onChange={e => { setDeadlineHour(Math.max(0, Math.min(23, parseInt(e.target.value) || 0))); setDirtySched(true); }}
+                                                    className={inputCls}
+                                                />
+                                            </div>
+                                            <span className="text-2xl font-bold text-slate-400 mt-4">:</span>
+                                            <div className="flex-1">
+                                                <label className="block text-xs text-slate-500 mb-1">Minute (0–59)</label>
+                                                <input
+                                                    type="number" min={0} max={59} value={deadlineMinute}
+                                                    onChange={e => { setDeadlineMinute(Math.max(0, Math.min(59, parseInt(e.target.value) || 0))); setDirtySched(true); }}
+                                                    className={inputCls}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800">
+                                            <strong>Summary:</strong> Members must save on{' '}
+                                            <strong>{savingsDay.charAt(0) + savingsDay.slice(1).toLowerCase()}</strong>. Deadline is{' '}
+                                            <strong>
+                                                {deadlineNextDay
+                                                    ? `${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][(DAYS_OF_WEEK.indexOf(savingsDay) + 1) % 7]}`
+                                                    : savingsDay.charAt(0) + savingsDay.slice(1).toLowerCase()}{' '}
+                                                at {String(deadlineHour).padStart(2,'0')}:{String(deadlineMinute).padStart(2,'0')} EAT
+                                            </strong>.
+                                            Members who haven't saved by this time will be marked <strong>OVERDUE</strong> and a penalty will be raised.
+                                        </div>
+                                    </Field>
+                                </div>
+                            </Section>
+
+                            <div className="flex justify-end">
+                                <SaveBtn loading={savingSched} dirty={dirtySched} label="Save Schedule" />
                             </div>
                         </form>
                     )}

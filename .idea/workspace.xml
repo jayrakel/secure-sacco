@@ -4,13 +4,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/util/SaccoDateUtils.java" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V64__add_savings_schedule_to_settings.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V65__fix_savings_schedule_column_types.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/api/dto/ObligationDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/api/dto/ObligationDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/entity/PeriodStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/entity/PeriodStatus.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationPeriodService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationPeriodService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/penalties/domain/repository/PenaltyRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/controller/SaccoSettingsController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/controller/SaccoSettingsController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/dto/SaccoSettingsDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/api/dto/SaccoSettingsDTOs.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/entity/SaccoSettings.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/entity/SaccoSettings.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/service/SaccoSettingsService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/settings/domain/service/SaccoSettingsService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/api/obligation-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/api/obligation-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/MemberObligationsSection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/MemberObligationsSection.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/ObligationHistoryTable.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/ObligationHistoryTable.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/ObligationStatusCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/components/ObligationStatusCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/pages/ObligationsCompliancePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/obligations/pages/ObligationsCompliancePage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/api/settings-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/api/settings-api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -466,15 +480,7 @@
       <workItem from="1775744784286" duration="4624000" />
       <workItem from="1776005299553" duration="3171000" />
       <workItem from="1776496758008" duration="3484000" />
-      <workItem from="1776747916275" duration="10615000" />
-    </task>
-    <task id="LOCAL-00037" summary="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
-      <option name="closed" value="true" />
-      <created>1774863565459</created>
-      <option name="number" value="00037" />
-      <option name="presentableId" value="LOCAL-00037" />
-      <option name="project" value="LOCAL" />
-      <updated>1774863565460</updated>
+      <workItem from="1776747916275" duration="16221000" />
     </task>
     <task id="LOCAL-00038" summary="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations">
       <option name="closed" value="true" />
@@ -860,7 +866,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776756315201</updated>
     </task>
-    <option name="localTasksCounter" value="86" />
+    <task id="LOCAL-00086" summary="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling">
+      <option name="closed" value="true" />
+      <created>1776779935060</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
+      <option name="project" value="LOCAL" />
+      <updated>1776779935060</updated>
+    </task>
+    <option name="localTasksCounter" value="87" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -882,7 +896,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: add branding URL fields and update database schema for logo and favicon" />
     <MESSAGE value="feat: add public legal pages and update session handling for unauthenticated access" />
     <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
     <MESSAGE value="feat: enhance Trusted Types handling with improved TypeScript interface" />
@@ -907,7 +920,8 @@
     <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic" />
     <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field" />
     <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
+    <MESSAGE value="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

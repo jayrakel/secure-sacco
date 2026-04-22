@@ -61,6 +61,11 @@ public class SaccoSettingsController {
                     Map.entry("contactVerifyRateLimit",  s.getContactVerifyRateLimit()),
                     Map.entry("contactVerifyWindowMin",  s.getContactVerifyWindowMin()),
                     Map.entry("rateLimitGeneralPerMin",  s.getRateLimitGeneralPerMin()),
+                    // Savings schedule
+                    Map.entry("savingsDay",              s.getSavingsDay()             != null ? s.getSavingsDay()             : "THURSDAY"),
+                    Map.entry("savingsDeadlineNextDay",  s.getSavingsDeadlineNextDay() != null ? s.getSavingsDeadlineNextDay() : true),
+                    Map.entry("savingsDeadlineHour",     s.getSavingsDeadlineHour()    != null ? s.getSavingsDeadlineHour()    : 23),
+                    Map.entry("savingsDeadlineMinute",   s.getSavingsDeadlineMinute()  != null ? s.getSavingsDeadlineMinute()  : 59),
                     // Modules
                     Map.entry("enabledModules", s.getEnabledModules())
             ));
@@ -161,4 +166,25 @@ public class SaccoSettingsController {
             return request.getRemoteAddr();
         return xf.split(",")[0];
     }
+
+    // ── Savings schedule ──────────────────────────────────────────────────────
+
+    @Operation(summary = "Update savings day and deadline settings")
+    @PutMapping("/savings-schedule")
+    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<?> updateSavingsSchedule(
+            @Valid @RequestBody UpdateSavingsScheduleRequest req) {
+        try {
+            SaccoSettings s = settingsService.updateSavingsSchedule(req);
+            return ResponseEntity.ok(Map.of(
+                    "savingsDay",             s.getSavingsDay(),
+                    "savingsDeadlineNextDay", s.getSavingsDeadlineNextDay(),
+                    "savingsDeadlineHour",    s.getSavingsDeadlineHour(),
+                    "savingsDeadlineMinute",  s.getSavingsDeadlineMinute()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
