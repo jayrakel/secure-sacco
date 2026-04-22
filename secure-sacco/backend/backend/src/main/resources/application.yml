@@ -48,7 +48,7 @@ spring:
       hibernate:
         format_sql: true
         jdbc:
-          time_zone: UTC
+          time_zone: Africa/Nairobi
 
   flyway:
     enabled: true
@@ -56,7 +56,7 @@ spring:
     baseline-on-migrate: false
 
   jackson:
-    time-zone: UTC
+    time-zone: Africa/Nairobi
 
   # ── Outgoing email (Resend HTTP API) ─────────────────────────────────────
   # Resend sends over HTTPS (port 443) — no SMTP port restrictions.
@@ -168,4 +168,3 @@ springdoc:
     display-request-duration: true
   packages-to-scan: com.jaytechwave.sacco.modules
   paths-to-exclude: /actuator/**
-

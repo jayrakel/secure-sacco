@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/util/SaccoDateUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingPenaltyService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/meetings/domain/service/MeetingPenaltyService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationPeriodService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/obligations/domain/service/ObligationPeriodService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -462,15 +466,7 @@
       <workItem from="1775744784286" duration="4624000" />
       <workItem from="1776005299553" duration="3171000" />
       <workItem from="1776496758008" duration="3484000" />
-      <workItem from="1776747916275" duration="6968000" />
-    </task>
-    <task id="LOCAL-00036" summary="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
-      <option name="closed" value="true" />
-      <created>1774643663489</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1774643663489</updated>
+      <workItem from="1776747916275" duration="10615000" />
     </task>
     <task id="LOCAL-00037" summary="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
       <option name="closed" value="true" />
@@ -856,7 +852,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776753762013</updated>
     </task>
-    <option name="localTasksCounter" value="85" />
+    <task id="LOCAL-00085" summary="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug">
+      <option name="closed" value="true" />
+      <created>1776756315201</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1776756315201</updated>
+    </task>
+    <option name="localTasksCounter" value="86" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -878,7 +882,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: backdate loan application timestamps for historical accuracy" />
     <MESSAGE value="feat: add branding URL fields and update database schema for logo and favicon" />
     <MESSAGE value="feat: add public legal pages and update session handling for unauthenticated access" />
     <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
@@ -903,7 +906,8 @@
     <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties" />
     <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic" />
     <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field" />
-    <option name="LAST_COMMIT_MESSAGE" value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field" />
+    <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

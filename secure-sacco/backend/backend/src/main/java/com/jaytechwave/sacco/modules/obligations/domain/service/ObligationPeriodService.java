@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -74,7 +75,7 @@ public class ObligationPeriodService {
 
         if (obligation.getStatus() == ObligationStatus.PAUSED) return false;
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(SaccoDateUtils.NAIROBI);
         LocalDate periodStart = currentPeriodStart(obligation, today);
 
         // 🟢 FIX 1: Dynamically set the period end based on frequency so grace periods calculate correctly
@@ -197,10 +198,12 @@ public class ObligationPeriodService {
 
         UUID accrualId = UUID.randomUUID();
         PenaltyAccrual accrual = PenaltyAccrual.builder()
-                .id(accrualId)
+                // NOTE: Do NOT set .id() here — same reason as MeetingPenaltyService.
+                // Setting an ID on a new entity causes Hibernate to treat it as detached.
+                // accrualId is still used for journalReference so the link is preserved.
                 .accrualKind(AccrualKind.PRINCIPAL)
                 .amount(penaltyAmount)
-                .accruedAt(java.time.LocalDateTime.now())
+                .accruedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .idempotencyKey(idempotencyKey)
                 .journalReference("PENC-" + accrualId)
                 .build();
