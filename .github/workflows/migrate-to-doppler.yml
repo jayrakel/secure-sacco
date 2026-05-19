@@ -1,4 +1,4 @@
-name: Migrate GitHub Secrets to Doppler (Staging)
+name: Migrate GitHub Secrets to Doppler (Staging Safe)
 
 on:
   workflow_dispatch:
@@ -10,6 +10,11 @@ jobs:
     steps:
       - name: Install Doppler CLI
         uses: dopplerhq/cli-action@v3
+
+      - name: Validate secrets exist
+        run: |
+          test -n "${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}" || (echo "Missing APP_DEFAULT_ADMIN_PASSWORD" && exit 1)
+          test -n "${{ secrets.MPESA_CONSUMER_KEY }}" || (echo "Missing MPESA_CONSUMER_KEY" && exit 1)
 
       - name: Push secrets to Doppler
         env:
