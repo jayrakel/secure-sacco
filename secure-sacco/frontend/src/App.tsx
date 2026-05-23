@@ -47,6 +47,7 @@ import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
 import SupportPage from './features/legal/pages/SupportPage';
 import StaffExpenseClaimsPage from './features/expense/pages/StaffExpenseClaimsPage';
 import MyExpenseClaimsPage from './features/expense/pages/MyExpenseClaimsPage';
+import StaffAssetsPage from './features/assets/pages/StaffAssetsPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -331,6 +332,19 @@ function App() {
                                 <Route path="/my-expense-claims" element={
                                     <ProtectedRoute>
                                         <MyExpenseClaimsPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* SAC-221: Asset Management Module */}
+                                <Route path="/assets" element={
+                                    <ProtectedRoute>
+                                        <HasPermission permissions={['ASSET_READ', 'ROLE_SYSTEM_ADMIN']} fallback={
+                                            <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
+                                                Access Denied: You need the ASSET_READ permission.
+                                            </div>
+                                        }>
+                                            <StaffAssetsPage />
+                                        </HasPermission>
                                     </ProtectedRoute>
                                 } />
 

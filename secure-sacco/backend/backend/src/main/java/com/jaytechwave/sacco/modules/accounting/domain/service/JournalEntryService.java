@@ -434,8 +434,65 @@ public class JournalEntryService {
     }
 
     // =========================================================================
-    // INTERNAL — saves without triggering the audit log (used by templates)
+    // SAC-221: ASSET ACQUISITION TEMPLATE
     // =========================================================================
+
+    /**
+     * Posts the GL entry for a newly registered SACCO-owned fixed asset.
+     *
+     * <pre>
+     *   DR {assetGlCode}  Fixed Asset account (from AssetCategory)  ← asset acquired
+     *   CR 1110           Main Bank Account                          ← cash paid out
+     * </pre>
+     *
+     * Idempotency: skips silently if {@code ASSET-{assetId}} has already been posted.
+     *
+     * @param assetId      UUID of the {@code SaccoAsset} being registered
+     * @param assetName    display name used in journal line descriptions
+     * @param cost         acquisition cost (must be &gt; 0)
+     * @param glAccountCode the fixed asset GL account code derived from the asset's category
+     */
+    @Transactional
+    public void postAssetAcquisition(UUID assetId, String assetName, BigDecimal cost, String glAccountCode) {
+        String journalRef = "ASSET-" + assetId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        Account assetAccount = accountRepository.findByAccountCode(glAccountCode)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Asset GL account " + glAccountCode + " not found. Ensure V45 migration has run."));
+        Account bankAccount = accountRepository.findByAccountCode("1110")
+                .orElseThrow(() -> new IllegalStateException(
+                        "System Account 1110 (Main Bank Account) not found. Ensure V10_1 migration has run."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description("Asset acquisition: " + assetName)
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(assetAccount)
+                .debitAmount(cost)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Asset acquisition (DR) - " + assetName)
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(bankAccount)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(cost)
+                .description("Asset acquisition (CR) - " + assetName)
+                .build());
+
+        journalEntryRepository.save(entry);
+        log.info("SAC-221: Posted asset acquisition GL entry {} for '{}' cost={}", journalRef, assetName, cost);
+    }
+
+
 
     private JournalEntryResponse postEntryInternal(CreateJournalEntryRequest request) {
         if (journalEntryRepository.existsByReferenceNumber(request.referenceNumber())) {

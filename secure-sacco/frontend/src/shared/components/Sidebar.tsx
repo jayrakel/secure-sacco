@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt,
+    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -69,6 +69,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
                 { label: 'Penalties', path: '/staff/penalties', icon: AlertCircle, requiredPermission: 'PENALTIES_WAIVE_ADJUST' },
                 { label: 'Expense Claims', path: '/expense/claims', icon: Receipt, requiredPermission: 'EXPENSE_CLAIMS_APPROVE' },
+                { label: 'Asset Register',  path: '/assets',         icon: Package, requiredPermission: 'ASSET_READ' },
             ],
         },
         {
