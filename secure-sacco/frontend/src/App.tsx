@@ -45,6 +45,8 @@ import MigrationPage from './features/migration/pages/MigrationPage';
 import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
 import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
 import SupportPage from './features/legal/pages/SupportPage';
+import StaffExpenseClaimsPage from './features/expense/pages/StaffExpenseClaimsPage';
+import MyExpenseClaimsPage from './features/expense/pages/MyExpenseClaimsPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -310,6 +312,25 @@ function App() {
                                 <Route path="/security" element={
                                     <ProtectedRoute>
                                         <SecuritySettingsPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* SAC-220: Expense Reimbursement Module */}
+                                <Route path="/expense/claims" element={
+                                    <ProtectedRoute>
+                                        <HasPermission permissions={['EXPENSE_CLAIMS_APPROVE', 'ROLE_SYSTEM_ADMIN']} fallback={
+                                            <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
+                                                Access Denied: You need the EXPENSE_CLAIMS_APPROVE permission.
+                                            </div>
+                                        }>
+                                            <StaffExpenseClaimsPage />
+                                        </HasPermission>
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/my-expense-claims" element={
+                                    <ProtectedRoute>
+                                        <MyExpenseClaimsPage />
                                     </ProtectedRoute>
                                 } />
 

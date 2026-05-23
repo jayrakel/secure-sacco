@@ -373,6 +373,67 @@ public class JournalEntryService {
     }
 
     // =========================================================================
+    // SAC-220: EXPENSE REIMBURSEMENT TEMPLATE
+    // =========================================================================
+
+    /**
+     * Posts the GL entry for an approved member expense reimbursement claim.
+     *
+     * <pre>
+     *   DR 5360 Member Expense Reimbursement (EXPENSE)   ← cost to the SACCO
+     *   CR 2190 Member Reimbursement Payable  (LIABILITY) ← SACCO now owes member
+     * </pre>
+     *
+     * No audit log here — the caller ({@code ExpenseClaimService.reviewClaim})
+     * already writes the business-level {@code EXPENSE_CLAIM_APPROVED} event.
+     *
+     * @param memberId the member whose out-of-pocket expense is being reimbursed
+     * @param amount   the approved reimbursement amount
+     * @param claimId  the UUID of the {@code ExpenseClaim} (used in the reference)
+     */
+    @Transactional
+    public void postExpenseReimbursementClaim(UUID memberId, BigDecimal amount, String claimId) {
+        String journalRef = "EXP-" + claimId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        Account expenseAccount = accountRepository.findByAccountCode("5360")
+                .orElseThrow(() -> new IllegalStateException(
+                        "System Account 5360 (Member Expense Reimbursement) not found. Run V67 migration."));
+        Account payableAccount = accountRepository.findByAccountCode("2190")
+                .orElseThrow(() -> new IllegalStateException(
+                        "System Account 2190 (Member Reimbursement Payable) not found. Run V67 migration."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description("Member expense reimbursement approved")
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(expenseAccount)
+                .memberId(memberId)
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Member Expense Reimbursement - Debit")
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(payableAccount)
+                .memberId(memberId)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Member Reimbursement Payable - Credit")
+                .build());
+
+        journalEntryRepository.save(entry);
+        log.info("SAC-220: Posted expense reimbursement GL entry {} for member {} amount {}", journalRef, memberId, amount);
+    }
+
+    // =========================================================================
     // INTERNAL — saves without triggering the audit log (used by templates)
     // =========================================================================
 

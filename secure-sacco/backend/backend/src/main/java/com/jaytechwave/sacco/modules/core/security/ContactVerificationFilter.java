@@ -110,6 +110,22 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Phone verification is currently disabled in the system.
+        // Once Africa's Talking is integrated, we will uncomment the block below.
+        /*
+        if (!user.isPhoneVerified()) {
+            log.warn("User {} accessed {} before phone verification (phoneVerified={}).",
+                    auth.getName(), path, user.isPhoneVerified());
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                    "{\"error\":\"CONTACT_VERIFICATION_REQUIRED\"," +
+                            "\"message\":\"You must verify your phone number before continuing.\"}"
+            );
+            return;
+        }
+        */
+
         chain.doFilter(request, response);
     }
 }

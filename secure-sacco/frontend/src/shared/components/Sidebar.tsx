@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database,
+    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -68,6 +68,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Savings Compliance', path: '/savings/obligations', icon: ShieldCheck, module: 'savings', requiredPermission: 'SAVINGS_OBLIGATIONS_MANAGE' },
                 { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
                 { label: 'Penalties', path: '/staff/penalties', icon: AlertCircle, requiredPermission: 'PENALTIES_WAIVE_ADJUST' },
+                { label: 'Expense Claims', path: '/expense/claims', icon: Receipt, requiredPermission: 'EXPENSE_CLAIMS_APPROVE' },
             ],
         },
         {
@@ -102,10 +103,11 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
         {
             sectionLabel: 'My Accounts',
             items: [
-                { label: 'Savings Vault', path: '/savings',      icon: PiggyBank,  module: 'savings' },
-                { label: 'My Loans',      path: '/my-loans',     icon: Coins,      module: 'loans' },
-                { label: 'Penalties',     path: '/my-penalties', icon: AlertCircle },
-                { label: 'My Meetings',   path: '/my-meetings',  icon: CalendarDays },
+                { label: 'Savings Vault', path: '/savings',           icon: PiggyBank,  module: 'savings' },
+                { label: 'My Loans',      path: '/my-loans',          icon: Coins,      module: 'loans' },
+                { label: 'Penalties',     path: '/my-penalties',      icon: AlertCircle },
+                { label: 'My Meetings',   path: '/my-meetings',       icon: CalendarDays },
+                { label: 'Expense Claims', path: '/my-expense-claims', icon: Receipt },
             ],
         },
         {
