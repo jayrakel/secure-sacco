@@ -25,7 +25,8 @@ class MpesaIpWhitelistFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new MpesaIpWhitelistFilter(ALLOWED_IPS);
+        // bypassIpWhitelist=false → enforce the allowlist (what all tests here verify)
+        filter = new MpesaIpWhitelistFilter(ALLOWED_IPS, false);
     }
 
     // ─── Allowed IPs ──────────────────────────────────────────────────
