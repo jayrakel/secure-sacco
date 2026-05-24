@@ -18,37 +18,37 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(expense-reimbursement): enable direct member submissions and savings credits&#10;&#10;- Add `submitMyExpenseClaim` API for members to self-submit SACCO claims&#10;- Enhance admin review flow: approved claims now credit member savings&#10;- Update UI for real-time claim submissions and credit confirmations&#10;- Add search-powered member picker to streamline admin submissions&#10;- Refactor frontend expenses pages with reusable utilities">
-      <changelist_data name="jayrakel" email="gesorajonathan@gmail.com" automatic="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/db-forest-config.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/db-forest-config.xml" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add expense reimbursement functionality for members to submit claims">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/service/JournalEntryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/accounting/domain/service/JournalEntryService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/assets/domain/service/AssetService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/assets/domain/service/AssetService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/expense/api/controller/ExpenseClaimController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/expense/api/controller/ExpenseClaimController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/expense/api/dto/ExpenseClaimDTOs.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/expense/api/dto/ExpenseClaimDTOs.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/expense/domain/service/ExpenseClaimService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/expense/domain/service/ExpenseClaimService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/DarajaApiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/DarajaApiService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/entity/SavingsTransaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/entity/SavingsTransaction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/entity/TransactionChannel.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/entity/TransactionChannel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/entity/TransactionType.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/entity/TransactionType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/repository/SavingsTransactionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/repository/SavingsTransactionRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/service/SavingsService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/savings/domain/service/SavingsService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-dev.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-dev.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/MemberDashboardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/MemberDashboardPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/dashboard/pages/UnifiedStaffDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/expense/api/expense-api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/expense/api/expense-api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/expense/pages/MyExpenseClaimsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/expense/pages/MyExpenseClaimsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/expense/pages/StaffExpenseClaimsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/expense/pages/StaffExpenseClaimsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/savings/pages/MemberSavingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/savings/pages/MemberSavingsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/eslint.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/eslint.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/setup/pages/SetupWizardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/setup/pages/SetupWizardPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="CopilotChats">
+    <option name="panelChat">
+      <chat>
+        <option name="activeSessionId" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
+        <option name="sessions">
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
+            <option name="modeId" value="Ask" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+        </option>
+        <option name="type" value="PANEL" />
+      </chat>
+    </option>
+  </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
+      <entry key="_/home/jay-techwave-solutions/Desktop/secure-sacco/secure-sacco/backend/backend" value="3EAJIRauf9aItomUNoFgyKR06lw" />
       <entry key="_C:/Users/JAY/OneDrive/Desktop/secure-sacco" value="3BS07ua0EqtAaZS9eFMKNL1lX4E" />
       <entry key="_C:/Users/JAY/OneDrive/Desktop/secure-sacco/secure-sacco/backend/backend" value="3BXNovXhZFWndXaFvJRMsBOWmrz" />
     </persistenceIdMap>
@@ -575,14 +575,7 @@
       <workItem from="1779538348636" duration="2004000" />
       <workItem from="1779613907434" duration="412000" />
       <workItem from="1779614415307" duration="892000" />
-    </task>
-    <task id="LOCAL-00038" summary="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations">
-      <option name="closed" value="true" />
-      <created>1774864469482</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
-      <option name="project" value="LOCAL" />
-      <updated>1774864469482</updated>
+      <workItem from="1779615374199" duration="890000" />
     </task>
     <task id="LOCAL-00039" summary="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
       <option name="closed" value="true" />
@@ -968,7 +961,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776779935060</updated>
     </task>
-    <option name="localTasksCounter" value="87" />
+    <task id="LOCAL-00087" summary="feat: add expense reimbursement functionality for members to submit claims">
+      <option name="closed" value="true" />
+      <created>1779615628111</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1779615628112</updated>
+    </task>
+    <option name="localTasksCounter" value="88" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -990,7 +991,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: add public legal pages and update session handling for unauthenticated access" />
     <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
     <MESSAGE value="feat: enhance Trusted Types handling with improved TypeScript interface" />
     <MESSAGE value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
@@ -1015,7 +1015,8 @@
     <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field" />
     <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
     <MESSAGE value="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="" />
+    <MESSAGE value="feat: add expense reimbursement functionality for members to submit claims" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add expense reimbursement functionality for members to submit claims" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

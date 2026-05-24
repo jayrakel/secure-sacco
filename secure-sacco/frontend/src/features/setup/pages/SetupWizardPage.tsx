@@ -99,11 +99,11 @@ const VerifyContactStep: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     const [emailSent,    setEmailSent]    = useState(false);
     const [emailToken,   setEmailToken]   = useState('');
     const [emailDone,    setEmailDone]    = useState(user?.emailVerified ?? false);
-    const [phoneSent,    setPhoneSent]    = useState(false);
-    const [phoneOtp,     setPhoneOtp]     = useState('');
+    const [_phoneSent,   setPhoneSent]    = useState(false);
+    const [_phoneOtp,    setPhoneOtp]     = useState('');
     // PHONE VERIFICATION BYPASSED — set to true until Africa's Talking is integrated.
     // To re-enable: change `true` back to `user?.phoneVerified ?? false`
-    const [phoneDone,    setPhoneDone]    = useState(true);
+    const [_phoneDone,   setPhoneDone]    = useState(true);
     const [loading,      setLoading]      = useState(false);
     const [error,        setError]        = useState('');
     const [successMsg,   setSuccessMsg]   = useState('');
@@ -125,15 +125,8 @@ const VerifyContactStep: React.FC<{ onDone: () => void }> = ({ onDone }) => {
         setEmailDone(true); await refreshUser();
         setSuccessMsg('Email verified ✓');
     });
-    const sendPhone = () => act(async () => {
-        await setupApi.sendPhoneOtp(); setPhoneSent(true);
-        setSuccessMsg('OTP sent to your registered phone.');
-    });
-    const confirmPhone = () => act(async () => {
-        await setupApi.confirmPhone(phoneOtp.trim());
-        setPhoneDone(true); await refreshUser();
-        setSuccessMsg('Phone verified ✓');
-    });
+    // _sendPhone / _confirmPhone removed until Africa's Talking phone OTP is integrated.
+    // State vars (_phoneSent, _phoneOtp, _phoneDone) remain for re-enabling later.
 
     // Only email is required until phone verification is re-enabled
     const canContinue = emailDone;
