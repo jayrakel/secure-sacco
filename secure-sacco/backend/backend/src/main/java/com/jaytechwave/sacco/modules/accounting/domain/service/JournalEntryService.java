@@ -373,8 +373,130 @@ public class JournalEntryService {
     }
 
     // =========================================================================
-    // INTERNAL — saves without triggering the audit log (used by templates)
+    // SAC-220: EXPENSE REIMBURSEMENT TEMPLATE
     // =========================================================================
+
+    /**
+     * Posts the GL entry for an approved member expense reimbursement claim.
+     *
+     * <pre>
+     *   DR 5360 Member Expense Reimbursement (EXPENSE)
+     *   CR 2100 Member Savings Deposits       (LIABILITY)
+     * </pre>
+     * The credit goes directly into the member's savings pool — the member
+     * will see this reimbursement in their savings history like a regular deposit.
+     *
+     * No audit log here — the caller ({@code ExpenseClaimService.reviewClaim})
+     * already writes the business-level {@code EXPENSE_CLAIM_APPROVED} event.
+     *
+     * @param memberId the member whose out-of-pocket expense is being reimbursed
+     * @param amount   the approved reimbursement amount
+     * @param claimId  the UUID of the {@code ExpenseClaim} (used in the reference)
+     */
+    @Transactional
+    public void postExpenseReimbursementClaim(UUID memberId, BigDecimal amount, String claimId) {
+        String journalRef = "EXP-" + claimId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        Account expenseAccount = accountRepository.findByAccountCode("5360")
+                .orElseThrow(() -> new IllegalStateException(
+                        "System Account 5360 (Member Expense Reimbursement) not found. Run V67 migration."));
+        // Credit goes to member savings deposits (2100), not to payable (2190).
+        // This immediately increases the member's savings balance on approval.
+        Account savingsAccount = accountRepository.findByAccountCode("2100")
+                .orElseThrow(() -> new IllegalStateException(
+                        "System Account 2100 (Member Savings Deposits) not found."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description("Expense reimbursement credited to member savings — claim " + claimId)
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(expenseAccount)
+                .memberId(memberId)
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Expense reimbursement — debit expense account 5360")
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(savingsAccount)
+                .memberId(memberId)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Expense reimbursement — credit member savings 2100")
+                .build());
+
+        journalEntryRepository.save(entry);
+        log.info("SAC-220: Posted expense reimbursement GL entry {} for member {} amount {}", journalRef, memberId, amount);
+    }
+
+    // =========================================================================
+    // SAC-221: ASSET ACQUISITION TEMPLATE
+    // =========================================================================
+
+    /**
+     * Posts the GL entry for a newly registered SACCO-owned fixed asset.
+     *
+     * <pre>
+     *   DR {assetGlCode}  Fixed Asset account (from AssetCategory)  ← asset acquired
+     *   CR 1110           Main Bank Account                          ← cash paid out
+     * </pre>
+     *
+     * Idempotency: skips silently if {@code ASSET-{assetId}} has already been posted.
+     *
+     * @param assetId      UUID of the {@code SaccoAsset} being registered
+     * @param assetName    display name used in journal line descriptions
+     * @param cost         acquisition cost (must be &gt; 0)
+     * @param glAccountCode the fixed asset GL account code derived from the asset's category
+     */
+    @Transactional
+    public void postAssetAcquisition(UUID assetId, String assetName, BigDecimal cost, String glAccountCode) {
+        String journalRef = "ASSET-" + assetId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        Account assetAccount = accountRepository.findByAccountCode(glAccountCode)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Asset GL account " + glAccountCode + " not found. Ensure V45 migration has run."));
+        Account bankAccount = accountRepository.findByAccountCode("1110")
+                .orElseThrow(() -> new IllegalStateException(
+                        "System Account 1110 (Main Bank Account) not found. Ensure V10_1 migration has run."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description("Asset acquisition: " + assetName)
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(assetAccount)
+                .debitAmount(cost)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Asset acquisition (DR) - " + assetName)
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(bankAccount)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(cost)
+                .description("Asset acquisition (CR) - " + assetName)
+                .build());
+
+        journalEntryRepository.save(entry);
+        log.info("SAC-221: Posted asset acquisition GL entry {} for '{}' cost={}", journalRef, assetName, cost);
+    }
+
+
 
     private JournalEntryResponse postEntryInternal(CreateJournalEntryRequest request) {
         if (journalEntryRepository.existsByReferenceNumber(request.referenceNumber())) {
