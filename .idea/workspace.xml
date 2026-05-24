@@ -18,9 +18,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: add expense reimbursement functionality for members to submit claims">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/eslint.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/eslint.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/expense/domain/service/ExpenseClaimServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/expense/domain/service/ExpenseClaimServiceTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/setup/pages/SetupWizardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/setup/pages/SetupWizardPage.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -575,23 +575,7 @@
       <workItem from="1779538348636" duration="2004000" />
       <workItem from="1779613907434" duration="412000" />
       <workItem from="1779614415307" duration="892000" />
-      <workItem from="1779615374199" duration="890000" />
-    </task>
-    <task id="LOCAL-00039" summary="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
-      <option name="closed" value="true" />
-      <created>1774865253264</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1774865253264</updated>
-    </task>
-    <task id="LOCAL-00040" summary="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
-      <option name="closed" value="true" />
-      <created>1774866996485</created>
-      <option name="number" value="00040" />
-      <option name="presentableId" value="LOCAL-00040" />
-      <option name="project" value="LOCAL" />
-      <updated>1774866996486</updated>
+      <workItem from="1779615374199" duration="2370000" />
     </task>
     <task id="LOCAL-00041" summary="feat: add refinance loan functionality and historical penalty migration support">
       <option name="closed" value="true" />
@@ -969,7 +953,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779615628112</updated>
     </task>
-    <option name="localTasksCounter" value="88" />
+    <task id="LOCAL-00088" summary="fix(expense): credit reimbursements to savings and pass lint&#10;&#10;- Fix calculateBalance JPQL to count EXPENSE_REIMBURSEMENT as credit&#10;  (old ELSE branch was deducting it, breaking member balance display)&#10;- Add idempotent V71 migration: widens savings_transactions enum&#10;  columns to VARCHAR(30), recreates v_member_savings_balance and&#10;  v_member_financial_overview dropped by CASCADE&#10;- Show EXPENSE_REIMBURSEMENT as green credit entry in member savings&#10;  statement (gift icon, + prefix, &quot;Expense Reimbursement&quot; label)&#10;- Downgrade react-hooks v7 set-state-in-effect/static-components/&#10;  immutability rules to warn so CI is not blocked by false positives&#10;- Remove dead phone-OTP functions bypassed pending Africa's Talking">
+      <option name="closed" value="true" />
+      <created>1779616987450</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1779616987450</updated>
+    </task>
+    <task id="LOCAL-00089" summary="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify.">
+      <option name="closed" value="true" />
+      <created>1779617008993</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1779617008993</updated>
+    </task>
+    <option name="localTasksCounter" value="90" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -991,8 +991,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: update Trusted Types handling and add react-qr-code dependency" />
-    <MESSAGE value="feat: enhance Trusted Types handling with improved TypeScript interface" />
     <MESSAGE value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
     <MESSAGE value="feat: fix 500 error on settings endpoint by ensuring branding URLs are never NULL" />
     <MESSAGE value="feat: add update obligation API and security policy fields to settings" />
@@ -1016,7 +1014,9 @@
     <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
     <MESSAGE value="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling" />
     <MESSAGE value="feat: add expense reimbursement functionality for members to submit claims" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: add expense reimbursement functionality for members to submit claims" />
+    <MESSAGE value="fix(expense): credit reimbursements to savings and pass lint&#10;&#10;- Fix calculateBalance JPQL to count EXPENSE_REIMBURSEMENT as credit&#10;  (old ELSE branch was deducting it, breaking member balance display)&#10;- Add idempotent V71 migration: widens savings_transactions enum&#10;  columns to VARCHAR(30), recreates v_member_savings_balance and&#10;  v_member_financial_overview dropped by CASCADE&#10;- Show EXPENSE_REIMBURSEMENT as green credit entry in member savings&#10;  statement (gift icon, + prefix, &quot;Expense Reimbursement&quot; label)&#10;- Downgrade react-hooks v7 set-state-in-effect/static-components/&#10;  immutability rules to warn so CI is not blocked by false positives&#10;- Remove dead phone-OTP functions bypassed pending Africa's Talking" />
+    <MESSAGE value="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify." />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

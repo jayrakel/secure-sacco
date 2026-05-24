@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimRepos
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +47,9 @@ class ExpenseClaimServiceTest {
     @Mock private UserRepository         userRepository;
     @Mock private JournalEntryService    journalEntryService;
     @Mock private SecurityAuditService   securityAuditService;
+    // SavingsService is called by ExpenseClaimService on approval to credit
+    // the member's savings vault (SAC-220 reimbursement workflow).
+    @Mock private SavingsService         savingsService;
 
     @InjectMocks
     private ExpenseClaimService expenseClaimService;
@@ -157,9 +161,12 @@ class ExpenseClaimServiceTest {
         assertThat(response.status()).isEqualTo("APPROVED");
         assertThat(response.journalReference()).isEqualTo("EXP-" + claimId);
 
-        // CRITICAL: exactly one GL entry must be posted
-        verify(journalEntryService, times(1))
-                .postExpenseReimbursementClaim(memberId, new BigDecimal("750.00"), claimId.toString());
+        // CRITICAL: savings credit must be posted (DR 5360 / CR 2100 inside SavingsService)
+        verify(savingsService, times(1))
+                .creditExpenseReimbursement(memberId, new BigDecimal("750.00"), claimId);
+
+        // GL journal entry is handled inside savingsService — must NOT be called directly
+        verify(journalEntryService, never()).postExpenseReimbursementClaim(any(), any(), any());
 
         verify(securityAuditService).logEventWithActorAndIp(
                 eq(staffEmail), eq("EXPENSE_CLAIM_APPROVED"), anyString(), eq("127.0.0.1"), anyString()
@@ -210,7 +217,8 @@ class ExpenseClaimServiceTest {
                 .status(ExpenseClaimStatus.PENDING).build();
 
         when(expenseClaimRepository.findById(claimId)).thenReturn(Optional.of(pendingClaim));
-        when(userRepository.findByEmail(staffEmail)).thenReturn(Optional.of(reviewerUser));
+        // NOTE: reviewClaim validates the rejection reason BEFORE loading the reviewer user,
+        // so no stub for userRepository is needed here — it would be flagged as unnecessary.
 
         ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(false, "");
 
@@ -219,6 +227,7 @@ class ExpenseClaimServiceTest {
                 .hasMessageContaining("Rejection reason");
 
         verify(journalEntryService, never()).postExpenseReimbursementClaim(any(), any(), any());
+        verify(savingsService, never()).creditExpenseReimbursement(any(), any(), any());
     }
 
     // ── Idempotency guard ─────────────────────────────────────────────────────
@@ -232,7 +241,8 @@ class ExpenseClaimServiceTest {
                 .status(ExpenseClaimStatus.APPROVED).build();
 
         when(expenseClaimRepository.findById(claimId)).thenReturn(Optional.of(alreadyApproved));
-        when(userRepository.findByEmail(staffEmail)).thenReturn(Optional.of(reviewerUser));
+        // NOTE: reviewClaim checks status BEFORE loading the reviewer user — the status
+        // guard throws immediately, so userRepository is never called here.
 
         ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null);
 
@@ -241,6 +251,7 @@ class ExpenseClaimServiceTest {
                 .hasMessageContaining("APPROVED");
 
         verify(journalEntryService, never()).postExpenseReimbursementClaim(any(), any(), any());
+        verify(savingsService, never()).creditExpenseReimbursement(any(), any(), any());
         verify(expenseClaimRepository, never()).save(any());
     }
 }

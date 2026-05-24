@@ -99,11 +99,10 @@ const VerifyContactStep: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     const [emailSent,    setEmailSent]    = useState(false);
     const [emailToken,   setEmailToken]   = useState('');
     const [emailDone,    setEmailDone]    = useState(user?.emailVerified ?? false);
-    const [_phoneSent,   setPhoneSent]    = useState(false);
-    const [_phoneOtp,    setPhoneOtp]     = useState('');
-    // PHONE VERIFICATION BYPASSED — set to true until Africa's Talking is integrated.
-    // To re-enable: change `true` back to `user?.phoneVerified ?? false`
-    const [_phoneDone,   setPhoneDone]    = useState(true);
+    // PHONE VERIFICATION BYPASSED — Africa's Talking not yet integrated.
+    // When re-enabling, restore: const [phoneSent, setPhoneSent], [phoneOtp, setPhoneOtp],
+    //   [phoneDone, setPhoneDone] = useState(user?.phoneVerified ?? false)
+
     const [loading,      setLoading]      = useState(false);
     const [error,        setError]        = useState('');
     const [successMsg,   setSuccessMsg]   = useState('');
