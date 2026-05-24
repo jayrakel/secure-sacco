@@ -6,7 +6,7 @@ import com.jaytechwave.sacco.modules.assets.domain.entity.AssetStatus;
 import com.jaytechwave.sacco.modules.assets.domain.entity.SaccoAsset;
 import com.jaytechwave.sacco.modules.assets.domain.repository.AssetRepository;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
-import com.jaytechwave.sacco.modules.audit.domain.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,10 +82,11 @@ public class AssetService {
         saved = assetRepository.save(saved);
 
         securityAuditService.logEvent(
-                actorEmail, "ASSET_REGISTERED",
-                "Asset registered: " + saved.getAssetName()
-                        + " [" + saved.getCategory() + "] cost=" + saved.getPurchaseCost()
-                        + " ref=" + journalRef
+                "ASSET_REGISTERED",
+                "ASSET-" + saved.getId(),
+                String.format("Asset registered by %s: %s [%s] cost=%s ref=%s",
+                        actorEmail, saved.getAssetName(), saved.getCategory(),
+                        saved.getPurchaseCost(), journalRef)
         );
 
         log.info("SAC-221: Asset {} registered by {} ref={}", saved.getId(), actorEmail, journalRef);
@@ -131,10 +132,12 @@ public class AssetService {
         SaccoAsset saved = assetRepository.save(asset);
 
         securityAuditService.logEvent(
-                actorEmail, "ASSET_STATUS_CHANGED",
-                "Asset " + saved.getAssetName() + " [" + saved.getId() + "] status changed: "
-                        + previousStatus + " → " + req.newStatus()
-                        + (req.disposalNotes() != null ? " | Notes: " + req.disposalNotes() : "")
+                "ASSET_STATUS_CHANGED",
+                "ASSET-" + saved.getId(),
+                String.format("Asset status changed by %s: %s [%s] %s → %s%s",
+                        actorEmail, saved.getAssetName(), saved.getId(),
+                        previousStatus, req.newStatus(),
+                        req.disposalNotes() != null ? " | Notes: " + req.disposalNotes() : "")
         );
 
         log.info("SAC-221: Asset {} status {} → {} by {}", id, previousStatus, req.newStatus(), actorEmail);

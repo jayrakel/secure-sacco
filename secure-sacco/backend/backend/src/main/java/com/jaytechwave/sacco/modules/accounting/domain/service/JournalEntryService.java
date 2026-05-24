@@ -380,9 +380,11 @@ public class JournalEntryService {
      * Posts the GL entry for an approved member expense reimbursement claim.
      *
      * <pre>
-     *   DR 5360 Member Expense Reimbursement (EXPENSE)   ← cost to the SACCO
-     *   CR 2190 Member Reimbursement Payable  (LIABILITY) ← SACCO now owes member
+     *   DR 5360 Member Expense Reimbursement (EXPENSE)
+     *   CR 2100 Member Savings Deposits       (LIABILITY)
      * </pre>
+     * The credit goes directly into the member's savings pool — the member
+     * will see this reimbursement in their savings history like a regular deposit.
      *
      * No audit log here — the caller ({@code ExpenseClaimService.reviewClaim})
      * already writes the business-level {@code EXPENSE_CLAIM_APPROVED} event.
@@ -402,13 +404,15 @@ public class JournalEntryService {
         Account expenseAccount = accountRepository.findByAccountCode("5360")
                 .orElseThrow(() -> new IllegalStateException(
                         "System Account 5360 (Member Expense Reimbursement) not found. Run V67 migration."));
-        Account payableAccount = accountRepository.findByAccountCode("2190")
+        // Credit goes to member savings deposits (2100), not to payable (2190).
+        // This immediately increases the member's savings balance on approval.
+        Account savingsAccount = accountRepository.findByAccountCode("2100")
                 .orElseThrow(() -> new IllegalStateException(
-                        "System Account 2190 (Member Reimbursement Payable) not found. Run V67 migration."));
+                        "System Account 2100 (Member Savings Deposits) not found."));
 
         JournalEntry entry = JournalEntry.builder()
                 .referenceNumber(journalRef)
-                .description("Member expense reimbursement approved")
+                .description("Expense reimbursement credited to member savings — claim " + claimId)
                 .transactionDate(LocalDate.now())
                 .status(JournalEntryStatus.POSTED)
                 .build();
@@ -418,15 +422,15 @@ public class JournalEntryService {
                 .memberId(memberId)
                 .debitAmount(amount)
                 .creditAmount(BigDecimal.ZERO)
-                .description("Member Expense Reimbursement - Debit")
+                .description("Expense reimbursement — debit expense account 5360")
                 .build());
 
         entry.addLine(JournalEntryLine.builder()
-                .account(payableAccount)
+                .account(savingsAccount)
                 .memberId(memberId)
                 .debitAmount(BigDecimal.ZERO)
                 .creditAmount(amount)
-                .description("Member Reimbursement Payable - Credit")
+                .description("Expense reimbursement — credit member savings 2100")
                 .build());
 
         journalEntryRepository.save(entry);

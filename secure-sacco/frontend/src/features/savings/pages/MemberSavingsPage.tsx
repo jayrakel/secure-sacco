@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { savingsApi, type StatementTransactionResponse, type SavingsBalanceResponse } from '../api/savings-api';
 import { MpesaDepositModal } from '../components/MpesaDepositModal';
-import { PiggyBank, Smartphone, Clock, RefreshCw, AlertCircle, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { PiggyBank, Smartphone, Clock, RefreshCw, AlertCircle, ArrowDownCircle, ArrowUpCircle, Gift } from 'lucide-react';
+
+/** Transaction types that increase the member's balance (credits). */
+const CREDIT_TYPES = new Set(['DEPOSIT', 'EXPENSE_REIMBURSEMENT']);
+const isCredit = (type: string) => CREDIT_TYPES.has(type);
+
+const txLabel = (type: string) => {
+    switch (type) {
+        case 'DEPOSIT':               return 'Deposit';
+        case 'EXPENSE_REIMBURSEMENT': return 'Expense Reimbursement';
+        case 'WITHDRAWAL':            return 'Withdrawal';
+        default:                      return type;
+    }
+};
+
+const txIcon = (type: string, size = 20) => {
+    if (type === 'EXPENSE_REIMBURSEMENT') return <Gift size={size} />;
+    return isCredit(type) ? <ArrowDownCircle size={size} /> : <ArrowUpCircle size={size} />;
+};
 import { format } from 'date-fns';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { MemberObligationsSection } from '../../obligations/components/MemberObligationsSection';
@@ -113,12 +131,12 @@ const MemberSavingsPage: React.FC = () => {
                                 {statement.map((tx) => (
                                     <div key={tx.transactionId} className="p-4 hover:bg-slate-50 flex items-center justify-between transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <div className={`p-2 rounded-full ${tx.type === 'DEPOSIT' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
-                                                {tx.type === 'DEPOSIT' ? <ArrowDownCircle size={20} /> : <ArrowUpCircle size={20} />}
+                                            <div className={`p-2 rounded-full ${isCredit(tx.type) ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                                {txIcon(tx.type)}
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-slate-800 flex items-center gap-2">
-                                                    {tx.type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'}
+                                                    {txLabel(tx.type)}
                                                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded-sm ${tx.status === 'POSTED' ? 'bg-emerald-100 text-emerald-700' : tx.status === 'PENDING' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
                                                         {tx.status}
                                                     </span>
@@ -133,8 +151,8 @@ const MemberSavingsPage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className={`font-bold ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                                                {tx.type === 'DEPOSIT' ? '+' : '-'} {tx.amount.toLocaleString()}
+                                            <p className={`font-bold ${isCredit(tx.type) ? 'text-emerald-600' : 'text-slate-800'}`}>
+                                                {isCredit(tx.type) ? '+' : '-'} {tx.amount.toLocaleString()}
                                             </p>
                                             <p className="text-xs text-slate-500 font-medium mt-0.5">
                                                 Bal: {tx.runningBalance.toLocaleString()}

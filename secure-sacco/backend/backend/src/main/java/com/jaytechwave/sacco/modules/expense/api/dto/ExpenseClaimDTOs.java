@@ -33,6 +33,21 @@ public class ExpenseClaimDTOs {
     ) {}
 
     /**
+     * Used by an authenticated MEMBER to submit their own expense claim.
+     * No {@code memberId} field — the member's identity is resolved from the JWT/session.
+     */
+    public record MemberSubmitExpenseClaimRequest(
+            @NotNull(message = "Amount is required")
+            @DecimalMin(value = "1.0", message = "Amount must be at least KES 1")
+            BigDecimal amount,
+
+            @NotBlank(message = "Description is required")
+            String description,
+
+            String receiptReference
+    ) {}
+
+    /**
      * Used by a Treasurer/Admin to approve or reject a PENDING claim.
      * If {@code approved} is false, {@code rejectionReason} is mandatory.
      */

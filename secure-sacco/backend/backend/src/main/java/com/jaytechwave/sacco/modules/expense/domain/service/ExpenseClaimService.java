@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimRepos
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class ExpenseClaimService {
     private final UserRepository         userRepository;
     private final JournalEntryService    journalEntryService;
     private final SecurityAuditService   securityAuditService;
+    private final SavingsService         savingsService;
 
     // ── Staff: Submit a claim on behalf of a member ───────────────────────────
 
@@ -72,6 +74,49 @@ public class ExpenseClaimService {
         );
 
         log.info("SAC-220: Expense claim {} submitted for member {} by {}", claim.getId(), member.getMemberNumber(), actorEmail);
+        return toResponse(claim, member);
+    }
+
+    // ── Member: Submit their own claim ───────────────────────────────────────────
+
+    /**
+     * Allows an authenticated member to submit their own expense claim directly.
+     * The member ID is resolved from their authenticated session — they cannot
+     * submit claims on behalf of other members.
+     */
+    @Transactional
+    public ExpenseClaimResponse submitMyClaim(MemberSubmitExpenseClaimRequest request, String actorEmail) {
+        User user = userRepository.findByEmail(actorEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getMember() == null) {
+            throw new IllegalStateException("You must be a registered member to submit an expense claim.");
+        }
+
+        Member member = user.getMember();
+
+        if (member.getStatus() != MemberStatus.ACTIVE) {
+            throw new IllegalStateException("Expense claims can only be submitted by ACTIVE members.");
+        }
+
+        ExpenseClaim claim = ExpenseClaim.builder()
+                .memberId(member.getId())
+                .amount(request.amount())
+                .description(request.description())
+                .receiptReference(request.receiptReference())
+                .status(ExpenseClaimStatus.PENDING)
+                .build();
+
+        claim = expenseClaimRepository.save(claim);
+
+        securityAuditService.logEvent(
+                "EXPENSE_CLAIM_SELF_SUBMITTED",
+                "CLAIM-" + claim.getId(),
+                String.format("Member %s submitted their own expense claim. Amount: KES %s. Desc: %s",
+                        member.getMemberNumber(), request.amount(), request.description())
+        );
+
+        log.info("SAC-220: Member {} self-submitted expense claim {}", member.getMemberNumber(), claim.getId());
         return toResponse(claim, member);
     }
 
@@ -157,11 +202,12 @@ public class ExpenseClaimService {
                 .orElseThrow(() -> new IllegalStateException("Member not found for claim: " + claimId));
 
         if (Boolean.TRUE.equals(request.approved())) {
-            // ── APPROVED: post GL entry, then mark claim ─────────────────────
+            // ── APPROVED: credit member's savings account, then mark claim ────────
             String journalRef = "EXP-" + claim.getId();
 
-            journalEntryService.postExpenseReimbursementClaim(
-                    member.getId(), claim.getAmount(), claim.getId().toString()
+            // This creates a SavingsTransaction + posts DR 5360 / CR 2100
+            savingsService.creditExpenseReimbursement(
+                    member.getId(), claim.getAmount(), claim.getId()
             );
 
             claim.setStatus(ExpenseClaimStatus.APPROVED);

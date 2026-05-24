@@ -45,6 +45,16 @@ public class ExpenseClaimController {
         return ResponseEntity.ok(expenseClaimService.getMyClaims(auth.getName()));
     }
 
+    @Operation(summary = "Submit my own expense claim (member)",
+            description = "An authenticated member submits their own expense claim. No member ID needed — resolved from session.")
+    @PostMapping("/my")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<ExpenseClaimResponse> submitMyClaim(
+            @Valid @RequestBody MemberSubmitExpenseClaimRequest request,
+            Authentication auth) {
+        return ResponseEntity.ok(expenseClaimService.submitMyClaim(request, auth.getName()));
+    }
+
     // ── Staff endpoints ───────────────────────────────────────────────────────
 
     @Operation(summary = "Submit an expense claim (staff)",

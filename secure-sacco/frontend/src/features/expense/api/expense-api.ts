@@ -23,6 +23,13 @@ export type SubmitExpenseClaimRequest = {
   receiptReference?: string;
 }
 
+/** Member self-submit — no memberId needed; resolved from session. */
+export type MemberSubmitExpenseClaimRequest = {
+  amount: number;
+  description: string;
+  receiptReference?: string;
+}
+
 export type ReviewExpenseClaimRequest = {
   approved: boolean;
   rejectionReason?: string;
@@ -33,6 +40,12 @@ export const submitExpenseClaim = (
   data: SubmitExpenseClaimRequest
 ): Promise<ExpenseClaimResponse> =>
   apiClient.post('/expense-claims', data).then((r) => r.data);
+
+/** Member: submit their own expense claim (no memberId — resolved from session). */
+export const submitMyExpenseClaim = (
+  data: MemberSubmitExpenseClaimRequest
+): Promise<ExpenseClaimResponse> =>
+  apiClient.post('/expense-claims/my', data).then((r) => r.data);
 
 /** Member: get my own expense claims. */
 export const getMyExpenseClaims = (): Promise<ExpenseClaimResponse[]> =>

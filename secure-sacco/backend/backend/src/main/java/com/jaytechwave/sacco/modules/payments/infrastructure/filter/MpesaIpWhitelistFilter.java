@@ -61,9 +61,27 @@ public class MpesaIpWhitelistFilter extends OncePerRequestFilter {
     private final Set<String> exactAllowedIps;
     private final List<CidrRange> allowedCidrRanges;
 
+    /**
+     * When {@code true}, the IP whitelist is skipped entirely.
+     * <p>
+     * Set this to {@code true} only in sandbox/dev ({@code application-dev.yml}).
+     * In production the filter always enforces the allowlist.
+     * </p>
+     * <p>
+     * Background: in sandbox mode, M-Pesa callbacks arrive via ngrok, which
+     * masks Safaricom's real IPs — the filter would see ngrok's own IP and
+     * reject every legitimate callback with 403.
+     * </p>
+     */
+    private final boolean bypassIpWhitelist;
+
     public MpesaIpWhitelistFilter(
             @Value("${sacco.safaricom.daraja.allowed-callback-ips:" + SAFARICOM_DEFAULT_IPS + "}")
-            String allowedIpsConfig) {
+            String allowedIpsConfig,
+            @Value("${sacco.safaricom.daraja.bypass-ip-whitelist:false}")
+            boolean bypassIpWhitelist) {
+
+        this.bypassIpWhitelist = bypassIpWhitelist;
 
         Set<String> exact = new java.util.HashSet<>();
         List<CidrRange> cidrs = new ArrayList<>();
@@ -86,8 +104,13 @@ public class MpesaIpWhitelistFilter extends OncePerRequestFilter {
         this.exactAllowedIps = Set.copyOf(exact);
         this.allowedCidrRanges = List.copyOf(cidrs);
 
-        log.info("MpesaIpWhitelistFilter initialized — {} exact IP(s), {} CIDR range(s)",
-                exactAllowedIps.size(), allowedCidrRanges.size());
+        if (bypassIpWhitelist) {
+            log.warn("⚠️  MpesaIpWhitelistFilter: IP enforcement is DISABLED (bypass-ip-whitelist=true). " +
+                    "This must only be active in sandbox/dev — never in production!");
+        } else {
+            log.info("MpesaIpWhitelistFilter initialized — {} exact IP(s), {} CIDR range(s)",
+                    exactAllowedIps.size(), allowedCidrRanges.size());
+        }
     }
 
     @Override
@@ -98,6 +121,14 @@ public class MpesaIpWhitelistFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         if (!path.startsWith(MPESA_CALLBACK_PATH_PREFIX)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // In sandbox/dev the request arrives via ngrok which masks Safaricom's real
+        // IPs. Skip enforcement when explicitly configured, but always log it.
+        if (bypassIpWhitelist) {
+            log.debug("M-Pesa IP whitelist bypassed (sandbox mode) for path: {}", path);
             filterChain.doFilter(request, response);
             return;
         }

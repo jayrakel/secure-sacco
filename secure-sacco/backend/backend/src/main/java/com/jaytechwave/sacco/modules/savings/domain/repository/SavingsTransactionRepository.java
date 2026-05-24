@@ -19,7 +19,11 @@ public interface SavingsTransactionRepository extends JpaRepository<SavingsTrans
 
     Optional<SavingsTransaction> findByReference(String reference);
 
-    @Query("SELECT COALESCE(SUM(CASE WHEN t.type = 'DEPOSIT' THEN t.amount ELSE -t.amount END), 0) " +
+    @Query("SELECT COALESCE(SUM(CASE " +
+            "WHEN t.type = 'DEPOSIT' THEN t.amount " +
+            "WHEN t.type = 'EXPENSE_REIMBURSEMENT' THEN t.amount " +
+            "WHEN t.type = 'WITHDRAWAL' THEN -t.amount " +
+            "ELSE 0 END), 0) " +
             "FROM SavingsTransaction t WHERE t.savingsAccountId = :accountId AND t.status = 'POSTED'")
     BigDecimal calculateBalance(@Param("accountId") UUID accountId);
 
