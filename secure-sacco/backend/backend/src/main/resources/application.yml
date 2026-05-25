@@ -109,33 +109,28 @@ sacco:
     cors:
       allowed-origins: "${FRONTEND_URL:http://localhost:5173}" # Change this to your actual frontend prod URL
 
-  safaricom:
-    daraja:
-      # Environment: 'production' or 'sandbox'
-      env: ${MPESA_ENV:production}
+  coopconnect:
+    # Co-op Connect API credentials (from Co-op Bank onboarding)
+    consumer-key:      ${COOP_CONSUMER_KEY}
+    consumer-secret:   ${COOP_CONSUMER_SECRET}
 
-      # Credentials
-      consumer-key: ${MPESA_CONSUMER_KEY}
-      consumer-secret: ${MPESA_CONSUMER_SECRET}
-      passkey: ${MPESA_PASSKEY}
+    # Operator code assigned by Co-op Bank to Betterlink Ventures
+    operator-code:     ${COOP_OPERATOR_CODE:BETTERLINK}
 
-      # Shortcodes (Paybill / Till Number)
-      shortcode: ${MPESA_SHORTCODE}
-      b2c-shortcode: ${MPESA_B2C_SHORTCODE:}
+    # Co-op Connect production API base URL
+    base-url:          ${COOP_BASE_URL:https://openapi.co-opbank.co.ke}
 
-      # Webhooks / Callbacks
-      callback-base-url: ${MPESA_CALLBACK_BASE_URL:https://api.securesacco.com}
+    # Your server base URL — Co-op will POST callbacks to:
+    #   {callback-base-url}/api/v1/payments/coop/stk-callback
+    #   {callback-base-url}/api/v1/payments/coop/ipn
+    callback-base-url: ${COOP_CALLBACK_BASE_URL:https://api-staging.jaytechwavesolutions.co.ke}
 
-      # Callback IP allowlist (Safaricom production IP ranges)
-      allowed-callback-ips: ${MPESA_ALLOWED_CALLBACK_IPS:196.201.214.200,196.201.214.206,196.201.213.114,196.201.214.207,196.201.214.208,196.201.214.209,196.201.212.138}
+    # SACCO's Co-op Bank account number (for balance / mini-statement queries)
+    sacco-account-number: ${COOP_SACCO_ACCOUNT_NUMBER:}
 
-      # Specific API Endpoints Callbacks (Relative paths)
-      endpoints:
-        mpesa-express-callback: /api/v1/payments/mpesa/stk-callback
-        c2b-validation: /api/v1/payments/mpesa/c2b-validate
-        c2b-confirmation: /api/v1/payments/mpesa/c2b-confirm
-        b2c-result: /api/v1/payments/mpesa/b2c-result
-        b2c-queue-timeout: /api/v1/payments/mpesa/b2c-queue-timeout
+    # Co-op Connect callback IP whitelist — set once Co-op provides their IPs.
+    # When empty the filter allows all IPs (bypass mode) with a warning.
+    allowed-callback-ips: ${COOP_ALLOWED_CALLBACK_IPS:}
 
 management:
   endpoints:

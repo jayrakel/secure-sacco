@@ -74,6 +74,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/auth/activation/**",
                                 "/api/v1/payments/mpesa/**",
+                                "/api/v1/payments/coop/**",
                                 "/error"
                         )
                 )
