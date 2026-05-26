@@ -18,11 +18,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(payments): migrate to Co-op Connect for STK push and IPN handling">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs">
       <change afterPath="$PROJECT_DIR$/coop-correct-workflow.http" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/CoopConnectService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/CoopConnectService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -192,23 +191,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0321002027213904" />
-      <entry key="MS500" value="1.958086880098913" />
-      <entry key="S2" value="3.8273755074371913" />
-      <entry key="S5" value="5.481510980511978" />
-      <entry key="S10" value="6.78038026760622" />
-      <entry key="S30" value="8.342249299503656" />
-      <entry key="S60" value="9.015352118314071" />
-      <entry key="M2" value="9.455250537749905" />
-      <entry key="M5" value="9.767182905712957" />
-      <entry key="M10" value="9.880878246791312" />
-      <entry key="M15" value="9.92014420568358" />
-      <entry key="M30" value="10.028430132798281" />
-      <entry key="H1" value="12.071391975197908" />
-      <entry key="H2" value="25.681615576034957" />
-      <entry key="H4" value="57.06086691733822" />
-      <entry key="D1" value="132.54398013317712" />
-      <entry key="W1" value="154.88536468109913" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0000000000000009" />
+      <entry key="S5" value="1.000000994310653" />
+      <entry key="S10" value="1.0009971512688747" />
+      <entry key="S30" value="1.0999049519831885" />
+      <entry key="S60" value="1.316077446179237" />
+      <entry key="M2" value="1.5622076539671412" />
+      <entry key="M5" value="1.7942527030891466" />
+      <entry key="M10" value="1.891208563202992" />
+      <entry key="M15" value="1.926089536017266" />
+      <entry key="M30" value="1.9636220150865715" />
+      <entry key="H1" value="2.117718736878707" />
+      <entry key="H2" value="4.723691995671315" />
+      <entry key="H4" value="20.61035682783003" />
+      <entry key="D1" value="111.97100420852843" />
+      <entry key="W1" value="152.80904437343682" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -216,37 +215,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="5.6652468388031115E-173" />
-      <entry key="S60" value="8.290038263267013E-87" />
-      <entry key="M2" value="1.261355400083052E-43" />
-      <entry key="M5" value="1.2549517653830096E-17" />
-      <entry key="M10" value="6.090257449478095E-9" />
-      <entry key="M15" value="4.870111859922906E-6" />
-      <entry key="M30" value="0.004294761053384021" />
-      <entry key="H1" value="0.16001411070927835" />
-      <entry key="H2" value="1.1609677605581126" />
-      <entry key="H4" value="3.3308867455685" />
-      <entry key="D1" value="8.29975266701549" />
-      <entry key="W1" value="9.736547303695449" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="1.4631433275542085E-203" />
+      <entry key="M2" value="5.29910638916376E-102" />
+      <entry key="M5" value="5.597229327925757E-41" />
+      <entry key="M10" value="1.2862005331606673E-20" />
+      <entry key="M15" value="8.016552213370648E-14" />
+      <entry key="M30" value="5.510149099739079E-7" />
+      <entry key="H1" value="0.001812468446019315" />
+      <entry key="H2" value="0.12355952950792548" />
+      <entry key="H4" value="1.0866455590231625" />
+      <entry key="D1" value="6.886308758556118" />
+      <entry key="W1" value="9.480305062075905" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.6077006809118805" />
-      <entry key="MS500" value="1.7750401217572787" />
-      <entry key="S2" value="3.7083046578854706" />
-      <entry key="S5" value="5.242272546194293" />
-      <entry key="S10" value="6.490877206141498" />
-      <entry key="S30" value="8.15600514289402" />
-      <entry key="S60" value="8.904576696314702" />
-      <entry key="M2" value="9.394727053303875" />
-      <entry key="M5" value="9.74163238695103" />
-      <entry key="M10" value="9.867869613923837" />
-      <entry key="M15" value="9.911423800981495" />
-      <entry key="M30" value="10.028284969012324" />
-      <entry key="H1" value="12.228572428429827" />
-      <entry key="H2" value="26.839718422673" />
-      <entry key="H4" value="60.38901117473956" />
-      <entry key="D1" value="140.8428323771483" />
-      <entry key="W1" value="164.62176599646222" />
+      <entry key="MS100" value="3.137554402636921E-5" />
+      <entry key="MS500" value="0.1256950725498085" />
+      <entry key="S2" value="0.5954284246824841" />
+      <entry key="S5" value="0.8127030936258836" />
+      <entry key="S10" value="0.9019053461954034" />
+      <entry key="S30" value="1.0400100944443935" />
+      <entry key="S60" value="1.2548669161397834" />
+      <entry key="M2" value="1.5129330491260988" />
+      <entry key="M5" value="1.767300422327183" />
+      <entry key="M10" value="1.8761974732448186" />
+      <entry key="M15" value="1.9157121735913927" />
+      <entry key="M30" value="1.9582406068457894" />
+      <entry key="H1" value="2.116758738272379" />
+      <entry key="H2" value="4.845563822048126" />
+      <entry key="H4" value="21.695413121473322" />
+      <entry key="D1" value="118.85644967985053" />
+      <entry key="W1" value="162.28919067752526" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -654,15 +653,7 @@
       <workItem from="1779615374199" duration="4445000" />
       <workItem from="1779722498808" duration="730000" />
       <workItem from="1779741549264" duration="6930000" />
-      <workItem from="1779774337625" duration="15118000" />
-    </task>
-    <task id="LOCAL-00044" summary="feat: enhance loan processing with improved cookie handling and penalty evaluation">
-      <option name="closed" value="true" />
-      <created>1775164976195</created>
-      <option name="number" value="00044" />
-      <option name="presentableId" value="LOCAL-00044" />
-      <option name="project" value="LOCAL" />
-      <updated>1775164976195</updated>
+      <workItem from="1779774337625" duration="16472000" />
     </task>
     <task id="LOCAL-00045" summary="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response">
       <option name="closed" value="true" />
@@ -1048,7 +1039,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779778851139</updated>
     </task>
-    <option name="localTasksCounter" value="93" />
+    <task id="LOCAL-00093" summary="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs">
+      <option name="closed" value="true" />
+      <created>1779813507133</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1779813507133</updated>
+    </task>
+    <option name="localTasksCounter" value="94" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -1070,8 +1069,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: implement update obligation functionality with dynamic password validation and new obligations tab" />
-    <MESSAGE value="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage" />
     <MESSAGE value="feat: enhance AdminObligationsSection with type safety by updating memberData type" />
     <MESSAGE value="feat: add granular admin permissions for Audit Log and Penalty Rules management" />
     <MESSAGE value="feat: improve loading state management and enhance log panel component in MigrationPage" />
@@ -1095,7 +1092,9 @@
     <MESSAGE value="fix(expense): wire SavingsService mock and fix test stubs in ExpenseClaimServiceTest&#10;&#10;- Add @Mock SavingsService so @InjectMocks can inject it into&#10;  ExpenseClaimService (was null, causing NPE on approval path)&#10;- Update approve test to verify savingsService.creditExpenseReimbursement&#10;  instead of the now-removed direct journalEntryService call&#10;- Remove unnecessary userRepository stubs from alreadyApproved and&#10;  rejectWithoutReason tests — service throws before reaching that call&#10;- Remove unused phone-OTP state vars from SetupWizardPage (bypassed&#10;  pending Africa's Talking integration, were causing lint errors)" />
     <MESSAGE value="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements" />
     <MESSAGE value="feat(payments): migrate to Co-op Connect for STK push and IPN handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(payments): migrate to Co-op Connect for STK push and IPN handling" />
+    <MESSAGE value="feat(asset-management): integrate Co-op Connect for STK push and callback handling" />
+    <MESSAGE value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

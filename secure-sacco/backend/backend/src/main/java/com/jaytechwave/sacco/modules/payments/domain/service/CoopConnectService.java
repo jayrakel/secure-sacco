@@ -148,7 +148,7 @@ public class CoopConnectService {
                 .otherDetails(List.of(OtherDetail.of("AccountRef", reference)))
                 .build();
 
-        log.info("Co-op STK Push → phone={} amount={} ref={}", phoneNumber, amount, reference);
+        log.info("Co-op STK Push → phone={} amount={} ref={} callbackUrl={}", phoneNumber, amount, reference, callbackUrl);
 
         try {
             StkPushResponse response = restClient.post()
