@@ -31,14 +31,14 @@ sacco:
       allowed-origins:
         - "${FRONTEND_URL}"
 
-  safaricom:
-    daraja:
-      env: production
-      consumer-key: ${MPESA_CONSUMER_KEY}
-      consumer-secret: ${MPESA_CONSUMER_SECRET}
-      passkey: ${MPESA_PASSKEY}
-      shortcode: ${MPESA_SHORTCODE}
-      callback-base-url: ${MPESA_CALLBACK_BASE_URL}
+  coopconnect:
+    consumer-key:         ${COOP_CONSUMER_KEY}
+    consumer-secret:      ${COOP_CONSUMER_SECRET}
+    operator-code:        ${COOP_OPERATOR_CODE:BETTERLINK}
+    base-url:             ${COOP_BASE_URL:https://openapi.co-opbank.co.ke}
+    callback-base-url:    ${COOP_CALLBACK_BASE_URL:https://api-staging.jaytechwavesolutions.co.ke}
+    sacco-account-number: ${COOP_SACCO_ACCOUNT_NUMBER:}
+    allowed-callback-ips: ${COOP_ALLOWED_CALLBACK_IPS:}
 
 logging:
   level:
@@ -46,6 +46,8 @@ logging:
     org.springframework.security: WARN
     org.springframework.web: WARN
     org.flywaydb: WARN
+    # Payments INFO so Co-op STK push and callback are visible in staging logs
+    com.jaytechwave.sacco.modules.payments: INFO
 
 # Production: admin credentials MUST be set via environment variables.
 # No fallback values — application will fail to start if these are missing.
@@ -75,4 +77,3 @@ management:
 springdoc:
   swagger-ui:
     enabled: false   # UI disabled in prod; /api-docs JSON still available for SYSTEM_ADMIN
-
