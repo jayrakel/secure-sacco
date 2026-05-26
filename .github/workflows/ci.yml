@@ -65,11 +65,13 @@ jobs:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           REDIS_PASSWORD: ""
-          MPESA_CONSUMER_KEY: test_key
-          MPESA_CONSUMER_SECRET: test_secret
-          MPESA_PASSKEY: test_passkey
-          MPESA_SHORTCODE: "174379"
-          MPESA_CALLBACK_BASE_URL: "http://localhost:8080"
+          COOP_CONSUMER_KEY: test_key
+          COOP_CONSUMER_SECRET: test_secret
+          COOP_OPERATOR_CODE: BETTERLINK
+          COOP_BASE_URL: "https://openapi.co-opbank.co.ke"
+          COOP_CALLBACK_BASE_URL: "http://localhost:8080"
+          COOP_SACCO_ACCOUNT_NUMBER: "000000000000"
+          COOP_ALLOWED_CALLBACK_IPS: ""
 
       - name: Upload test reports
         if: always()
