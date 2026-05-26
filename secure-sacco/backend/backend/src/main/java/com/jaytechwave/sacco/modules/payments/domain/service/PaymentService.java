@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -32,16 +34,7 @@ public class PaymentService {
 
     @Transactional
     public InitiateStkResponse initiateMpesaStkPush(InitiateStkRequest request, UUID memberId) {
-
-        // Normalise phone to 2547XXXXXXXX
-        String phone = request.phoneNumber().replaceAll("\\s+", "");
-        if (phone.startsWith("+")) {
-            phone = phone.substring(1);
-        } else if (phone.startsWith("0")) {
-            phone = "254" + phone.substring(1);
-        }
-
-        // Each STK push needs a unique MessageReference
+        String phone = normalisePhone(request.phoneNumber());
         String messageRef = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
 
         StkPushResponse coopResponse = coopConnectService.initiateStkPush(
@@ -51,16 +44,13 @@ public class PaymentService {
         if (coopResponse == null) {
             throw new RuntimeException("Co-op Connect returned no response to STK Push");
         }
-
-        // MessageCode "0" = success for Co-op Connect
-        boolean success = "0".equals(coopResponse.getMessageCode());
-        if (!success) {
+        if (!"0".equals(coopResponse.getMessageCode())) {
             throw new RuntimeException("Co-op STK Push failed: " + coopResponse.getMessageDescription());
         }
 
         Payment payment = Payment.builder()
                 .memberId(memberId)
-                .internalRef(messageRef)          // Co-op MessageReference is our tracking key
+                .internalRef(messageRef)
                 .amount(request.amount())
                 .paymentMethod("MPESA_COOP")
                 .paymentType("STK_PUSH")
@@ -72,7 +62,8 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         securityAuditService.logEvent(
-                "STK_PUSH_INITIATED", memberId != null ? memberId.toString() : "UNKNOWN",
+                "STK_PUSH_INITIATED",
+                memberId != null ? memberId.toString() : "UNKNOWN",
                 "Co-op STK push of KES " + request.amount() + " initiated. Ref: " + messageRef
         );
 
@@ -83,17 +74,20 @@ public class PaymentService {
         );
     }
 
-    // ── STK Callback (Co-op posts to /coop/stk-callback) ─────────────────────
+    // ── STK Callback (kept for forward compatibility — Co-op may use it) ─────
 
     @Transactional
     public void processStkCallback(String rawJson, StkCallbackPayload callback) {
         String messageRef = callback.getMessageReference();
 
-        Payment payment = paymentRepository.findByInternalRef(messageRef)
-                .orElseThrow(() -> new RuntimeException(
-                        "Payment not found for MessageReference: " + messageRef));
+        Optional<Payment> paymentOpt = paymentRepository.findByInternalRef(messageRef);
+        if (paymentOpt.isEmpty()) {
+            log.warn("STK Callback: no payment found for MessageReference={}. " +
+                    "Co-op may be routing this through the IPN instead.", messageRef);
+            return;
+        }
 
-        // Idempotency: skip if already terminal
+        Payment payment = paymentOpt.get();
         if (payment.getStatus() == PaymentStatus.COMPLETED
                 || payment.getStatus() == PaymentStatus.FAILED) {
             log.info("Payment {} already in terminal state. Skipping.", messageRef);
@@ -101,57 +95,30 @@ public class PaymentService {
         }
 
         payment.setProviderMetadata(rawJson);
-
-        // Co-op success code is "0"
         boolean success = "0".equals(callback.getMessageCode());
 
         if (success) {
-            payment.setStatus(PaymentStatus.COMPLETED);
-            payment.setTransactionRef(callback.getTransactionId());
-            paymentRepository.save(payment);
-
-            log.info("Co-op STK payment SUCCESS. TransactionID={}", callback.getTransactionId());
-
-            securityAuditService.logEvent(
-                    "PAYMENT_RECEIVED",
-                    payment.getMemberId() != null ? payment.getMemberId().toString() : "UNKNOWN",
-                    "Co-op M-Pesa payment of KES " + payment.getAmount()
-                            + " confirmed. TxID: " + callback.getTransactionId()
-                            + ". Ref: " + payment.getAccountReference()
-            );
-
-            if (payment.getMemberId() != null) {
-                eventPublisher.publishEvent(new PaymentCompletedEvent(
-                        payment.getId(), payment.getMemberId(), payment.getAmount(),
-                        payment.getAccountReference(),
-                        callback.getTransactionId() != null
-                                ? callback.getTransactionId() : messageRef
-                ));
-            }
-
+            markCompleted(payment, callback.getTransactionId(), rawJson);
         } else {
-            payment.setStatus(PaymentStatus.FAILED);
-            payment.setFailureReason(callback.getMessageDescription());
-            paymentRepository.save(payment);
-
-            log.warn("Co-op STK payment FAILED. Reason={}", callback.getMessageDescription());
-
-            if (payment.getMemberId() != null) {
-                eventPublisher.publishEvent(new PaymentFailedEvent(
-                        payment.getId(), payment.getMemberId(), payment.getAmount(),
-                        payment.getAccountReference(), callback.getMessageDescription()
-                ));
-            }
+            markFailed(payment, callback.getMessageDescription());
         }
     }
 
-    // ── B2B IPN (Co-op CBS posts when member pays to paybill manually) ────────
+    // ── B2B IPN — handles ALL Co-op payment notifications ────────────────────
+    //
+    // Co-op Bank routes ALL payment results through the IPN endpoint:
+    //   - Manual M-Pesa paybill payments (member pays 400200 directly)
+    //   - STK Push completions (after member enters PIN)
+    //
+    // In both cases Co-op credits the SACCO's bank account and fires an IPN.
+    // The CallBackUrl in the STK push request is not used for the payment result.
 
     @Transactional
     public void processCoopIpn(String rawJson, CoopIpnPayload ipn) {
         // Only process CREDIT events
         if (!"CREDIT".equalsIgnoreCase(ipn.getEventType())) {
-            log.info("Co-op IPN: ignoring non-CREDIT event '{}' for AcctNo={}", ipn.getEventType(), ipn.getAcctNo());
+            log.info("Co-op IPN: ignoring non-CREDIT event '{}' for AcctNo={}",
+                    ipn.getEventType(), ipn.getAcctNo());
             return;
         }
 
@@ -171,41 +138,111 @@ public class PaymentService {
         }
 
         // Extract phone from CustMemoLine1 (format: "TIP6V5IRAE~254707919065~0")
-        String phone = extractPhone(ipn.getCustMemoLine1());
-        // Extract sender name from CustMemoLine3 (format: "0200~MELVIN WANJIKU")
-        String senderName = extractSenderName(ipn.getCustMemoLine3());
-
-        Payment payment = Payment.builder()
-                .transactionRef(txId)
-                .internalRef("IPN-" + txId)
-                .amount(amount)
-                .paymentMethod("MPESA_COOP_IPN")
-                .paymentType("PAYBILL_DEPOSIT")
-                .senderPhoneNumber(phone)
-                .senderName(senderName)
-                .accountReference(ipn.getPaymentRef())
-                .status(PaymentStatus.COMPLETED)
-                .providerMetadata(rawJson)
-                .build();
-
-        paymentRepository.save(payment);
+        String phone       = extractPhone(ipn.getCustMemoLine1());
+        String senderName  = extractSenderName(ipn.getCustMemoLine3());
 
         log.info("Co-op IPN: CREDIT KES {} from {} ({}). PaymentRef={} TxId={}",
                 amount, senderName, phone, ipn.getPaymentRef(), txId);
 
-        securityAuditService.logEvent(
-                "IPN_PAYMENT_RECEIVED", "COOP_IPN",
-                "Co-op IPN credit KES " + amount + " from " + senderName
-                        + " (" + phone + "). TxId: " + txId
-        );
+        // ── Try to match to a pending STK push payment ─────────────────────
+        //
+        // Co-op routes STK push results through the IPN, so we look for the
+        // most recent PENDING payment for this phone number and link it.
+        Payment payment = null;
+        if (phone != null) {
+            List<Payment> pending = paymentRepository
+                    .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.PENDING);
+            if (!pending.isEmpty()) {
+                payment = pending.get(0); // most recent PENDING for this phone
+                log.info("Co-op IPN: matched to pending STK payment id={} ref={}",
+                        payment.getId(), payment.getInternalRef());
+            }
+        }
 
-        // Publish event so SavingsPaymentListener / LoanRepaymentService can pick it up
-        eventPublisher.publishEvent(new PaymentCompletedEvent(
-                payment.getId(), null, amount, ipn.getPaymentRef(), txId
-        ));
+        if (payment != null) {
+            // Update the existing STK push payment record
+            payment.setTransactionRef(txId);
+            payment.setProviderMetadata(rawJson);
+            payment.setSenderName(senderName);
+            markCompleted(payment, txId, rawJson);
+        } else {
+            // No matching STK push — create a new record (manual paybill payment)
+            payment = Payment.builder()
+                    .transactionRef(txId)
+                    .internalRef("IPN-" + txId)
+                    .amount(amount)
+                    .paymentMethod("MPESA_COOP_IPN")
+                    .paymentType("PAYBILL_DEPOSIT")
+                    .senderPhoneNumber(phone)
+                    .senderName(senderName)
+                    .accountReference(ipn.getPaymentRef())
+                    .status(PaymentStatus.COMPLETED)
+                    .providerMetadata(rawJson)
+                    .build();
+
+            paymentRepository.save(payment);
+            log.info("Co-op IPN: new paybill payment KES {} from {} saved.", amount, senderName);
+
+            securityAuditService.logEvent(
+                    "IPN_PAYMENT_RECEIVED", "COOP_IPN",
+                    "Co-op IPN credit KES " + amount + " from " + senderName
+                            + " (" + phone + "). TxId: " + txId
+            );
+
+            // Publish event so SavingsPaymentListener can pick it up
+            eventPublisher.publishEvent(new PaymentCompletedEvent(
+                    payment.getId(), null, amount, ipn.getPaymentRef(), txId
+            ));
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void markCompleted(Payment payment, String transactionId, String rawJson) {
+        payment.setStatus(PaymentStatus.COMPLETED);
+        payment.setTransactionRef(transactionId);
+        payment.setProviderMetadata(rawJson);
+        paymentRepository.save(payment);
+
+        log.info("Co-op payment COMPLETED. TxId={} memberId={}",
+                transactionId, payment.getMemberId());
+
+        securityAuditService.logEvent(
+                "PAYMENT_RECEIVED",
+                payment.getMemberId() != null ? payment.getMemberId().toString() : "UNKNOWN",
+                "Co-op M-Pesa payment of KES " + payment.getAmount()
+                        + " confirmed. TxID: " + transactionId
+        );
+
+        eventPublisher.publishEvent(new PaymentCompletedEvent(
+                payment.getId(),
+                payment.getMemberId(),
+                payment.getAmount(),
+                payment.getAccountReference(),
+                transactionId != null ? transactionId : payment.getInternalRef()
+        ));
+    }
+
+    private void markFailed(Payment payment, String reason) {
+        payment.setStatus(PaymentStatus.FAILED);
+        payment.setFailureReason(reason);
+        paymentRepository.save(payment);
+        log.warn("Co-op payment FAILED. Reason={}", reason);
+
+        if (payment.getMemberId() != null) {
+            eventPublisher.publishEvent(new PaymentFailedEvent(
+                    payment.getId(), payment.getMemberId(),
+                    payment.getAmount(), payment.getAccountReference(), reason
+            ));
+        }
+    }
+
+    private String normalisePhone(String raw) {
+        String phone = raw.replaceAll("\\s+", "");
+        if (phone.startsWith("+"))  return phone.substring(1);
+        if (phone.startsWith("0"))  return "254" + phone.substring(1);
+        return phone;
+    }
 
     /**
      * Extracts phone number from CustMemoLine1.
