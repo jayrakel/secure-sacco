@@ -18,10 +18,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(asset-management): log callback URL in Co-op STK Push for improved traceability">
       <change afterPath="$PROJECT_DIR$/coop-correct-workflow.http" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/CoopConnectService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/CoopConnectService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/repository/PaymentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/repository/PaymentRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -653,15 +654,7 @@
       <workItem from="1779615374199" duration="4445000" />
       <workItem from="1779722498808" duration="730000" />
       <workItem from="1779741549264" duration="6930000" />
-      <workItem from="1779774337625" duration="16472000" />
-    </task>
-    <task id="LOCAL-00045" summary="feat: enhance API rate limiting with bypass for migration endpoints and update loan application service response">
-      <option name="closed" value="true" />
-      <created>1775171632566</created>
-      <option name="number" value="00045" />
-      <option name="presentableId" value="LOCAL-00045" />
-      <option name="project" value="LOCAL" />
-      <updated>1775171632566</updated>
+      <workItem from="1779774337625" duration="19558000" />
     </task>
     <task id="LOCAL-00046" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
       <option name="closed" value="true" />
@@ -1047,7 +1040,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779813507133</updated>
     </task>
-    <option name="localTasksCounter" value="94" />
+    <task id="LOCAL-00094" summary="feat(asset-management): log callback URL in Co-op STK Push for improved traceability">
+      <option name="closed" value="true" />
+      <created>1779815134608</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1779815134608</updated>
+    </task>
+    <option name="localTasksCounter" value="95" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -1069,7 +1070,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: enhance AdminObligationsSection with type safety by updating memberData type" />
     <MESSAGE value="feat: add granular admin permissions for Audit Log and Penalty Rules management" />
     <MESSAGE value="feat: improve loading state management and enhance log panel component in MigrationPage" />
     <MESSAGE value="feat: remove clear log functionality from LogPanel in MigrationPage" />
@@ -1094,7 +1094,8 @@
     <MESSAGE value="feat(payments): migrate to Co-op Connect for STK push and IPN handling" />
     <MESSAGE value="feat(asset-management): integrate Co-op Connect for STK push and callback handling" />
     <MESSAGE value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
+    <MESSAGE value="feat(asset-management): log callback URL in Co-op STK Push for improved traceability" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(asset-management): log callback URL in Co-op STK Push for improved traceability" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
