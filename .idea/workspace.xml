@@ -18,13 +18,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(payments): integrate Co-op Connect for STK push and IPN handling&#10;&#10;PAY-01: Replace Daraja with Co-op Connect for M-Pesa STK Push">
-      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(payments): migrate to Co-op Connect for STK push and IPN handling">
+      <change afterPath="$PROJECT_DIR$/coop-correct-workflow.http" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,7 +32,7 @@
   <component name="CopilotChats">
     <option name="panelChat">
       <chat>
-        <option name="activeSessionId" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
+        <option name="activeSessionId" value="24ae678f-98b4-471a-9ddf-e18ee4da5d7c" />
         <option name="sessions">
           <session>
             <option name="chatType" value="PANEL" />
@@ -51,6 +49,23 @@
             <option name="modeId" value="Agent" />
             <option name="modelType" value="builtin_family" />
             <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="96be5f95-92d8-453d-9e85-2d16bb87a058" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="24ae678f-98b4-471a-9ddf-e18ee4da5d7c" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="status" value="Completed" />
             <option name="targetType" value="LOCAL" />
           </session>
         </option>
@@ -155,6 +170,7 @@
     <file url="file://$PROJECT_DIR$/coop-connect-test.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/real-coop-integration.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/coop-callbacks-simulation.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/coop-correct-workflow.http" environment="stag" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -176,61 +192,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.025436726796668" />
-      <entry key="MS500" value="1.7379425571269107" />
-      <entry key="S2" value="4.532069924953728" />
-      <entry key="S5" value="7.663304153905049" />
-      <entry key="S10" value="9.763181479754774" />
-      <entry key="S30" value="11.876171077695274" />
-      <entry key="S60" value="13.046963688470418" />
-      <entry key="M2" value="14.333764309438402" />
-      <entry key="M5" value="15.703972764760572" />
-      <entry key="M10" value="16.517284355453064" />
-      <entry key="M15" value="17.179547871995464" />
-      <entry key="M30" value="21.2236674725175" />
-      <entry key="H1" value="36.746653167395635" />
-      <entry key="H2" value="65.77141994572932" />
-      <entry key="H4" value="96.35839697622882" />
-      <entry key="D1" value="138.08890387865327" />
-      <entry key="W1" value="147.37845354862472" />
+      <entry key="MS100" value="1.0321002027213904" />
+      <entry key="MS500" value="1.958086880098913" />
+      <entry key="S2" value="3.8273755074371913" />
+      <entry key="S5" value="5.481510980511978" />
+      <entry key="S10" value="6.78038026760622" />
+      <entry key="S30" value="8.342249299503656" />
+      <entry key="S60" value="9.015352118314071" />
+      <entry key="M2" value="9.455250537749905" />
+      <entry key="M5" value="9.767182905712957" />
+      <entry key="M10" value="9.880878246791312" />
+      <entry key="M15" value="9.92014420568358" />
+      <entry key="M30" value="10.028430132798281" />
+      <entry key="H1" value="12.071391975197908" />
+      <entry key="H2" value="25.681615576034957" />
+      <entry key="H4" value="57.06086691733822" />
+      <entry key="D1" value="132.54398013317712" />
+      <entry key="W1" value="154.88536468109913" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="5.1439516934195645E-138" />
-      <entry key="S10" value="2.2680282720098805E-69" />
-      <entry key="S30" value="1.3211777546596096E-23" />
-      <entry key="S60" value="4.003388550981294E-12" />
-      <entry key="M2" value="2.771871382396631E-6" />
-      <entry key="M5" value="0.010849288935983104" />
-      <entry key="M10" value="0.17906997477919287" />
-      <entry key="M15" value="0.4639419928661989" />
-      <entry key="M30" value="1.3255660718451276" />
-      <entry key="H1" value="2.8111852731357865" />
-      <entry key="H2" value="4.866152926358505" />
-      <entry key="H4" value="6.81934500812772" />
-      <entry key="D1" value="9.352526555926854" />
-      <entry key="W1" value="9.904078920527867" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="5.6652468388031115E-173" />
+      <entry key="S60" value="8.290038263267013E-87" />
+      <entry key="M2" value="1.261355400083052E-43" />
+      <entry key="M5" value="1.2549517653830096E-17" />
+      <entry key="M10" value="6.090257449478095E-9" />
+      <entry key="M15" value="4.870111859922906E-6" />
+      <entry key="M30" value="0.004294761053384021" />
+      <entry key="H1" value="0.16001411070927835" />
+      <entry key="H2" value="1.1609677605581126" />
+      <entry key="H4" value="3.3308867455685" />
+      <entry key="D1" value="8.29975266701549" />
+      <entry key="W1" value="9.736547303695449" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.2498770870458649" />
-      <entry key="MS500" value="1.3386623170510583" />
-      <entry key="S2" value="4.165801069055942" />
-      <entry key="S5" value="7.367747443264208" />
-      <entry key="S10" value="9.563840759069059" />
-      <entry key="S30" value="11.78278196027768" />
-      <entry key="S60" value="12.970815250402511" />
-      <entry key="M2" value="14.271161684473023" />
-      <entry key="M5" value="15.677112701338434" />
-      <entry key="M10" value="16.670662685048136" />
-      <entry key="M15" value="17.62204082699357" />
-      <entry key="M30" value="22.533525241899984" />
-      <entry key="H1" value="39.54672682400774" />
-      <entry key="H2" value="70.63018477277275" />
-      <entry key="H4" value="103.17325645904907" />
-      <entry key="D1" value="147.44051944853368" />
-      <entry key="W1" value="157.2823973368247" />
+      <entry key="MS100" value="0.6077006809118805" />
+      <entry key="MS500" value="1.7750401217572787" />
+      <entry key="S2" value="3.7083046578854706" />
+      <entry key="S5" value="5.242272546194293" />
+      <entry key="S10" value="6.490877206141498" />
+      <entry key="S30" value="8.15600514289402" />
+      <entry key="S60" value="8.904576696314702" />
+      <entry key="M2" value="9.394727053303875" />
+      <entry key="M5" value="9.74163238695103" />
+      <entry key="M10" value="9.867869613923837" />
+      <entry key="M15" value="9.911423800981495" />
+      <entry key="M30" value="10.028284969012324" />
+      <entry key="H1" value="12.228572428429827" />
+      <entry key="H2" value="26.839718422673" />
+      <entry key="H4" value="60.38901117473956" />
+      <entry key="D1" value="140.8428323771483" />
+      <entry key="W1" value="164.62176599646222" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -290,6 +306,8 @@
     "HTTP Request.All in coop-connect-test (4).executor": "Run",
     "HTTP Request.All in coop-connect-test (5).executor": "Run",
     "HTTP Request.All in coop-connect-test.executor": "Run",
+    "HTTP Request.All in coop-correct-workflow (1).executor": "Run",
+    "HTTP Request.All in coop-correct-workflow.executor": "Run",
     "HTTP Request.All in cron-proof.executor": "Run",
     "HTTP Request.All in cron-test (1).executor": "Run",
     "HTTP Request.All in cron-test.executor": "Run",
@@ -433,6 +451,8 @@
     "HTTP Request.charles-savings-seeder | #1 (2).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (3).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1.executor": "Run",
+    "HTTP Request.coop-connect-test | #2.executor": "Run",
+    "HTTP Request.coop-connect-test | ============================================================.executor": "Run",
     "HTTP Request.cron-test | 1. LOGIN (If you need a fresh session).executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token) (1).executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor": "Run",
@@ -504,11 +524,11 @@
         <entry key="HttpClient.HttpRequestRunConfigurationType">
           <value>
             <map>
-              <entry key="All in coop-connect-test" value="STOPPED" />
-              <entry key="All in coop-connect-test (1)" value="STOPPED" />
               <entry key="All in coop-connect-test (3)" value="STOPPED" />
-              <entry key="All in coop-connect-test (4)" value="STOPPED" />
-              <entry key="All in coop-connect-test (5)" value="STOPPED" />
+              <entry key="All in coop-correct-workflow" value="STOPPED" />
+              <entry key="All in coop-correct-workflow (1)" value="STOPPED" />
+              <entry key="coop-connect-test | #2" value="STOPPED" />
+              <entry key="coop-connect-test | ============================================================" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -523,22 +543,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in coop-connect-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
+    <configuration name="All in coop-connect-test (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in coop-connect-test (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
+    <configuration name="All in coop-correct-workflow (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-correct-workflow.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in coop-connect-test (4)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in coop-connect-test (5)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in coop-connect-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
+    <configuration name="All in coop-correct-workflow" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-correct-workflow.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
+      <method v="2" />
+    </configuration>
+    <configuration name="coop-connect-test | #2" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http" executionIdentifier="#2" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="coop-connect-test | ============================================================" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http" executionIdentifier="============================================================" runType="Run single request">
       <method v="2" />
     </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
@@ -565,19 +585,19 @@
     </configuration>
     <list>
       <item itemvalue="HTTP Request.All in coop-connect-test (3)" />
-      <item itemvalue="HTTP Request.All in coop-connect-test (4)" />
-      <item itemvalue="HTTP Request.All in coop-connect-test (5)" />
-      <item itemvalue="HTTP Request.All in coop-connect-test" />
-      <item itemvalue="HTTP Request.All in coop-connect-test (1)" />
+      <item itemvalue="HTTP Request.All in coop-correct-workflow" />
+      <item itemvalue="HTTP Request.All in coop-correct-workflow (1)" />
+      <item itemvalue="HTTP Request.coop-connect-test | #2" />
+      <item itemvalue="HTTP Request.coop-connect-test | ============================================================" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in coop-connect-test (1)" />
-        <item itemvalue="HTTP Request.All in coop-connect-test" />
-        <item itemvalue="HTTP Request.All in coop-connect-test (5)" />
-        <item itemvalue="HTTP Request.All in coop-connect-test (4)" />
+        <item itemvalue="HTTP Request.All in coop-correct-workflow (1)" />
+        <item itemvalue="HTTP Request.All in coop-correct-workflow" />
         <item itemvalue="HTTP Request.All in coop-connect-test (3)" />
+        <item itemvalue="HTTP Request.coop-connect-test | ============================================================" />
+        <item itemvalue="HTTP Request.coop-connect-test | #2" />
       </list>
     </recent_temporary>
   </component>
@@ -634,15 +654,7 @@
       <workItem from="1779615374199" duration="4445000" />
       <workItem from="1779722498808" duration="730000" />
       <workItem from="1779741549264" duration="6930000" />
-      <workItem from="1779774337625" duration="4193000" />
-    </task>
-    <task id="LOCAL-00043" summary="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration">
-      <option name="closed" value="true" />
-      <created>1775117796362</created>
-      <option name="number" value="00043" />
-      <option name="presentableId" value="LOCAL-00043" />
-      <option name="project" value="LOCAL" />
-      <updated>1775117796362</updated>
+      <workItem from="1779774337625" duration="15118000" />
     </task>
     <task id="LOCAL-00044" summary="feat: enhance loan processing with improved cookie handling and penalty evaluation">
       <option name="closed" value="true" />
@@ -1028,7 +1040,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779623417107</updated>
     </task>
-    <option name="localTasksCounter" value="92" />
+    <task id="LOCAL-00092" summary="feat(payments): migrate to Co-op Connect for STK push and IPN handling">
+      <option name="closed" value="true" />
+      <created>1779778851135</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
+      <option name="project" value="LOCAL" />
+      <updated>1779778851139</updated>
+    </task>
+    <option name="localTasksCounter" value="93" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -1050,7 +1070,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: add update obligation API and security policy fields to settings" />
     <MESSAGE value="feat: implement update obligation functionality with dynamic password validation and new obligations tab" />
     <MESSAGE value="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage" />
     <MESSAGE value="feat: enhance AdminObligationsSection with type safety by updating memberData type" />
@@ -1075,7 +1094,8 @@
     <MESSAGE value="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify." />
     <MESSAGE value="fix(expense): wire SavingsService mock and fix test stubs in ExpenseClaimServiceTest&#10;&#10;- Add @Mock SavingsService so @InjectMocks can inject it into&#10;  ExpenseClaimService (was null, causing NPE on approval path)&#10;- Update approve test to verify savingsService.creditExpenseReimbursement&#10;  instead of the now-removed direct journalEntryService call&#10;- Remove unnecessary userRepository stubs from alreadyApproved and&#10;  rejectWithoutReason tests — service throws before reaching that call&#10;- Remove unused phone-OTP state vars from SetupWizardPage (bypassed&#10;  pending Africa's Talking integration, were causing lint errors)" />
     <MESSAGE value="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements" />
+    <MESSAGE value="feat(payments): migrate to Co-op Connect for STK push and IPN handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(payments): migrate to Co-op Connect for STK push and IPN handling" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
