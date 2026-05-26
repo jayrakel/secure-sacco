@@ -18,27 +18,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(payments): integrate Co-op Connect for STK push and IPN handling&#10;&#10;PAY-01: Replace Daraja with Co-op Connect for M-Pesa STK Push">
       <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/test-coop-connect.sh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/controller/CoopConnectController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/dto/CoopConnectDTOs.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/config/CoopConnectProperties.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/CoopConnectService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V72__coop_connect_payments.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/ci.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/ci.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy-staging.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/controller/PaymentController.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/dto/DarajaDTOs.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/config/DarajaProperties.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/DarajaApiService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilterTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,7 +34,7 @@
   <component name="CopilotChats">
     <option name="panelChat">
       <chat>
-        <option name="activeSessionId" value="a956fc11-f9fa-42cb-9dbc-20c9ded6a116" />
+        <option name="activeSessionId" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
         <option name="sessions">
           <session>
             <option name="chatType" value="PANEL" />
@@ -56,7 +42,7 @@
             <option name="modeId" value="Agent" />
             <option name="modelType" value="builtin_family" />
             <option name="modelValue" value="claude-haiku-4.5" />
-            <option name="status" value="WaitingForResponse" />
+            <option name="status" value="Stopped" />
             <option name="targetType" value="LOCAL" />
           </session>
           <session>
@@ -89,7 +75,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="335" />
+    <option name="cachedIndexableFilesCount" value="336" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -166,7 +152,9 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-loan-seeder-with-cron.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/cron-proof.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/coop-connect-test.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/coop-connect-test.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/real-coop-integration.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/coop-callbacks-simulation.http" environment="dev" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -188,61 +176,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.000000000253432" />
-      <entry key="M5" value="1.0009852894042255" />
-      <entry key="M10" value="1.1680059688618627" />
-      <entry key="M15" value="1.9930707079941588" />
-      <entry key="M30" value="8.506174092538176" />
-      <entry key="H1" value="27.981667230281992" />
-      <entry key="H2" value="57.976861368199124" />
-      <entry key="H4" value="86.24606337231843" />
-      <entry key="D1" value="122.01371435659506" />
-      <entry key="W1" value="129.67246800478074" />
+      <entry key="MS100" value="1.025436726796668" />
+      <entry key="MS500" value="1.7379425571269107" />
+      <entry key="S2" value="4.532069924953728" />
+      <entry key="S5" value="7.663304153905049" />
+      <entry key="S10" value="9.763181479754774" />
+      <entry key="S30" value="11.876171077695274" />
+      <entry key="S60" value="13.046963688470418" />
+      <entry key="M2" value="14.333764309438402" />
+      <entry key="M5" value="15.703972764760572" />
+      <entry key="M10" value="16.517284355453064" />
+      <entry key="M15" value="17.179547871995464" />
+      <entry key="M30" value="21.2236674725175" />
+      <entry key="H1" value="36.746653167395635" />
+      <entry key="H2" value="65.77141994572932" />
+      <entry key="H4" value="96.35839697622882" />
+      <entry key="D1" value="138.08890387865327" />
+      <entry key="W1" value="147.37845354862472" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="3.0740109695352113E-193" />
-      <entry key="S2" value="7.446056944953009E-49" />
-      <entry key="S5" value="5.6075162564101E-20" />
-      <entry key="S10" value="2.368019606152189E-10" />
-      <entry key="S30" value="6.221190917347799E-4" />
-      <entry key="S60" value="0.027471595371237775" />
-      <entry key="M2" value="0.2296154695835323" />
-      <entry key="M5" value="1.0062189754234698" />
-      <entry key="M10" value="1.7245205989757293" />
-      <entry key="M15" value="2.100039319627549" />
-      <entry key="M30" value="2.8202217068328053" />
-      <entry key="H1" value="4.100439464092002" />
-      <entry key="H2" value="5.877007176015013" />
-      <entry key="H4" value="7.494245175024295" />
-      <entry key="D1" value="9.500792265096942" />
-      <entry key="W1" value="9.926357932121617" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="5.1439516934195645E-138" />
+      <entry key="S10" value="2.2680282720098805E-69" />
+      <entry key="S30" value="1.3211777546596096E-23" />
+      <entry key="S60" value="4.003388550981294E-12" />
+      <entry key="M2" value="2.771871382396631E-6" />
+      <entry key="M5" value="0.010849288935983104" />
+      <entry key="M10" value="0.17906997477919287" />
+      <entry key="M15" value="0.4639419928661989" />
+      <entry key="M30" value="1.3255660718451276" />
+      <entry key="H1" value="2.8111852731357865" />
+      <entry key="H2" value="4.866152926358505" />
+      <entry key="H4" value="6.81934500812772" />
+      <entry key="D1" value="9.352526555926854" />
+      <entry key="W1" value="9.904078920527867" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.1907824011200699" />
-      <entry key="MS500" value="0.7179722553117177" />
-      <entry key="S2" value="0.9205066186324345" />
-      <entry key="S5" value="0.967410431881117" />
-      <entry key="S10" value="0.9835702477408076" />
-      <entry key="S30" value="0.9950639708910244" />
-      <entry key="S60" value="1.0235658450078398" />
-      <entry key="M2" value="1.223472296110666" />
-      <entry key="M5" value="1.9983995797693521" />
-      <entry key="M10" value="2.885146848825289" />
-      <entry key="M15" value="4.086927660425741" />
-      <entry key="M30" value="11.321356834363383" />
-      <entry key="H1" value="32.077609379974106" />
-      <entry key="H2" value="63.85032588681307" />
-      <entry key="H4" value="93.73796514681703" />
-      <entry key="D1" value="131.51399886493283" />
-      <entry key="W1" value="139.5987498549674" />
+      <entry key="MS100" value="0.2498770870458649" />
+      <entry key="MS500" value="1.3386623170510583" />
+      <entry key="S2" value="4.165801069055942" />
+      <entry key="S5" value="7.367747443264208" />
+      <entry key="S10" value="9.563840759069059" />
+      <entry key="S30" value="11.78278196027768" />
+      <entry key="S60" value="12.970815250402511" />
+      <entry key="M2" value="14.271161684473023" />
+      <entry key="M5" value="15.677112701338434" />
+      <entry key="M10" value="16.670662685048136" />
+      <entry key="M15" value="17.62204082699357" />
+      <entry key="M30" value="22.533525241899984" />
+      <entry key="H1" value="39.54672682400774" />
+      <entry key="H2" value="70.63018477277275" />
+      <entry key="H4" value="103.17325645904907" />
+      <entry key="D1" value="147.44051944853368" />
+      <entry key="W1" value="157.2823973368247" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -298,6 +286,9 @@
     "HTTP Request.All in charles-savings-seeder.executor": "Run",
     "HTTP Request.All in coop-connect-test (1).executor": "Run",
     "HTTP Request.All in coop-connect-test (2).executor": "Run",
+    "HTTP Request.All in coop-connect-test (3).executor": "Run",
+    "HTTP Request.All in coop-connect-test (4).executor": "Run",
+    "HTTP Request.All in coop-connect-test (5).executor": "Run",
     "HTTP Request.All in coop-connect-test.executor": "Run",
     "HTTP Request.All in cron-proof.executor": "Run",
     "HTTP Request.All in cron-test (1).executor": "Run",
@@ -486,7 +477,7 @@
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "rest.client.default.execution.environment": "dev",
+    "rest.client.default.execution.environment": "stag",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
@@ -515,7 +506,9 @@
             <map>
               <entry key="All in coop-connect-test" value="STOPPED" />
               <entry key="All in coop-connect-test (1)" value="STOPPED" />
-              <entry key="All in coop-connect-test (2)" value="STOPPED" />
+              <entry key="All in coop-connect-test (3)" value="STOPPED" />
+              <entry key="All in coop-connect-test (4)" value="STOPPED" />
+              <entry key="All in coop-connect-test (5)" value="STOPPED" />
             </map>
           </value>
         </entry>
@@ -530,19 +523,19 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in coop-connect-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
+    <configuration name="All in coop-connect-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in coop-connect-test (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
+    <configuration name="All in coop-connect-test (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in coop-connect-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
+    <configuration name="All in coop-connect-test (4)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in loan-product-seeder (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http">
+    <configuration name="All in coop-connect-test (5)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in loan-product-seeder (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http">
+    <configuration name="All in coop-connect-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
@@ -571,20 +564,20 @@
       </method>
     </configuration>
     <list>
+      <item itemvalue="HTTP Request.All in coop-connect-test (3)" />
+      <item itemvalue="HTTP Request.All in coop-connect-test (4)" />
+      <item itemvalue="HTTP Request.All in coop-connect-test (5)" />
       <item itemvalue="HTTP Request.All in coop-connect-test" />
       <item itemvalue="HTTP Request.All in coop-connect-test (1)" />
-      <item itemvalue="HTTP Request.All in coop-connect-test (2)" />
-      <item itemvalue="HTTP Request.All in loan-product-seeder (1)" />
-      <item itemvalue="HTTP Request.All in loan-product-seeder (2)" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in coop-connect-test (2)" />
         <item itemvalue="HTTP Request.All in coop-connect-test (1)" />
         <item itemvalue="HTTP Request.All in coop-connect-test" />
-        <item itemvalue="HTTP Request.All in loan-product-seeder (2)" />
-        <item itemvalue="HTTP Request.All in loan-product-seeder (1)" />
+        <item itemvalue="HTTP Request.All in coop-connect-test (5)" />
+        <item itemvalue="HTTP Request.All in coop-connect-test (4)" />
+        <item itemvalue="HTTP Request.All in coop-connect-test (3)" />
       </list>
     </recent_temporary>
   </component>
@@ -641,6 +634,7 @@
       <workItem from="1779615374199" duration="4445000" />
       <workItem from="1779722498808" duration="730000" />
       <workItem from="1779741549264" duration="6930000" />
+      <workItem from="1779774337625" duration="4193000" />
     </task>
     <task id="LOCAL-00043" summary="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration">
       <option name="closed" value="true" />
