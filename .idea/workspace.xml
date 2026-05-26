@@ -18,10 +18,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify.">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements">
+      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/test-coop-connect.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/controller/CoopConnectController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/dto/CoopConnectDTOs.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/config/CoopConnectProperties.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/CoopConnectService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/db/migration/V72__coop_connect_payments.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/httpRequests/http-client.cookies" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/expense/domain/service/ExpenseClaimServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/expense/domain/service/ExpenseClaimServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/setup/pages/SetupWizardPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/setup/pages/SetupWizardPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/controller/PaymentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/api/dto/DarajaDTOs.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/config/DarajaProperties.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/DarajaApiService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/test/java/com/jaytechwave/sacco/modules/payments/infrastructure/filter/MpesaIpWhitelistFilterTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/infra/docker-compose.prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,14 +48,23 @@
   <component name="CopilotChats">
     <option name="panelChat">
       <chat>
-        <option name="activeSessionId" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
+        <option name="activeSessionId" value="a956fc11-f9fa-42cb-9dbc-20c9ded6a116" />
         <option name="sessions">
           <session>
             <option name="chatType" value="PANEL" />
             <option name="id" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
-            <option name="modeId" value="Ask" />
+            <option name="modeId" value="Agent" />
             <option name="modelType" value="builtin_family" />
-            <option name="modelValue" value="auto" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="status" value="WaitingForResponse" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="a956fc11-f9fa-42cb-9dbc-20c9ded6a116" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
             <option name="targetType" value="LOCAL" />
           </session>
         </option>
@@ -58,8 +84,8 @@
   </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
-      <entry key="chat-panel" value="Claude Haiku 4.5" />
       <entry key="agent-panel" value="Claude Haiku 4.5" />
+      <entry key="chat-panel" value="Claude Haiku 4.5" />
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
@@ -70,6 +96,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTTP Public Environment File" />
+        <option value="HTTP Private Environment File" />
       </list>
     </option>
   </component>
@@ -120,6 +147,9 @@
     &quot;repository&quot;: &quot;secure-sacco&quot;
   }
 }</component>
+  <component name="HttpClientEndpointsTabState">
+    <option name="cachedRequestData" value="&lt;CachedHttpClientTabRequests&gt;&#10;  &lt;entry key=&quot;b495f2c26609a0e339a96f9ab704c3886a095254&quot; value=&quot;###&amp;#10;POST http://localhost:${SERVER_PORT:8080}/api/v1/payments/coop/stk-callback&amp;#10;Content-Type: application/json&amp;#10;&amp;#10;&amp;quot;&amp;quot;&quot; /&gt;&#10;&lt;/CachedHttpClientTabRequests&gt;" />
+  </component>
   <component name="HttpClientOnboardingState">{
   &quot;isOnboardingCommentShown&quot;: true
 }</component>
@@ -136,6 +166,7 @@
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-loan-seeder-with-cron.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/cron-proof.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/coop-connect-test.http" environment="dev" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
@@ -157,25 +188,6 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="2.4132469864946113E-19" />
-      <entry key="MS500" value="2.9239934915395915E-4" />
-      <entry key="S2" value="0.5054329885022537" />
-      <entry key="S5" value="2.778962049497231" />
-      <entry key="S10" value="5.222248051846715" />
-      <entry key="S30" value="8.978100614433467" />
-      <entry key="S60" value="10.678301093780922" />
-      <entry key="M2" value="11.744769858418632" />
-      <entry key="M5" value="12.534211057722125" />
-      <entry key="M10" value="13.546771541724382" />
-      <entry key="M15" value="15.70741212436142" />
-      <entry key="M30" value="27.194446939360446" />
-      <entry key="H1" value="49.26950401986426" />
-      <entry key="H2" value="73.03923607825946" />
-      <entry key="H4" value="90.99337420970424" />
-      <entry key="D1" value="110.49215122942731" />
-      <entry key="W1" value="114.34228657760607" />
-    </decayedCancelled>
-    <decayedSelected>
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
@@ -183,35 +195,54 @@
       <entry key="S10" value="1.0" />
       <entry key="S30" value="1.0" />
       <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.000000000721669" />
-      <entry key="M5" value="1.000292403500032" />
-      <entry key="M10" value="1.0318308554450024" />
-      <entry key="M15" value="1.1662665246616988" />
-      <entry key="M30" value="1.9275836370121548" />
-      <entry key="H1" value="3.2914210509487516" />
-      <entry key="H2" value="4.673348264795081" />
-      <entry key="H4" value="5.682250603442043" />
-      <entry key="D1" value="6.754789197072242" />
-      <entry key="W1" value="6.964280072517049" />
+      <entry key="M2" value="1.000000000253432" />
+      <entry key="M5" value="1.0009852894042255" />
+      <entry key="M10" value="1.1680059688618627" />
+      <entry key="M15" value="1.9930707079941588" />
+      <entry key="M30" value="8.506174092538176" />
+      <entry key="H1" value="27.981667230281992" />
+      <entry key="H2" value="57.976861368199124" />
+      <entry key="H4" value="86.24606337231843" />
+      <entry key="D1" value="122.01371435659506" />
+      <entry key="W1" value="129.67246800478074" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="3.0740109695352113E-193" />
+      <entry key="S2" value="7.446056944953009E-49" />
+      <entry key="S5" value="5.6075162564101E-20" />
+      <entry key="S10" value="2.368019606152189E-10" />
+      <entry key="S30" value="6.221190917347799E-4" />
+      <entry key="S60" value="0.027471595371237775" />
+      <entry key="M2" value="0.2296154695835323" />
+      <entry key="M5" value="1.0062189754234698" />
+      <entry key="M10" value="1.7245205989757293" />
+      <entry key="M15" value="2.100039319627549" />
+      <entry key="M30" value="2.8202217068328053" />
+      <entry key="H1" value="4.100439464092002" />
+      <entry key="H2" value="5.877007176015013" />
+      <entry key="H4" value="7.494245175024295" />
+      <entry key="D1" value="9.500792265096942" />
+      <entry key="W1" value="9.926357932121617" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.418962426268727E-19" />
-      <entry key="MS500" value="3.460295658538523E-4" />
-      <entry key="S2" value="0.5887380375635963" />
-      <entry key="S5" value="3.146843371186503" />
-      <entry key="S10" value="5.827651917253644" />
-      <entry key="S30" value="9.82313755897257" />
-      <entry key="S60" value="11.597313048224537" />
-      <entry key="M2" value="12.703335537540523" />
-      <entry key="M5" value="13.516978950696348" />
-      <entry key="M10" value="14.567193969374735" />
-      <entry key="M15" value="16.863902391933713" />
-      <entry key="M30" value="29.11442260955851" />
-      <entry key="H1" value="52.55540059008039" />
-      <entry key="H2" value="77.70898996501882" />
-      <entry key="H4" value="96.67351773479903" />
-      <entry key="D1" value="117.2465328432833" />
-      <entry key="W1" value="121.30650682265369" />
+      <entry key="MS100" value="0.1907824011200699" />
+      <entry key="MS500" value="0.7179722553117177" />
+      <entry key="S2" value="0.9205066186324345" />
+      <entry key="S5" value="0.967410431881117" />
+      <entry key="S10" value="0.9835702477408076" />
+      <entry key="S30" value="0.9950639708910244" />
+      <entry key="S60" value="1.0235658450078398" />
+      <entry key="M2" value="1.223472296110666" />
+      <entry key="M5" value="1.9983995797693521" />
+      <entry key="M10" value="2.885146848825289" />
+      <entry key="M15" value="4.086927660425741" />
+      <entry key="M30" value="11.321356834363383" />
+      <entry key="H1" value="32.077609379974106" />
+      <entry key="H2" value="63.85032588681307" />
+      <entry key="H4" value="93.73796514681703" />
+      <entry key="D1" value="131.51399886493283" />
+      <entry key="W1" value="139.5987498549674" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -221,235 +252,252 @@
   &quot;associatedIndex&quot;: 6
 }</component>
   <component name="ProjectId" id="3BS07ua0EqtAaZS9eFMKNL1lX4E" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Agent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+          </model>
+        </option>
+        <option name="targetType" value="LOCAL" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Application.BackendApplication.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in base-balances-seeder (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in base-balances-seeder (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in base-balances-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-loan-seeder-with-cron.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-savings-seed (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-savings-seed.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-time-travel-api (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-time-travel-api (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-time-travel-api (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-time-travel-api (4).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-time-travel-api.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test (4).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test-with-timetravel (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test-with-timetravel (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test-with-timetravel (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test-with-timetravel (4).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test-with-timetravel.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in benjamin-ultimate-test.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in charles-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in cron-proof.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in cron-test (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in cron-test.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in dashboard-test.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in gideon-savings-seeder (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in gideon-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-loan-test (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-loan-test (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-loan-test (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-loan-test (4).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-loan-test (5).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-loan-test.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-repayments (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-repayments.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-savings-seeder (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-savings-seeder (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-savings-seeder (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in jacob-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in kimere-savings-seeder (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in kimere-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in loan-product-seeder (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in loan-product-seeder (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in loan-product-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in members-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in migration_loans (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in migration_loans.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in migrations-seeder-corrected (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in migrations-seeder-corrected (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in migrations-seeder-corrected (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in migrations-seeder-corrected.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in moses-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in salesio-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in samuel-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in stephen-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in tarcisio-savings-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in withdrawals-seeder (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in withdrawals-seeder (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.All in withdrawals-seeder.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.base-balances-seeder | #62.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.base-balances-seeder | ============================================================#1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.base-balances-seeder | ============================================================#2 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.base-balances-seeder | ============================================================#2.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #10.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #11.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #12.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #13.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #14.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #15.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #16.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #17.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #18.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #19.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #20.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #21.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #22.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #23.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #24.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #25.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #26.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #27.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #28.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #29.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #30.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #31.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #32.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #33.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #34.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #35.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #36.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #37.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #38.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #39.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #4.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #40.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #41.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #42.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #43.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #44.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #45 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #45.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #46.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #47.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #48.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #49.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #5.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #50.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #51.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #52.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #53.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #54.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #55.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #56.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #57.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #58.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #59.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #6.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #60.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #61.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #62.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #63.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #66.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #67.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #68.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #69.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #7.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #70.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #71.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #72.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #73.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #74.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #75.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #76.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #79.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #8.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #80.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #81.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #82.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #83.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #84.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | #9.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | --- Loan 1 Repayments (61 payments) ---.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | --- Loan 2 Repayments (12 payments) ---.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | --- Loan 3 Repayments (47 payments) ---.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | 1. LOGIN.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#2 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#2 (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#2 (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#2.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test | ============================================================#3.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ====================.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.benjamin-ultimate-test-with-timetravel | Benjamin's Ultimate Loan Test with Time-Travel &amp; Penalty Tracking.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.charles-savings-seeder | #1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.charles-savings-seeder | #1 (2).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.charles-savings-seeder | #1 (3).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.charles-savings-seeder | #1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.cron-test | 1. LOGIN (If you need a fresh session).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.dashboard-test | Login as Admin (Run this first to get the token) (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.jacob-loan-test | ============================================================#1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.jacob-loan-test | ============================================================#1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.jacob-loan-test | ============================================================#2.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.jacob-savings-seeder | #1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.migration_loans | ============================================================#1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.migration_loans | ============================================================#1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.migrations-seeder-corrected | ============================================================#1.executor&quot;: &quot;Run&quot;,
-    &quot;HTTP Request.withdrawals-seeder | ==========================================#1.executor&quot;: &quot;Run&quot;,
-    &quot;JavaClassFindUsagesOptions.isDerivedClasses&quot;: &quot;true&quot;,
-    &quot;JavaClassFindUsagesOptions.isFieldsUsages&quot;: &quot;true&quot;,
-    &quot;JavaClassFindUsagesOptions.isMethodsUsages&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;SHELLCHECK.PATH&quot;: &quot;C:\\Users\\JAY\\AppData\\Roaming\\JetBrains\\IntelliJIdea2025.3\\plugins\\Shell Script\\shellcheck.exe&quot;,
-    &quot;Spring Boot.BackendApplication.executor&quot;: &quot;Run&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;database.data.extractors.current.export.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
-    &quot;database.data.extractors.current.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/SAC-221-asset-management-module&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/jay-techwave-solutions/Downloads/github-copilot-intellij-1.9.1-251.zip&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;rest.client.default.execution.environment&quot;: &quot;stag&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Application.BackendApplication.executor": "Run",
+    "HTTP Request.All in base-balances-seeder (1).executor": "Run",
+    "HTTP Request.All in base-balances-seeder (2).executor": "Run",
+    "HTTP Request.All in base-balances-seeder.executor": "Run",
+    "HTTP Request.All in benjamin-loan-seeder-with-cron.executor": "Run",
+    "HTTP Request.All in benjamin-savings-seed (1).executor": "Run",
+    "HTTP Request.All in benjamin-savings-seed.executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (1).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (2).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (3).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (4).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api.executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (1).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (2).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (4).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (1).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (2).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (4).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel.executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test.executor": "Run",
+    "HTTP Request.All in charles-savings-seeder.executor": "Run",
+    "HTTP Request.All in coop-connect-test (1).executor": "Run",
+    "HTTP Request.All in coop-connect-test (2).executor": "Run",
+    "HTTP Request.All in coop-connect-test.executor": "Run",
+    "HTTP Request.All in cron-proof.executor": "Run",
+    "HTTP Request.All in cron-test (1).executor": "Run",
+    "HTTP Request.All in cron-test.executor": "Run",
+    "HTTP Request.All in dashboard-test.executor": "Run",
+    "HTTP Request.All in gideon-savings-seeder (1).executor": "Run",
+    "HTTP Request.All in gideon-savings-seeder.executor": "Run",
+    "HTTP Request.All in jacob-loan-test (1).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (2).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (3).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (4).executor": "Run",
+    "HTTP Request.All in jacob-loan-test (5).executor": "Run",
+    "HTTP Request.All in jacob-loan-test.executor": "Run",
+    "HTTP Request.All in jacob-repayments (1).executor": "Run",
+    "HTTP Request.All in jacob-repayments.executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder (1).executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder (2).executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder (3).executor": "Run",
+    "HTTP Request.All in jacob-savings-seeder.executor": "Run",
+    "HTTP Request.All in kimere-savings-seeder (1).executor": "Run",
+    "HTTP Request.All in kimere-savings-seeder.executor": "Run",
+    "HTTP Request.All in loan-product-seeder (1).executor": "Run",
+    "HTTP Request.All in loan-product-seeder (2).executor": "Run",
+    "HTTP Request.All in loan-product-seeder.executor": "Run",
+    "HTTP Request.All in members-seeder.executor": "Run",
+    "HTTP Request.All in migration_loans (1).executor": "Run",
+    "HTTP Request.All in migration_loans.executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected (1).executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected (2).executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected (3).executor": "Run",
+    "HTTP Request.All in migrations-seeder-corrected.executor": "Run",
+    "HTTP Request.All in moses-savings-seeder.executor": "Run",
+    "HTTP Request.All in salesio-savings-seeder.executor": "Run",
+    "HTTP Request.All in samuel-savings-seeder.executor": "Run",
+    "HTTP Request.All in stephen-savings-seeder.executor": "Run",
+    "HTTP Request.All in tarcisio-savings-seeder.executor": "Run",
+    "HTTP Request.All in withdrawals-seeder (1).executor": "Run",
+    "HTTP Request.All in withdrawals-seeder (2).executor": "Run",
+    "HTTP Request.All in withdrawals-seeder.executor": "Run",
+    "HTTP Request.base-balances-seeder | #62.executor": "Run",
+    "HTTP Request.base-balances-seeder | ============================================================#1.executor": "Run",
+    "HTTP Request.base-balances-seeder | ============================================================#2 (1).executor": "Run",
+    "HTTP Request.base-balances-seeder | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #10.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #11.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #12.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #13.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #14.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #15.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #16.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #17.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #18.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #19.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #20.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #21.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #22.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #23.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #24.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #25.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #26.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #27.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #28.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #29.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #30.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #31.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #32.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #33.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #34.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #35.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #36.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #37.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #38.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #39.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #4.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #40.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #41.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #42.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #43.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #44.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #45 (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #45.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #46.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #47.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #48.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #49.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #5.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #50.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #51.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #52.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #53.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #54.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #55.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #56.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #57.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #58.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #59.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #6.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #60.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #61.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #62.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #63.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #66.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #67.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #68.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #69.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #7.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #70.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #71.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #72.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #73.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #74.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #75.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #76.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #79.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #8.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #80.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #81.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #82.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #83.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #84.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #9.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 1 Repayments (61 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 2 Repayments (12 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 3 Repayments (47 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | 1. LOGIN.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#1 (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#1.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (3).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#3.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ====================.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | Benjamin's Ultimate Loan Test with Time-Travel & Penalty Tracking.executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1 (1).executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1 (2).executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1 (3).executor": "Run",
+    "HTTP Request.charles-savings-seeder | #1.executor": "Run",
+    "HTTP Request.cron-test | 1. LOGIN (If you need a fresh session).executor": "Run",
+    "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token) (1).executor": "Run",
+    "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor": "Run",
+    "HTTP Request.jacob-loan-test | ============================================================#1 (1).executor": "Run",
+    "HTTP Request.jacob-loan-test | ============================================================#1.executor": "Run",
+    "HTTP Request.jacob-loan-test | ============================================================#2.executor": "Run",
+    "HTTP Request.jacob-savings-seeder | #1.executor": "Run",
+    "HTTP Request.migration_loans | ============================================================#1 (1).executor": "Run",
+    "HTTP Request.migration_loans | ============================================================#1.executor": "Run",
+    "HTTP Request.migrations-seeder-corrected | ============================================================#1.executor": "Run",
+    "HTTP Request.withdrawals-seeder | ==========================================#1.executor": "Run",
+    "JavaClassFindUsagesOptions.isDerivedClasses": "true",
+    "JavaClassFindUsagesOptions.isFieldsUsages": "true",
+    "JavaClassFindUsagesOptions.isMethodsUsages": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "SHELLCHECK.PATH": "C:\\Users\\JAY\\AppData\\Roaming\\JetBrains\\IntelliJIdea2025.3\\plugins\\Shell Script\\shellcheck.exe",
+    "Spring Boot.BackendApplication.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "database.data.extractors.current.export.id": "Comma-separated (CSV)_id",
+    "database.data.extractors.current.id": "Comma-separated (CSV)_id",
+    "git-widget-placeholder": "feature/SAC-221-asset-management-module",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/jay-techwave-solutions/Downloads/github-copilot-intellij-1.9.1-251.zip",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "rest.client.default.execution.environment": "dev",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migration\pages" />
@@ -459,6 +507,21 @@
       <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\backend" />
     </key>
   </component>
+  <component name="RunDashboard">
+    <option name="configurationStatuses">
+      <map>
+        <entry key="HttpClient.HttpRequestRunConfigurationType">
+          <value>
+            <map>
+              <entry key="All in coop-connect-test" value="STOPPED" />
+              <entry key="All in coop-connect-test (1)" value="STOPPED" />
+              <entry key="All in coop-connect-test (2)" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="RunManager" selected="Spring Boot.BackendApplication">
     <configuration default="true" type="Application" factoryName="Application">
       <option name="ALTERNATIVE_JRE_PATH" value="$USER_HOME$/.jdks/temurin-17.0.18" />
@@ -467,19 +530,19 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in cron-proof" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/cron-proof.http">
+    <configuration name="All in coop-connect-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="All in coop-connect-test (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
+      <method v="2" />
+    </configuration>
+    <configuration name="All in coop-connect-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
     <configuration name="All in loan-product-seeder (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http">
       <method v="2" />
     </configuration>
     <configuration name="All in loan-product-seeder (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in loan-product-seeder" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in members-seeder" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/members-seeder.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
@@ -508,20 +571,20 @@
       </method>
     </configuration>
     <list>
-      <item itemvalue="HTTP Request.All in loan-product-seeder" />
+      <item itemvalue="HTTP Request.All in coop-connect-test" />
+      <item itemvalue="HTTP Request.All in coop-connect-test (1)" />
+      <item itemvalue="HTTP Request.All in coop-connect-test (2)" />
       <item itemvalue="HTTP Request.All in loan-product-seeder (1)" />
       <item itemvalue="HTTP Request.All in loan-product-seeder (2)" />
-      <item itemvalue="HTTP Request.All in members-seeder" />
-      <item itemvalue="HTTP Request.All in cron-proof" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="HTTP Request.All in coop-connect-test (2)" />
+        <item itemvalue="HTTP Request.All in coop-connect-test (1)" />
+        <item itemvalue="HTTP Request.All in coop-connect-test" />
         <item itemvalue="HTTP Request.All in loan-product-seeder (2)" />
         <item itemvalue="HTTP Request.All in loan-product-seeder (1)" />
-        <item itemvalue="HTTP Request.All in loan-product-seeder" />
-        <item itemvalue="HTTP Request.All in members-seeder" />
-        <item itemvalue="HTTP Request.All in cron-proof" />
       </list>
     </recent_temporary>
   </component>
@@ -575,23 +638,9 @@
       <workItem from="1779538348636" duration="2004000" />
       <workItem from="1779613907434" duration="412000" />
       <workItem from="1779614415307" duration="892000" />
-      <workItem from="1779615374199" duration="2370000" />
-    </task>
-    <task id="LOCAL-00041" summary="feat: add refinance loan functionality and historical penalty migration support">
-      <option name="closed" value="true" />
-      <created>1775033304459</created>
-      <option name="number" value="00041" />
-      <option name="presentableId" value="LOCAL-00041" />
-      <option name="project" value="LOCAL" />
-      <updated>1775033304459</updated>
-    </task>
-    <task id="LOCAL-00042" summary="feat: implement TimeTravelerService for loan simulation and schedule progression">
-      <option name="closed" value="true" />
-      <created>1775116665174</created>
-      <option name="number" value="00042" />
-      <option name="presentableId" value="LOCAL-00042" />
-      <option name="project" value="LOCAL" />
-      <updated>1775116665175</updated>
+      <workItem from="1779615374199" duration="4445000" />
+      <workItem from="1779722498808" duration="730000" />
+      <workItem from="1779741549264" duration="6930000" />
     </task>
     <task id="LOCAL-00043" summary="feat: enhance TimeTravelerService for system-wide loan simulation and flexible date configuration">
       <option name="closed" value="true" />
@@ -969,7 +1018,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779617008993</updated>
     </task>
-    <option name="localTasksCounter" value="90" />
+    <task id="LOCAL-00090" summary="fix(expense): wire SavingsService mock and fix test stubs in ExpenseClaimServiceTest&#10;&#10;- Add @Mock SavingsService so @InjectMocks can inject it into&#10;  ExpenseClaimService (was null, causing NPE on approval path)&#10;- Update approve test to verify savingsService.creditExpenseReimbursement&#10;  instead of the now-removed direct journalEntryService call&#10;- Remove unnecessary userRepository stubs from alreadyApproved and&#10;  rejectWithoutReason tests — service throws before reaching that call&#10;- Remove unused phone-OTP state vars from SetupWizardPage (bypassed&#10;  pending Africa's Talking integration, were causing lint errors)">
+      <option name="closed" value="true" />
+      <created>1779621184586</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
+      <option name="project" value="LOCAL" />
+      <updated>1779621184587</updated>
+    </task>
+    <task id="LOCAL-00091" summary="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements">
+      <option name="closed" value="true" />
+      <created>1779623417107</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
+      <option name="project" value="LOCAL" />
+      <updated>1779623417107</updated>
+    </task>
+    <option name="localTasksCounter" value="92" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -991,8 +1056,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling" />
-    <MESSAGE value="feat: fix 500 error on settings endpoint by ensuring branding URLs are never NULL" />
     <MESSAGE value="feat: add update obligation API and security policy fields to settings" />
     <MESSAGE value="feat: implement update obligation functionality with dynamic password validation and new obligations tab" />
     <MESSAGE value="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage" />
@@ -1016,7 +1079,9 @@
     <MESSAGE value="feat: add expense reimbursement functionality for members to submit claims" />
     <MESSAGE value="fix(expense): credit reimbursements to savings and pass lint&#10;&#10;- Fix calculateBalance JPQL to count EXPENSE_REIMBURSEMENT as credit&#10;  (old ELSE branch was deducting it, breaking member balance display)&#10;- Add idempotent V71 migration: widens savings_transactions enum&#10;  columns to VARCHAR(30), recreates v_member_savings_balance and&#10;  v_member_financial_overview dropped by CASCADE&#10;- Show EXPENSE_REIMBURSEMENT as green credit entry in member savings&#10;  statement (gift icon, + prefix, &quot;Expense Reimbursement&quot; label)&#10;- Downgrade react-hooks v7 set-state-in-effect/static-components/&#10;  immutability rules to warn so CI is not blocked by false positives&#10;- Remove dead phone-OTP functions bypassed pending Africa's Talking" />
     <MESSAGE value="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify." />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify." />
+    <MESSAGE value="fix(expense): wire SavingsService mock and fix test stubs in ExpenseClaimServiceTest&#10;&#10;- Add @Mock SavingsService so @InjectMocks can inject it into&#10;  ExpenseClaimService (was null, causing NPE on approval path)&#10;- Update approve test to verify savingsService.creditExpenseReimbursement&#10;  instead of the now-removed direct journalEntryService call&#10;- Remove unnecessary userRepository stubs from alreadyApproved and&#10;  rejectWithoutReason tests — service throws before reaching that call&#10;- Remove unused phone-OTP state vars from SetupWizardPage (bypassed&#10;  pending Africa's Talking integration, were causing lint errors)" />
+    <MESSAGE value="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -1,7 +1,7 @@
 package com.jaytechwave.sacco.modules.payments.domain.service;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
-import com.jaytechwave.sacco.modules.payments.api.dto.DarajaDTOs.*;
+import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,18 +25,18 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PaymentService — M-Pesa STK Callback Handling")
+@DisplayName("PaymentService — Co-op Connect STK Callback Handling")
 class PaymentServiceTest {
 
-    @Mock DarajaApiService darajaApiService;
-    @Mock PaymentRepository paymentRepository;
+    @Mock CoopConnectService    coopConnectService;
+    @Mock PaymentRepository     paymentRepository;
     @Mock ApplicationEventPublisher eventPublisher;
-    @Mock SecurityAuditService securityAuditService;
+    @Mock SecurityAuditService  securityAuditService;
 
     @InjectMocks
     private PaymentService service;
 
-    private static final String CHECKOUT_ID = "ws_CO_2026010600001";
+    private static final String MESSAGE_REF = "abc123def456ghi789jk"; // 20-char ref
     private UUID memberId;
     private Payment pendingPayment;
 
@@ -48,9 +47,9 @@ class PaymentServiceTest {
         pendingPayment = Payment.builder()
                 .id(UUID.randomUUID())
                 .memberId(memberId)
-                .internalRef(CHECKOUT_ID)
+                .internalRef(MESSAGE_REF)
                 .amount(new BigDecimal("1000.00"))
-                .paymentMethod("MPESA")
+                .paymentMethod("MPESA_COOP")
                 .paymentType("STK_PUSH")
                 .accountReference("DEP-ABCD1234")
                 .senderPhoneNumber("254700000001")
@@ -63,29 +62,29 @@ class PaymentServiceTest {
     @Test
     @DisplayName("successful callback marks payment COMPLETED and fires event")
     void processStkCallback_success_marksCompletedAndFiresEvent() {
-        when(paymentRepository.findByInternalRef(CHECKOUT_ID)).thenReturn(Optional.of(pendingPayment));
+        when(paymentRepository.findByInternalRef(MESSAGE_REF)).thenReturn(Optional.of(pendingPayment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        StkCallbackResponse callback = buildSuccessfulCallback(CHECKOUT_ID, "PGS123456789");
+        StkCallbackPayload callback = buildSuccessfulCallback(MESSAGE_REF, "PGS123456789");
 
         service.processStkCallback("{}", callback);
 
         assertThat(pendingPayment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
         assertThat(pendingPayment.getTransactionRef()).isEqualTo("PGS123456789");
 
-        ArgumentCaptor<PaymentCompletedEvent> eventCaptor = ArgumentCaptor.forClass(PaymentCompletedEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().memberId()).isEqualTo(memberId);
-        assertThat(eventCaptor.getValue().amount()).isEqualByComparingTo(new BigDecimal("1000.00"));
+        ArgumentCaptor<PaymentCompletedEvent> captor = ArgumentCaptor.forClass(PaymentCompletedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().memberId()).isEqualTo(memberId);
+        assertThat(captor.getValue().amount()).isEqualByComparingTo(new BigDecimal("1000.00"));
     }
 
     @Test
     @DisplayName("failed callback marks payment FAILED and stores reason")
     void processStkCallback_failure_marksFailedWithReason() {
-        when(paymentRepository.findByInternalRef(CHECKOUT_ID)).thenReturn(Optional.of(pendingPayment));
+        when(paymentRepository.findByInternalRef(MESSAGE_REF)).thenReturn(Optional.of(pendingPayment));
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        StkCallbackResponse callback = buildFailedCallback(CHECKOUT_ID, "Request cancelled by user");
+        StkCallbackPayload callback = buildFailedCallback(MESSAGE_REF, "Request cancelled by user");
 
         service.processStkCallback("{}", callback);
 
@@ -102,19 +101,15 @@ class PaymentServiceTest {
         pendingPayment.setStatus(PaymentStatus.COMPLETED);
         pendingPayment.setTransactionRef("PGS111111111");
 
-        when(paymentRepository.findByInternalRef(CHECKOUT_ID)).thenReturn(Optional.of(pendingPayment));
+        when(paymentRepository.findByInternalRef(MESSAGE_REF)).thenReturn(Optional.of(pendingPayment));
 
-        StkCallbackResponse callback = buildSuccessfulCallback(CHECKOUT_ID, "PGS222222222");
+        StkCallbackPayload callback = buildSuccessfulCallback(MESSAGE_REF, "PGS222222222");
 
         service.processStkCallback("{}", callback);
 
         // Receipt number must NOT be overwritten
         assertThat(pendingPayment.getTransactionRef()).isEqualTo("PGS111111111");
-
-        // No duplicate event must be fired
         verify(eventPublisher, never()).publishEvent(any(PaymentCompletedEvent.class));
-
-        // No re-save
         verify(paymentRepository, never()).save(any());
     }
 
@@ -124,13 +119,12 @@ class PaymentServiceTest {
         pendingPayment.setStatus(PaymentStatus.FAILED);
         pendingPayment.setFailureReason("First failure reason");
 
-        when(paymentRepository.findByInternalRef(CHECKOUT_ID)).thenReturn(Optional.of(pendingPayment));
+        when(paymentRepository.findByInternalRef(MESSAGE_REF)).thenReturn(Optional.of(pendingPayment));
 
-        StkCallbackResponse callback = buildFailedCallback(CHECKOUT_ID, "Second failure attempt");
+        StkCallbackPayload callback = buildFailedCallback(MESSAGE_REF, "Second failure attempt");
 
         service.processStkCallback("{}", callback);
 
-        // Failure reason must NOT be overwritten
         assertThat(pendingPayment.getFailureReason()).isEqualTo("First failure reason");
         verify(paymentRepository, never()).save(any());
     }
@@ -140,7 +134,7 @@ class PaymentServiceTest {
     @Test
     @DisplayName("phone starting with + is normalized to international format")
     void initiateStkPush_plusPrefixNormalized() {
-        when(darajaApiService.initiateStkPush(anyString(), anyString(), anyString(), anyString()))
+        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString()))
                 .thenReturn(buildStkPushResponse());
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -149,13 +143,15 @@ class PaymentServiceTest {
                 memberId
         );
 
-        verify(darajaApiService).initiateStkPush(eq("254700123456"), anyString(), anyString(), anyString());
+        verify(coopConnectService).initiateStkPush(
+                eq("254700123456"), any(), anyString(), anyString()
+        );
     }
 
     @Test
     @DisplayName("phone starting with 0 is converted to 254 prefix")
     void initiateStkPush_zeroPrefixNormalized() {
-        when(darajaApiService.initiateStkPush(anyString(), anyString(), anyString(), anyString()))
+        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString()))
                 .thenReturn(buildStkPushResponse());
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -164,72 +160,55 @@ class PaymentServiceTest {
                 memberId
         );
 
-        verify(darajaApiService).initiateStkPush(eq("254712345678"), anyString(), anyString(), anyString());
+        verify(coopConnectService).initiateStkPush(
+                eq("254712345678"), any(), anyString(), anyString()
+        );
     }
 
     @Test
-    @DisplayName("daraja API error throws RuntimeException — no payment saved")
-    void initiateStkPush_darajaError_throwsAndNoPaymentSaved() {
-        StkPushSyncResponse errorResponse = new StkPushSyncResponse();
-        errorResponse.setResponseCode("1");
-        errorResponse.setResponseDescription("Insufficient permissions");
+    @DisplayName("Co-op API error response throws RuntimeException — no payment saved")
+    void initiateStkPush_coopError_throwsAndNoPaymentSaved() {
+        StkPushResponse errorResponse = new StkPushResponse();
+        errorResponse.setMessageCode("500");
+        errorResponse.setMessageDescription("Insufficient permissions");
 
-        when(darajaApiService.initiateStkPush(anyString(), anyString(), anyString(), anyString()))
+        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString()))
                 .thenReturn(errorResponse);
 
         assertThatThrownBy(() -> service.initiateMpesaStkPush(
                 new InitiateStkRequest("254700000001", new BigDecimal("500.00"), "REF-003"),
                 memberId
         )).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to initiate");
+                .hasMessageContaining("failed");
 
         verify(paymentRepository, never()).save(any());
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────
 
-    private StkCallbackResponse buildSuccessfulCallback(String checkoutId, String receiptNumber) {
-        StkCallbackResponse.Item receiptItem = new StkCallbackResponse.Item();
-        receiptItem.setName("MpesaReceiptNumber");
-        receiptItem.setValue(receiptNumber);
-
-        StkCallbackResponse.CallbackMetadata metadata = new StkCallbackResponse.CallbackMetadata();
-        metadata.setItem(List.of(receiptItem));
-
-        StkCallbackResponse.StkCallback callback = new StkCallbackResponse.StkCallback();
-        callback.setCheckoutRequestID(checkoutId);
-        callback.setResultCode(0);
-        callback.setResultDesc("The service request is processed successfully.");
-        callback.setCallbackMetadata(metadata);
-
-        StkCallbackResponse.Body body = new StkCallbackResponse.Body();
-        body.setStkCallback(callback);
-
-        StkCallbackResponse response = new StkCallbackResponse();
-        response.setBody(body);
-        return response;
+    private StkCallbackPayload buildSuccessfulCallback(String messageRef, String transactionId) {
+        StkCallbackPayload p = new StkCallbackPayload();
+        p.setMessageReference(messageRef);
+        p.setMessageCode("0");
+        p.setMessageDescription("The service request is processed successfully.");
+        p.setTransactionId(transactionId);
+        p.setAmount("1000.00");
+        return p;
     }
 
-    private StkCallbackResponse buildFailedCallback(String checkoutId, String reason) {
-        StkCallbackResponse.StkCallback callback = new StkCallbackResponse.StkCallback();
-        callback.setCheckoutRequestID(checkoutId);
-        callback.setResultCode(1032);
-        callback.setResultDesc(reason);
-
-        StkCallbackResponse.Body body = new StkCallbackResponse.Body();
-        body.setStkCallback(callback);
-
-        StkCallbackResponse response = new StkCallbackResponse();
-        response.setBody(body);
-        return response;
+    private StkCallbackPayload buildFailedCallback(String messageRef, String reason) {
+        StkCallbackPayload p = new StkCallbackPayload();
+        p.setMessageReference(messageRef);
+        p.setMessageCode("1032");
+        p.setMessageDescription(reason);
+        return p;
     }
 
-    private StkPushSyncResponse buildStkPushResponse() {
-        StkPushSyncResponse r = new StkPushSyncResponse();
-        r.setResponseCode("0");
-        r.setResponseDescription("Success");
-        r.setCheckoutRequestID(CHECKOUT_ID);
-        r.setCustomerMessage("Please enter your M-Pesa PIN");
+    private StkPushResponse buildStkPushResponse() {
+        StkPushResponse r = new StkPushResponse();
+        r.setMessageCode("0");
+        r.setMessageDescription("Success");
+        r.setMessageReference(MESSAGE_REF);
         return r;
     }
 }
