@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSettings } from '../../features/settings/context/useSettings';
 import { DarkModeToggle } from './DarkModeToggle';
+import { PRIMITIVE_TOKENS } from '@/shared/design';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
@@ -151,26 +152,63 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
 
     return (
         <>
-            {/* ── Mobile overlay backdrop ────────────────────────────────── */}
+            {/* Mobile overlay backdrop */}
             {mobileOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        zIndex: 30,
+                        display: window.innerWidth >= 1024 ? 'none' : 'block',
+                    }}
                     onClick={onMobileClose}
                 />
             )}
 
-            {/* ── Sidebar ───────────────────────────────────────────────── */}
-            <aside className={`
-    ${isCollapsed ? 'w-17' : 'w-60'}
-    bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col shrink-0 z-40
-    fixed lg:static inset-y-0 left-0
-    ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-`}>
-
+            {/* Sidebar */}
+            <aside
+                style={{
+                    width: isCollapsed ? PRIMITIVE_TOKENS.spacing[17] : PRIMITIVE_TOKENS.spacing[60],
+                    background: 'var(--sidebar-bg)',
+                    color: 'var(--text-inverse)',
+                    transition: `all ${PRIMITIVE_TOKENS.transition.base}`,
+                    height: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flexShrink: 0,
+                    zIndex: 40,
+                    position: window.innerWidth < 1024 ? 'fixed' : 'static',
+                    inset: window.innerWidth < 1024 ? '0 auto 0 0' : 'auto',
+                    transform: window.innerWidth < 1024 ? (mobileOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
+                    left: 0,
+                }}
+            >
                 {/* Mobile close button */}
                 <button
                     onClick={onMobileClose}
-                    className="absolute top-3 right-3 lg:hidden text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                    style={{
+                        position: 'absolute',
+                        top: PRIMITIVE_TOKENS.spacing[3],
+                        right: PRIMITIVE_TOKENS.spacing[3],
+                        display: window.innerWidth >= 1024 ? 'none' : 'block',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        padding: PRIMITIVE_TOKENS.spacing[1],
+                        borderRadius: PRIMITIVE_TOKENS.radius.lg,
+                        cursor: 'pointer',
+                        transition: PRIMITIVE_TOKENS.transition.fast,
+                        zIndex: 50,
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--sidebar-active)';
+                        e.currentTarget.style.color = 'var(--text-inverse)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'none';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
                 >
                     <X size={18} />
                 </button>
@@ -178,34 +216,107 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 {/* Desktop collapse toggle */}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="absolute -right-3 top-13 bg-emerald-600 rounded-full p-0.5 hover:bg-emerald-500 border-2 border-slate-900 z-50 transition-colors hidden lg:block"
+                    style={{
+                        position: 'absolute',
+                        right: `calc(-${PRIMITIVE_TOKENS.spacing[3]})`,
+                        top: PRIMITIVE_TOKENS.spacing[13],
+                        background: 'var(--brand-primary)',
+                        borderRadius: PRIMITIVE_TOKENS.radius.full,
+                        padding: PRIMITIVE_TOKENS.spacing[0.5],
+                        border: `2px solid var(--sidebar-bg)`,
+                        cursor: 'pointer',
+                        transition: PRIMITIVE_TOKENS.transition.fast,
+                        zIndex: 50,
+                        display: window.innerWidth >= 1024 ? 'block' : 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                    }}
                 >
                     {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </button>
 
                 {/* Logo */}
-                <div className={`flex items-center gap-3 border-b border-slate-800 shrink-0 ${isCollapsed ? 'p-4 justify-center' : 'p-5'}`}>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: PRIMITIVE_TOKENS.spacing[3],
+                        borderBottom: `1px solid var(--sidebar-active)`,
+                        flexShrink: 0,
+                        padding: isCollapsed ? PRIMITIVE_TOKENS.spacing[4] : PRIMITIVE_TOKENS.spacing[5],
+                        justifyContent: isCollapsed ? 'center' : 'flex-start',
+                    }}
+                >
                     {settings?.logoUrl ? (
                         <img
                             key={settings.logoUrl}
                             src={settings.logoUrl}
                             alt="Logo"
-                            // 👇 Updated scaling logic here 👇
-                            className={`object-contain shrink-0 drop-shadow-sm transition-all duration-300 ${isCollapsed ? 'w-8 h-8 rounded-lg' : 'h-8 w-auto max-w-[160px]'}`}
+                            style={{
+                                objectFit: 'contain',
+                                flexShrink: 0,
+                                filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
+                                transition: `all ${PRIMITIVE_TOKENS.transition.base}`,
+                                width: isCollapsed ? PRIMITIVE_TOKENS.spacing[8] : 'auto',
+                                height: PRIMITIVE_TOKENS.spacing[8],
+                                maxWidth: isCollapsed ? PRIMITIVE_TOKENS.spacing[8] : '160px',
+                                borderRadius: isCollapsed ? PRIMITIVE_TOKENS.radius.lg : '0',
+                            }}
                         />
                     ) : (
-                        <div className="bg-emerald-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        <div
+                            style={{
+                                background: 'var(--brand-primary)',
+                                width: PRIMITIVE_TOKENS.spacing[8],
+                                height: PRIMITIVE_TOKENS.spacing[8],
+                                borderRadius: PRIMITIVE_TOKENS.radius.lg,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--text-inverse)',
+                                fontWeight: 'bold',
+                                fontSize: PRIMITIVE_TOKENS.fontSize.sm[0],
+                                flexShrink: 0,
+                            }}
+                        >
                             {settings?.saccoName ? settings.saccoName.charAt(0).toUpperCase() : 'S'}
                         </div>
                     )}
 
                     {!isCollapsed && (
-                        <span className="font-bold text-sm text-white truncate">{settings?.saccoName || 'Secure SACCO'}</span>
+                        <span
+                            style={{
+                                fontWeight: 'bold',
+                                fontSize: PRIMITIVE_TOKENS.fontSize.sm[0],
+                                color: 'var(--text-inverse)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                            }}
+                        >
+                            {settings?.saccoName || 'Secure SACCO'}
+                        </span>
                     )}
                 </div>
 
                 {/* Nav */}
-                <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+                <nav
+                    style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        paddingTop: PRIMITIVE_TOKENS.spacing[3],
+                        paddingBottom: PRIMITIVE_TOKENS.spacing[3],
+                        paddingLeft: PRIMITIVE_TOKENS.spacing[2],
+                        paddingRight: PRIMITIVE_TOKENS.spacing[2],
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: PRIMITIVE_TOKENS.spacing[4],
+                    }}
+                >
                     {filteredSections.map(section => (
                         <div key={section.sectionLabel}>
                             {!isCollapsed && (
@@ -287,22 +398,80 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
 
                 {/* User footer */}
                 {!isCollapsed && (
-                    <div className="p-3 border-t border-slate-800 shrink-0">
-                        <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-slate-800/50">
-                            <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0 uppercase">
+                    <div
+                        style={{
+                            padding: PRIMITIVE_TOKENS.spacing[3],
+                            borderTop: `1px solid var(--sidebar-active)`,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: PRIMITIVE_TOKENS.spacing[2.5],
+                                padding: PRIMITIVE_TOKENS.spacing[2],
+                                borderRadius: PRIMITIVE_TOKENS.radius.lg,
+                                background: 'var(--sidebar-active)',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: PRIMITIVE_TOKENS.spacing[7],
+                                    height: PRIMITIVE_TOKENS.spacing[7],
+                                    borderRadius: PRIMITIVE_TOKENS.radius.full,
+                                    background: 'var(--brand-primary)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'var(--text-inverse)',
+                                    fontSize: PRIMITIVE_TOKENS.fontSize.xs[0],
+                                    fontWeight: 'bold',
+                                    flexShrink: 0,
+                                    textTransform: 'uppercase',
+                                }}
+                            >
                                 {user?.firstName?.[0]}{user?.lastName?.[0]}
                             </div>
-                            <div className="min-w-0">
-                                <p className="text-xs font-semibold text-slate-200 truncate leading-none">{user?.firstName} {user?.lastName}</p>
+                            <div
+                                style={{
+                                    minWidth: 0,
+                                }}
+                            >
+                                <p
+                                    style={{
+                                        fontSize: PRIMITIVE_TOKENS.fontSize.xs[0],
+                                        fontWeight: 'semibold',
+                                        color: 'var(--text-inverse)',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        lineHeight: 1,
+                                        margin: 0,
+                                    }}
+                                >
+                                    {user?.firstName} {user?.lastName}
+                                </p>
                                 {user?.memberNumber && (
-                                    <p className="text-[10px] font-mono text-emerald-400 mt-0.5">{user.memberNumber}</p>
+                                    <p
+                                        style={{
+                                            fontSize: PRIMITIVE_TOKENS.fontSize.xs[0],
+                                            fontFamily: 'monospace',
+                                            color: 'var(--brand-primary)',
+                                            margin: `${PRIMITIVE_TOKENS.spacing[0.5]} 0 0 0`,
+                                        }}
+                                    >
+                                        {user.memberNumber}
+                                    </p>
                                 )}
                             </div>
+                        </div>
+                        <div style={{ marginTop: PRIMITIVE_TOKENS.spacing[3] }}>
+                            <DarkModeToggle />
                         </div>
                     </div>
                 )}
             </aside>
         </>
     );
-    <DarkModeToggle />
 };

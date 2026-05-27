@@ -18,18 +18,27 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(payments): add method to find recent PENDING STK push by phone number">
-      <change afterPath="$PROJECT_DIR$/coop-correct-workflow.http" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/components/ThemeSettingsSection.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/DarkModeToggle.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/context/ThemeContext.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/theme.css" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(theme): implement theme provider and dark mode toggle functionality">
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/DESIGN_SYSTEM_QUICKSTART.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Button.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Card.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Panel.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Table.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/design/themes.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/design/tokens.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/design/variants.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/copilotDiffState.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/LoginPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/LoginPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/savings/components/ManualTransactionModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/savings/components/ManualTransactionModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/savings/components/MpesaDepositModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/savings/components/MpesaDepositModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/DarkModeToggle.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/DarkModeToggle.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/GuestRoute.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/GuestRoute.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/ProtectedRoute.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/ProtectedRoute.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/SetupGuard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/SetupGuard.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/tsconfig.app.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/tsconfig.app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/vite.config.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,7 +48,7 @@
   <component name="CopilotChats">
     <option name="panelChat">
       <chat>
-        <option name="activeSessionId" value="24ae678f-98b4-471a-9ddf-e18ee4da5d7c" />
+        <option name="activeSessionId" value="10e3c0b9-5ed1-49ba-8051-47a08938cd58" />
         <option name="sessions">
           <session>
             <option name="chatType" value="PANEL" />
@@ -73,6 +82,23 @@
             <option name="modelType" value="builtin_family" />
             <option name="modelValue" value="claude-haiku-4.5" />
             <option name="status" value="Completed" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="1feaedea-8a00-49e0-89aa-ae733d5052de" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="10e3c0b9-5ed1-49ba-8051-47a08938cd58" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="status" value="Processing" />
             <option name="targetType" value="LOCAL" />
           </session>
         </option>
@@ -116,7 +142,7 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/SAC-221-asset-management-module" />
+        <entry key="$PROJECT_DIR$" value="UI-frontend-redesign" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -491,7 +517,7 @@
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "database.data.extractors.current.export.id": "Comma-separated (CSV)_id",
     "database.data.extractors.current.id": "Comma-separated (CSV)_id",
-    "git-widget-placeholder": "UI-frontend-redesign",
+    "git-widget-placeholder": "Phase-1-Tokenization",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
@@ -662,15 +688,7 @@
       <workItem from="1779722498808" duration="730000" />
       <workItem from="1779741549264" duration="6930000" />
       <workItem from="1779774337625" duration="21162000" />
-      <workItem from="1779863954944" duration="4459000" />
-    </task>
-    <task id="LOCAL-00047" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
-      <option name="closed" value="true" />
-      <created>1775279860281</created>
-      <option name="number" value="00047" />
-      <option name="presentableId" value="LOCAL-00047" />
-      <option name="project" value="LOCAL" />
-      <updated>1775279860281</updated>
+      <workItem from="1779863954944" duration="6815000" />
     </task>
     <task id="LOCAL-00048" summary="feat: implement migration scripts for loan processing and data handling">
       <option name="closed" value="true" />
@@ -1056,7 +1074,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779818772689</updated>
     </task>
-    <option name="localTasksCounter" value="96" />
+    <task id="LOCAL-00096" summary="feat(theme): implement theme provider and dark mode toggle functionality">
+      <option name="closed" value="true" />
+      <created>1779869110272</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
+      <option name="project" value="LOCAL" />
+      <updated>1779869110276</updated>
+    </task>
+    <option name="localTasksCounter" value="97" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -1078,7 +1104,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: improve loading state management and enhance log panel component in MigrationPage" />
     <MESSAGE value="feat: remove clear log functionality from LogPanel in MigrationPage" />
     <MESSAGE value="feat: add Permissions Registry page and update sidebar navigation" />
     <MESSAGE value="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access" />
@@ -1103,7 +1128,8 @@
     <MESSAGE value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
     <MESSAGE value="feat(asset-management): log callback URL in Co-op STK Push for improved traceability" />
     <MESSAGE value="feat(payments): add method to find recent PENDING STK push by phone number" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(payments): add method to find recent PENDING STK push by phone number" />
+    <MESSAGE value="feat(theme): implement theme provider and dark mode toggle functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(theme): implement theme provider and dark mode toggle functionality" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSetup } from '../../features/setup/context/useSetup';
 import { ShieldCheck, Loader2 } from 'lucide-react';
+import { PRIMITIVE_TOKENS } from '@/shared/design';
 
 /**
  * SetupGuard wraps the entire authenticated app shell.
@@ -21,8 +22,19 @@ const SetupGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Don't block while either auth or setup is loading
     if (setupLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                background: 'var(--page-bg)',
+            }}>
+                <Loader2 style={{
+                    width: PRIMITIVE_TOKENS.spacing[8],
+                    height: PRIMITIVE_TOKENS.spacing[8],
+                    color: 'var(--brand-primary)',
+                    animation: 'spin 1s linear infinite',
+                }} />
             </div>
         );
     }
@@ -43,13 +55,51 @@ const SetupGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Non-admin visiting while system isn't ready yet
     if (!isAdmin) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                <div className="max-w-md w-full text-center bg-white rounded-3xl shadow-xl border border-slate-100 p-10">
-                    <div className="mx-auto w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-6">
-                        <ShieldCheck className="w-8 h-8 text-amber-500" />
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                background: 'var(--page-bg)',
+            }}>
+                <div style={{
+                    maxWidth: '28rem',
+                    width: '100%',
+                    textAlign: 'center',
+                    background: 'var(--surface-primary)',
+                    borderRadius: PRIMITIVE_TOKENS.radius['3xl'],
+                    boxShadow: PRIMITIVE_TOKENS.shadow.xl,
+                    border: `1px solid var(--border-light)`,
+                    padding: PRIMITIVE_TOKENS.spacing[10],
+                }}>
+                    <div style={{
+                        margin: '0 auto',
+                        width: PRIMITIVE_TOKENS.spacing[16],
+                        height: PRIMITIVE_TOKENS.spacing[16],
+                        background: 'color-mix(in srgb, var(--brand-warning) 15%, white)',
+                        borderRadius: PRIMITIVE_TOKENS.radius['2xl'],
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: PRIMITIVE_TOKENS.spacing[6],
+                    }}>
+                        <ShieldCheck style={{
+                            width: PRIMITIVE_TOKENS.spacing[8],
+                            height: PRIMITIVE_TOKENS.spacing[8],
+                            color: 'var(--brand-warning)',
+                        }} />
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900 mb-3">System Initializing</h1>
-                    <p className="text-slate-500 text-sm leading-relaxed">
+                    <h1 style={{
+                        fontSize: PRIMITIVE_TOKENS.fontSize.xl[0],
+                        fontWeight: 'bold',
+                        color: 'var(--text-primary)',
+                        marginBottom: PRIMITIVE_TOKENS.spacing[3],
+                    }}>System Initializing</h1>
+                    <p style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: PRIMITIVE_TOKENS.fontSize.sm[0],
+                        lineHeight: 1.5,
+                    }}>
                         The system administrator is completing the initial setup.
                         Please check back shortly — your account will be ready once the setup is complete.
                     </p>

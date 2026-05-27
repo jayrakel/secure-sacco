@@ -1,23 +1,43 @@
-import React from 'react';
+import React, { type CSSProperties } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { PRIMITIVE_TOKENS } from '@/shared/design';
 
 /**
  * Compact toggle button — drop into Sidebar footer or Topbar.
  */
-export const DarkModeToggle: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const DarkModeToggle: React.FC<{ className?: string; style?: CSSProperties }> = ({ className = '', style }) => {
     const { mode, toggleMode } = useTheme();
+
+    const isDark = mode === 'dark';
 
     return (
         <button
             onClick={toggleMode}
-            title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
-                mode === 'dark'
-                    ? 'bg-slate-700 text-yellow-300 hover:bg-slate-600'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            } ${className}`}>
-            {mode === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: PRIMITIVE_TOKENS.spacing[8],
+                height: PRIMITIVE_TOKENS.spacing[8],
+                borderRadius: PRIMITIVE_TOKENS.radius.lg,
+                background: isDark ? 'var(--surface-secondary)' : 'var(--surface-secondary)',
+                color: isDark ? '#fcd34d' : '#475569',
+                border: 'none',
+                cursor: 'pointer',
+                transition: PRIMITIVE_TOKENS.transition.fast,
+                ...style,
+            }}
+            className={className}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+            }}
+        >
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
         </button>
     );
 };
