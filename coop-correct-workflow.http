@@ -1,0 +1,172 @@
+### ============================================================
+### CORRECT Co-op Integration Workflow
+###
+### This file shows the CORRECT way to test Co-op integration:
+### 1. Call backend /stk-push → creates payment record
+### 2. Use the messageRef from step 1 in callback simulation
+###
+### WRONG approach (what you were doing):
+###   - Sending STK push directly to Co-op (bypasses backend)
+###   - Using random messageRefs in callbacks
+###   - Result: "Payment not found" error
+###
+### CORRECT approach (this file):
+###   - Call backend endpoint → creates DB record
+###   - Use the SAME messageRef in callback
+###   - Result: Payment is properly tracked end-to-end
+### ============================================================
+
+### Setup: Log in first
+POST {{api_url}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@jaytechwavesolutions.co.ke",
+  "password": "Michira._2000"
+}
+
+> {%
+    if (response.status === 200) {
+        const body = JSON.parse(response.body);
+        const token = body.data.token;
+        client.global.set("auth_token", token);
+        client.log("✓ Logged in as benjamin@example.com");
+        client.log("  Token: " + token.substring(0, 30) + "...");
+    } else {
+        client.log("✗ Login failed: " + response.status);
+        client.log("Response: " + response.body);
+    }
+%}
+
+###
+
+### ============================================================
+### STEP 1: Initiate STK Push via Backend
+###
+### This is the CORRECT starting point.
+### Backend will:
+###   1. Generate a unique messageRef
+###   2. Create a payment record in DB
+###   3. Call Co-op API with this messageRef
+###   4. Return the messageRef to you
+###
+### Status: ✅ Creates payment record in DB
+### ============================================================
+POST {{api_url}}/api/v1/payments/stk-push
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "phoneNumber": "254716962489",
+  "amount": 1.00,
+  "accountReference": "BENJAMIN-STK-TEST"
+}
+
+> {%
+    if (response.status === 200) {
+        const body = JSON.parse(response.body);
+        const messageRef = body.data.messageReference;
+        const message = body.data.message;
+
+        client.global.set("test_message_reference", messageRef);
+        client.global.set("stk_push_response", response.body);
+
+        client.log("✓ STK Push initiated via backend");
+        client.log("  MessageReference: " + messageRef);
+        client.log("  Message: " + message);
+        client.log("  ⚠️ SAVE THIS MessageReference - you'll use it in the next step!");
+    } else {
+        client.log("✗ STK push initiation failed: " + response.status);
+        client.log("Response: " + response.body);
+    }
+%}
+
+###
+
+### ============================================================
+### STEP 2: Simulate Callback with MATCHING MessageReference
+###
+### ⚠️ CRITICAL: Use the SAME messageRef from Step 1
+###
+### Co-op will eventually post to /coop/stk-callback with:
+###   - MessageReference: (the one you just got)
+###   - TransactionID: (their transaction ID)
+###   - MessageCode: "0" for success
+###
+### This simulation lets you test without waiting for real Co-op
+### Status: ✅ Matches payment record from Step 1
+### ============================================================
+POST {{api_url}}/api/v1/payments/coop/stk-callback
+Content-Type: application/json
+
+{
+  "MessageReference": "{{test_message_reference}}",
+  "MessageCode": "0",
+  "MessageDescription": "The service request is processed successfully.",
+  "Amount": "1.00",
+  "TransactionID": "COOP_{{$timestamp}}_{{$randomInt(10000, 99999)}}",
+  "MobileNumber": "254712345678",
+  "OperatorCode": "BETTERLINK"
+}
+
+> {%
+    if (response.status === 200) {
+        const body = JSON.parse(response.body);
+        client.log("✓ Callback processed successfully!");
+        client.log("  MessageCode: " + body.MessageCode);
+        client.log("  Message: " + body.Message);
+        client.log("");
+        client.log("✓ Verify in database:");
+        client.log("  SELECT * FROM payments WHERE internal_ref = '{{test_message_reference}}';");
+        client.log("  Status should be: COMPLETED");
+    } else {
+        client.log("✗ Callback processing failed: " + response.status);
+        client.log("Response: " + response.body);
+    }
+%}
+
+###
+
+### ============================================================
+### STEP 3: Verify Payment in Database
+###
+### After running Steps 1-2, check that the payment was created
+### and updated correctly
+### ============================================================
+GET {{api_url}}/api/v1/payments
+Authorization: Bearer {{auth_token}}
+
+> {%
+    if (response.status === 200) {
+        const body = JSON.parse(response.body);
+        const payments = body.data;
+
+        client.log("✓ Recent payments:");
+        payments.forEach(p => {
+            client.log("  - Ref: " + p.internalRef + " | Status: " + p.status + " | Amount: " + p.amount);
+        });
+    } else {
+        client.log("✗ Failed to fetch payments: " + response.status);
+    }
+%}
+
+###
+
+### ============================================================
+### TROUBLESHOOTING
+### ============================================================
+###
+### If you get "Payment not found for MessageReference: X"
+###
+### Causes:
+###   1. ❌ Using a messageRef that wasn't created by backend
+###   2. ❌ Sending STK push directly to Co-op (bypasses backend)
+###   3. ❌ Using a different messageRef in callback than in STK push
+###
+### Solution:
+###   ✅ Always start with Step 1 (backend /stk-push endpoint)
+###   ✅ Copy the messageRef from the response
+###   ✅ Use that SAME messageRef in all subsequent callbacks
+###
+### ============================================================
+

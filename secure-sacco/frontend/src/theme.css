@@ -1,0 +1,249 @@
+/*
+ * ================================================================
+ * SACCO Theme System — global CSS variable overrides
+ * ================================================================
+ *
+ * ThemeContext.tsx sets these variables on :root when the user
+ * switches themes. These rules then cascade over Tailwind's
+ * hardcoded utility classes so every structural element in the
+ * system changes colour without touching individual components.
+ *
+ * How it works:
+ *   1. ThemeProvider calls document.documentElement.style.setProperty()
+ *      which sets --color-* on :root with higher specificity than
+ *      any external stylesheet.
+ *   2. The rules below use those variables via var(--color-*).
+ *   3. Because :root { --color-sidebar-bg: ... } is more specific
+ *      than Tailwind's .bg-slate-900, the override wins.
+ *
+ * Import this file in main.tsx AFTER index.css:
+ *   import './theme.css'
+ * ================================================================
+ */
+
+/* ── Sidebar ─────────────────────────────────────────────────────── */
+
+/* Main sidebar container */
+aside.bg-slate-900,
+aside[class*="bg-slate-9"] {
+    background-color: var(--color-sidebar-bg) !important;
+    border-color: color-mix(in srgb, var(--color-sidebar-bg) 80%, white) !important;
+}
+
+/* Sidebar border-b (logo area) */
+aside .border-b.border-slate-800 {
+    border-color: color-mix(in srgb, var(--color-sidebar-bg) 70%, white) !important;
+}
+
+/* Sidebar section labels */
+aside p.text-slate-500 {
+    color: var(--color-sidebar-text) !important;
+    opacity: 0.7;
+}
+
+/* Nav items — default text */
+aside a.text-slate-400,
+aside button.text-slate-400 {
+    color: var(--color-sidebar-text) !important;
+}
+
+/* Nav items — hover bg */
+aside a.hover\:bg-slate-800:hover,
+aside button.hover\:bg-slate-800:hover {
+    background-color: var(--color-sidebar-active) !important;
+    color: var(--color-sidebar-text-active) !important;
+}
+
+/* Nav items — active (primary bg) */
+aside a.bg-emerald-600,
+aside a[class*="bg-emerald-6"] {
+    background-color: var(--color-primary) !important;
+    color: var(--color-sidebar-text-active) !important;
+}
+
+/* Expanded menu bg */
+aside .bg-slate-800 {
+    background-color: var(--color-sidebar-active) !important;
+}
+aside .text-white {
+    color: var(--color-sidebar-text-active) !important;
+}
+
+/* Sub-item border */
+aside .border-l.border-slate-700\/60 {
+    border-color: color-mix(in srgb, var(--color-sidebar-bg) 60%, white) !important;
+}
+
+/* Sub-item active */
+aside .bg-emerald-600\/20 {
+    background-color: color-mix(in srgb, var(--color-primary) 20%, transparent) !important;
+}
+aside .text-emerald-400 {
+    color: var(--color-primary) !important;
+}
+
+/* Collapse toggle button */
+aside .bg-emerald-600.rounded-full {
+    background-color: var(--color-primary) !important;
+}
+aside .border-slate-900 {
+    border-color: var(--color-sidebar-bg) !important;
+}
+
+/* Logo fallback bg */
+aside .bg-emerald-600.rounded-lg {
+    background-color: var(--color-primary) !important;
+}
+
+/* Mobile overlay close button */
+aside button.hover\:bg-slate-800:hover {
+    background-color: var(--color-sidebar-active) !important;
+}
+
+/* ── Topbar / Header ─────────────────────────────────────────────── */
+
+header.bg-white {
+    background-color: var(--color-surface) !important;
+    border-color: var(--color-border) !important;
+}
+header .text-slate-700,
+header .text-slate-800 {
+    color: var(--color-text-heading) !important;
+}
+header .text-slate-400 {
+    color: var(--color-text-muted) !important;
+}
+header .text-slate-300 {
+    color: var(--color-border) !important;
+}
+
+/* User avatar */
+header .bg-emerald-100 {
+    background-color: var(--color-primary-light) !important;
+    border-color: var(--color-primary-mid) !important;
+}
+header .text-emerald-700 {
+    color: var(--color-primary) !important;
+}
+
+/* Page background */
+.flex.h-screen.bg-slate-50,
+main.flex-1 {
+    background-color: var(--color-page-bg) !important;
+}
+
+/* ── Cards & surfaces ────────────────────────────────────────────── */
+
+.bg-white {
+    background-color: var(--color-surface) !important;
+}
+.border-slate-100,
+.border-slate-200 {
+    border-color: var(--color-border) !important;
+}
+.bg-slate-50 {
+    background-color: color-mix(in srgb, var(--color-page-bg) 60%, var(--color-surface)) !important;
+}
+
+/* ── Text ────────────────────────────────────────────────────────── */
+
+.text-slate-900,
+.text-slate-800 {
+    color: var(--color-text-heading) !important;
+}
+.text-slate-700,
+.text-slate-600 {
+    color: var(--color-text-body) !important;
+}
+.text-slate-500,
+.text-slate-400 {
+    color: var(--color-text-muted) !important;
+}
+
+/* ── Primary buttons & accents ───────────────────────────────────── */
+
+.bg-slate-900:not(aside):not(aside *) {
+    background-color: var(--color-text-heading) !important;
+}
+.hover\:bg-emerald-600:hover,
+.bg-emerald-600:not(aside):not(aside *) {
+    background-color: var(--color-primary) !important;
+}
+.text-emerald-600:not(aside):not(aside *) {
+    color: var(--color-primary) !important;
+}
+.focus\:ring-slate-900:focus {
+    --tw-ring-color: var(--color-primary) !important;
+}
+.focus\:ring-2:focus {
+    --tw-ring-color: var(--color-primary) !important;
+}
+
+/* ── Status chips / badges ───────────────────────────────────────── */
+
+/* Covered / Success */
+.bg-emerald-50, .bg-green-50 { background-color: color-mix(in srgb, var(--color-success) 12%, white) !important; }
+.text-emerald-700, .text-green-700 { color: var(--color-success) !important; }
+.border-emerald-200, .border-green-200 { border-color: color-mix(in srgb, var(--color-success) 30%, white) !important; }
+
+/* Due / Warning / Upcoming */
+.bg-amber-50, .bg-yellow-50 { background-color: color-mix(in srgb, var(--color-warning) 12%, white) !important; }
+.text-amber-700, .text-yellow-700 { color: var(--color-warning) !important; }
+.border-amber-200, .border-yellow-200 { border-color: color-mix(in srgb, var(--color-warning) 30%, white) !important; }
+
+/* Overdue / Danger */
+.bg-red-50 { background-color: color-mix(in srgb, var(--color-danger) 10%, white) !important; }
+.text-red-700, .text-red-800 { color: var(--color-danger) !important; }
+.border-red-200, .border-red-100 { border-color: color-mix(in srgb, var(--color-danger) 25%, white) !important; }
+
+/* Blue / Info / Upcoming */
+.bg-blue-50 { background-color: color-mix(in srgb, var(--color-primary) 10%, white) !important; }
+.text-blue-700, .text-blue-800 { color: var(--color-primary) !important; }
+.border-blue-200, .border-blue-100 { border-color: color-mix(in srgb, var(--color-primary) 25%, white) !important; }
+
+/* ── Form inputs ─────────────────────────────────────────────────── */
+
+input:focus, textarea:focus, select:focus {
+    outline-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+input.focus\:ring-slate-900:focus,
+input.focus\:ring-2:focus {
+    --tw-ring-color: var(--color-primary) !important;
+}
+
+/* ── Dark mode overrides ─────────────────────────────────────────── */
+
+html.dark .bg-white {
+    background-color: var(--color-surface) !important;
+}
+html.dark .bg-slate-50 {
+    background-color: var(--color-page-bg) !important;
+}
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+    color: var(--color-text-heading) !important;
+}
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+    color: var(--color-text-body) !important;
+}
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+    color: var(--color-text-muted) !important;
+}
+html.dark .border-slate-100,
+html.dark .border-slate-200 {
+    border-color: var(--color-border) !important;
+}
+html.dark .shadow-sm,
+html.dark .shadow-xl {
+    --tw-shadow-color: rgba(0,0,0,0.4) !important;
+}
+html.dark input,
+html.dark textarea,
+html.dark select {
+    background-color: color-mix(in srgb, var(--color-surface) 80%, var(--color-page-bg)) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-body) !important;
+}

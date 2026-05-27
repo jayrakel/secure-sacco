@@ -48,6 +48,7 @@ import SupportPage from './features/legal/pages/SupportPage';
 import StaffExpenseClaimsPage from './features/expense/pages/StaffExpenseClaimsPage';
 import MyExpenseClaimsPage from './features/expense/pages/MyExpenseClaimsPage';
 import StaffAssetsPage from './features/assets/pages/StaffAssetsPage';
+import { ThemeProvider } from './shared/context/ThemeContext';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -67,6 +68,7 @@ const SavingsRouteWrapper = () => {
 function App() {
     return (
         <BrowserRouter>
+            <ThemeProvider>
             <AuthProvider>
                 <SetupProvider>
                     <SettingsProvider>
@@ -370,6 +372,7 @@ function App() {
                     </SettingsProvider>
                 </SetupProvider>
             </AuthProvider>
+                </ThemeProvider>
         </BrowserRouter>
     );
 }

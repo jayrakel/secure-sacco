@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App' // Ensure this path is correct
 import './index.css'
+import './theme.css'
 
 // Verify Trusted Types policy is available (fallback in case HTML inline script didn't work)
 interface TrustedTypesWindow extends Window {

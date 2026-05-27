@@ -18,11 +18,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(asset-management): log callback URL in Co-op STK Push for improved traceability">
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(payments): add method to find recent PENDING STK push by phone number">
       <change afterPath="$PROJECT_DIR$/coop-correct-workflow.http" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/components/ThemeSettingsSection.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/DarkModeToggle.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/context/ThemeContext.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/theme.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/repository/PaymentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/repository/PaymentRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/payments/domain/service/PaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/LoginPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/auth/pages/LoginPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/features/settings/pages/SaccoSettingsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/frontend/src/shared/components/Sidebar.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,7 +116,7 @@
     </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="feature/SAC-221-asset-management-module" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -193,60 +200,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0000000000000009" />
-      <entry key="S5" value="1.000000994310653" />
-      <entry key="S10" value="1.0009971512688747" />
-      <entry key="S30" value="1.0999049519831885" />
-      <entry key="S60" value="1.316077446179237" />
-      <entry key="M2" value="1.5622076539671412" />
-      <entry key="M5" value="1.7942527030891466" />
-      <entry key="M10" value="1.891208563202992" />
-      <entry key="M15" value="1.926089536017266" />
-      <entry key="M30" value="1.9636220150865715" />
-      <entry key="H1" value="2.117718736878707" />
-      <entry key="H2" value="4.723691995671315" />
-      <entry key="H4" value="20.61035682783003" />
-      <entry key="D1" value="111.97100420852843" />
-      <entry key="W1" value="152.80904437343682" />
+      <entry key="MS500" value="1.0000000000140563" />
+      <entry key="S2" value="1.0019362755614505" />
+      <entry key="S5" value="1.082183922512817" />
+      <entry key="S10" value="1.286677384027441" />
+      <entry key="S30" value="1.6593729766049916" />
+      <entry key="S60" value="1.8120223770818562" />
+      <entry key="M2" value="1.908894329710697" />
+      <entry key="M5" value="2.7987153098539714" />
+      <entry key="M10" value="6.275269857291376" />
+      <entry key="M15" value="9.515171524396616" />
+      <entry key="M30" value="15.343133824947897" />
+      <entry key="H1" value="19.952800603699938" />
+      <entry key="H2" value="24.917996715072356" />
+      <entry key="H4" value="41.0709202969191" />
+      <entry key="D1" value="133.79823423486815" />
+      <entry key="W1" value="176.39605522792243" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="1.4631433275542085E-203" />
-      <entry key="M2" value="5.29910638916376E-102" />
-      <entry key="M5" value="5.597229327925757E-41" />
-      <entry key="M10" value="1.2862005331606673E-20" />
-      <entry key="M15" value="8.016552213370648E-14" />
-      <entry key="M30" value="5.510149099739079E-7" />
-      <entry key="H1" value="0.001812468446019315" />
-      <entry key="H2" value="0.12355952950792548" />
-      <entry key="H4" value="1.0866455590231625" />
-      <entry key="D1" value="6.886308758556118" />
-      <entry key="W1" value="9.480305062075905" />
+      <entry key="S2" value="2.07729975865063E-310" />
+      <entry key="S5" value="1.3396756641002307E-124" />
+      <entry key="S10" value="1.1574435900294364E-62" />
+      <entry key="S30" value="2.26203825178933E-21" />
+      <entry key="S60" value="4.75608899389964E-11" />
+      <entry key="M2" value="6.8964403817474104E-6" />
+      <entry key="M5" value="0.008618863336883614" />
+      <entry key="M10" value="0.09283783354260065" />
+      <entry key="M15" value="0.2050296474026877" />
+      <entry key="M30" value="0.4528022368249716" />
+      <entry key="H1" value="0.6741043562121218" />
+      <entry key="H2" value="0.9207929291258607" />
+      <entry key="H4" value="1.8856491799318251" />
+      <entry key="D1" value="7.752326985634084" />
+      <entry key="W1" value="10.454648148978173" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="3.137554402636921E-5" />
-      <entry key="MS500" value="0.1256950725498085" />
-      <entry key="S2" value="0.5954284246824841" />
-      <entry key="S5" value="0.8127030936258836" />
-      <entry key="S10" value="0.9019053461954034" />
-      <entry key="S30" value="1.0400100944443935" />
-      <entry key="S60" value="1.2548669161397834" />
-      <entry key="M2" value="1.5129330491260988" />
-      <entry key="M5" value="1.767300422327183" />
-      <entry key="M10" value="1.8761974732448186" />
-      <entry key="M15" value="1.9157121735913927" />
-      <entry key="M30" value="1.9582406068457894" />
-      <entry key="H1" value="2.116758738272379" />
-      <entry key="H2" value="4.845563822048126" />
-      <entry key="H4" value="21.695413121473322" />
-      <entry key="D1" value="118.85644967985053" />
-      <entry key="W1" value="162.28919067752526" />
+      <entry key="MS100" value="0.7320428479728127" />
+      <entry key="MS500" value="0.9395227492248581" />
+      <entry key="S2" value="0.9863399402793103" />
+      <entry key="S5" value="1.0738618823950128" />
+      <entry key="S10" value="1.2798711899094146" />
+      <entry key="S30" value="1.655491043428864" />
+      <entry key="S60" value="1.8097501360503725" />
+      <entry key="M2" value="1.907598721520072" />
+      <entry key="M5" value="2.8051532656073666" />
+      <entry key="M10" value="6.363691542126168" />
+      <entry key="M15" value="9.714946414444073" />
+      <entry key="M30" value="15.790987643080232" />
+      <entry key="H1" value="20.623423583163785" />
+      <entry key="H2" value="25.836486588971862" />
+      <entry key="H4" value="42.95464153721298" />
+      <entry key="D1" value="141.54962586759316" />
+      <entry key="W1" value="186.85053249753852" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -484,7 +491,7 @@
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "database.data.extractors.current.export.id": "Comma-separated (CSV)_id",
     "database.data.extractors.current.id": "Comma-separated (CSV)_id",
-    "git-widget-placeholder": "feature/SAC-221-asset-management-module",
+    "git-widget-placeholder": "UI-frontend-redesign",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
@@ -654,15 +661,8 @@
       <workItem from="1779615374199" duration="4445000" />
       <workItem from="1779722498808" duration="730000" />
       <workItem from="1779741549264" duration="6930000" />
-      <workItem from="1779774337625" duration="19558000" />
-    </task>
-    <task id="LOCAL-00046" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
-      <option name="closed" value="true" />
-      <created>1775175881295</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1775175881295</updated>
+      <workItem from="1779774337625" duration="21162000" />
+      <workItem from="1779863954944" duration="4459000" />
     </task>
     <task id="LOCAL-00047" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
       <option name="closed" value="true" />
@@ -1048,7 +1048,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779815134608</updated>
     </task>
-    <option name="localTasksCounter" value="95" />
+    <task id="LOCAL-00095" summary="feat(payments): add method to find recent PENDING STK push by phone number">
+      <option name="closed" value="true" />
+      <created>1779818772688</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1779818772689</updated>
+    </task>
+    <option name="localTasksCounter" value="96" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -1070,7 +1078,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
-    <MESSAGE value="feat: add granular admin permissions for Audit Log and Penalty Rules management" />
     <MESSAGE value="feat: improve loading state management and enhance log panel component in MigrationPage" />
     <MESSAGE value="feat: remove clear log functionality from LogPanel in MigrationPage" />
     <MESSAGE value="feat: add Permissions Registry page and update sidebar navigation" />
@@ -1095,7 +1102,8 @@
     <MESSAGE value="feat(asset-management): integrate Co-op Connect for STK push and callback handling" />
     <MESSAGE value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
     <MESSAGE value="feat(asset-management): log callback URL in Co-op STK Push for improved traceability" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(asset-management): log callback URL in Co-op STK Push for improved traceability" />
+    <MESSAGE value="feat(payments): add method to find recent PENDING STK push by phone number" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(payments): add method to find recent PENDING STK push by phone number" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

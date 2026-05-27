@@ -9,9 +9,10 @@ import {
     Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
     Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
-    Gavel, Plus, Pencil, X, Check, TriangleAlert,
+    Gavel, Plus, Pencil, X, Check, TriangleAlert, Palette, Moon, Sun
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
+import { ThemeSettingsSection } from '../components/ThemeSettingsSection';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] 
     { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
     { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
     { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
+    { id: 'appearance', label: 'Appearance', icon: <Palette size={15} />, desc: 'Themes & dark mode' }
 ];
 
 const MODULE_CONFIG: Record<string, { label: string; desc: string; icon: React.ReactNode; cls: { bg: string; ring: string; text: string; icon: string } }> = {
@@ -379,6 +381,13 @@ const SaccoSettingsPage: React.FC = () => {
 
                 {/* ── Content ─────────────────────────────────────────── */}
                 <div className="flex-1 min-w-0 space-y-5">
+
+                    {/* APPEARANCE*/}
+                    {tab === 'appearance' && (
+                        <Section title="Appearance" desc="Customise how the system looks for you.">
+                            <ThemeSettingsSection />
+                        </Section>
+                    )}
 
                     {/* IDENTITY */}
                     {tab === 'identity' && (

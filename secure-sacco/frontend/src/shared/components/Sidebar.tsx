@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSettings } from '../../features/settings/context/useSettings';
+import { DarkModeToggle } from './DarkModeToggle';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
@@ -303,4 +304,5 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             </aside>
         </>
     );
+    <DarkModeToggle />
 };
