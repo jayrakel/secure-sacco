@@ -29,6 +29,8 @@ export interface LoanGuarantor {
 export interface LoanApplication {
     id: string;
     memberId: string;
+    memberNumber?: string;
+    memberName?: string;
     productId: string;
     productName: string;
     termWeeks: number;
@@ -36,10 +38,18 @@ export interface LoanApplication {
     principalAmount: number;
     applicationFee: number;
     applicationFeePaid: boolean;
+    interestRate?: number;
     status: string;
     purpose: string;
     createdAt: string;
+    updatedAt?: string;
+    appliedAt?: string;
+    comments?: string;
+    collateralType?: string;
+    collateralValue?: number;
+    feePaidAmount?: number;
     guarantors: LoanGuarantor[];
+    tenorMonths?: number; // Legacy field name
 }
 
 export interface LoanSummary {

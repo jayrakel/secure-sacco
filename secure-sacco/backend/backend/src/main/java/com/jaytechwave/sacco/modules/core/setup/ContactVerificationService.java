@@ -1,58 +1,79 @@
 package com.jaytechwave.sacco.modules.core.setup;
 
 import com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService;
+import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.VerificationToken;
 import com.jaytechwave.sacco.modules.users.domain.entity.VerificationTokenType;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.users.domain.repository.VerificationTokenRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
-import java.util.Random;
 import java.util.UUID;
 
 /**
  * Handles email and phone OTP verification for ACTIVE users.
- *
- * <p>This is distinct from {@code UserActivationService}, which handles
- * the new-user activation flow (PENDING_ACTIVATION → ACTIVE with password-set).
- * This service verifies contacts for users who are already ACTIVE but whose
- * {@code email_verified} / {@code phone_verified} flags are still false —
- * which happens for the bootstrap SYSTEM_ADMIN and for any staff user whose
- * admin created their account without going through the activation link flow.
+ * All limits are loaded dynamically from {@link SaccoSettingsService}.
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ContactVerificationService {
 
-    private static final int OTP_EXPIRY_MINUTES   = 10;
-    private static final int EMAIL_EXPIRY_HOURS   = 24;
-    private static final int RATE_LIMIT_WINDOW_MIN = 15;
-    private static final int RATE_LIMIT_MAX        = 3;
+    // Safe fallback defaults used before SACCO is initialized
+    private static final int DEFAULT_EMAIL_EXPIRY_HOURS    = 24;
+    private static final int DEFAULT_OTP_EXPIRY_MINUTES    = 10;
+    private static final int DEFAULT_RATE_LIMIT_WINDOW_MIN = 15;
+    private static final int DEFAULT_RATE_LIMIT_MAX        = 3;
 
     private final UserRepository              userRepository;
     private final VerificationTokenRepository tokenRepository;
     private final EmailNotificationService    emailNotificationService;
+    private final SaccoSettingsService        settingsService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
+    @Autowired
+    public ContactVerificationService(
+            UserRepository userRepository,
+            VerificationTokenRepository tokenRepository,
+            EmailNotificationService emailNotificationService,
+            @Lazy SaccoSettingsService settingsService) {
+        this.userRepository           = userRepository;
+        this.tokenRepository          = tokenRepository;
+        this.emailNotificationService = emailNotificationService;
+        this.settingsService          = settingsService;
+    }
+
+    // ── Dynamic settings helpers ──────────────────────────────────────────────
+
+    private int emailExpiryHours() {
+        try { int v = settingsService.getEmailVerifyExpiryHours(); return v > 0 ? v : DEFAULT_EMAIL_EXPIRY_HOURS; }
+        catch (Exception e) { return DEFAULT_EMAIL_EXPIRY_HOURS; }
+    }
+
+    private int rateLimitMax() {
+        try { int v = settingsService.getContactVerifyRateLimit(); return v > 0 ? v : DEFAULT_RATE_LIMIT_MAX; }
+        catch (Exception e) { return DEFAULT_RATE_LIMIT_MAX; }
+    }
+
+    private int rateLimitWindowMin() {
+        try { int v = settingsService.getContactVerifyWindowMin(); return v > 0 ? v : DEFAULT_RATE_LIMIT_WINDOW_MIN; }
+        catch (Exception e) { return DEFAULT_RATE_LIMIT_WINDOW_MIN; }
+    }
+
     // ── Email verification ────────────────────────────────────────────────────
 
-    /**
-     * Generates a one-time email verification link token and logs it (mock).
-     * In production, replace the log.info with your email service call.
-     */
     @Transactional
     public void sendEmailOtp(String email) {
         User user = requireUser(email);
-        if (user.isEmailVerified()) return; // already verified, no-op
+        if (user.isEmailVerified()) return;
         enforceRateLimit(user, VerificationTokenType.EMAIL_VERIFICATION);
 
         String token = UUID.randomUUID().toString();
@@ -60,80 +81,46 @@ public class ContactVerificationService {
                 .user(user)
                 .token(token)
                 .tokenType(VerificationTokenType.EMAIL_VERIFICATION)
-                .expiryDate(ZonedDateTime.now().plusHours(EMAIL_EXPIRY_HOURS))
+                .expiryDate(ZonedDateTime.now().plusHours(emailExpiryHours()))
                 .build());
 
         String verificationUrl = frontendUrl + "/verify-contact?type=email&token=" + token;
         emailNotificationService.sendContactVerificationEmail(email, verificationUrl);
-        log.info("📧 Email verification link dispatched to {}", email);
+        log.info("Email verification link dispatched to {}", email);
     }
 
-    /**
-     * Confirms the email verification token and marks the user's email as verified.
-     */
     @Transactional
     public void confirmEmail(String email, String token) {
         User user = requireUser(email);
         VerificationToken vt = requireToken(token, VerificationTokenType.EMAIL_VERIFICATION, user);
-
         vt.setUsed(true);
         tokenRepository.save(vt);
         user.setEmailVerified(true);
         userRepository.save(user);
-        log.info("✅ Email verified for {}", email);
+        log.info("Email verified for {}", email);
     }
 
     // ── Phone / OTP verification ──────────────────────────────────────────────
 
-    /**
-     * Generates a 6-digit OTP and logs it (mock).
-     * In production, replace the log.info with your SMS/Daraja service call.
-     */
-//    @Transactional
-//    public void sendPhoneOtp(String email) {
-//        User user = requireUser(email);
-//        if (user.isPhoneVerified()) return; // already verified, no-op
-//        enforceRateLimit(user, VerificationTokenType.PHONE_VERIFICATION);
-//
-//        String code = String.format("%06d", new Random().nextInt(1_000_000));
-//        tokenRepository.save(VerificationToken.builder()
-//                .user(user)
-//                .token(code)
-//                .tokenType(VerificationTokenType.PHONE_VERIFICATION)
-//                .expiryDate(ZonedDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES))
-//                .build());
-//
-//        // 📱 SMS delivery deferred to v2 — integrate Africa's Talking / Twilio here.
-//        // For initial setup, the OTP appears in server logs so the admin can complete verification.
-//        log.info("📱 [SMS-PENDING] Phone OTP for {} ({}): {} — configure Africa's Talking in v2.",
-//                email, user.getPhoneNumber() != null ? user.getPhoneNumber() : "no-phone", code);
-//    }
-
     public void sendPhoneOtp(String email) {
-        // 📱 Phone verification disabled — Africa's Talking SMS not yet configured.
-        // Re-enable by removing this return statement and configuring AT credentials.
-        log.info("📱 [SMS-DISABLED] Phone verification skipped for {} — configure Africa's Talking to enable.", email);
-        return;
+        // Phone verification disabled — Africa's Talking SMS not yet configured.
+        log.info("[SMS-DISABLED] Phone verification skipped for {} — configure Africa's Talking to enable.", email);
     }
 
-    /**
-     * Confirms the phone OTP and marks the user's phone as verified.
-     */
     @Transactional
     public void confirmPhone(String email, String otp) {
         User user = requireUser(email);
         VerificationToken vt = tokenRepository
                 .findFirstByUserIdAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(
                         user.getId(), VerificationTokenType.PHONE_VERIFICATION)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "No active OTP found. Please request a new code."));
+                .orElseThrow(() -> new IllegalArgumentException("No active OTP found. Please request a new code."));
 
         validateToken(vt, otp);
         vt.setUsed(true);
         tokenRepository.save(vt);
         user.setPhoneVerified(true);
         userRepository.save(user);
-        log.info("✅ Phone verified for {}", email);
+        log.info("Phone verified for {}", email);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -147,9 +134,8 @@ public class ContactVerificationService {
         VerificationToken vt = tokenRepository
                 .findByTokenAndTokenTypeAndIsUsedFalse(rawToken, type)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired verification token."));
-        if (!vt.getUser().getId().equals(user.getId())) {
+        if (!vt.getUser().getId().equals(user.getId()))
             throw new IllegalArgumentException("Token does not belong to this account.");
-        }
         validateToken(vt, rawToken);
         return vt;
     }
@@ -162,20 +148,18 @@ public class ContactVerificationService {
         }
         if (!token.getToken().equals(input)) {
             token.setAttempts(token.getAttempts() + 1);
-            if (token.getAttempts() >= 3) {
-                token.setUsed(true); // lock after 3 bad attempts
-            }
+            if (token.getAttempts() >= 3) token.setUsed(true);
             tokenRepository.save(token);
             throw new IllegalArgumentException("Incorrect verification code.");
         }
     }
 
     private void enforceRateLimit(User user, VerificationTokenType type) {
-        ZonedDateTime window = ZonedDateTime.now().minusMinutes(RATE_LIMIT_WINDOW_MIN);
+        ZonedDateTime window = ZonedDateTime.now().minusMinutes(rateLimitWindowMin());
         int count = tokenRepository.countByUserIdAndTokenTypeAndCreatedAtAfter(user.getId(), type, window);
-        if (count >= RATE_LIMIT_MAX) {
+        if (count >= rateLimitMax()) {
             throw new IllegalStateException(
-                    "Too many requests. Please wait " + RATE_LIMIT_WINDOW_MIN + " minutes and try again.");
+                    "Too many requests. Please wait " + rateLimitWindowMin() + " minutes and try again.");
         }
     }
 }

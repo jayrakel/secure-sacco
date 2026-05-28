@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.loans.domain.repository.*;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,7 @@ class LoanRepaymentServiceTest {
     @Mock JournalEntryService journalEntryService;
     @Mock SecurityAuditService securityAuditService;
     @Mock MemberRepository memberRepository;
+    @Mock PenaltyRepository penaltyRepository; // 🟢 THE FIX: Mocked the penalty repository
 
     @InjectMocks
     private LoanRepaymentService service;
@@ -97,7 +99,7 @@ class LoanRepaymentServiceTest {
                 .status(LoanScheduleStatus.OVERDUE)
                 .build();
 
-        // 🚨 FIX: Mock the Member so Audit Logs can fetch the member number
+        // Mock the Member so Audit Logs can fetch the member number
         Member mockMember = new Member();
         mockMember.setId(memberId);
         mockMember.setMemberNumber("M-TEST-001");

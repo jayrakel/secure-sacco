@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { useSettings } from '../../settings/context/useSettings';
-import { reportApi, type StatementItemDTO } from '../api/report-api';
+import { reportApi, type StatementItemDTO, type StatementResponseDTO } from '../api/report-api';
 import { memberApi, type Member } from '../../members/api/member-api';
+import QRCode from 'react-qr-code'; // <-- REAL QR CODE GENERATOR
 import {
     ArrowLeft, FileText, Download, Printer, Search,
     Loader2, X, Minus, CalendarDays,
     PiggyBank, Coins, AlertTriangle, TrendingUp, TrendingDown,
-    Building2, BadgeCheck,
+    Building2, BadgeCheck
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -70,6 +71,23 @@ export const MemberStatementPage: React.FC = () => {
     const isStaff      = user?.permissions?.includes('REPORTS_READ') ?? false;
     const saccoName    = settings?.saccoName ?? 'Secure SACCO';
 
+    // ── DYNAMIC LOGO HELPER ──
+    const DynamicLogo = ({ size = 48, className = "" }: { size?: number, className?: string }) => {
+        // We will use the faviconUrl for that perfect square look
+        if (settings?.faviconUrl) {
+            return (
+                <img
+                    src={settings.faviconUrl}
+                    alt={saccoName}
+                    style={{ width: size, height: size }}
+                    className={`object-contain drop-shadow-sm shrink-0 ${className}`}
+                />
+            );
+        }
+        // Fallback if no image is uploaded
+        return <Building2 size={size} className={`text-slate-800 ${className}`} />;
+    };
+
     // Member search
     const [memberSearch, setMemberSearch]               = useState('');
     const [memberResults, setMemberResults]             = useState<Member[]>([]);
@@ -83,7 +101,9 @@ export const MemberStatementPage: React.FC = () => {
     const [toDate,   setToDate]   = useState(TODAY);
 
     // Statement
+    const [filterModule, setFilterModule] = useState<'ALL' | Module>('ALL');
     const [statement,  setStatement]  = useState<StatementItemDTO[]>([]);
+    const [response,   setResponse]   = useState<StatementResponseDTO | null>(null);
     const [loading,    setLoading]    = useState(false);
     const [error,      setError]      = useState('');
     const [hasFetched, setHasFetched] = useState(false);
@@ -118,55 +138,98 @@ export const MemberStatementPage: React.FC = () => {
 
     const fetchStatement = useCallback(async () => {
         if (!activeMemberId) { setError('Please select a member first.'); return; }
+
+        let finalFromDate = fromDate;
+        let finalToDate = toDate;
+
+        // ─── STRICT 12-MONTH RULE FOR REGULAR MEMBERS ───
+        if (!isStaff) {
+            if (!finalToDate) finalToDate = TODAY;
+
+            // If a member has an empty fromDate (e.g., initial load), force it to exactly 1 year ago
+            if (!finalFromDate) {
+                const d = new Date(finalToDate);
+                d.setFullYear(d.getFullYear() - 1);
+                finalFromDate = d.toISOString().split('T')[0];
+                setFromDate(finalFromDate); // Update UI to match
+            }
+
+            // Calculate date difference
+            const start = new Date(finalFromDate);
+            const end = new Date(finalToDate);
+            const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+
+            if (diffDays > 366) { // Allowing 366 for leap years
+                setError('For performance and security, member statement downloads are limited to a maximum of 12 months per request. Please narrow your date range.');
+                return;
+            }
+        }
+        // ────────────────────────────────────────────────
+
         setError(''); setLoading(true); setHasFetched(false);
         try {
             const data = await reportApi.getMemberStatement(
                 activeMemberId,
-                toIsoDateTime(fromDate, false),
-                toIsoDateTime(toDate, true),
+                toIsoDateTime(finalFromDate, false),
+                toIsoDateTime(finalToDate, true),
             );
-            // Sort chronologically
-            data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            setStatement(data);
+            data.items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            setStatement(data.items);
+            setResponse(data);
             setHasFetched(true);
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
             setError(msg || 'Failed to load statement. Please try again.');
         } finally { setLoading(false); }
-    }, [activeMemberId, fromDate, toDate]);
+    }, [activeMemberId, fromDate, toDate, isStaff]);
 
-    // Members auto-fetch on load
-    useEffect(() => {
-        if (!isStaff && activeMemberId) fetchStatement();
-    }, [isStaff, activeMemberId]); // eslint-disable-line react-hooks/exhaustive-deps
+     useEffect(() => {
+         if (!isStaff && activeMemberId) fetchStatement();
+     }, [isStaff, activeMemberId, fetchStatement]);
 
     // ── Derived data ──────────────────────────────────────────────────────────
 
     const { rows, openingBalance, closingBalance, stats } = useMemo(() => {
         let balance = 0;
+
+        // 1. FIRST, build the enriched array with the running balances
         const enriched: EnrichedRow[] = statement.map(item => {
             const isCredit = CREDIT_TYPES.has(item.type);
-            // Running balance only tracks savings
             if (item.module === 'SAVINGS') {
                 balance = isCredit ? balance + item.amount : balance - item.amount;
             }
             return { ...item, runningBalance: balance, isCredit };
         });
 
-        const savingsDeposits    = statement.filter(i => i.module === 'SAVINGS' && i.type === 'DEPOSIT').reduce((s,i) => s + i.amount, 0);
-        const savingsWithdrawals = statement.filter(i => i.module === 'SAVINGS' && i.type === 'WITHDRAWAL').reduce((s,i) => s + i.amount, 0);
-        const loanDisbursed      = statement.filter(i => i.module === 'LOANS' && i.type === 'DISBURSEMENT').reduce((s,i) => s + i.amount, 0);
-        const loanRepaid         = statement.filter(i => i.module === 'LOANS' && i.type === 'REPAYMENT').reduce((s,i) => s + i.amount, 0);
-        const penaltiesCharged   = statement.filter(i => i.module === 'PENALTIES' && i.type === 'ACCRUAL').reduce((s,i) => s + i.amount, 0);
-        const penaltiesPaid      = statement.filter(i => i.module === 'PENALTIES' && ['REPAYMENT','WAIVER'].includes(i.type)).reduce((s,i) => s + i.amount, 0);
+        // 2. THEN, filter the enriched array based on the user's selection
+        const filteredRows = filterModule === 'ALL'
+            ? enriched
+            : enriched.filter(r => r.module === filterModule);
 
+        // 3. Calculate stats
+        const statsObj = response?.summary ? {
+            savingsDeposits: response.summary.savingsDeposited,
+            savingsWithdrawals: response.summary.savingsWithdrawn,
+            savingsNet: response.summary.savingsDeposited - response.summary.savingsWithdrawn,
+            loanDisbursed: response.summary.loanDisbursed,
+            loanRepaid: response.summary.loanRepaid,
+            loanOutstanding: response.summary.loanOutstanding,
+            penaltiesCharged: response.summary.penaltiesCharged,
+            penaltiesPaid: response.summary.penaltiesPaid,
+        } : {
+            savingsDeposits: 0, savingsWithdrawals: 0, savingsNet: 0,
+            loanDisbursed: 0, loanRepaid: 0, loanOutstanding: 0,
+            penaltiesCharged: 0, penaltiesPaid: 0,
+        };
+
+        // 4. Return the filtered rows to the table!
         return {
-            rows: enriched,
+            rows: filteredRows,
             openingBalance: 0,
             closingBalance: balance,
-            stats: { savingsDeposits, savingsWithdrawals, savingsNet: savingsDeposits - savingsWithdrawals, loanDisbursed, loanRepaid, penaltiesCharged, penaltiesPaid },
+            stats: statsObj,
         };
-    }, [statement]);
+    }, [statement, response, filterModule]);
 
     const handleExportCSV = () => {
         const header = 'Date,Module,Type,Reference,Description,Debit,Credit,Balance\n';
@@ -185,19 +248,70 @@ export const MemberStatementPage: React.FC = () => {
         URL.revokeObjectURL(url);
     };
 
+    const handlePrint = () => {
+        const originalTitle = document.title;
+        const safeName = activeMemberName ? activeMemberName.replace(/[^a-zA-Z0-9]/g, '_') : 'Member';
+        const dateStr = new Date().toISOString().replace(/[:T]/g, '-').substring(0, 16);
+
+        document.title = `Statement_${safeName}_${dateStr}`;
+        window.print();
+
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 1000);
+    };
+
+    // The data encoded in the QR code (Points to a verification page on your domain)
+    const verificationUrl = `${window.location.origin}/verify/statement/${stmtRef}`;
+
     // ─────────────────────────────────────────────────────────────────────────
     return (
         <>
             {/* ── Print stylesheet ─────────────────────────────────────── */}
             <style>{`
-                @media print {
-                    body * { visibility: hidden !important; }
-                    #statement-printable, #statement-printable * { visibility: visible !important; }
-                    #statement-printable { position: fixed; top: 0; left: 0; right: 0; width: 100%; padding: 24px 32px; background: white; }
-                    .no-print { display: none !important; }
-                    @page { size: A4; margin: 0; }
-                }
-            `}</style>
+    @media print {
+        html, body, #root {
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+        }
+        
+        .no-print, header, aside, nav { 
+            display: none !important; 
+        }
+
+        #statement-print {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: visible !important;
+        }
+
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .print-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            opacity: 0.04;
+            pointer-events: none;
+        }
+
+        @page { 
+            size: A4 portrait; 
+            margin: 15mm 10mm; 
+        }
+    }
+`}</style>
 
             <div className="space-y-5 max-w-5xl mx-auto pb-16">
 
@@ -225,7 +339,7 @@ export const MemberStatementPage: React.FC = () => {
                                 <Download size={14} /> CSV
                             </button>
                             <button
-                                onClick={() => window.print()}
+                                onClick={handlePrint}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-lg transition-colors"
                             >
                                 <Printer size={14} /> Print / PDF
@@ -317,7 +431,8 @@ export const MemberStatementPage: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
-                                {QUICK_RANGES.map(r => (
+                                {/* Filter out 'All time' if the user is a standard member */}
+                                {QUICK_RANGES.filter(r => isStaff || r.label !== 'All time').map(r => (
                                     <button key={r.label}
                                             onClick={() => { const d = r.getDates(); setFromDate(d.from); setToDate(d.to); }}
                                             className="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors"
@@ -328,6 +443,29 @@ export const MemberStatementPage: React.FC = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* 👇 ADD THIS NEW FILTER SECTION 👇 */}
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                            Statement Type
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {(['ALL', 'SAVINGS', 'LOANS', 'PENALTIES'] as const).map(mod => (
+                                <button
+                                    key={mod}
+                                    onClick={() => setFilterModule(mod)}
+                                    className={`px-4 py-1.5 text-xs font-bold rounded-lg border transition-colors ${
+                                        filterModule === mod
+                                            ? 'bg-slate-900 text-white border-slate-900'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {mod === 'ALL' ? 'Consolidated (All)' : mod}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    {/* 👆 END FILTER SECTION 👆 */}
 
                     <div className="flex justify-end border-t border-slate-100 pt-4">
                         <button
@@ -358,25 +496,22 @@ export const MemberStatementPage: React.FC = () => {
                 )}
 
                 {/* ════════════════════════════════════════════════════════
-                    PRINTABLE STATEMENT DOCUMENT
+                    WEB VIEW (Screen Only)
                 ════════════════════════════════════════════════════════ */}
                 {!loading && hasFetched && (
-                    <div id="statement-printable" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
+                    <div id="statement-web" className="print:hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         {/* ── Letterhead ───────────────────────────────── */}
                         <div className="bg-slate-900 px-8 py-6">
                             <div className="flex items-start justify-between gap-6">
-                                {/* Left: SACCO identity */}
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                                        <Building2 size={22} className="text-white" />
-                                    </div>
+                                    <DynamicLogo size={48} />
                                     <div>
                                         <div className="text-white font-bold text-xl tracking-tight leading-none">{saccoName}</div>
-                                        <div className="text-slate-400 text-xs mt-1 uppercase tracking-widest">Account Statement</div>
+                                        <div className="text-slate-400 text-xs mt-1 uppercase tracking-widest">
+                                            {filterModule === 'ALL' ? 'Account Statement' : `${filterModule} Statement`}
+                                        </div>
                                     </div>
                                 </div>
-                                {/* Right: Statement meta */}
                                 <div className="text-right text-xs text-slate-400 space-y-1">
                                     <div className="text-slate-300 font-mono font-semibold text-sm">{stmtRef}</div>
                                     <div>Generated: <span className="text-slate-300">{generatedAt}</span></div>
@@ -435,7 +570,6 @@ export const MemberStatementPage: React.FC = () => {
                             <>
                                 {/* ── Summary cards ─────────────────────── */}
                                 <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
-                                    {/* Savings */}
                                     <div className="px-6 py-4">
                                         <div className="flex items-center gap-1.5 mb-3">
                                             <PiggyBank size={13} className="text-emerald-600" />
@@ -459,7 +593,6 @@ export const MemberStatementPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Loans */}
                                     <div className="px-6 py-4">
                                         <div className="flex items-center gap-1.5 mb-3">
                                             <Coins size={13} className="text-sky-600" />
@@ -476,14 +609,13 @@ export const MemberStatementPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between pt-1.5 border-t border-slate-100">
                                                 <span className="font-bold text-slate-700">Outstanding</span>
-                                                <span className={`font-bold font-mono ${stats.loanDisbursed - stats.loanRepaid > 0 ? 'text-sky-700' : 'text-emerald-700'}`}>
-                                                    {fmt(Math.max(0, stats.loanDisbursed - stats.loanRepaid))}
+                                                <span className={`font-bold font-mono ${stats.loanOutstanding > 0 ? 'text-sky-700' : 'text-emerald-700'}`}>
+                                                    {fmt(Math.max(0, stats.loanOutstanding))}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Penalties */}
                                     <div className="px-6 py-4">
                                         <div className="flex items-center gap-1.5 mb-3">
                                             <AlertTriangle size={13} className="text-red-500" />
@@ -500,8 +632,8 @@ export const MemberStatementPage: React.FC = () => {
                                             </div>
                                             <div className="flex justify-between pt-1.5 border-t border-slate-100">
                                                 <span className="font-bold text-slate-700">Outstanding</span>
-                                                <span className={`font-bold font-mono ${stats.penaltiesCharged - stats.penaltiesPaid > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
-                                                    {fmt(Math.max(0, stats.penaltiesCharged - stats.penaltiesPaid))}
+                                                <span className={`font-bold font-mono ${(response?.summary?.penaltiesOutstanding ?? 0) > 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                                                    {fmt(Math.max(0, response?.summary?.penaltiesOutstanding ?? 0))}
                                                 </span>
                                             </div>
                                         </div>
@@ -522,7 +654,6 @@ export const MemberStatementPage: React.FC = () => {
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {/* Opening balance row */}
                                         <tr className="bg-slate-900/3 border-b border-slate-100">
                                             <td colSpan={5} className="px-5 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wide">
                                                 Opening Balance
@@ -533,7 +664,6 @@ export const MemberStatementPage: React.FC = () => {
                                             </td>
                                         </tr>
 
-                                        {/* Transaction rows */}
                                         {rows.map((row, idx) => {
                                             const badge = MODULE_BADGE[row.module as Module] ?? MODULE_BADGE.SAVINGS;
                                             const showBalance = row.module === 'SAVINGS';
@@ -542,19 +672,14 @@ export const MemberStatementPage: React.FC = () => {
                                                     key={idx}
                                                     className={`border-b border-slate-50 hover:bg-slate-50/70 transition-colors ${idx % 2 === 0 ? '' : 'bg-slate-50/30'}`}
                                                 >
-                                                    {/* Date */}
                                                     <td className="px-5 py-3 whitespace-nowrap">
                                                         <div className="text-xs font-semibold text-slate-700">{fmtDate(row.date)}</div>
                                                     </td>
-
-                                                    {/* Reference */}
                                                     <td className="px-5 py-3">
                                                         <div className="text-xs font-mono text-slate-500 truncate max-w-32.5" title={row.reference}>
                                                             {row.reference || '—'}
                                                         </div>
                                                     </td>
-
-                                                    {/* Description */}
                                                     <td className="px-5 py-3">
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                                 <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded ${badge.bg} ${badge.text}`}>
@@ -564,8 +689,6 @@ export const MemberStatementPage: React.FC = () => {
                                                             <span className="text-slate-700 text-xs">{row.description}</span>
                                                         </div>
                                                     </td>
-
-                                                    {/* Debit */}
                                                     <td className="px-5 py-3 text-right">
                                                         {!row.isCredit ? (
                                                             <div className="flex items-center justify-end gap-1 text-red-600 font-mono font-semibold text-xs">
@@ -576,8 +699,6 @@ export const MemberStatementPage: React.FC = () => {
                                                             <span className="text-slate-200 text-xs">—</span>
                                                         )}
                                                     </td>
-
-                                                    {/* Credit */}
                                                     <td className="px-5 py-3 text-right">
                                                         {row.isCredit ? (
                                                             <div className="flex items-center justify-end gap-1 text-emerald-600 font-mono font-semibold text-xs">
@@ -588,8 +709,6 @@ export const MemberStatementPage: React.FC = () => {
                                                             <span className="text-slate-200 text-xs">—</span>
                                                         )}
                                                     </td>
-
-                                                    {/* Running balance (savings only) */}
                                                     <td className="px-5 py-3 text-right bg-slate-50/50">
                                                         {showBalance ? (
                                                             <span className={`font-mono font-bold text-xs ${row.runningBalance < 0 ? 'text-red-600' : 'text-slate-800'}`}>
@@ -603,7 +722,6 @@ export const MemberStatementPage: React.FC = () => {
                                             );
                                         })}
 
-                                        {/* Closing balance row */}
                                         <tr className="bg-slate-900 text-white">
                                             <td colSpan={5} className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-300">
                                                 Closing Balance
@@ -635,11 +753,157 @@ export const MemberStatementPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Empty state for staff before selecting member */}
                 {!loading && !hasFetched && isStaff && !error && (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400 no-print">
                         <FileText size={36} className="mb-3 text-slate-200" />
                         <p className="text-sm">Select a member and click Generate to produce their statement.</p>
+                    </div>
+                )}
+
+
+                {/* ════════════════════════════════════════════════════════
+                    FORMAL BANK-GRADE PDF VIEW (Visible ONLY on Print)
+                ════════════════════════════════════════════════════════ */}
+                {!loading && hasFetched && (
+                    <div id="statement-print" className="hidden print:block bg-white text-black relative" style={{ fontFamily: 'Georgia, serif' }}>
+
+                        {/* ── Repeating Multi-Page Watermark ── */}
+                        <div className="print-watermark hidden print:flex items-center justify-center">
+                            <DynamicLogo size={400} className="text-slate-900 opacity-20" />
+                        </div>
+
+                        {/* ── Formal Letterhead & Logo ── */}
+                        <div className="flex items-start justify-between border-b-4 border-slate-900 pb-6 mb-8 relative">
+                            <div className="flex items-center gap-5">
+                                <DynamicLogo size={64} />
+                                <div>
+                                    <h1 className="text-3xl font-extrabold uppercase tracking-widest text-slate-900 mb-1">{saccoName}</h1>
+                                    <p className="text-sm font-sans text-slate-600 font-semibold tracking-widest">
+                                        OFFICIAL {filterModule === 'ALL' ? 'STATEMENT OF ACCOUNT' : `${filterModule} STATEMENT`}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="text-right text-xs font-sans">
+                                <table className="ml-auto">
+                                    <tbody>
+                                    <tr><td className="text-slate-500 pr-4 text-right py-0.5">Reference:</td><td className="font-mono font-bold text-slate-900">{stmtRef}</td></tr>
+                                    <tr><td className="text-slate-500 pr-4 text-right py-0.5">Generated:</td><td className="font-bold text-slate-900">{generatedAt}</td></tr>
+                                    <tr><td className="text-slate-500 pr-4 text-right py-0.5">Period:</td><td className="font-bold text-slate-900">{fromDate ? fmtDate(fromDate + 'T00:00:00') : 'All Time'} — {toDate ? fmtDate(toDate + 'T00:00:00') : 'Present'}</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* ── Customer Details & Real QR Code ── */}
+                        <div className="flex justify-between items-start mb-10 font-sans">
+                            <div>
+                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Account Holder</h3>
+                                <div className="text-xl font-bold text-slate-900 uppercase">{activeMemberName}</div>
+                                <div className="text-sm text-slate-600 mt-1 mb-4">
+                                    Member No: <span className="font-mono font-bold text-slate-900">{activeMemberNumber}</span>
+                                </div>
+
+                                {/* REAL, SCANNABLE QR CODE */}
+                                <div className="flex items-center gap-3 border border-slate-300 p-2 rounded-lg inline-flex bg-white">
+                                    <QRCode value={verificationUrl} size={48} level="M" />
+                                    <div className="text-[9px] text-slate-500 font-mono tracking-widest uppercase font-bold leading-tight pr-2">
+                                        Scan To<br/>Verify<br/>Doc
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-2 border-slate-900 p-4 w-80 bg-slate-50 break-inside-avoid">
+                                <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 border-b border-slate-300 pb-1.5">Account Summary</h3>
+                                <div className="flex justify-between text-sm mb-1.5">
+                                    <span className="text-slate-600">Opening Balance:</span>
+                                    <span className="font-mono text-slate-900">{fmt(openingBalance)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm mb-1.5">
+                                    <span className="text-slate-600">Total Credits In:</span>
+                                    <span className="font-mono text-emerald-700">{fmt(stats.savingsDeposits + stats.loanRepaid + stats.penaltiesPaid)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm mb-3">
+                                    <span className="text-slate-600">Total Debits Out:</span>
+                                    <span className="font-mono text-red-700">{fmt(stats.savingsWithdrawals + stats.loanDisbursed + stats.penaltiesCharged)}</span>
+                                </div>
+                                <div className="flex justify-between text-base font-bold border-t-2 border-slate-900 pt-2.5 mt-2">
+                                    <span>Closing Balance:</span>
+                                    <span className="font-mono">{fmt(closingBalance)} KES</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Tabular Transaction History (Zebra Striped) ── */}
+                        <table className="w-full text-left border-collapse font-sans text-sm">
+                            <thead>
+                            <tr className="border-y-2 border-slate-900 bg-slate-50">
+                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] w-28">Date</th>
+                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] w-36">Reference</th>
+                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px]">Description</th>
+                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-28">Debit</th>
+                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-28">Credit</th>
+                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-36">Balance</th>
+                            </tr>
+                            </thead>
+                            <tbody className="font-mono text-xs">
+
+                            <tr className="border-b border-slate-300 bg-slate-50/50 break-inside-avoid">
+                                <td colSpan={5} className="py-2.5 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-widest font-sans">
+                                    Opening Balance
+                                </td>
+                                <td className="py-2.5 px-2 text-right font-bold text-slate-800">
+                                    {fmt(openingBalance)}
+                                </td>
+                            </tr>
+
+                            {rows.map((row, idx) => (
+                                <tr key={idx} className="border-b border-slate-300 break-inside-avoid print:even:bg-slate-100">
+                                    <td className="py-3 px-2 font-sans text-[11px] text-slate-700">{fmtDate(row.date)}</td>
+                                    <td className="py-3 px-2 text-[10px] text-slate-500 truncate max-w-[120px]">{row.reference || '—'}</td>
+                                    <td className="py-3 px-2 font-sans text-[11px] text-slate-800">
+                                        <span className="font-bold text-slate-900">[{row.module}]</span> {row.description}
+                                    </td>
+                                    <td className="py-3 px-2 text-right text-red-700">{!row.isCredit ? fmt(row.amount) : ''}</td>
+                                    <td className="py-3 px-2 text-right text-emerald-700">{row.isCredit ? fmt(row.amount) : ''}</td>
+                                    <td className="py-3 px-2 text-right font-bold text-slate-900">
+                                        {row.module === 'SAVINGS' ? fmt(row.runningBalance) : '—'}
+                                    </td>
+                                </tr>
+                            ))}
+
+                            <tr className="border-y-2 border-slate-900 bg-slate-50 break-inside-avoid">
+                                <td colSpan={5} className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-widest font-sans text-right">
+                                    Closing Balance
+                                </td>
+                                <td className="py-3 px-2 text-right font-bold text-sm text-slate-900">
+                                    {fmt(closingBalance)}
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        {/* ── Official Sign-off Footer & INK STAMP ── */}
+                        <div className="mt-16 pt-6 border-t-2 border-slate-300 text-center text-[11px] font-sans text-slate-500 break-inside-avoid relative">
+                            <p>This is a system-generated statement and does not require a physical signature.</p>
+                            <p className="mt-1">Any discrepancies must be reported to {saccoName} within 14 days of receipt.</p>
+
+                            <div className="mt-20 flex justify-between px-20 relative">
+
+                                <div className="absolute -top-12 left-24 pointer-events-none opacity-80 mix-blend-multiply -rotate-[15deg]">
+                                    <div className="w-28 h-28 rounded-full border-[3px] border-blue-700 flex items-center justify-center p-1">
+                                        <div className="w-full h-full rounded-full border-[2px] border-dotted border-blue-700 flex flex-col items-center justify-center text-blue-800 bg-blue-50/20">
+                                            <span className="text-[10px] font-black tracking-widest uppercase">OFFICIAL</span>
+                                            <span className="text-sm font-black mt-0.5 tracking-widest uppercase">STAMP</span>
+                                            <span className="text-[7px] font-bold mt-1 text-center leading-tight px-2">{saccoName}</span>
+                                            <span className="text-[7px] font-mono mt-0.5 text-blue-600">{generatedAt.split(' ')[0]}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="w-56 border-t border-slate-800 pt-2 uppercase tracking-widest text-[10px] font-bold text-slate-800 text-left">Authorized Signatory</div>
+                                <div className="w-56 border-t border-slate-800 pt-2 uppercase tracking-widest text-[10px] font-bold text-slate-800 text-right">Member Signature</div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

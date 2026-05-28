@@ -36,6 +36,16 @@ public class ObligationDTOs {
         private int graceDays = 0;
     }
 
+    public record UpdateObligationRequest(
+            @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
+            BigDecimal amountDue,
+
+            LocalDate startDate,
+
+            @Min(value = 0, message = "Grace days cannot be negative")
+            Integer graceDays
+    ) {}
+
     @Data
     public static class UpdateObligationStatusRequest {
         @NotNull(message = "Status is required")
@@ -58,7 +68,7 @@ public class ObligationDTOs {
         private ObligationStatus  status;
         private ZonedDateTime     createdAt;
 
-        /** Current or most recent period */
+        /** Current period with UPCOMING/DUE/COVERED/OVERDUE computed status. */
         private ObligationPeriodResponse currentPeriod;
 
         public static ObligationResponse from(SavingsObligation o) {
@@ -87,8 +97,36 @@ public class ObligationDTOs {
         private BigDecimal    requiredAmount;
         private BigDecimal    paidAmount;
         private BigDecimal    remaining;
+
+        /**
+         * The stored DB status (DUE/COVERED/OVERDUE).
+         * Use {@link #computedStatus} for display — it may be UPCOMING when the
+         * savings deadline hasn't arrived yet this cycle.
+         */
         private PeriodStatus  status;
+
+        /**
+         * Status enriched by the savings-schedule settings.
+         * Possible values: UPCOMING | DUE | COVERED | OVERDUE.
+         * This is what the UI should display.
+         */
+        private PeriodStatus  computedStatus;
+
         private ZonedDateTime createdAt;
+
+        // ── Penalty linked to this period (if any) ────────────────────────────
+
+        /** Penalty UUID — null if no penalty exists for this period. */
+        private UUID          penaltyId;
+
+        /** Total penalty amount (original, before any payments). Null if no penalty. */
+        private BigDecimal    penaltyAmount;
+
+        /** Remaining outstanding penalty amount. Null if no penalty. */
+        private BigDecimal    penaltyOutstanding;
+
+        /** Penalty status: OPEN | PAID | WAIVED. Null if no penalty. */
+        private String        penaltyStatus;
 
         public static ObligationPeriodResponse from(SavingsObligationPeriod p) {
             BigDecimal remaining = p.getRequiredAmount().subtract(p.getPaidAmount()).max(BigDecimal.ZERO);
@@ -101,12 +139,12 @@ public class ObligationDTOs {
                     .paidAmount(p.getPaidAmount())
                     .remaining(remaining)
                     .status(p.getStatus())
-                    .createdAt(p.getCreatedAt())
+                    .computedStatus(p.getStatus())   // will be overridden by service when UPCOMING
                     .build();
         }
     }
 
-    /** One row in the staff compliance report table */
+    /** One row in the staff compliance report table. */
     @Data
     @Builder
     @NoArgsConstructor
@@ -119,6 +157,7 @@ public class ObligationDTOs {
         private BigDecimal        amountDue;
         private long              totalOverduePeriods;
         private BigDecimal        totalShortfall;
+        private BigDecimal        totalPenalties;
         private PeriodStatus      worstStatus;
     }
 }

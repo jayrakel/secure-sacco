@@ -1,0 +1,38 @@
+@baseUrl = https://staging.jaytechwavesolutions.co.ke/api/v1
+
+### 1. LOGIN
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "admin@jaytechwavesolutions.co.ke",
+  "password": "M1chira._2000"
+}
+
+> {%
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    for (const cookie of cookies) {
+        const csrf = cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (csrf) client.global.set("csrf_token", csrf[1]);
+        const session = cookie.match(/SACCO_SESSION=([^;]+)/);
+        if (session) client.global.set("sacco_cookie", "SACCO_SESSION=" + session[1]);
+    }
+%}
+
+### ==========================================
+POST {{baseUrl}}/loans/products
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "name": "Historical Smart Loan",
+  "description": "Internal product used exclusively for migrating historical loan Records. Not for new application.",
+  "repaymentFrequency": "WEEKLY",
+  "termWeeks": 52,
+  "interestModel": "FLAT",
+  "interestRate": 10.0,
+  "applicationFee": 0.0,
+  "gracePeriodDays": 28,
+  "isActive": true
+}

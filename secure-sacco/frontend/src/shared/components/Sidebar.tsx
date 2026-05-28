@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, Calculator, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X,
+    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -63,35 +63,31 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'Operations',
             items: [
                 { label: 'Members', path: '/members', icon: UserCircle, module: 'members', requiredPermission: 'MEMBERS_READ' },
-                { label: 'Loans', path: '/loans', icon: Coins, module: 'loans' },
-                { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings' },
+                { label: 'Loans', path: '/loans', icon: Coins, module: 'loans', requiredPermission: 'LOANS_READ' },
+                { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings', requiredPermission: 'SAVINGS_READ' },
                 { label: 'Savings Compliance', path: '/savings/obligations', icon: ShieldCheck, module: 'savings', requiredPermission: 'SAVINGS_OBLIGATIONS_MANAGE' },
                 { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
+                { label: 'Penalties', path: '/staff/penalties', icon: AlertCircle, requiredPermission: 'PENALTIES_WAIVE_ADJUST' },
             ],
         },
         {
             sectionLabel: 'Finance',
             items: [
-                {
-                    label: 'Accounting',
-                    icon: Calculator,
-                    adminOnly: true,
-                    subItems: [
-                        { label: 'Chart of Accounts', path: '/accounting/accounts',      icon: BookOpen, adminOnly: true },
-                        { label: 'Journal Entries',   path: '/accounting/journals',      icon: FileText, adminOnly: true },
-                        { label: 'Trial Balance',     path: '/accounting/trial-balance', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
-                        { label: 'Manual GL Posting', path: '/accounting/gl-posting',    icon: PenLine,  adminOnly: true },
-                    ],
-                },
+                { label: 'Chart of Accounts', path: '/accounting/accounts',      icon: BookOpen, requiredPermission: 'ACCOUNTING_READ' },
+                { label: 'Journal Entries',   path: '/accounting/journals',      icon: FileText, requiredPermission: 'ACCOUNTING_READ' },
+                { label: 'Manual GL Posting', path: '/accounting/gl-posting',    icon: PenLine,  requiredPermission: 'ACCOUNTING_JOURNAL_POST' },
+                { label: 'Trial Balance',     path: '/accounting/trial-balance', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
                 { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
             ],
         },
         {
             sectionLabel: 'System',
             items: [
-                { label: 'Audit Log', path: '/audit/logs', icon: Shield, adminOnly: true },
-                { label: 'Security',  path: '/security',   icon: Shield },
-                { label: 'Settings',  path: '/settings',   icon: Settings, adminOnly: true },
+                { label: 'Audit Log', path: '/audit/logs', icon: Shield, requiredPermission: 'AUDIT_LOG_READ' },
+                { label: 'My Profile', path: '/profile',   icon: UserCircle },
+                { label: 'Settings',  path: '/settings',   icon: Settings, requiredPermission: 'PENALTIES_MANAGE_RULES' },
+                { label: 'Migration',             path: '/migration',             icon: Database, requiredPermission: 'DATA_MIGRATION' },
+                { label: 'Permissions Registry', path: '/permissions-registry', icon: Shield,   adminOnly: true },
             ],
         },
     ];
@@ -116,7 +112,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'Account',
             items: [
                 { label: 'My Reports', path: '/my-reports', icon: BarChart3 },
-                { label: 'Security',   path: '/security',   icon: Shield    },
+                { label: 'My Profile',  path: '/profile',   icon: UserCircle },
             ],
         },
     ];
@@ -162,7 +158,6 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             {/* ── Sidebar ───────────────────────────────────────────────── */}
             <aside className={`
     ${isCollapsed ? 'w-17' : 'w-60'}
-    /* Removed 'relative' from the line below */
     bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col shrink-0 z-40
     fixed lg:static inset-y-0 left-0
     ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -186,7 +181,20 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
 
                 {/* Logo */}
                 <div className={`flex items-center gap-3 border-b border-slate-800 shrink-0 ${isCollapsed ? 'p-4 justify-center' : 'p-5'}`}>
-                    <div className="bg-emerald-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">S</div>
+                    {settings?.logoUrl ? (
+                        <img
+                            key={settings.logoUrl}
+                            src={settings.logoUrl}
+                            alt="Logo"
+                            // 👇 Updated scaling logic here 👇
+                            className={`object-contain shrink-0 drop-shadow-sm transition-all duration-300 ${isCollapsed ? 'w-8 h-8 rounded-lg' : 'h-8 w-auto max-w-[160px]'}`}
+                        />
+                    ) : (
+                        <div className="bg-emerald-600 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {settings?.saccoName ? settings.saccoName.charAt(0).toUpperCase() : 'S'}
+                        </div>
+                    )}
+
                     {!isCollapsed && (
                         <span className="font-bold text-sm text-white truncate">{settings?.saccoName || 'Secure SACCO'}</span>
                     )}

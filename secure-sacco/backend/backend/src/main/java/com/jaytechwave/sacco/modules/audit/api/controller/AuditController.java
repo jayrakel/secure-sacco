@@ -13,10 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,9 +28,10 @@ public class AuditController {
 
     private final SecurityAuditLogRepository auditLogRepository;
 
-    @Operation(summary = "Get audit logs", description = "Paginated, filterable audit log. Restricted to SYSTEM_ADMIN.")
+    @Operation(summary = "Get audit logs",
+            description = "Paginated, filterable audit log. Requires AUDIT_LOG_READ or SYSTEM_ADMIN.")
     @GetMapping("/logs")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('AUDIT_LOG_READ', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<Map<String, Object>> getLogs(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "50") int size,
@@ -43,15 +41,9 @@ public class AuditController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         Specification<SecurityAuditLog> spec = buildSpec(actorEmail, eventType, from, to);
+        PageRequest pageable = PageRequest.of(page, Math.min(size, 200), Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        PageRequest pageable = PageRequest.of(
-                page, Math.min(size, 200),
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
-
-        Page<AuditLogDTO> resultPage = auditLogRepository
-                .findAll(spec, pageable)
-                .map(AuditLogDTO::from);
+        Page<AuditLogDTO> resultPage = auditLogRepository.findAll(spec, pageable).map(AuditLogDTO::from);
 
         return ResponseEntity.ok(Map.of(
                 "content",       resultPage.getContent(),
@@ -62,36 +54,23 @@ public class AuditController {
         ));
     }
 
-    // ── Specification builder ──────────────────────────────────────────────────
-
-    private Specification<SecurityAuditLog> buildSpec(
-            String actorEmail, String eventType, LocalDate from, LocalDate to) {
-
+    private Specification<SecurityAuditLog> buildSpec(String actorEmail, String eventType, LocalDate from, LocalDate to) {
         Specification<SecurityAuditLog> spec = Specification.where(null);
-
         if (actorEmail != null && !actorEmail.isBlank()) {
-            String pattern = "%" + actorEmail.trim().toLowerCase() + "%";
-            spec = spec.and((root, q, cb) ->
-                    cb.like(cb.lower(root.get("actor")), pattern));
+            String p = "%" + actorEmail.trim().toLowerCase() + "%";
+            spec = spec.and((root, q, cb) -> cb.like(cb.lower(root.get("actor")), p));
         }
-
         if (eventType != null && !eventType.isBlank()) {
-            spec = spec.and((root, q, cb) ->
-                    cb.equal(root.get("action"), eventType.trim().toUpperCase()));
+            spec = spec.and((root, q, cb) -> cb.equal(root.get("action"), eventType.trim().toUpperCase()));
         }
-
         if (from != null) {
-            Instant fromInstant = from.atStartOfDay(ZoneOffset.UTC).toInstant();
-            spec = spec.and((root, q, cb) ->
-                    cb.greaterThanOrEqualTo(root.get("createdAt"), fromInstant));
+            Instant fi = from.atStartOfDay(ZoneOffset.UTC).toInstant();
+            spec = spec.and((root, q, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), fi));
         }
-
         if (to != null) {
-            Instant toInstant = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
-            spec = spec.and((root, q, cb) ->
-                    cb.lessThan(root.get("createdAt"), toInstant));
+            Instant ti = to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+            spec = spec.and((root, q, cb) -> cb.lessThan(root.get("createdAt"), ti));
         }
-
         return spec;
     }
 }

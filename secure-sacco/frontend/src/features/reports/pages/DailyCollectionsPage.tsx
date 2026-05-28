@@ -43,13 +43,15 @@ const fmtDateLong = (iso: string) =>
 const METHOD_STYLE: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     MPESA:         { bg: 'bg-green-50',  text: 'text-green-700',  icon: Smartphone  },
     BANK_TRANSFER: { bg: 'bg-blue-50',   text: 'text-blue-700',   icon: CreditCard  },
+    MANUAL_ENTRY:  { bg: 'bg-purple-50', text: 'text-purple-700', icon: Wallet      }, // 🟢 Historical migrations
 };
 const DEFAULT_METHOD = { bg: 'bg-slate-50', text: 'text-slate-600', icon: Wallet };
 
 const TYPE_BADGE: Record<string, string> = {
-    STK_PUSH: 'bg-green-100 text-green-800',
-    C2B:      'bg-teal-100  text-teal-800',
-    B2C:      'bg-indigo-100 text-indigo-800',
+    STK_PUSH:       'bg-green-100 text-green-800',
+    C2B:            'bg-teal-100  text-teal-800',
+    B2C:            'bg-indigo-100 text-indigo-800',
+    LOAN_REPAYMENT: 'bg-purple-100 text-purple-800', // 🟢 Historical migrations
 };
 const DEFAULT_TYPE_BADGE = 'bg-slate-100 text-slate-600';
 

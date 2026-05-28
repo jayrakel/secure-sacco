@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.users.domain.service;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.service.PasswordValidator;
+import com.jaytechwave.sacco.modules.core.security.SessionInvalidationService;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import com.jaytechwave.sacco.modules.users.api.dto.UserDTOs.*;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
@@ -9,6 +10,7 @@ import com.jaytechwave.sacco.modules.roles.domain.repository.RoleRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordValidator passwordValidator;
     private final SecurityAuditService securityAuditService;
+    private final CacheManager cacheManager;
+    private final SessionInvalidationService sessionInvalidationService;
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
@@ -112,6 +116,11 @@ public class UserService {
         user.setStatus(newStatus);
         userRepository.save(user);
 
+        // If user is being disabled or locked, invalidate all their sessions immediately
+        if (newStatus == UserStatus.DISABLED || newStatus == UserStatus.LOCKED) {
+            sessionInvalidationService.invalidateAllUserSessions(user.getEmail());
+        }
+
         securityAuditService.logEvent(
                 "USER_STATUS_UPDATED",
                 user.getEmail(),
@@ -128,6 +137,10 @@ public class UserService {
         }
         user.setRoles(roles);
         userRepository.save(user);
+
+        // ✅ CRITICAL: Invalidate user's sessions so authorities are reloaded on next auth
+        // This forces the user to re-authenticate with their updated permissions
+        sessionInvalidationService.invalidateAllUserSessions(user.getEmail());
 
         securityAuditService.logEvent(
                 "USER_ROLES_UPDATED",
@@ -249,4 +262,34 @@ public class UserService {
         if (phone == null || phone.isBlank()) return null;
         return phone.trim();
     }
+    /** Admin-initiated email change. Invalidates the user's existing sessions. */
+    @Transactional
+    public void changeUserEmail(UUID id, String rawNewEmail) {
+        User user = getUserEntityById(id);
+
+        String normalized = normalizeEmail(rawNewEmail);
+
+        if (normalized.equalsIgnoreCase(user.getEmail())) {
+            throw new IllegalArgumentException("New email is the same as the current email.");
+        }
+
+        if (userRepository.existsByEmail(normalized)) {
+            throw new IllegalArgumentException("This email address is already in use by another account.");
+        }
+
+        String oldEmail = user.getEmail();
+        user.setEmail(normalized);
+        user.setEmailVerified(false); // Must re-verify after email change
+        userRepository.save(user);
+
+        // Invalidate all sessions so the user is forced to log in with the new email
+        sessionInvalidationService.invalidateAllUserSessions(oldEmail);
+
+        securityAuditService.logEvent(
+                "ADMIN_EMAIL_CHANGED",
+                oldEmail,
+                String.format("Email changed to: %s", normalized)
+        );
+    }
+
 }

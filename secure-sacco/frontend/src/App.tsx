@@ -12,6 +12,7 @@ import RolesPermissionsPage from "./features/users/pages/RolesPermissionsPage";
 import ProtectedRoute from "./shared/components/ProtectedRoute";
 import SetupGuard from "./shared/components/SetupGuard";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
+import ProfilePage from "./features/auth/pages/ProfilePage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
@@ -38,6 +39,12 @@ import MeetingsManagementPage from './features/meetings/pages/MeetingsManagement
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import StaffPenaltiesPage from './features/penalties/pages/StaffPenaltiesPage';
+import PermissionsRegistryPage from './features/users/pages/PermissionsRegistryPage';
+import MigrationPage from './features/migration/pages/MigrationPage';
+import PrivacyPolicyPage from './features/legal/pages/PrivacyPolicyPage';
+import TermsOfServicePage from './features/legal/pages/TermsOfServicePage';
+import SupportPage from './features/legal/pages/SupportPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -115,6 +122,11 @@ function App() {
                                 </ProtectedRoute>
                             } />
 
+                            {/* Legal pages - public, accessible without authentication */}
+                            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+                            <Route path="/support" element={<SupportPage />} />
+
                             {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                             <Route element={
                                 <SetupGuard>
@@ -150,13 +162,13 @@ function App() {
                                 } />
 
                                 <Route path="/accounting/accounts" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['ACCOUNTING_READ']}>
                                         <ChartOfAccountsPage />
                                     </ProtectedRoute>
                                 } />
 
                                 <Route path="/accounting/journals" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['ACCOUNTING_READ']}>
                                         <JournalEntriesPage />
                                     </ProtectedRoute>
                                 } />
@@ -168,7 +180,7 @@ function App() {
                                 } />
 
                                 <Route path="/accounting/gl-posting" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['ACCOUNTING_JOURNAL_POST']}>
                                         <ManualGlPostingPage />
                                     </ProtectedRoute>
                                 } />
@@ -261,10 +273,37 @@ function App() {
                                 } />
 
 
+                                {/* Staff Penalty Management */}
+                                <Route path="/staff/penalties" element={
+                                    <ProtectedRoute requiredPermissions={['PENALTIES_WAIVE_ADJUST']}>
+                                        <StaffPenaltiesPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Permissions Registry */}
+                                <Route path="/permissions-registry" element={
+                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                        <PermissionsRegistryPage />
+                                    </ProtectedRoute>
+                                } />
+
                                 {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
                                 <Route path="/audit/logs" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['AUDIT_LOG_READ']}>
                                         <AuditLogPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Historical data migration — SYSTEM_ADMIN only */}
+                                <Route path="/migration" element={
+                                    <ProtectedRoute requiredPermissions={['DATA_MIGRATION']}>
+                                        <MigrationPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/profile" element={
+                                    <ProtectedRoute>
+                                        <ProfilePage />
                                     </ProtectedRoute>
                                 } />
 
@@ -277,7 +316,7 @@ function App() {
                                 {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
                                 <Route path="/settings" element={
                                     <ProtectedRoute>
-                                        <HasPermission permission="ROLE_SYSTEM_ADMIN" fallback={
+                                        <HasPermission permissions={['ROLE_SYSTEM_ADMIN', 'PENALTIES_MANAGE_RULES']} fallback={
                                             <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
                                                 Access Denied: You do not have permission to view global settings.
                                             </div>

@@ -29,18 +29,35 @@ import java.util.UUID;
 @Tag(name = "Savings Obligations", description = "Required savings obligations, compliance, and period tracking")
 public class ObligationController {
 
-    private final ObligationService      obligationService;
+    private final ObligationService       obligationService;
     private final ObligationPeriodService periodService;
-    private final MemberRepository       memberRepository;
+    private final MemberRepository        memberRepository;
 
-    // ── Staff endpoints ───────────────────────────────────────────────────────
+    // ── Staff: create ────────────────────────────────────────────────────────
 
     @Operation(summary = "Create a savings obligation for a member")
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<ObligationResponse> createObligation(@Valid @RequestBody CreateObligationRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(obligationService.createObligation(request));
+    public ResponseEntity<ObligationResponse> createObligation(
+            @Valid @RequestBody CreateObligationRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(obligationService.createObligation(request));
     }
+
+    // ── Staff: edit obligation terms ──────────────────────────────────────────
+
+    @Operation(summary = "Edit an obligation's amount, start date or grace period",
+            description = "Only the fields included in the request body are changed. " +
+                    "Send only what you want to update — all fields are optional.")
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<ObligationResponse> updateObligation(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateObligationRequest request) {
+        return ResponseEntity.ok(obligationService.updateObligation(id, request));
+    }
+
+    // ── Staff: pause / resume ────────────────────────────────────────────────
 
     @Operation(summary = "Pause or resume an obligation")
     @PatchMapping("/{id}/status")
@@ -51,6 +68,29 @@ public class ObligationController {
         return ResponseEntity.ok(obligationService.updateStatus(id, request));
     }
 
+    // ── Staff: lookup by member ───────────────────────────────────────────────
+
+    @Operation(summary = "Get all obligations for a specific member (staff view)")
+    @GetMapping("/member/{memberId}")
+    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<List<ObligationResponse>> getByMember(@PathVariable UUID memberId) {
+        return ResponseEntity.ok(obligationService.getObligationsByMemberId(memberId));
+    }
+
+    @Operation(summary = "Get obligation period history for a specific member (staff view)")
+    @GetMapping("/member/{memberId}/history")
+    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<PagedResponse<ObligationPeriodResponse>> getMemberHistory(
+            @PathVariable UUID memberId,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageRequest pageable = PageRequest.of(page, size);
+        Page<ObligationPeriodResponse> result = obligationService.getMyHistory(memberId, pageable);
+        return ResponseEntity.ok(PagedResponse.from(result));
+    }
+
+    // ── Staff: compliance report ──────────────────────────────────────────────
+
     @Operation(summary = "Staff compliance report — who is behind on savings",
             description = "Returns all active obligations with overdue period counts and total shortfall.")
     @GetMapping("/compliance")
@@ -58,11 +98,12 @@ public class ObligationController {
     public ResponseEntity<PagedResponse<ObligationComplianceEntry>> getComplianceReport(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size) {
-
         PageRequest pageable = PageRequest.of(page, size, Sort.by("totalShortfall").descending());
         Page<ObligationComplianceEntry> result = obligationService.getComplianceReport(pageable);
         return ResponseEntity.ok(PagedResponse.from(result));
     }
+
+    // ── Staff: trigger evaluation ─────────────────────────────────────────────
 
     @Operation(summary = "Manually trigger the obligation evaluation job",
             description = "Evaluates all active obligations right now. Admin only.")
@@ -73,10 +114,10 @@ public class ObligationController {
         return ResponseEntity.ok(Map.of("message", "Obligation evaluation triggered successfully."));
     }
 
-    // ── Member endpoints ──────────────────────────────────────────────────────
+    // ── Member: my obligations ────────────────────────────────────────────────
 
     @Operation(summary = "My current savings obligations",
-            description = "Returns the authenticated member's active obligation(s) with the current period status.")
+            description = "Returns the authenticated member's active obligation(s) with current period status.")
     @GetMapping("/my")
     @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_READ', 'ROLE_MEMBER', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<List<ObligationResponse>> getMyObligations(Authentication authentication) {
@@ -91,14 +132,13 @@ public class ObligationController {
             Authentication authentication,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size) {
-
         UUID memberId = resolveMemberId(authentication);
         PageRequest pageable = PageRequest.of(page, size);
         Page<ObligationPeriodResponse> result = obligationService.getMyHistory(memberId, pageable);
         return ResponseEntity.ok(PagedResponse.from(result));
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private UUID resolveMemberId(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

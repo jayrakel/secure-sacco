@@ -28,6 +28,7 @@ const PAGE_LABELS: Record<string, string> = {
     '/audit/logs':                 'Security Audit Log',
     '/security':                   'Security Settings',
     '/settings':                   'Platform Settings',
+    '/admin/time-machine':            'System Time Machine',
 };
 
 export const DashboardLayout = () => {
@@ -45,7 +46,7 @@ export const DashboardLayout = () => {
     const roleName = user?.roles?.[0]?.replace('ROLE_', '').replace(/_/g, ' ') ?? 'User';
 
     return (
-        <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+        <div className="flex h-screen print:h-auto print:overflow-visible bg-slate-50 font-sans overflow-hidden print:bg-white">
             <Sidebar
                 mobileOpen={mobileSidebarOpen}
                 onMobileClose={() => setMobileSidebarOpen(false)}
@@ -107,7 +108,7 @@ export const DashboardLayout = () => {
                 </header>
 
                 {/* ── Page content ── */}
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+                <main className="flex-1 overflow-y-auto print:overflow-visible p-4 sm:p-6 md:p-8 print:p-0">
                     <Outlet />
                 </main>
             </div>

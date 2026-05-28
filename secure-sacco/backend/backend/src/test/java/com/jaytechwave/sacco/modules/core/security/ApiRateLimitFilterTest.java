@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.security;
 
+import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,13 +29,15 @@ class ApiRateLimitFilterTest {
 
     @Mock StringRedisTemplate redis;
     @Mock ValueOperations<String, String> valueOps;
+    @Mock SaccoSettingsService settingsService;
 
     private ApiRateLimitFilter filter;
 
     @BeforeEach
     void setUp() {
         lenient().when(redis.opsForValue()).thenReturn(valueOps);
-        filter = new ApiRateLimitFilter(redis);
+        lenient().when(settingsService.getRateLimitGeneralPerMin()).thenReturn(60);
+        filter = new ApiRateLimitFilter(redis, settingsService);
 
         // Authenticate user in security context
         var auth = new UsernamePasswordAuthenticationToken(

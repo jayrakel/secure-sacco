@@ -19,6 +19,22 @@ export interface StatementItemDTO {
     description: string;
 }
 
+export interface StatementSummaryDTO {
+    loanDisbursed: number;
+    loanRepaid: number;
+    loanOutstanding: number;
+    savingsDeposited: number;
+    savingsWithdrawn: number;
+    penaltiesCharged: number;
+    penaltiesPaid: number;
+    penaltiesOutstanding: number;
+}
+
+export interface StatementResponseDTO {
+    items: StatementItemDTO[];
+    summary: StatementSummaryDTO;
+}
+
 export interface MemberMiniSummaryDTO {
     savingsBalance: number;
     loanArrears: number;
@@ -83,12 +99,12 @@ export const reportApi = {
         return res.data;
     },
 
-    getMemberStatement: async (memberId: string, from?: string, to?: string): Promise<StatementItemDTO[]> => {
+    getMemberStatement: async (memberId: string, from?: string, to?: string): Promise<StatementResponseDTO> => {
         const params = new URLSearchParams();
         if (from) params.append('from', from);
         if (to)   params.append('to',   to);
         const qs = params.toString() ? `?${params}` : '';
-        const res = await apiClient.get<StatementItemDTO[]>(`/reports/members/${memberId}/statement${qs}`);
+        const res = await apiClient.get<StatementResponseDTO>(`/reports/members/${memberId}/statement${qs}`);
         return res.data;
     },
 

@@ -55,7 +55,7 @@ public class ReportController {
 
     @Operation(summary = "Member transaction statement", description = "Returns a member's statement. Staff (REPORTS_READ) can view any member; members can only view their own.")
     @GetMapping("/members/{memberId}/statement")
-    public ResponseEntity<List<StatementItemDTO>> getMemberStatement(
+    public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementResponseDTO> getMemberStatement(
             @PathVariable UUID memberId,
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
@@ -73,7 +73,7 @@ public class ReportController {
             }
         }
 
-        return ResponseEntity.ok(reportService.getMemberStatement(memberId, from, to));
+        return ResponseEntity.ok(reportService.getMemberStatementWithSummary(memberId, from, to));
     }
 
     // --- NEW: LOAN ARREARS AGING REPORT ---

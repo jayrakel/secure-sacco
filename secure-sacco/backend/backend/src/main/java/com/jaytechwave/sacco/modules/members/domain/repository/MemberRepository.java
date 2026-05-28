@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,4 +35,11 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
     @Query("SELECT m FROM Member m WHERE m.user.id = :userId")
     Optional<Member> findByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Returns all members with the given status.
+     * Used by {@link com.jaytechwave.sacco.modules.meetings.job.MeetingAttendanceSeedJob}
+     * to seed ABSENT records for all ACTIVE members when a meeting starts.
+     */
+    List<Member> findByStatus(MemberStatus status);
 }

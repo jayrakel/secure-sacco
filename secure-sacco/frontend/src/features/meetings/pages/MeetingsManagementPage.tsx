@@ -26,6 +26,7 @@ export default function MeetingsManagementPage() {
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
     const [attendanceLoading, setAttendanceLoading] = useState(false);
     const [draftAttendance, setDraftAttendance] = useState<Record<string, AttendanceStatus>>({});
+    const [draftArrivedAt, setDraftArrivedAt] = useState<Record<string, string>>({});  // memberId -> HH:mm
     const [saving, setSaving] = useState(false);
     const [actionMsg, setActionMsg] = useState('');
 
@@ -58,8 +59,16 @@ export default function MeetingsManagementPage() {
             .then(records => {
                 setAttendance(records);
                 const draft: Record<string, AttendanceStatus> = {};
-                records.forEach(r => { draft[r.memberId] = r.status; });
+                const arrivedAtDraft: Record<string, string> = {};
+                records.forEach(r => {
+                    draft[r.memberId] = r.status;
+                    if (r.arrivedAt) {
+                        // Convert ISO arrivedAt to HH:mm for the time input
+                        arrivedAtDraft[r.memberId] = new Date(r.arrivedAt).toTimeString().slice(0, 5);
+                    }
+                });
                 setDraftAttendance(draft);
+                setDraftArrivedAt(arrivedAtDraft);
             })
             .catch(() => {})
             .finally(() => setAttendanceLoading(false));
@@ -69,7 +78,15 @@ export default function MeetingsManagementPage() {
         if (!selected) return;
         setSaving(true);
         try {
-            const records = Object.entries(draftAttendance).map(([memberId, status]) => ({ memberId, status }));
+            const records = Object.entries(draftAttendance).map(([memberId, status]) => {
+                let arrivedAt: string | undefined;
+                if (status === 'LATE' && draftArrivedAt[memberId] && selected) {
+                    // Combine meeting date with the time the staff entered
+                    const meetingDate = new Date(selected.startAt).toISOString().slice(0, 10);
+                    arrivedAt = new Date(`${meetingDate}T${draftArrivedAt[memberId]}:00`).toISOString();
+                }
+                return { memberId, status, arrivedAt };
+            });
             const updated = await meetingsApi.recordAttendance(selected.id, records);
             setAttendance(updated);
             setActionMsg('Attendance saved successfully.');
@@ -226,18 +243,34 @@ export default function MeetingsManagementPage() {
                                             <p className="text-sm font-medium text-slate-800">{rec.memberName}</p>
                                             <p className="text-xs text-slate-400">{rec.memberNumber}</p>
                                         </div>
-                                        <select
-                                            disabled={selected.status === 'CANCELED'}
-                                            value={draftAttendance[rec.memberId] ?? rec.status}
-                                            onChange={e => setDraftAttendance(prev => ({
-                                                ...prev, [rec.memberId]: e.target.value as AttendanceStatus,
-                                            }))}
-                                            className={`text-xs border-0 rounded-lg px-2 py-1 font-medium cursor-pointer ${ATTENDANCE_COLOR[draftAttendance[rec.memberId] ?? rec.status]}`}
-                                        >
-                                            {(['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] as AttendanceStatus[]).map(s => (
-                                                <option key={s} value={s}>{s}</option>
-                                            ))}
-                                        </select>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <select
+                                                disabled={selected.status === 'CANCELED'}
+                                                value={draftAttendance[rec.memberId] ?? rec.status}
+                                                onChange={e => setDraftAttendance(prev => ({
+                                                    ...prev, [rec.memberId]: e.target.value as AttendanceStatus,
+                                                }))}
+                                                className={`text-xs border-0 rounded-lg px-2 py-1 font-medium cursor-pointer ${ATTENDANCE_COLOR[draftAttendance[rec.memberId] ?? rec.status]}`}
+                                            >
+                                                {(['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] as AttendanceStatus[]).map(s => (
+                                                    <option key={s} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                            {(draftAttendance[rec.memberId] ?? rec.status) === 'LATE' && (
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-[10px] text-slate-400">Arrived at</span>
+                                                    <input
+                                                        type="time"
+                                                        disabled={selected.status === 'CANCELED'}
+                                                        value={draftArrivedAt[rec.memberId] ?? ''}
+                                                        onChange={e => setDraftArrivedAt(prev => ({
+                                                            ...prev, [rec.memberId]: e.target.value,
+                                                        }))}
+                                                        className="text-[10px] border border-slate-200 rounded px-1 py-0.5 text-slate-700 w-20"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -358,18 +391,34 @@ export default function MeetingsManagementPage() {
                                                     <p className="text-xs font-medium text-slate-800">{rec.memberName}</p>
                                                     <p className="text-xs text-slate-400">{rec.memberNumber}</p>
                                                 </div>
-                                                <select
-                                                    disabled={selected.status === 'CANCELED'}
-                                                    value={draftAttendance[rec.memberId] ?? rec.status}
-                                                    onChange={e => setDraftAttendance(prev => ({
-                                                        ...prev, [rec.memberId]: e.target.value as AttendanceStatus,
-                                                    }))}
-                                                    className={`text-xs border-0 rounded-lg px-2 py-1 font-medium cursor-pointer ${ATTENDANCE_COLOR[draftAttendance[rec.memberId] ?? rec.status]}`}
-                                                >
-                                                    {(['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] as AttendanceStatus[]).map(s => (
-                                                        <option key={s} value={s}>{s}</option>
-                                                    ))}
-                                                </select>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <select
+                                                        disabled={selected.status === 'CANCELED'}
+                                                        value={draftAttendance[rec.memberId] ?? rec.status}
+                                                        onChange={e => setDraftAttendance(prev => ({
+                                                            ...prev, [rec.memberId]: e.target.value as AttendanceStatus,
+                                                        }))}
+                                                        className={`text-xs border-0 rounded-lg px-2 py-1 font-medium cursor-pointer ${ATTENDANCE_COLOR[draftAttendance[rec.memberId] ?? rec.status]}`}
+                                                    >
+                                                        {(['PRESENT', 'LATE', 'ABSENT', 'EXCUSED'] as AttendanceStatus[]).map(s => (
+                                                            <option key={s} value={s}>{s}</option>
+                                                        ))}
+                                                    </select>
+                                                    {(draftAttendance[rec.memberId] ?? rec.status) === 'LATE' && (
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="text-[10px] text-slate-400">Arrived at</span>
+                                                            <input
+                                                                type="time"
+                                                                disabled={selected.status === 'CANCELED'}
+                                                                value={draftArrivedAt[rec.memberId] ?? ''}
+                                                                onChange={e => setDraftArrivedAt(prev => ({
+                                                                    ...prev, [rec.memberId]: e.target.value,
+                                                                }))}
+                                                                className="text-[10px] border border-slate-200 rounded px-1 py-0.5 text-slate-700 w-20"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

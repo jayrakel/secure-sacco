@@ -20,18 +20,20 @@ public class JournalEntryController {
 
     private final JournalEntryService journalEntryService;
 
+    /** Post a manual journal entry. Requires ACCOUNTING_JOURNAL_POST. */
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<JournalEntryResponse> createManualJournalEntry(@Valid @RequestBody CreateJournalEntryRequest request) {
+    @PreAuthorize("hasAnyAuthority('ACCOUNTING_JOURNAL_POST', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<JournalEntryResponse> createManualJournalEntry(
+            @Valid @RequestBody CreateJournalEntryRequest request) {
         return ResponseEntity.ok(journalEntryService.postEntry(request));
     }
 
+    /** List all journal entries. Requires ACCOUNTING_READ. */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'ROLE_TREASURER')")
+    @PreAuthorize("hasAnyAuthority('ACCOUNTING_READ', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<PagedResponse<JournalEntryResponse>> getAllJournalEntries(
             @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
         PageSizeValidator.validated(pageable);
-        return ResponseEntity.ok(PagedResponse.from(
-                journalEntryService.getAllJournalEntries(pageable)));
+        return ResponseEntity.ok(PagedResponse.from(journalEntryService.getAllJournalEntries(pageable)));
     }
 }

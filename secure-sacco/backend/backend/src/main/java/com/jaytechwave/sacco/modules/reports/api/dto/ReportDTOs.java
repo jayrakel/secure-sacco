@@ -42,6 +42,24 @@ public class ReportDTOs {
     }
 
     @Data
+    public static class StatementSummaryDTO {
+        private BigDecimal loanDisbursed = BigDecimal.ZERO;
+        private BigDecimal loanRepaid = BigDecimal.ZERO;
+        private BigDecimal loanOutstanding = BigDecimal.ZERO;
+        private BigDecimal savingsDeposited = BigDecimal.ZERO;
+        private BigDecimal savingsWithdrawn = BigDecimal.ZERO;
+        private BigDecimal penaltiesCharged = BigDecimal.ZERO;
+        private BigDecimal penaltiesPaid = BigDecimal.ZERO;
+        private BigDecimal penaltiesOutstanding = BigDecimal.ZERO;
+    }
+
+    @Data
+    public static class StatementResponseDTO {
+        private java.util.List<StatementItemDTO> items;
+        private StatementSummaryDTO summary;
+    }
+
+    @Data
     public static class LoanArrearsDTO {
         private String memberNumber;
         private String memberName;

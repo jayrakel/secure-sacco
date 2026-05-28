@@ -1,0 +1,64 @@
+name: Migrate GitHub Secrets to Doppler (Staging Safe)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Validate secrets exist
+        run: |
+          test -n "${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}" || (echo "Missing APP_DEFAULT_ADMIN_PASSWORD" && exit 1)
+          test -n "${{ secrets.MPESA_CONSUMER_KEY }}" || (echo "Missing MPESA_CONSUMER_KEY" && exit 1)
+
+      - name: Push secrets to Doppler
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+          APP_DEFAULT_ADMIN_PASSWORD: ${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}
+          APP_FIELD_ENCRYPTION_KEY: ${{ secrets.APP_FIELD_ENCRYPTION_KEY }}
+          APP_PII_HMAC_KEY: ${{ secrets.APP_PII_HMAC_KEY }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+
+          MPESA_CONSUMER_KEY: ${{ secrets.MPESA_CONSUMER_KEY }}
+          MPESA_CONSUMER_SECRET: ${{ secrets.MPESA_CONSUMER_SECRET }}
+          MPESA_PASSKEY: ${{ secrets.MPESA_PASSKEY }}
+
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+          STAGING_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          STAGING_DB_USERNAME: ${{ secrets.STAGING_DB_USERNAME }}
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_SSH_PASSPHRASE: ${{ secrets.STAGING_SSH_PASSPHRASE }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+
+        run: |
+          doppler secrets set APP_DEFAULT_ADMIN_PASSWORD="$APP_DEFAULT_ADMIN_PASSWORD"
+          doppler secrets set APP_FIELD_ENCRYPTION_KEY="$APP_FIELD_ENCRYPTION_KEY"
+          doppler secrets set APP_PII_HMAC_KEY="$APP_PII_HMAC_KEY"
+          doppler secrets set MAIL_PASSWORD="$MAIL_PASSWORD"
+
+          doppler secrets set MPESA_CONSUMER_KEY="$MPESA_CONSUMER_KEY"
+          doppler secrets set MPESA_CONSUMER_SECRET="$MPESA_CONSUMER_SECRET"
+          doppler secrets set MPESA_PASSKEY="$MPESA_PASSKEY"
+
+          doppler secrets set NVD_API_KEY="$NVD_API_KEY"
+          doppler secrets set REDIS_PASSWORD="$REDIS_PASSWORD"
+          doppler secrets set RESEND_API_KEY="$RESEND_API_KEY"
+
+          doppler secrets set STAGING_DB_PASSWORD="$STAGING_DB_PASSWORD"
+          doppler secrets set STAGING_DB_USERNAME="$STAGING_DB_USERNAME"
+          doppler secrets set STAGING_HOST="$STAGING_HOST"
+
+          doppler secrets set STAGING_SSH_KEY="$STAGING_SSH_KEY"
+          doppler secrets set STAGING_SSH_PASSPHRASE="$STAGING_SSH_PASSPHRASE"
+          doppler secrets set STAGING_USER="$STAGING_USER"

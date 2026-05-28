@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Coins, TrendingDown, ClipboardList, AlertTriangle,
-    CheckCircle2, Banknote,
+    CheckCircle2, Banknote, BarChart3, Users,
 } from 'lucide-react';
 import { dashboardApi, type StaffDashboardDTO } from '../api/dashboard-api';
 import { useAuth } from '../../auth/context/AuthProvider';
@@ -136,10 +136,10 @@ const LoanOfficerDashboard: React.FC = () => {
             <section>
                 <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Quick Actions</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <QuickLink label="Loan Applications" to="/loans"             icon={ClipboardList} color="bg-amber-50"   textColor="text-amber-700" />
-                    <QuickLink label="Arrears Report"    to="/reports/arrears"   icon={TrendingDown}  color="bg-red-50"    textColor="text-red-700" />
-                    <QuickLink label="Members"           to="/members"           icon={CheckCircle2}  color="bg-blue-50"   textColor="text-blue-700" />
-                    <QuickLink label="Collections"       to="/reports/collections" icon={Coins}       color="bg-violet-50" textColor="text-violet-700" />
+                    <QuickLink label="Loan Applications" to="/loans"               icon={ClipboardList} color="bg-amber-50"   textColor="text-amber-700" />
+                    <QuickLink label="Arrears Report"    to="/reports/arrears"     icon={TrendingDown}  color="bg-red-50"     textColor="text-red-700" />
+                    <QuickLink label="Members"           to="/members"             icon={Users}         color="bg-blue-50"    textColor="text-blue-700" />
+                    <QuickLink label="Reports Hub"       to="/reports"             icon={BarChart3}     color="bg-violet-50"  textColor="text-violet-700" />
                 </div>
             </section>
         </div>

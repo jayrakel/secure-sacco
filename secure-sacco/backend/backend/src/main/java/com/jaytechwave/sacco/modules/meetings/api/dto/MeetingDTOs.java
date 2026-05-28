@@ -28,9 +28,21 @@ public class MeetingDTOs {
             Integer lateAfterMinutes
     ) {}
 
+    /**
+     * Single entry in a bulk attendance submission.
+     *
+     * {@code arrivedAt} is optional and only meaningful when {@code status = LATE}.
+     * When provided, the penalty engine uses it to determine the correct lateness tier:
+     * <ul>
+     *   <li>&lt; 120 minutes late → MEETING_LATE_30</li>
+     *   <li>&ge; 120 minutes late → MEETING_LATE_120</li>
+     * </ul>
+     * When null and status is LATE, the minimum tier (MEETING_LATE_30) is applied.
+     */
     public record BulkAttendanceEntry(
             UUID memberId,
-            AttendanceStatus status
+            AttendanceStatus status,
+            LocalDateTime arrivedAt   // null-safe — optional for LATE, ignored for PRESENT/ABSENT
     ) {}
 
     public record BulkAttendanceRequest(
@@ -56,7 +68,8 @@ public class MeetingDTOs {
             String memberName,
             String memberNumber,
             AttendanceStatus status,
-            LocalDateTime recordedAt
+            LocalDateTime recordedAt,
+            LocalDateTime arrivedAt   // exposed to frontend so it can show arrival time
     ) {}
 
     public record MeetingAttendanceSummaryResponse(

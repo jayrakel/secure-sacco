@@ -22,13 +22,6 @@ public class PenaltyRuleController {
 
     private final PenaltyRuleService penaltyRuleService;
 
-    @Operation(summary = "Create penalty rule", description = "Define a new penalty rule (e.g. missed meeting fee). Requires SYSTEM_ADMIN.")
-    @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<PenaltyRuleResponse> createRule(@Valid @RequestBody PenaltyRuleRequest request) {
-        return ResponseEntity.ok(penaltyRuleService.createRule(request));
-    }
-
     @Operation(summary = "List penalty rules")
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -37,10 +30,21 @@ public class PenaltyRuleController {
         return ResponseEntity.ok(penaltyRuleService.getAllRules(activeOnly));
     }
 
-    @Operation(summary = "Update penalty rule")
+    @Operation(summary = "Create penalty rule",
+            description = "Define a new penalty rule. Requires PENALTIES_MANAGE_RULES or SYSTEM_ADMIN.")
+    @PostMapping
+    @PreAuthorize("hasAnyAuthority('PENALTIES_MANAGE_RULES', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<PenaltyRuleResponse> createRule(@Valid @RequestBody PenaltyRuleRequest request) {
+        return ResponseEntity.ok(penaltyRuleService.createRule(request));
+    }
+
+    @Operation(summary = "Update penalty rule",
+            description = "Modify an existing penalty rule. Requires PENALTIES_MANAGE_RULES or SYSTEM_ADMIN.")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
-    public ResponseEntity<PenaltyRuleResponse> updateRule(@PathVariable UUID id, @Valid @RequestBody PenaltyRuleRequest request) {
+    @PreAuthorize("hasAnyAuthority('PENALTIES_MANAGE_RULES', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<PenaltyRuleResponse> updateRule(
+            @PathVariable UUID id,
+            @Valid @RequestBody PenaltyRuleRequest request) {
         return ResponseEntity.ok(penaltyRuleService.updateRule(id, request));
     }
 }

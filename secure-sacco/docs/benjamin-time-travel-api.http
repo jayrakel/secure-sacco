@@ -1,0 +1,129 @@
+### ============================================================
+### TIME-TRAVELER QUICK START
+### Benjamin's Loan Simulation REST API
+### ============================================================
+
+@baseUrl = http://localhost:8080/api/v1
+
+### ============================================================
+### 1. LOGIN AS ADMIN
+### ============================================================
+
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "Michira._2000"
+}
+
+> {%
+    const raw = response.headers.valueOf("Set-Cookie");
+    if (raw) {
+        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) client.global.set("csrf_token", match[1]);
+        const s = raw.match(/SACCO_SESSION=([^;]+)/);
+        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    }
+%}
+
+### ============================================================
+### 2. CHECK INITIAL TIME-TRAVEL STATUS
+### Should show Week 0, Virtual Date = 2022-10-06, Progress = 0%
+### ============================================================
+
+GET {{baseUrl}}/time-travel/status
+Cookie: {{sacco_cookie}}
+
+
+### ============================================================
+### 3. RESET SIMULATION (Ensure a clean state)
+### ============================================================
+
+POST {{baseUrl}}/time-travel/reset
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### 4. ADVANCE TIME BY 4 WEEKS
+### Virtual Date should advance to ~2022-11-03 (4 weeks forward)
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?weeks=4
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### 5. CHECK STATUS AGAIN
+### Should now show Week 4, Virtual Date = 2022-11-03
+### ============================================================
+
+GET {{baseUrl}}/time-travel/status
+Cookie: {{sacco_cookie}}
+
+
+### ============================================================
+### 6. CHECK PROGRESS PERCENTAGE
+### ============================================================
+
+GET {{baseUrl}}/time-travel/progress
+Cookie: {{sacco_cookie}}
+
+
+### ============================================================
+### 7. ADVANCE LARGE JUMP (26 weeks = ~6 months virtual)
+### This should get us to ~May 2023 (midway through Loan 1)
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?weeks=26
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### 8. GET BENJAMIN'S ACTIVE LOAN
+### Verify the loan state at the current virtual date
+### ============================================================
+
+GET {{baseUrl}}/migration/loans/active/BVL-2022-000001
+Cookie: {{sacco_cookie}}
+
+
+### ============================================================
+### 9. BIG JUMP: Advance to Loan 2 Refinance Date (May 30, 2024)
+### From Week 4 → ~Week 61 (57 weeks forward = ~10 months virtual)
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?weeks=57
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### 10. JUMP TO LOAN 3 RESTRUCTURE DATE (Oct 10, 2024)
+### Advance another 18 weeks from current position
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?weeks=18
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### 11. JUMP TO NEAR END OF SIMULATION (Aug 2025)
+### Advance remaining weeks to ~85% complete
+### ============================================================
+
+POST {{baseUrl}}/time-travel/advance?weeks=45
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+
+### ============================================================
+### 12. FINAL STATUS CHECK (should be near 100%)
+### ============================================================
+
+GET {{baseUrl}}/time-travel/status
+Cookie: {{sacco_cookie}}

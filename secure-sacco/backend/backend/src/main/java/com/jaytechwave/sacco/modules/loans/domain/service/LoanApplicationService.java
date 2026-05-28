@@ -17,10 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,7 @@ public class LoanApplicationService {
     private final LoanScheduleService loanScheduleService;
     private final SecurityAuditService securityAuditService;
     private final LoanScheduleItemRepository scheduleItemRepository;
+    private final JdbcTemplate jdbcTemplate; // ← ADDED: needed for created_at backdating
 
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
@@ -284,8 +287,23 @@ public class LoanApplicationService {
                 .map(item -> item.getTotalDue().subtract(item.getPrincipalPaid()).subtract(item.getInterestPaid()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 3. Mark old loan as CLOSED
-        oldLoan.setStatus(LoanStatus.CLOSED);
+        // 3. Explicitly define the business outcome of the old loan
+        if (request.topUpAmount().compareTo(BigDecimal.ZERO) > 0) {
+            oldLoan.setStatus(LoanStatus.REFINANCED);
+        } else {
+            oldLoan.setStatus(LoanStatus.RESTRUCTURED);
+        }
+
+        // 🟢 THE FIX (BENJAMIN'S BUG): Kill the Ghost Schedules!
+        List<LoanScheduleItem> oldSchedulesToNeutralize = scheduleItemRepository.findByLoanApplicationIdOrderByWeekNumberAsc(oldLoan.getId());
+        for (LoanScheduleItem item : oldSchedulesToNeutralize) {
+            // If the schedule hasn't been paid, neutralize it so the cron job ignores it
+            if (item.getStatus() != LoanScheduleStatus.PAID) {
+                item.setStatus(LoanScheduleStatus.REPLACED);
+            }
+        }
+        scheduleItemRepository.saveAll(oldSchedulesToNeutralize);
+
         loanApplicationRepository.save(oldLoan);
 
         // 4. Create the New Consolidated Loan
@@ -297,9 +315,11 @@ public class LoanApplicationService {
                 .loanProduct(product)
                 .principalAmount(newPrincipal)
                 .termWeeks(request.newTermWeeks())
-                .status(LoanStatus.ACTIVE)
+                .status(LoanStatus.ACTIVE) // 🟢 THE FIX (CHARLES'S BUG): Ensure the new loan is ACTIVE
                 .disbursedBy(admin.getId())
-                // Use historical date if provided (for migration), otherwise use NOW (for real-time)
+                .applicationFee(BigDecimal.ZERO)
+                .applicationFeePaid(true)
+                .referenceNotes(request.referenceNumber() != null ? "MIGRATION: " + request.referenceNumber() : null) // 🟢 COSMETIC FIX
                 .disbursedAt(request.historicalDateOverride() != null ?
                         request.historicalDateOverride().atStartOfDay() : LocalDateTime.now())
                 .build();
@@ -308,6 +328,70 @@ public class LoanApplicationService {
 
         // 5. Generate the new schedule
         loanScheduleService.generateWeeklySchedule(newLoan);
+
+// 5a. 🚨 GRACE PERIOD FIX: Refinanced/restructured loans should NOT have a grace
+//     period. The generateWeeklySchedule uses the product's grace period to push
+//     the first due date forward. Shift it back immediately.
+        int graceDays = product.getGracePeriodDays();
+        if (graceDays > 0) {
+            jdbcTemplate.update(
+                    "UPDATE loan_schedule_items " +
+                            "SET due_date = due_date - INTERVAL '" + graceDays + " days' " +
+                            "WHERE loan_application_id = ?",
+                    newLoan.getId());
+            log.info("⚙️  Shifted schedule back {} days (grace period removed) for refinanced loan {}",
+                    graceDays, newLoan.getId());
+        }
+
+        // 5b. SCHEDULE OVERRIDE: If interestOverride provided, rewrite schedule
+        //     with the exact historical interest (e.g. 5% on top-up only)
+        if (request.interestOverride() != null
+                && request.interestOverride().compareTo(BigDecimal.ZERO) > 0) {
+
+            int termWeeks = request.newTermWeeks();
+            BigDecimal totalInterest = request.interestOverride();
+
+            BigDecimal principalPerWeek = newPrincipal
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+            BigDecimal interestPerWeek = totalInterest
+                    .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
+
+            BigDecimal principalAccumulated = BigDecimal.ZERO;
+            BigDecimal interestAccumulated = BigDecimal.ZERO;
+
+            List<LoanScheduleItem> items = scheduleItemRepository
+                    .findByLoanApplicationIdOrderByWeekNumberAsc(newLoan.getId());
+
+            for (int i = 0; i < items.size(); i++) {
+                LoanScheduleItem item = items.get(i);
+                boolean isLast = (i == items.size() - 1);
+
+                BigDecimal p = isLast ? newPrincipal.subtract(principalAccumulated) : principalPerWeek;
+                BigDecimal ir = isLast ? totalInterest.subtract(interestAccumulated) : interestPerWeek;
+
+                item.setPrincipalDue(p);
+                item.setInterestDue(ir);
+                item.setTotalDue(p.add(ir));
+                scheduleItemRepository.save(item);
+
+                principalAccumulated = principalAccumulated.add(p);
+                interestAccumulated = interestAccumulated.add(ir);
+            }
+            log.info("✅ Refinance schedule overridden. Principal={}, InterestOverride={}", newPrincipal, totalInterest);
+        }
+
+        // 5c. 🚨 TIME MACHINE: If a historical date was provided, backdate created_at AND disbursed_at on the
+        //     new loan so the UI shows the correct "Disbursed On" date instead of today.
+        //     @CreationTimestamp always writes the real wall-clock time — JDBC is the only way
+        //     to override it after the fact.
+        if (request.historicalDateOverride() != null) {
+            Timestamp historicalTs = Timestamp.valueOf(
+                    request.historicalDateOverride().atStartOfDay());
+            jdbcTemplate.update(
+                    "UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
+                    historicalTs, historicalTs, historicalTs, newLoan.getId());
+            log.info("⏮️  Backdated new loan {} created_at & disbursed_at → {}", newLoan.getId(), request.historicalDateOverride());
+        }
 
         // 6. Post Accounting (Net Cash)
         journalEntryService.postLoanRefinance(
@@ -377,6 +461,9 @@ public class LoanApplicationService {
     // =================================================================================
     // MIGRATION BACKDOOR: Overloaded disbursement method that accepts a historical date
     // =================================================================================
+    // =================================================================================
+    // MIGRATION BACKDOOR: Overloaded disbursement method that accepts a historical date
+    // =================================================================================
     @Transactional
     public LoanApplicationResponse disburseHistoricalApplication(UUID applicationId, String email, java.time.LocalDate backdateOverride) {
         User treasurer = userRepository.findByEmail(email).orElseThrow();
@@ -413,6 +500,18 @@ public class LoanApplicationService {
 
         LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
 
+        // 🟢 THE FIX: TIME MACHINE - Backdate the Loan Application's immutable created_at and disbursed_at timestamps
+        Timestamp historicalTs = Timestamp.valueOf(backdateOverride.atStartOfDay());
+        jdbcTemplate.update(
+                "UPDATE loan_applications SET created_at = ?, updated_at = ?, disbursed_at = ? WHERE id = ?",
+                historicalTs, historicalTs, historicalTs, app.getId());
+
+        // 🟢 THE FIX: TIME MACHINE - Backdate the General Ledger Journal Entry!
+        // We must update the accounting ledger so the statement picks up the correct historical date.
+        jdbcTemplate.update(
+                "UPDATE journal_entries SET transaction_date = ?, created_at = ?, updated_at = ? WHERE reference_number = ?",
+                historicalTs, historicalTs, historicalTs, "LNDIS-" + reference);
+
         // 5. EXACT SAVINGS FORMAT for the Audit Log
         securityAuditService.logEvent(
                 "LOAN_DISBURSED",
@@ -426,11 +525,19 @@ public class LoanApplicationService {
     // --- MAPPERS ---
 
     private LoanApplicationResponse mapToResponse(LoanApplication application) {
+        // Fetch member info
+        Member member = memberRepository.findById(application.getMemberId()).orElse(null);
+        String memberNumber = member != null ? member.getMemberNumber() : "";
+        String memberName = member != null ? member.getFirstName() + " " + member.getLastName() : "";
+
         return new LoanApplicationResponse(
                 application.getId(),
                 application.getMemberId(),
+                memberNumber,
+                memberName,
                 application.getLoanProduct().getId(),
                 application.getLoanProduct().getName(),
+                application.getLoanProduct().getInterestRate(),
                 application.getTermWeeks(),
                 application.getLoanProduct().getGracePeriodDays(),
                 application.getPrincipalAmount(),
@@ -453,4 +560,3 @@ public class LoanApplicationService {
         );
     }
 }
-

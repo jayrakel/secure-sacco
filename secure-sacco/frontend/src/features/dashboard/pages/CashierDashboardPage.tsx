@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Banknote, TrendingUp, TrendingDown, Coins,
-    Receipt, AlertTriangle,
+    Receipt, AlertTriangle, BarChart3,
 } from 'lucide-react';
 import { dashboardApi, type StaffDashboardDTO } from '../api/dashboard-api';
 import { useAuth } from '../../auth/context/AuthProvider';
@@ -125,7 +125,7 @@ const CashierDashboard: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <QuickLink label="Post Deposit/Withdrawal" to="/savings"             icon={Banknote}   color="bg-emerald-50" textColor="text-emerald-700" />
                     <QuickLink label="Daily Collections"        to="/reports/collections" icon={TrendingUp} color="bg-blue-50"    textColor="text-blue-700" />
-                    <QuickLink label="Member Statement"         to="/reports/statements"  icon={Receipt}    color="bg-slate-100"  textColor="text-slate-700" />
+                    <QuickLink label="Member Statement"         to="/reports/statements"  icon={BarChart3}  color="bg-slate-100"  textColor="text-slate-700" />
                 </div>
             </section>
         </div>

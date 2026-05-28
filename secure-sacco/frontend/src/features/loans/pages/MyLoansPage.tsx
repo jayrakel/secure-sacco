@@ -3,8 +3,8 @@ import { loanApi, type LoanApplication } from '../api/loan-api';
 import { ApplyLoanModal } from '../components/ApplyLoanModal';
 import { PayLoanFeeModal } from '../components/PayLoanFeeModal';
 import { AddGuarantorModal } from '../components/AddGuarantorModal';
-import { ActiveLoanCard } from '../components/ActiveLoanCard'; // <--- NEW
-import { RepayLoanModal } from '../components/RepayLoanModal'; // <--- NEW
+import { ActiveLoanCard } from '../components/ActiveLoanCard'; 
+import { RepayLoanModal } from '../components/RepayLoanModal'; 
 
 export default function MyLoansPage() {
     const [applications, setApplications] = useState<LoanApplication[]>([]);
@@ -14,7 +14,7 @@ export default function MyLoansPage() {
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [payFeeApp, setPayFeeApp] = useState<LoanApplication | null>(null);
     const [addGuarantorApp, setAddGuarantorApp] = useState<LoanApplication | null>(null);
-    const [repayApp, setRepayApp] = useState<LoanApplication | null>(null); // <--- NEW
+    const [repayApp, setRepayApp] = useState<LoanApplication | null>(null); 
 
     const fetchApplications = () => {
         loanApi.getMyApplications()
@@ -92,8 +92,12 @@ export default function MyLoansPage() {
                                         <span className="font-medium text-slate-800">{app.applicationFee.toLocaleString()} KES {app.applicationFeePaid ? <span className="text-emerald-600 text-xs font-bold">(PAID)</span> : <span className="text-amber-600 text-xs font-bold">(UNPAID)</span>}</span>
                                     </div>
                                     <div className="flex justify-between pb-2">
-                                        <span className="text-slate-500">Applied On</span>
+                                        <span className="text-slate-500">Disbursed On</span>
                                         <span className="font-medium text-slate-800">{new Date(app.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex justify-between pb-2">
+                                        <span className="text-slate-500">Grace Period</span>
+                                        <span className="font-medium text-slate-800">{app.gracePeriodDays} days</span>
                                     </div>
 
                                     {(app.guarantors?.length ?? 0) > 0 && (
