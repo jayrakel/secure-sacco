@@ -18,76 +18,67 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Protects M-Pesa callback endpoints by only allowing requests from
- * Safaricom's known IP ranges.
+ * Protects Co-op Connect callback endpoints by only allowing requests from
+ * Co-op Bank's registered IP addresses.
  *
- * <p>All other IPs are rejected with HTTP 403 before any business logic runs.</p>
+ * <p>Guarded paths (anything under {@code /api/v1/payments/coop/}):</p>
+ * <ul>
+ *   <li>{@code /api/v1/payments/coop/stk-callback} — STK push result</li>
+ *   <li>{@code /api/v1/payments/coop/ipn}           — B2B IPN from CBS</li>
+ * </ul>
  *
- * <p>The allowlist is configurable via the
- * {@code sacco.safaricom.daraja.allowed-callback-ips} property and supports
- * both exact IPs (e.g. {@code 196.201.214.200}) and CIDR ranges
- * (e.g. {@code 196.201.212.0/23}) so that Safaricom IP updates can be made
- * via environment variable without redeploying.</p>
+ * <p>The allowlist is configurable via {@code sacco.coopconnect.allowed-callback-ips}.
+ * Supports exact IPs and CIDR ranges. When empty (not yet provided by Co-op Bank),
+ * the filter logs a warning and allows the request through — remove this bypass
+ * once Co-op provides their IP ranges.</p>
  *
- * <p><strong>Note:</strong> When deployed behind a reverse proxy (Nginx, Caddy,
- * or a cloud load balancer), ensure the proxy is configured to forward
- * {@code X-Forwarded-For} and set {@code server.forward-headers-strategy=framework}
- * in {@code application-prod.yml} so that {@code request.getRemoteAddr()} returns
- * the real client IP rather than the proxy IP.</p>
+ * <p>Ensure Nginx forwards {@code X-Forwarded-For} and set
+ * {@code server.forward-headers-strategy=framework} in prod so the real
+ * client IP is resolved correctly.</p>
  */
 @Slf4j
 @Component
 public class MpesaIpWhitelistFilter extends OncePerRequestFilter {
 
-    private static final String MPESA_CALLBACK_PATH_PREFIX = "/api/v1/payments/mpesa/";
+    private static final String COOP_CALLBACK_PATH_PREFIX = "/api/v1/payments/coop/";
 
-    /**
-     * Full set of Safaricom Daraja/M-Pesa callback IP ranges (as of 2025).
-     * Covers both the 196.201.212.x/213.x and 196.201.214.x blocks.
-     * Source: https://developer.safaricom.co.ke/docs#ip-address-whitelisting
-     */
-    private static final String SAFARICOM_DEFAULT_IPS =
-            // Exact IPs from Safaricom developer portal
-            "196.201.214.200," +
-            "196.201.214.206," +
-            "196.201.214.207," +
-            "196.201.214.208," +
-            "196.201.214.209," +
-            "196.201.213.114," +
-            // CIDR blocks covering the full Safaricom AS37061 callback range
-            "196.201.212.0/23," +   // covers 196.201.212.x and 196.201.213.x
-            "196.201.214.0/24";     // covers 196.201.214.x
-
-    private final Set<String> exactAllowedIps;
+    private final Set<String>    exactAllowedIps;
     private final List<CidrRange> allowedCidrRanges;
+    private final boolean        bypassModeEnabled;
 
     public MpesaIpWhitelistFilter(
-            @Value("${sacco.safaricom.daraja.allowed-callback-ips:" + SAFARICOM_DEFAULT_IPS + "}")
-            String allowedIpsConfig) {
+            @Value("${sacco.coopconnect.allowed-callback-ips:}") String allowedIpsConfig) {
 
         Set<String> exact = new java.util.HashSet<>();
         List<CidrRange> cidrs = new ArrayList<>();
 
-        Arrays.stream(allowedIpsConfig.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .forEach(entry -> {
-                    if (entry.contains("/")) {
-                        try {
-                            cidrs.add(new CidrRange(entry));
-                        } catch (Exception e) {
-                            log.warn("Skipping invalid CIDR entry '{}': {}", entry, e.getMessage());
+        if (allowedIpsConfig != null && !allowedIpsConfig.isBlank()) {
+            Arrays.stream(allowedIpsConfig.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .forEach(entry -> {
+                        if (entry.contains("/")) {
+                            try { cidrs.add(new CidrRange(entry)); }
+                            catch (Exception e) {
+                                log.warn("Skipping invalid CIDR '{}': {}", entry, e.getMessage());
+                            }
+                        } else {
+                            exact.add(entry);
                         }
-                    } else {
-                        exact.add(entry);
-                    }
-                });
+                    });
+        }
 
-        this.exactAllowedIps = Set.copyOf(exact);
+        this.exactAllowedIps   = Set.copyOf(exact);
         this.allowedCidrRanges = List.copyOf(cidrs);
+        this.bypassModeEnabled = exact.isEmpty() && cidrs.isEmpty();
 
-        log.info("MpesaIpWhitelistFilter initialized — {} exact IP(s), {} CIDR range(s)",
-                exactAllowedIps.size(), allowedCidrRanges.size());
+        if (bypassModeEnabled) {
+            log.warn("CoopConnectIpWhitelist: NO IPs configured — callbacks will be allowed from ANY IP. " +
+                    "Set sacco.coopconnect.allowed-callback-ips once Co-op Bank provides their IP ranges.");
+        } else {
+            log.info("CoopConnectIpWhitelist: {} exact IP(s), {} CIDR range(s)",
+                    exactAllowedIps.size(), allowedCidrRanges.size());
+        }
     }
 
     @Override
@@ -97,7 +88,14 @@ public class MpesaIpWhitelistFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        if (!path.startsWith(MPESA_CALLBACK_PATH_PREFIX)) {
+        if (!path.startsWith(COOP_CALLBACK_PATH_PREFIX)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Bypass mode: no IPs configured yet — allow but warn
+        if (bypassModeEnabled) {
+            log.warn("Co-op callback allowed (BYPASS MODE — no IP whitelist set): {}", path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -105,94 +103,64 @@ public class MpesaIpWhitelistFilter extends OncePerRequestFilter {
         String clientIp = resolveClientIp(request);
 
         if (isAllowed(clientIp)) {
-            log.debug("M-Pesa callback allowed from IP: {}", clientIp);
+            log.debug("Co-op callback allowed from IP: {}", clientIp);
             filterChain.doFilter(request, response);
             return;
         }
 
-        log.warn("M-Pesa callback BLOCKED from unauthorized IP: {} (path: {})", clientIp, path);
-
+        log.warn("Co-op callback BLOCKED from unauthorized IP: {} (path: {})", clientIp, path);
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json");
-        response.getWriter().write(
-                "{\"error\":\"FORBIDDEN\",\"message\":\"Access denied.\"}"
-        );
+        response.getWriter().write("{\"error\":\"FORBIDDEN\",\"message\":\"Access denied.\"}");
     }
 
     private boolean isAllowed(String clientIp) {
-        if (exactAllowedIps.contains(clientIp)) {
-            return true;
-        }
-        for (CidrRange range : allowedCidrRanges) {
-            if (range.contains(clientIp)) {
-                return true;
-            }
+        if (exactAllowedIps.contains(clientIp)) return true;
+        for (CidrRange r : allowedCidrRanges) {
+            if (r.contains(clientIp)) return true;
         }
         return false;
     }
 
-    /**
-     * Resolves the real client IP, X-Forwarded-For aware.
-     *
-     * <p>Uses the <em>rightmost</em> non-blank segment of X-Forwarded-For to defend
-     * against IP spoofing — each proxy appends its own IP, so the rightmost
-     * value is the last trusted hop.</p>
-     */
     private String resolveClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            String[] parts = xForwardedFor.split(",");
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            String[] parts = xff.split(",");
             for (int i = parts.length - 1; i >= 0; i--) {
-                String candidate = parts[i].trim();
-                if (!candidate.isBlank()) {
-                    return candidate;
-                }
+                String c = parts[i].trim();
+                if (!c.isBlank()) return c;
             }
         }
-
         return request.getRemoteAddr();
     }
 
-    // ── CIDR helper ──────────────────────────────────────────────────────────
+    // ── CIDR helper ───────────────────────────────────────────────────────────
 
-    /**
-     * Lightweight CIDR range checker — no external dependencies required.
-     * Supports IPv4 only (all Safaricom IPs are IPv4).
-     */
     private static class CidrRange {
-
-        private final int networkInt;
-        private final int maskInt;
+        private final int networkInt, maskInt;
         private final String cidr;
 
         CidrRange(String cidr) throws UnknownHostException {
             this.cidr = cidr;
-            String[] parts = cidr.split("/");
-            int prefix = Integer.parseInt(parts[1]);
-            this.maskInt = prefix == 0 ? 0 : (0xFFFFFFFF << (32 - prefix));
-            this.networkInt = ipToInt(InetAddress.getByName(parts[0]).getAddress()) & maskInt;
+            String[] p = cidr.split("/");
+            int prefix = Integer.parseInt(p[1]);
+            this.maskInt    = prefix == 0 ? 0 : (0xFFFFFFFF << (32 - prefix));
+            this.networkInt = ipToInt(InetAddress.getByName(p[0]).getAddress()) & maskInt;
         }
 
         boolean contains(String ip) {
             try {
-                InetAddress addr = InetAddress.getByName(ip);
-                if (addr.getAddress().length != 4) return false; // skip IPv6
-                int ipInt = ipToInt(addr.getAddress());
-                return (ipInt & maskInt) == networkInt;
-            } catch (UnknownHostException e) {
-                return false;
-            }
+                InetAddress a = InetAddress.getByName(ip);
+                if (a.getAddress().length != 4) return false;
+                return (ipToInt(a.getAddress()) & maskInt) == networkInt;
+            } catch (UnknownHostException e) { return false; }
         }
 
-        private static int ipToInt(byte[] bytes) {
-            return ((bytes[0] & 0xFF) << 24)
-                 | ((bytes[1] & 0xFF) << 16)
-                 | ((bytes[2] & 0xFF) << 8)
-                 |  (bytes[3] & 0xFF);
+        private static int ipToInt(byte[] b) {
+            return ((b[0] & 0xFF) << 24) | ((b[1] & 0xFF) << 16)
+                    | ((b[2] & 0xFF) << 8)  |  (b[3] & 0xFF);
         }
 
-        @Override
-        public String toString() { return cidr; }
+        @Override public String toString() { return cidr; }
     }
 }

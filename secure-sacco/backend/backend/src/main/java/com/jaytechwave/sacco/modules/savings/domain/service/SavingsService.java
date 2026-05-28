@@ -238,7 +238,8 @@ public class SavingsService {
 
         for (SavingsTransaction tx : allTxs) {
             if (tx.getStatus() == TransactionStatus.POSTED) {
-                if (tx.getType() == TransactionType.DEPOSIT) {
+                if (tx.getType() == TransactionType.DEPOSIT
+                        || tx.getType() == TransactionType.EXPENSE_REIMBURSEMENT) {
                     runningBalance = runningBalance.add(tx.getAmount());
                 } else if (tx.getType() == TransactionType.WITHDRAWAL) {
                     runningBalance = runningBalance.subtract(tx.getAmount());
@@ -274,5 +275,55 @@ public class SavingsService {
         }
 
         return getMemberStatement(user.getMember().getId(), from, to);
+    }
+
+    /**
+     * Credits an approved expense reimbursement directly to a member's savings account.
+     * Called by {@code ExpenseClaimService} when a staff member approves a claim.
+     *
+     * <p>Creates a POSTED {@code SavingsTransaction} of type {@code EXPENSE_REIMBURSEMENT}
+     * so the member sees it in their savings history. Also delegates to
+     * {@link JournalEntryService} to post the double-entry GL:
+     * <pre>
+     *   DR 5360 Member Expense Reimbursement
+     *   CR 2100 Member Savings Deposits
+     * </pre>
+     */
+    @Transactional
+    public void creditExpenseReimbursement(UUID memberId, java.math.BigDecimal amount, UUID claimId) {
+        // Auto-create savings account if the member doesn't have one yet
+        SavingsAccount account = savingsAccountRepository.findByMemberId(memberId)
+                .orElseGet(() -> {
+                    log.info("Auto-creating savings account for member {} during expense reimbursement", memberId);
+                    return savingsAccountRepository.save(
+                            SavingsAccount.builder()
+                                    .memberId(memberId)
+                                    .status(SavingsAccountStatus.ACTIVE)
+                                    .build());
+                });
+
+        if (account.getStatus() == SavingsAccountStatus.FROZEN) {
+            throw new IllegalStateException("Cannot credit reimbursement: savings account is frozen for member " + memberId);
+        }
+
+        String reference = "EXP-" + claimId.toString().substring(0, 8).toUpperCase();
+
+        SavingsTransaction tx = SavingsTransaction.builder()
+                .savingsAccountId(account.getId())
+                .type(TransactionType.EXPENSE_REIMBURSEMENT)
+                .channel(TransactionChannel.INTERNAL)
+                .amount(amount)
+                .reference(reference)
+                .status(TransactionStatus.POSTED)
+                .postedAt(LocalDateTime.now())
+                .build();
+
+        savingsTransactionRepository.save(tx);
+
+        // Post the GL entry (DR 5360 / CR 2100)
+        journalEntryService.postExpenseReimbursementClaim(memberId, amount, claimId.toString());
+
+        log.info("Credited expense reimbursement of {} to savings account for member {}. Ref: {}",
+                amount, memberId, reference);
     }
 }

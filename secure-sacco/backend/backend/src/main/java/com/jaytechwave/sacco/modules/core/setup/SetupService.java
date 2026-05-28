@@ -48,8 +48,8 @@ public class SetupService {
         // Phase 1: password not yet changed
         if (admin.isMustChangePassword()) return SetupPhase.CHANGE_PASSWORD;
 
-        // Phase 2: contacts not verified
-        if (!admin.isEmailVerified() || !admin.isPhoneVerified()) return SetupPhase.VERIFY_CONTACT;
+        // Phase 2: email not verified (only email required — phone bypassed until Africa's Talking is integrated)
+        if (!admin.isEmailVerified()) return SetupPhase.VERIFY_CONTACT;
 
         // Phase 3: required officers not yet created
         for (String role : REQUIRED_OFFICER_ROLES) {

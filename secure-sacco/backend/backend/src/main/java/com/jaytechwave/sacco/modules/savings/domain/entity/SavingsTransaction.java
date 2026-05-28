@@ -28,11 +28,11 @@ public class SavingsTransaction {
     private UUID savingsAccountId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     private TransactionType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     private TransactionChannel channel;
 
     @Column(nullable = false, precision = 19, scale = 2)
@@ -42,7 +42,7 @@ public class SavingsTransaction {
     private String reference;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     @Builder.Default
     private TransactionStatus status = TransactionStatus.PENDING;
 
