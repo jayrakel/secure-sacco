@@ -1,26 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AIAssistantCustomInstructionsStorage">
+    <option name="instructions">
+      <map>
+        <entry key="AIAssistant.VCS.GenerateCommitMessage">
+          <value>
+            <AIAssistantStoredInstruction>
+              <option name="actionId" value="AIAssistant.VCS.GenerateCommitMessage" />
+              <option name="content" value="Act as a senior software engineer generating production-quality Git commit messages.&#10;&#10;Analyze the staged git diff and generate a commit message using Conventional Commits.&#10;&#10;Rules:&#10;- Prioritize intent over implementation details&#10;- Use this format:&#10;  type(scope): concise summary&#10;- Keep summary under 72 characters&#10;- Use lowercase except proper nouns&#10;- Use imperative mood (add, fix, refactor, remove)&#10;- Never use vague wording&#10;- Infer the most appropriate scope&#10;- Include a short body only when the change is non-trivial&#10;- If multiple unrelated changes exist, emphasize the dominant purpose&#10;&#10;Allowed types:&#10;feat, fix, refactor, docs, test, chore, perf, ci, build, style, revert&#10;&#10;Return only the final commit message, no explanations." />
+            </AIAssistantStoredInstruction>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat: implement TimeTravelerService for loan simulation and schedule progression">
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_REF.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_QUICK_START.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/secure-sacco/backend/SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/worktrees/kind-lamarr" afterDir="false" />
+    <list default="true" id="64ec6d9f-f2fe-48ad-92ea-829ce1602440" name="Changes" comment="feat(asset-management): log callback URL in Co-op STK Push for improved traceability">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/deploy-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/deploy-prod.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/controller/TimeTravelController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/java/com/jaytechwave/sacco/modules/core/service/TimeTravelerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/http-client.private.env.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" beforeDir="false" afterPath="$PROJECT_DIR$/secure-sacco/backend/backend/src/main/resources/application-prod.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="CopilotChats">
+    <option name="panelChat">
+      <chat>
+        <option name="activeSessionId" value="24ae678f-98b4-471a-9ddf-e18ee4da5d7c" />
+        <option name="sessions">
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="dc9647b4-4bff-4ee9-a934-a5934c3c444e" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="status" value="Stopped" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="a956fc11-f9fa-42cb-9dbc-20c9ded6a116" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="96be5f95-92d8-453d-9e85-2d16bb87a058" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="24ae678f-98b4-471a-9ddf-e18ee4da5d7c" />
+            <option name="modeId" value="Agent" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+            <option name="status" value="Completed" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+        </option>
+        <option name="type" value="PANEL" />
+      </chat>
+    </option>
+  </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
+      <entry key="_/home/jay-techwave-solutions/Desktop/secure-sacco/secure-sacco/backend/backend" value="3EAJIRauf9aItomUNoFgyKR06lw" />
       <entry key="_C:/Users/JAY/OneDrive/Desktop/secure-sacco" value="3BS07ua0EqtAaZS9eFMKNL1lX4E" />
       <entry key="_C:/Users/JAY/OneDrive/Desktop/secure-sacco/secure-sacco/backend/backend" value="3BXNovXhZFWndXaFvJRMsBOWmrz" />
     </persistenceIdMap>
@@ -30,24 +84,35 @@
   </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
-      <entry key="chat-panel" value="Claude Haiku 4.5" />
       <entry key="agent-panel" value="Claude Haiku 4.5" />
+      <entry key="chat-panel" value="Claude Haiku 4.5" />
     </selectedModels>
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="336" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTTP Public Environment File" />
+        <option value="HTTP Private Environment File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="jayrakel &lt;gesorajonathan@gmail.com&gt;" />
+      </list>
+    </option>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="main" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="SIGN_OFF_COMMIT" value="true" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -55,40 +120,63 @@
     &quot;assignee&quot;: &quot;jayrakel&quot;
   }
 }</component>
+  <component name="GitHubPullRequestState">{
+  &quot;prStates&quot;: [
+    {
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDORWn9Ps7QAJxm&quot;,
+        &quot;number&quot;: 7
+      },
+      &quot;lastSeen&quot;: 1775350322189
+    }
+  ]
+}</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/jayrakel/secure-sacco.git&quot;,
-    &quot;accountId&quot;: &quot;441d619d-d32d-4945-8fc1-e858e3c07647&quot;
+    &quot;accountId&quot;: &quot;99d9a12d-4151-48d1-a6a6-1caa10b0d593&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;jayrakel&quot;,
+    &quot;repository&quot;: &quot;secure-sacco&quot;
   }
 }</component>
+  <component name="HttpClientEndpointsTabState">
+    <option name="cachedRequestData" value="&lt;CachedHttpClientTabRequests&gt;&#10;  &lt;entry key=&quot;b495f2c26609a0e339a96f9ab704c3886a095254&quot; value=&quot;###&amp;#10;POST http://localhost:${SERVER_PORT:8080}/api/v1/payments/coop/stk-callback&amp;#10;Content-Type: application/json&amp;#10;&amp;#10;&amp;quot;&amp;quot;&quot; /&gt;&#10;&lt;/CachedHttpClientTabRequests&gt;" />
+  </component>
   <component name="HttpClientOnboardingState">{
   &quot;isOnboardingCommentShown&quot;: true
 }</component>
   <component name="HttpClientSelectedEnvironments">
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/dashboard-test.http" environment="dev" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-savings-seed.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/charles-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-savings-seeder.http" environment="dev" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/kimere-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/salesio-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/samuel-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/gideon-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/stephen-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/moses-savings-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/tarcisio-savings-seeder.http" environment="stag" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/withdrawals-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/migrations-seeder-corrected.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/base-balances-seeder.http" environment="stag" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-loan-test.http" environment="dev" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/jacob-repayments.http" environment="dev" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/migration_loans.http" environment="dev" />
-    <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http" environment="dev" />
     <file url="file://$PROJECT_DIR$/secure-sacco/backend/cron-test.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/coop-connect-test.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/real-coop-integration.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/coop-callbacks-simulation.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/members-seeder.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/docs/benjamin-savings-seed.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/savings-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/docs/base-balances-seeder.http" environment="stag" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/loans-seeder.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/docs/benjamin-time-travel-api.http" environment="dev-benjamin-test" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/docs/benjamin-ultimate-test-with-timetravel.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/benjamin-loan-seeder-with-cron.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/cron-proof.http" environment="dev" />
+    <file url="file://$PROJECT_DIR$/secure-sacco/backend/loan-product-seeder.http" environment="stag" />
   </component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
 }</component>
+  <component name="MaliciousPackageCheckinHandlerState">
+    <option name="packageCheck" value="true" />
+  </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -100,10 +188,86 @@
     <commands />
     <urls />
   </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000000007349767" />
+      <entry key="S2" value="1.0067798108302366" />
+      <entry key="S5" value="1.1978162121359825" />
+      <entry key="S10" value="1.6256183162081068" />
+      <entry key="S30" value="2.4540305332956187" />
+      <entry key="S60" value="2.960741636102312" />
+      <entry key="M2" value="3.3753901801916792" />
+      <entry key="M5" value="3.7171572715198766" />
+      <entry key="M10" value="3.8522493240724964" />
+      <entry key="M15" value="3.9000237468578853" />
+      <entry key="M30" value="3.9492558124334987" />
+      <entry key="H1" value="3.9744354214066666" />
+      <entry key="H2" value="3.987595690539411" />
+      <entry key="H4" value="4.189426773450524" />
+      <entry key="D1" value="55.5313083721634" />
+      <entry key="W1" value="140.77354163331614" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="4.8380356361401515E-138" />
+      <entry key="M10" value="3.7814352318909764E-69" />
+      <entry key="M15" value="3.5444833955513235E-46" />
+      <entry key="M30" value="3.6639202402277435E-23" />
+      <entry key="H1" value="1.4779569519469382E-11" />
+      <entry key="H2" value="1.1157628854072687E-5" />
+      <entry key="H4" value="0.01032608610139787" />
+      <entry key="D1" value="3.1692837936023843" />
+      <entry key="W1" value="8.48546863159777" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.45062523130541515" />
+      <entry key="MS500" value="0.8526348922968509" />
+      <entry key="S2" value="0.9670873812277225" />
+      <entry key="S5" value="1.173833902494219" />
+      <entry key="S10" value="1.6041265548806176" />
+      <entry key="S30" value="2.4386753685714133" />
+      <entry key="S60" value="2.949014190159671" />
+      <entry key="M2" value="3.3675221545039338" />
+      <entry key="M5" value="3.7132898930480396" />
+      <entry key="M10" value="3.850167924175638" />
+      <entry key="M15" value="3.89860091375436" />
+      <entry key="M30" value="3.9485261378732828" />
+      <entry key="H1" value="3.97406589546829" />
+      <entry key="H2" value="3.9874207447707066" />
+      <entry key="H4" value="4.19964448270082" />
+      <entry key="D1" value="58.70017926789098" />
+      <entry key="W1" value="149.2588659387387" />
+    </decayedShown>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
   <component name="ProjectId" id="3BS07ua0EqtAaZS9eFMKNL1lX4E" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Agent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="claude-haiku-4.5" />
+          </model>
+        </option>
+        <option name="targetType" value="LOCAL" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -115,13 +279,34 @@
     "HTTP Request.All in base-balances-seeder (1).executor": "Run",
     "HTTP Request.All in base-balances-seeder (2).executor": "Run",
     "HTTP Request.All in base-balances-seeder.executor": "Run",
+    "HTTP Request.All in benjamin-loan-seeder-with-cron.executor": "Run",
     "HTTP Request.All in benjamin-savings-seed (1).executor": "Run",
     "HTTP Request.All in benjamin-savings-seed.executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (1).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (2).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (3).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api (4).executor": "Run",
+    "HTTP Request.All in benjamin-time-travel-api.executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (1).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (2).executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test (4).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (1).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (2).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (3).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel (4).executor": "Run",
+    "HTTP Request.All in benjamin-ultimate-test-with-timetravel.executor": "Run",
     "HTTP Request.All in benjamin-ultimate-test.executor": "Run",
     "HTTP Request.All in charles-savings-seeder.executor": "Run",
+    "HTTP Request.All in coop-connect-test (1).executor": "Run",
+    "HTTP Request.All in coop-connect-test (2).executor": "Run",
+    "HTTP Request.All in coop-connect-test (3).executor": "Run",
+    "HTTP Request.All in coop-connect-test (4).executor": "Run",
+    "HTTP Request.All in coop-connect-test (5).executor": "Run",
+    "HTTP Request.All in coop-connect-test.executor": "Run",
+    "HTTP Request.All in coop-correct-workflow (1).executor": "Run",
+    "HTTP Request.All in coop-correct-workflow.executor": "Run",
+    "HTTP Request.All in cron-proof.executor": "Run",
     "HTTP Request.All in cron-test (1).executor": "Run",
     "HTTP Request.All in cron-test.executor": "Run",
     "HTTP Request.All in dashboard-test.executor": "Run",
@@ -141,6 +326,10 @@
     "HTTP Request.All in jacob-savings-seeder.executor": "Run",
     "HTTP Request.All in kimere-savings-seeder (1).executor": "Run",
     "HTTP Request.All in kimere-savings-seeder.executor": "Run",
+    "HTTP Request.All in loan-product-seeder (1).executor": "Run",
+    "HTTP Request.All in loan-product-seeder (2).executor": "Run",
+    "HTTP Request.All in loan-product-seeder.executor": "Run",
+    "HTTP Request.All in members-seeder.executor": "Run",
     "HTTP Request.All in migration_loans (1).executor": "Run",
     "HTTP Request.All in migration_loans.executor": "Run",
     "HTTP Request.All in migrations-seeder-corrected (1).executor": "Run",
@@ -159,6 +348,87 @@
     "HTTP Request.base-balances-seeder | ============================================================#1.executor": "Run",
     "HTTP Request.base-balances-seeder | ============================================================#2 (1).executor": "Run",
     "HTTP Request.base-balances-seeder | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #10.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #11.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #12.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #13.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #14.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #15.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #16.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #17.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #18.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #19.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #20.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #21.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #22.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #23.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #24.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #25.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #26.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #27.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #28.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #29.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #30.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #31.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #32.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #33.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #34.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #35.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #36.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #37.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #38.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #39.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #4.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #40.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #41.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #42.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #43.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #44.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #45 (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #45.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #46.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #47.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #48.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #49.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #5.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #50.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #51.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #52.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #53.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #54.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #55.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #56.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #57.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #58.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #59.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #6.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #60.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #61.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #62.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #63.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #66.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #67.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #68.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #69.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #7.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #70.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #71.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #72.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #73.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #74.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #75.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #76.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #79.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #8.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #80.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #81.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #82.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #83.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #84.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | #9.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 1 Repayments (61 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 2 Repayments (12 payments) ---.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | --- Loan 3 Repayments (47 payments) ---.executor": "Run",
     "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session) (1).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | 1. LOGIN (Get System Admin Session).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | 1. LOGIN.executor": "Run",
@@ -166,11 +436,22 @@
     "HTTP Request.benjamin-ultimate-test | ============================================================#1.executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2 (1).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2 (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#2 (3).executor": "Run",
     "HTTP Request.benjamin-ultimate-test | ============================================================#2.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test | ============================================================#3.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (1).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (2).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ==================== (3).executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 3. CONFIGURE TIME-TRAVELER ====================.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | ==================== 4. DISBURSE LOAN 1 (Oct 6, 2022) ====================.executor": "Run",
+    "HTTP Request.benjamin-ultimate-test-with-timetravel | Benjamin's Ultimate Loan Test with Time-Travel & Penalty Tracking.executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (1).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (2).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1 (3).executor": "Run",
     "HTTP Request.charles-savings-seeder | #1.executor": "Run",
+    "HTTP Request.coop-connect-test | #2.executor": "Run",
+    "HTTP Request.coop-connect-test | ============================================================.executor": "Run",
+    "HTTP Request.cron-test | 1. LOGIN (If you need a fresh session).executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token) (1).executor": "Run",
     "HTTP Request.dashboard-test | Login as Admin (Run this first to get the token).executor": "Run",
     "HTTP Request.jacob-loan-test | ============================================================#1 (1).executor": "Run",
@@ -181,6 +462,9 @@
     "HTTP Request.migration_loans | ============================================================#1.executor": "Run",
     "HTTP Request.migrations-seeder-corrected | ============================================================#1.executor": "Run",
     "HTTP Request.withdrawals-seeder | ==========================================#1.executor": "Run",
+    "JavaClassFindUsagesOptions.isDerivedClasses": "true",
+    "JavaClassFindUsagesOptions.isFieldsUsages": "true",
+    "JavaClassFindUsagesOptions.isMethodsUsages": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
@@ -192,11 +476,17 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "SHELLCHECK.PATH": "C:\\Users\\JAY\\AppData\\Roaming\\JetBrains\\IntelliJIdea2025.3\\plugins\\Shell Script\\shellcheck.exe",
     "Spring Boot.BackendApplication.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "database.data.extractors.current.export.id": "Comma-separated (CSV)_id",
+    "database.data.extractors.current.id": "Comma-separated (CSV)_id",
     "git-widget-placeholder": "dev",
+    "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/jay-techwave-solutions/Downloads/github-copilot-intellij-1.9.1-251.zip",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -205,8 +495,8 @@
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "rest.client.default.execution.environment": "dev",
-    "settings.editor.selected.configurable": "terminal",
+    "rest.client.default.execution.environment": "stag",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Program Files\\JetBrains\\IntelliJ IDEA 2025.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true"
@@ -219,25 +509,12 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migration\pages" />
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migration\api" />
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\frontend\src\features\migrations\pages" />
+      <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\docs" />
       <recent name="C:\Users\JAY\OneDrive\Desktop\secure-sacco\secure-sacco\backend" />
     </key>
-  </component>
-  <component name="RunDashboard">
-    <option name="configurationStatuses">
-      <map>
-        <entry key="HttpClient.HttpRequestRunConfigurationType">
-          <value>
-            <map>
-              <entry key="All in benjamin-ultimate-test" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (1)" value="STOPPED" />
-              <entry key="All in benjamin-ultimate-test (2)" value="STOPPED" />
-              <entry key="All in cron-test" value="STOPPED" />
-              <entry key="All in cron-test (1)" value="STOPPED" />
-            </map>
-          </value>
-        </entry>
-      </map>
-    </option>
   </component>
   <component name="RunManager" selected="Spring Boot.BackendApplication">
     <configuration default="true" type="Application" factoryName="Application">
@@ -247,61 +524,69 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="All in benjamin-ultimate-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
+    <configuration name="All in coop-connect-test (3)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in benjamin-ultimate-test (2)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
+    <configuration name="All in coop-correct-workflow (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-correct-workflow.http">
       <method v="2" />
     </configuration>
-    <configuration name="All in benjamin-ultimate-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/benjamin-ultimate-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in cron-test (1)" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="dev" path="$PROJECT_DIR$/secure-sacco/backend/cron-test.http">
-      <method v="2" />
-    </configuration>
-    <configuration name="All in cron-test" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="&lt;No Environment&gt;" path="$PROJECT_DIR$/secure-sacco/backend/cron-test.http">
+    <configuration name="All in coop-correct-workflow" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" environment="stag" path="$PROJECT_DIR$/coop-correct-workflow.http">
       <method v="2" />
     </configuration>
     <configuration default="true" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="&lt;No Environment&gt;" path="">
       <method v="2" />
     </configuration>
+    <configuration name="coop-connect-test | #2" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http" executionIdentifier="#2" index="2" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="coop-connect-test | ============================================================" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" environment="stag" path="$PROJECT_DIR$/coop-connect-test.http" executionIdentifier="============================================================" runType="Run single request">
+      <method v="2" />
+    </configuration>
     <configuration name="BackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <option name="ACTIVE_PROFILES" value="dev,linear" />
+      <option name="ALTERNATIVE_JRE_PATH" value="temurin-17" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
       <option name="envFilePaths">
         <option value="$PROJECT_DIR$/secure-sacco/backend/backend/.env" />
       </option>
       <module name="sacco" />
-      <selectedOptions>
-        <option name="environmentVariables" />
-      </selectedOptions>
+      <option name="PROGRAM_PARAMETERS" value="doppler run --" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.jaytechwave.sacco.BackendApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
+        <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_doppler" />
+      </method>
+    </configuration>
+    <configuration default="true" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+      <module name="sacco" />
+      <option name="SPRING_BOOT_MAIN_CLASS" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+        <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_doppler" />
       </method>
     </configuration>
     <list>
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
-      <item itemvalue="HTTP Request.All in cron-test" />
-      <item itemvalue="HTTP Request.All in cron-test (1)" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
-      <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
+      <item itemvalue="HTTP Request.All in coop-connect-test (3)" />
+      <item itemvalue="HTTP Request.All in coop-correct-workflow" />
+      <item itemvalue="HTTP Request.All in coop-correct-workflow (1)" />
+      <item itemvalue="HTTP Request.coop-connect-test | #2" />
+      <item itemvalue="HTTP Request.coop-connect-test | ============================================================" />
       <item itemvalue="Spring Boot.BackendApplication" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="HTTP Request.All in cron-test (1)" />
-        <item itemvalue="HTTP Request.All in cron-test" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (2)" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test (1)" />
-        <item itemvalue="HTTP Request.All in benjamin-ultimate-test" />
+        <item itemvalue="HTTP Request.coop-connect-test | ============================================================" />
+        <item itemvalue="HTTP Request.coop-connect-test | #2" />
+        <item itemvalue="HTTP Request.All in coop-correct-workflow (1)" />
+        <item itemvalue="HTTP Request.All in coop-correct-workflow" />
+        <item itemvalue="HTTP Request.All in coop-connect-test (3)" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
       </set>
     </attachedChunks>
   </component>
@@ -329,349 +614,429 @@
       <workItem from="1774712131475" duration="1718000" />
       <workItem from="1774849285425" duration="23806000" />
       <workItem from="1775021039419" duration="11604000" />
-      <workItem from="1775105589808" duration="9963000" />
+      <workItem from="1775105589808" duration="16112000" />
+      <workItem from="1775278274570" duration="13719000" />
+      <workItem from="1775309966859" duration="41932000" />
+      <workItem from="1775414197404" duration="24385000" />
+      <workItem from="1775479161613" duration="273000" />
+      <workItem from="1775624552521" duration="14858000" />
+      <workItem from="1775710647320" duration="45000" />
+      <workItem from="1775711110771" duration="18072000" />
+      <workItem from="1775744001047" duration="365000" />
+      <workItem from="1775744784286" duration="4624000" />
+      <workItem from="1776005299553" duration="3171000" />
+      <workItem from="1776496758008" duration="3484000" />
+      <workItem from="1776747916275" duration="16221000" />
+      <workItem from="1779521452136" duration="6156000" />
+      <workItem from="1779528828463" duration="5704000" />
+      <workItem from="1779538348636" duration="2004000" />
+      <workItem from="1779613907434" duration="412000" />
+      <workItem from="1779614415307" duration="892000" />
+      <workItem from="1779615374199" duration="4445000" />
+      <workItem from="1779722498808" duration="730000" />
+      <workItem from="1779741549264" duration="6930000" />
+      <workItem from="1779774337625" duration="19558000" />
     </task>
-    <task id="LOCAL-00001" summary="chore(deploy): use environment variable for staging frontend URL and add SSH passphrase; update MPESA_ENV default in prod compose">
+    <task id="LOCAL-00046" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
       <option name="closed" value="true" />
-      <created>1774467830640</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
+      <created>1775175881295</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
       <option name="project" value="LOCAL" />
-      <updated>1774467830640</updated>
+      <updated>1775175881295</updated>
     </task>
-    <task id="LOCAL-00002" summary="chore(ci+deploy): cache OWASP NVD DB for faster scans; improve staging env var handling and .env generation&#10;&#10;- Cache OWASP Dependency Check NVD database in CI, reducing scan time by using weekly cache keys and incremental updates&#10;- Pass additional environment variables to staging deploy for full .env generation, including MPESA and admin credentials&#10;- Generate .env on staging server using printf for reliability and completeness&#10;- Add deploy directory bootstrap step to ensure target exists before SCP&#10;- Refactor rollback and notification steps for clarity">
+    <task id="LOCAL-00047" summary="feat: update loan refinancing logic and adjust loan term duration in test configurations">
       <option name="closed" value="true" />
-      <created>1774471444067</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
+      <created>1775279860281</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
       <option name="project" value="LOCAL" />
-      <updated>1774471444068</updated>
+      <updated>1775279860281</updated>
     </task>
-    <task id="LOCAL-00003" summary="chore(ci+deploy): clarify NVD cache logic; fix docker-compose strip_components in staging deploy">
+    <task id="LOCAL-00048" summary="feat: implement migration scripts for loan processing and data handling">
       <option name="closed" value="true" />
-      <created>1774472862159</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
+      <created>1775335387822</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
       <option name="project" value="LOCAL" />
-      <updated>1774472862159</updated>
+      <updated>1775335387822</updated>
     </task>
-    <task id="LOCAL-00004" summary="chore(deploy): improve staging deploy speed and reliability; clarify compose comments&#10;&#10;- Set docker compose up to use --no-wait for faster SSH steps&#10;- Move backend healthcheck to dedicated CI step to avoid SSH timeouts&#10;- Adjust frontend depends_on to service_started for non-blocking startup&#10;- Add command_timeout to SSH steps for robust deployment and rollback&#10;- Refine and clarify comments in deploy-staging.yml and docker-compose.prod.yml">
+    <task id="LOCAL-00049" summary="feat: enhance loan application processing with grace period adjustments and historical date backdating">
       <option name="closed" value="true" />
-      <created>1774476233518</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
+      <created>1775341692943</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
       <option name="project" value="LOCAL" />
-      <updated>1774476233518</updated>
+      <updated>1775341692943</updated>
     </task>
-    <task id="LOCAL-00005" summary="chore(deploy): remove --no-wait from docker compose up in staging deploy and rollback steps">
+    <task id="LOCAL-00050" summary="feat: implement time travel feature and fix loan schedule status discrepancies">
       <option name="closed" value="true" />
-      <created>1774516072059</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
+      <created>1775349293454</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
       <option name="project" value="LOCAL" />
-      <updated>1774516072059</updated>
+      <updated>1775349293455</updated>
     </task>
-    <task id="LOCAL-00006" summary="chore(config): disable mail health check in production profile">
+    <task id="LOCAL-00051" summary="feat: enable time travel feature and configure migration settings in application.yml">
       <option name="closed" value="true" />
-      <created>1774519998053</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
+      <created>1775350164971</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
       <option name="project" value="LOCAL" />
-      <updated>1774519998053</updated>
+      <updated>1775350164971</updated>
     </task>
-    <task id="LOCAL-00007" summary="fix(setup): prevent silent bypass on setup status fetch error by marking setup as incomplete">
+    <task id="LOCAL-00052" summary="feat: enhance member statement retrieval with summary details and historical date handling">
       <option name="closed" value="true" />
-      <created>1774521150530</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
+      <created>1775387492590</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
       <option name="project" value="LOCAL" />
-      <updated>1774521150530</updated>
+      <updated>1775387492591</updated>
     </task>
-    <task id="LOCAL-00008" summary="fix: disable mail health indicator to unblock staging deploy">
+    <task id="LOCAL-00053" summary="feat: add loan product seeder and update session cookies for staging environment">
       <option name="closed" value="true" />
-      <created>1774523165909</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
+      <created>1775392814199</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
       <option name="project" value="LOCAL" />
-      <updated>1774523165909</updated>
+      <updated>1775392814199</updated>
     </task>
-    <task id="LOCAL-00009" summary="chore: move OWASP scan to weekly schedule, unblock CI pipeline">
+    <task id="LOCAL-00054" summary="feat: update outstanding penalties display to handle null values gracefully">
       <option name="closed" value="true" />
-      <created>1774525513611</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
+      <created>1775393123424</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
       <option name="project" value="LOCAL" />
-      <updated>1774525513611</updated>
+      <updated>1775393123429</updated>
     </task>
-    <task id="LOCAL-00010" summary="fix(auth): guard against invalid /auth/me response to prevent treating HTML as user data">
+    <task id="LOCAL-00055" summary="feat: update loan portfolio calculation to include outstanding interest">
       <option name="closed" value="true" />
-      <created>1774526679570</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
+      <created>1775398482146</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
       <option name="project" value="LOCAL" />
-      <updated>1774526679570</updated>
+      <updated>1775398482146</updated>
     </task>
-    <task id="LOCAL-00011" summary="fix(auth): return user or null from fetchCurrentUser and improve invalid response handling">
+    <task id="LOCAL-00056" summary="feat: backdate loan application timestamps for historical accuracy">
       <option name="closed" value="true" />
-      <created>1774527114580</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
+      <created>1775402300566</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
       <option name="project" value="LOCAL" />
-      <updated>1774527114580</updated>
+      <updated>1775402300567</updated>
     </task>
-    <task id="LOCAL-00012" summary="fix(api): allow configurable API base URL via VITE_API_BASE_URL env variable">
+    <task id="LOCAL-00057" summary="feat: add branding URL fields and update database schema for logo and favicon">
       <option name="closed" value="true" />
-      <created>1774527428489</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
+      <created>1775431134399</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
       <option name="project" value="LOCAL" />
-      <updated>1774527428489</updated>
+      <updated>1775431134401</updated>
     </task>
-    <task id="LOCAL-00013" summary="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling">
+    <task id="LOCAL-00058" summary="feat: add public legal pages and update session handling for unauthenticated access">
       <option name="closed" value="true" />
-      <created>1774528462272</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
+      <created>1775433567266</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
       <option name="project" value="LOCAL" />
-      <updated>1774528462274</updated>
+      <updated>1775433567266</updated>
     </task>
-    <task id="LOCAL-00014" summary="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value">
+    <task id="LOCAL-00059" summary="feat: add public legal pages and update session handling for unauthenticated access">
       <option name="closed" value="true" />
-      <created>1774530001302</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
+      <created>1775433725232</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
       <option name="project" value="LOCAL" />
-      <updated>1774530001302</updated>
+      <updated>1775433725233</updated>
     </task>
-    <task id="LOCAL-00015" summary="fix: set session cookie domain for cross-subdomain auth on staging">
+    <task id="LOCAL-00060" summary="feat: update Trusted Types handling and add react-qr-code dependency">
       <option name="closed" value="true" />
-      <created>1774531000005</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
+      <created>1775434118034</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
       <option name="project" value="LOCAL" />
-      <updated>1774531000005</updated>
+      <updated>1775434118034</updated>
     </task>
-    <task id="LOCAL-00016" summary="fix: proxy API requests through nginx and update API base URL handling for staging">
+    <task id="LOCAL-00061" summary="feat: enhance Trusted Types handling with improved TypeScript interface">
       <option name="closed" value="true" />
-      <created>1774532287311</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
+      <created>1775434246909</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
       <option name="project" value="LOCAL" />
-      <updated>1774532287311</updated>
+      <updated>1775434246909</updated>
     </task>
-    <task id="LOCAL-00017" summary="fix: add mail server environment variables to production docker compose">
+    <task id="LOCAL-00062" summary="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling">
       <option name="closed" value="true" />
-      <created>1774533309217</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
+      <created>1775435022634</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
       <option name="project" value="LOCAL" />
-      <updated>1774533309217</updated>
+      <updated>1775435022635</updated>
     </task>
-    <task id="LOCAL-00018" summary="fix: add mail server environment variables to production docker compose">
+    <task id="LOCAL-00063" summary="feat: resolve 500 error on SACCO settings endpoint with database seeding and error handling">
       <option name="closed" value="true" />
-      <created>1774539237838</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
+      <created>1775435345229</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
       <option name="project" value="LOCAL" />
-      <updated>1774539237838</updated>
+      <updated>1775435345229</updated>
     </task>
-    <task id="LOCAL-00019" summary="fix: improve journal entries API response parsing for safer type handling">
+    <task id="LOCAL-00064" summary="feat: fix 500 error on settings endpoint by ensuring branding URLs are never NULL">
       <option name="closed" value="true" />
-      <created>1774539619456</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
+      <created>1775626798909</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
       <option name="project" value="LOCAL" />
-      <updated>1774539619456</updated>
+      <updated>1775626798911</updated>
     </task>
-    <task id="LOCAL-00020" summary="fix: update nginx API proxy to route /api requests directly to backend root and clarify config comments">
+    <task id="LOCAL-00065" summary="feat: add update obligation API and security policy fields to settings">
       <option name="closed" value="true" />
-      <created>1774549433585</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
+      <created>1775631447269</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
       <option name="project" value="LOCAL" />
-      <updated>1774549433585</updated>
+      <updated>1775631447269</updated>
     </task>
-    <task id="LOCAL-00021" summary="fix: ensure totalOverdue and totalShortfall calculations handle undefined data content safely">
+    <task id="LOCAL-00066" summary="feat: implement update obligation functionality with dynamic password validation and new obligations tab">
       <option name="closed" value="true" />
-      <created>1774550479359</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
+      <created>1775636106338</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
       <option name="project" value="LOCAL" />
-      <updated>1774550479359</updated>
+      <updated>1775636106338</updated>
     </task>
-    <task id="LOCAL-00022" summary="fix: handle non-array account API responses safely in chart of accounts page and API client">
+    <task id="LOCAL-00067" summary="feat: enhance AdminObligationsSection with type safety and improve error handling in SaccoSettingsPage">
       <option name="closed" value="true" />
-      <created>1774551219679</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
+      <created>1775637347616</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
       <option name="project" value="LOCAL" />
-      <updated>1774551219679</updated>
+      <updated>1775637347617</updated>
     </task>
-    <task id="LOCAL-00023" summary="fix: update frontend build arg to use absolute API base URL in staging deployment">
+    <task id="LOCAL-00068" summary="feat: enhance AdminObligationsSection with type safety by updating memberData type">
       <option name="closed" value="true" />
-      <created>1774589714169</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
+      <created>1775637781056</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
       <option name="project" value="LOCAL" />
-      <updated>1774589714170</updated>
+      <updated>1775637781056</updated>
     </task>
-    <task id="LOCAL-00024" summary="fix: update frontend build arg to use absolute API base URL in staging deployment">
+    <task id="LOCAL-00069" summary="feat: add granular admin permissions for Audit Log and Penalty Rules management">
       <option name="closed" value="true" />
-      <created>1774596713701</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
+      <created>1775652317835</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
       <option name="project" value="LOCAL" />
-      <updated>1774596713701</updated>
+      <updated>1775652317835</updated>
     </task>
-    <task id="LOCAL-00025" summary="chore: add migration HTTP request logs, cookies, and response samples for historical savings import">
+    <task id="LOCAL-00070" summary="feat: improve loading state management and enhance log panel component in MigrationPage">
       <option name="closed" value="true" />
-      <created>1774596751564</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
+      <created>1775652865704</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
       <option name="project" value="LOCAL" />
-      <updated>1774596751564</updated>
+      <updated>1775652865704</updated>
     </task>
-    <task id="LOCAL-00026" summary="chore: migrate outgoing email configuration to use Resend API and update deployment scripts">
+    <task id="LOCAL-00071" summary="feat: remove clear log functionality from LogPanel in MigrationPage">
       <option name="closed" value="true" />
-      <created>1774599057416</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
+      <created>1775653191031</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
       <option name="project" value="LOCAL" />
-      <updated>1774599057416</updated>
+      <updated>1775653191031</updated>
     </task>
-    <task id="LOCAL-00027" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
+    <task id="LOCAL-00072" summary="feat: add Permissions Registry page and update sidebar navigation">
       <option name="closed" value="true" />
-      <created>1774599556031</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
+      <created>1775673334322</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
       <option name="project" value="LOCAL" />
-      <updated>1774599556031</updated>
+      <updated>1775673334325</updated>
     </task>
-    <task id="LOCAL-00028" summary="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file">
+    <task id="LOCAL-00073" summary="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access">
       <option name="closed" value="true" />
-      <created>1774599579543</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
+      <created>1775715780295</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
       <option name="project" value="LOCAL" />
-      <updated>1774599579543</updated>
+      <updated>1775715780296</updated>
     </task>
-    <task id="LOCAL-00029" summary="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API">
+    <task id="LOCAL-00074" summary="feat: enhance loan application details with member information and update penalty management endpoints">
       <option name="closed" value="true" />
-      <created>1774600869077</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
+      <created>1775733371309</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
       <option name="project" value="LOCAL" />
-      <updated>1774600869077</updated>
+      <updated>1775733371310</updated>
     </task>
-    <task id="LOCAL-00030" summary="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter">
+    <task id="LOCAL-00075" summary="feat: streamline icon imports and optimize status count calculation in loan management components">
       <option name="closed" value="true" />
-      <created>1774605433136</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
+      <created>1775737110977</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
       <option name="project" value="LOCAL" />
-      <updated>1774605433136</updated>
+      <updated>1775737110979</updated>
     </task>
-    <task id="LOCAL-00031" summary="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue">
+    <task id="LOCAL-00076" summary="feat: update XLSX import type definitions for improved type safety in MigrationPage">
       <option name="closed" value="true" />
-      <created>1774605739606</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
+      <created>1775737471249</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
       <option name="project" value="LOCAL" />
-      <updated>1774605739606</updated>
+      <updated>1775737471249</updated>
     </task>
-    <task id="LOCAL-00032" summary="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode">
+    <task id="LOCAL-00077" summary="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety">
       <option name="closed" value="true" />
-      <created>1774606461532</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
+      <created>1775739759238</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
       <option name="project" value="LOCAL" />
-      <updated>1774606461532</updated>
+      <updated>1775739759238</updated>
     </task>
-    <task id="LOCAL-00033" summary="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode">
+    <task id="LOCAL-00078" summary="feat: refine XLSX import type definitions in MigrationPage for improved type safety">
       <option name="closed" value="true" />
-      <created>1774618260127</created>
-      <option name="number" value="00033" />
-      <option name="presentableId" value="LOCAL-00033" />
+      <created>1775740709600</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
       <option name="project" value="LOCAL" />
-      <updated>1774618260127</updated>
+      <updated>1775740709604</updated>
     </task>
-    <task id="LOCAL-00034" summary="chore: add project encoding and Maven repository configuration files">
+    <task id="LOCAL-00079" summary="feat: add profile management page and API for user profile updates">
       <option name="closed" value="true" />
-      <created>1774618353007</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
+      <created>1776497792895</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
       <option name="project" value="LOCAL" />
-      <updated>1774618353007</updated>
+      <updated>1776497792897</updated>
     </task>
-    <task id="LOCAL-00035" summary="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency">
+    <task id="LOCAL-00080" summary="feat: add profile management page and API for user profile updates">
       <option name="closed" value="true" />
-      <created>1774621836766</created>
-      <option name="number" value="00035" />
-      <option name="presentableId" value="LOCAL-00035" />
+      <created>1776498268555</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
       <option name="project" value="LOCAL" />
-      <updated>1774621836766</updated>
+      <updated>1776498268555</updated>
     </task>
-    <task id="LOCAL-00036" summary="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
+    <task id="LOCAL-00081" summary="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties">
       <option name="closed" value="true" />
-      <created>1774643663489</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
+      <created>1776500176204</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
       <option name="project" value="LOCAL" />
-      <updated>1774643663489</updated>
+      <updated>1776500176204</updated>
     </task>
-    <task id="LOCAL-00037" summary="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs">
+    <task id="LOCAL-00082" summary="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic">
       <option name="closed" value="true" />
-      <created>1774863565459</created>
-      <option name="number" value="00037" />
-      <option name="presentableId" value="LOCAL-00037" />
+      <created>1776751053208</created>
+      <option name="number" value="00082" />
+      <option name="presentableId" value="LOCAL-00082" />
       <option name="project" value="LOCAL" />
-      <updated>1774863565460</updated>
+      <updated>1776751053210</updated>
     </task>
-    <task id="LOCAL-00038" summary="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations">
+    <task id="LOCAL-00083" summary="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic">
       <option name="closed" value="true" />
-      <created>1774864469482</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
+      <created>1776752601544</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
       <option name="project" value="LOCAL" />
-      <updated>1774864469482</updated>
+      <updated>1776752601545</updated>
     </task>
-    <task id="LOCAL-00039" summary="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
+    <task id="LOCAL-00084" summary="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field">
       <option name="closed" value="true" />
-      <created>1774865253264</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
+      <created>1776753762013</created>
+      <option name="number" value="00084" />
+      <option name="presentableId" value="LOCAL-00084" />
       <option name="project" value="LOCAL" />
-      <updated>1774865253264</updated>
+      <updated>1776753762013</updated>
     </task>
-    <task id="LOCAL-00040" summary="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage">
+    <task id="LOCAL-00085" summary="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug">
       <option name="closed" value="true" />
-      <created>1774866996485</created>
-      <option name="number" value="00040" />
-      <option name="presentableId" value="LOCAL-00040" />
+      <created>1776756315201</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
       <option name="project" value="LOCAL" />
-      <updated>1774866996486</updated>
+      <updated>1776756315201</updated>
     </task>
-    <task id="LOCAL-00041" summary="feat: add refinance loan functionality and historical penalty migration support">
+    <task id="LOCAL-00086" summary="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling">
       <option name="closed" value="true" />
-      <created>1775033304459</created>
-      <option name="number" value="00041" />
-      <option name="presentableId" value="LOCAL-00041" />
+      <created>1776779935060</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
       <option name="project" value="LOCAL" />
-      <updated>1775033304459</updated>
+      <updated>1776779935060</updated>
     </task>
-    <task id="LOCAL-00042" summary="feat: implement TimeTravelerService for loan simulation and schedule progression">
+    <task id="LOCAL-00087" summary="feat: add expense reimbursement functionality for members to submit claims">
       <option name="closed" value="true" />
-      <created>1775116665174</created>
-      <option name="number" value="00042" />
-      <option name="presentableId" value="LOCAL-00042" />
+      <created>1779615628111</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
       <option name="project" value="LOCAL" />
-      <updated>1775116665175</updated>
+      <updated>1779615628112</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00088" summary="fix(expense): credit reimbursements to savings and pass lint&#10;&#10;- Fix calculateBalance JPQL to count EXPENSE_REIMBURSEMENT as credit&#10;  (old ELSE branch was deducting it, breaking member balance display)&#10;- Add idempotent V71 migration: widens savings_transactions enum&#10;  columns to VARCHAR(30), recreates v_member_savings_balance and&#10;  v_member_financial_overview dropped by CASCADE&#10;- Show EXPENSE_REIMBURSEMENT as green credit entry in member savings&#10;  statement (gift icon, + prefix, &quot;Expense Reimbursement&quot; label)&#10;- Downgrade react-hooks v7 set-state-in-effect/static-components/&#10;  immutability rules to warn so CI is not blocked by false positives&#10;- Remove dead phone-OTP functions bypassed pending Africa's Talking">
+      <option name="closed" value="true" />
+      <created>1779616987450</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1779616987450</updated>
+    </task>
+    <task id="LOCAL-00089" summary="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify.">
+      <option name="closed" value="true" />
+      <created>1779617008993</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1779617008993</updated>
+    </task>
+    <task id="LOCAL-00090" summary="fix(expense): wire SavingsService mock and fix test stubs in ExpenseClaimServiceTest&#10;&#10;- Add @Mock SavingsService so @InjectMocks can inject it into&#10;  ExpenseClaimService (was null, causing NPE on approval path)&#10;- Update approve test to verify savingsService.creditExpenseReimbursement&#10;  instead of the now-removed direct journalEntryService call&#10;- Remove unnecessary userRepository stubs from alreadyApproved and&#10;  rejectWithoutReason tests — service throws before reaching that call&#10;- Remove unused phone-OTP state vars from SetupWizardPage (bypassed&#10;  pending Africa's Talking integration, were causing lint errors)">
+      <option name="closed" value="true" />
+      <created>1779621184586</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
+      <option name="project" value="LOCAL" />
+      <updated>1779621184587</updated>
+    </task>
+    <task id="LOCAL-00091" summary="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements">
+      <option name="closed" value="true" />
+      <created>1779623417107</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
+      <option name="project" value="LOCAL" />
+      <updated>1779623417107</updated>
+    </task>
+    <task id="LOCAL-00092" summary="feat(payments): migrate to Co-op Connect for STK push and IPN handling">
+      <option name="closed" value="true" />
+      <created>1779778851135</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
+      <option name="project" value="LOCAL" />
+      <updated>1779778851139</updated>
+    </task>
+    <task id="LOCAL-00093" summary="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs">
+      <option name="closed" value="true" />
+      <created>1779813507133</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1779813507133</updated>
+    </task>
+    <task id="LOCAL-00094" summary="feat(asset-management): log callback URL in Co-op STK Push for improved traceability">
+      <option name="closed" value="true" />
+      <created>1779815134608</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1779815134608</updated>
+    </task>
+    <option name="localTasksCounter" value="95" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="UpdateCopyrightCheckinHandler">
+    <option name="UPDATE_COPYRIGHT" value="true" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -685,32 +1050,33 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fix(api): append /api/v1 to VITE_API_BASE_URL for consistent base URL handling" />
-    <MESSAGE value="fix: read CORS allowed-origins from FRONTEND_URL env var instead of hardcoded value" />
-    <MESSAGE value="fix: set session cookie domain for cross-subdomain auth on staging" />
-    <MESSAGE value="fix: proxy API requests through nginx and update API base URL handling for staging" />
-    <MESSAGE value="fix: add mail server environment variables to production docker compose" />
-    <MESSAGE value="fix: improve journal entries API response parsing for safer type handling" />
-    <MESSAGE value="fix: update nginx API proxy to route /api requests directly to backend root and clarify config comments" />
-    <MESSAGE value="fix: ensure totalOverdue and totalShortfall calculations handle undefined data content safely" />
-    <MESSAGE value="fix: handle non-array account API responses safely in chart of accounts page and API client" />
-    <MESSAGE value="fix: update frontend build arg to use absolute API base URL in staging deployment" />
-    <MESSAGE value="chore: add migration HTTP request logs, cookies, and response samples for historical savings import" />
-    <MESSAGE value="chore: migrate outgoing email configuration to use Resend API and update deployment scripts" />
-    <MESSAGE value="fix: update mail configuration to enable SMTP SSL and disable STARTTLS in production compose file" />
-    <MESSAGE value="chore: remove SMTP mail configuration and migrate email sending to Resend HTTP API" />
-    <MESSAGE value="feat: auto-confirm email verification if token is present in URL on verify contact page" />
-    <MESSAGE value="feat: disable phone verification flow and update UI to reflect SMS coming soon&#10;&#10;- Remove phone OTP sending and verification logic from backend; log SMS-disabled message instead&#10;- Update frontend verify contact page to hide phone verification form and display &quot;Coming soon&quot; message&#10;- Require only email verification for access in ContactVerificationFilter" />
-    <MESSAGE value="feat: update verify contact page to disable phone verification and show SMS coming soon&#10;&#10;- Remove phone OTP logic and related state from frontend&#10;- Update UI to display &quot;Coming soon&quot; message for phone verification&#10;- Require only email verification to continue" />
-    <MESSAGE value="feat: add responsive mobile sidebar with overlay and hamburger menu&#10;&#10;- Implement mobile sidebar with overlay and close button for small screens&#10;- Add hamburger menu to header for toggling sidebar on mobile&#10;- Adjust layout paddings and sidebar transitions for responsive design&#10;- Ensure sidebar closes on navigation in mobile mode" />
-    <MESSAGE value="chore: add project encoding and Maven repository configuration files" />
-    <MESSAGE value="fix: remove unnecessary 'relative' class from sidebar for improved layout consistency" />
-    <MESSAGE value="feat: add historical withdrawals migration support and seeder scripts&#10;&#10;- Add HistoricalWithdrawalRequest DTO for withdrawal migration&#10;- Implement seedHistoricalWithdrawal in MigrationService with backdating logic&#10;- Expose /withdrawals endpoint in MigrationController for historical withdrawals&#10;- Add withdrawals-seeder.http for bulk migration requests&#10;- Update http-client.private.env.json with withdrawal seeding cookies and tokens&#10;- Update workspace.xml for new seeder scripts and environment configs" />
-    <MESSAGE value="test: refactor and expand LoanScheduleServiceTest for improved coverage and clarity&#10;&#10;- Rewrite tests to use JUnit assertions and ArgumentCaptor for batch saves&#10;- Add tests for reducing balance interest model, empty principal, and missing disbursement date&#10;- Improve setup with explicit mock objects and realistic loan parameters&#10;- Ensure principal and interest calculations are validated for various scenarios&#10;- Remove unused imports and legacy DisplayName annotations" />
-    <MESSAGE value="test: refactor LoanScheduleServiceTest and LoanRepaymentServiceTest for improved mocking and coverage" />
-    <MESSAGE value="feat: add refinance loan functionality and historical penalty migration support" />
-    <MESSAGE value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: implement TimeTravelerService for loan simulation and schedule progression" />
+    <option name="MARK_IGNORED_AS_EXCLUDED" value="true" />
+    <MESSAGE value="feat: improve loading state management and enhance log panel component in MigrationPage" />
+    <MESSAGE value="feat: remove clear log functionality from LogPanel in MigrationPage" />
+    <MESSAGE value="feat: add Permissions Registry page and update sidebar navigation" />
+    <MESSAGE value="feat: add DATA_MIGRATION permission and update migration endpoints for historical data access" />
+    <MESSAGE value="feat: enhance loan application details with member information and update penalty management endpoints" />
+    <MESSAGE value="feat: streamline icon imports and optimize status count calculation in loan management components" />
+    <MESSAGE value="feat: update XLSX import type definitions for improved type safety in MigrationPage" />
+    <MESSAGE value="feat: improve type definitions for XLSX import in MigrationPage for enhanced type safety" />
+    <MESSAGE value="feat: refine XLSX import type definitions in MigrationPage for improved type safety" />
+    <MESSAGE value="feat: add profile management page and API for user profile updates" />
+    <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties" />
+    <MESSAGE value="SAC-216 MEET-02:Auto-seed attendance at start + auto-complete at end time with immediate penalties fix: allow updates to recorded attendance times and improve penalty evaluation logic" />
+    <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field" />
+    <MESSAGE value="SAC-217 BUG: Manual Late attendance uses wrong timestamp for penalty-tier add arrivedAt field. fixed: complete button bug" />
+    <MESSAGE value="feat: update timezone settings to Africa/Nairobi and introduce SaccoDateUtils for consistent date handling" />
+    <MESSAGE value="feat: add expense reimbursement functionality for members to submit claims" />
+    <MESSAGE value="fix(expense): credit reimbursements to savings and pass lint&#10;&#10;- Fix calculateBalance JPQL to count EXPENSE_REIMBURSEMENT as credit&#10;  (old ELSE branch was deducting it, breaking member balance display)&#10;- Add idempotent V71 migration: widens savings_transactions enum&#10;  columns to VARCHAR(30), recreates v_member_savings_balance and&#10;  v_member_financial_overview dropped by CASCADE&#10;- Show EXPENSE_REIMBURSEMENT as green credit entry in member savings&#10;  statement (gift icon, + prefix, &quot;Expense Reimbursement&quot; label)&#10;- Downgrade react-hooks v7 set-state-in-effect/static-components/&#10;  immutability rules to warn so CI is not blocked by false positives&#10;- Remove dead phone-OTP functions bypassed pending Africa's Talking" />
+    <MESSAGE value="fix(test): update MpesaIpWhitelistFilter test for two-arg constructor&#10;&#10;The bypassIpWhitelist flag added to the filter constructor was not&#10;reflected in the test setUp, causing a compile failure in CI.&#10;Pass false (enforce whitelist) to match what all existing test cases verify." />
+    <MESSAGE value="fix(expense): wire SavingsService mock and fix test stubs in ExpenseClaimServiceTest&#10;&#10;- Add @Mock SavingsService so @InjectMocks can inject it into&#10;  ExpenseClaimService (was null, causing NPE on approval path)&#10;- Update approve test to verify savingsService.creditExpenseReimbursement&#10;  instead of the now-removed direct journalEntryService call&#10;- Remove unnecessary userRepository stubs from alreadyApproved and&#10;  rejectWithoutReason tests — service throws before reaching that call&#10;- Remove unused phone-OTP state vars from SetupWizardPage (bypassed&#10;  pending Africa's Talking integration, were causing lint errors)" />
+    <MESSAGE value="feat(roles-permissions): enhance mobile experience with detail panel and UI improvements" />
+    <MESSAGE value="feat(payments): migrate to Co-op Connect for STK push and IPN handling" />
+    <MESSAGE value="feat(asset-management): integrate Co-op Connect for STK push and callback handling" />
+    <MESSAGE value="feat(config): replace Safaricom with Co-op Connect settings in prod config&#10;&#10;- Update production YAML to use Co-op Connect payment gateway parameters&#10;- Log Co-op STK push and callbacks at INFO level for visibility in staging logs" />
+    <MESSAGE value="feat(asset-management): log callback URL in Co-op STK Push for improved traceability" />
+    <MESSAGE value="feat(deploy): update production configuration and enhance deployment process" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(deploy): update production configuration and enhance deployment process" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

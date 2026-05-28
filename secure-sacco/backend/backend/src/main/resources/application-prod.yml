@@ -4,7 +4,7 @@ server:
     session:
       cookie:
         name: SACCO_SESSION
-        domain: jaytechwavesolutions.co.ke
+        domain: betterlinkventureslimited.co.ke
         same-site: none
         secure: true
         http-only: true
@@ -30,15 +30,14 @@ sacco:
     cors:
       allowed-origins:
         - "${FRONTEND_URL}"
-
-  safaricom:
-    daraja:
-      env: production
-      consumer-key: ${MPESA_CONSUMER_KEY}
-      consumer-secret: ${MPESA_CONSUMER_SECRET}
-      passkey: ${MPESA_PASSKEY}
-      shortcode: ${MPESA_SHORTCODE}
-      callback-base-url: ${MPESA_CALLBACK_BASE_URL}
+  coopconnect:
+    consumer-key:         ${COOP_CONSUMER_KEY}
+    consumer-secret:      ${COOP_CONSUMER_SECRET}
+    operator-code:        ${COOP_OPERATOR_CODE:BETTERLINK}
+    base-url:             ${COOP_BASE_URL:https://openapi.co-opbank.co.ke}
+    callback-base-url:    ${COOP_CALLBACK_BASE_URL}
+    sacco-account-number: ${COOP_SACCO_ACCOUNT_NUMBER:}
+    allowed-callback-ips: ${COOP_ALLOWED_CALLBACK_IPS:}
 
 logging:
   level:
@@ -46,14 +45,16 @@ logging:
     org.springframework.security: WARN
     org.springframework.web: WARN
     org.flywaydb: WARN
+    # Raise payments to INFO so Co-op STK push and IPN activity is visible in logs
+    com.jaytechwave.sacco.modules.payments: INFO
 
 # Production: admin credentials MUST be set via environment variables.
 # No fallback values — application will fail to start if these are missing.
 app:
   default-admin:
-    email: ${APP_DEFAULT_ADMIN_EMAIL}
+    email:    ${APP_DEFAULT_ADMIN_EMAIL}
     password: ${APP_DEFAULT_ADMIN_PASSWORD}
-    phone: ${APP_DEFAULT_ADMIN_PHONE}
+    phone:    ${APP_DEFAULT_ADMIN_PHONE}
 
 management:
   health:
@@ -62,7 +63,6 @@ management:
   endpoints:
     web:
       exposure:
-        # In prod, expose only health (for load balancer) and prometheus (for metrics scraper)
         include: health,prometheus
   endpoint:
     health:
@@ -71,4 +71,3 @@ management:
 springdoc:
   swagger-ui:
     enabled: false   # UI disabled in prod; /api-docs JSON still available for SYSTEM_ADMIN
-
