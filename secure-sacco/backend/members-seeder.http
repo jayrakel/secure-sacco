@@ -1,9 +1,9 @@
 ### Login as Admin (Run this first to get the token)
-POST http://localhost:8080/api/v1/auth/login
+POST https://betterlinkventureslimited.co.ke/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "jaytechwavesolutions@gmail.com",
+  "identifier": "betterlinkventures@gmail.com",
   "password": "Michira._2000"
 }
 
@@ -16,141 +16,141 @@ Content-Type: application/json
 %}
 
 ### 1. Migrate Member 1
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Benjamin",
   "lastName": "Muketha",
-  "email": "benjamin.muketha@betterlink.com",
+  "email": "muketha63.bm@gmail.com",
   "phoneNumber": "+254721338747",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 2. Migrate Member 2
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Salesio",
   "lastName": "Mwiraria",
-  "email": "salesio.mwiraria@betterlink.com",
-  "phoneNumber": "+254700000002",
+  "email": "mwirariasalesio5@gmail.com",
+  "phoneNumber": "+254712437862",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 3. Migrate Member 3
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Charles",
   "lastName": "Gicheru",
-  "email": "charles.gicheru@betterlink.com",
-  "phoneNumber": "+254700000003",
+  "email": "mwangigicheru4@gmail.com",
+  "phoneNumber": "+254717921562",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 4. Migrate Member 4
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Jacob",
   "lastName": "Mungai",
-  "email": "jacob.mungai@betterlink.com",
-  "phoneNumber": "+254700000004",
+  "email": "mungaijacob65@gmail.com",
+  "phoneNumber": "+254722770148",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 5. Migrate Member 5
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Mbuthia",
   "lastName": "Kimere",
-  "email": "mbuthia.kimere@betterlink.com",
-  "phoneNumber": "+254700000005",
+  "email": "kimerembuthia9@gmail.com",
+  "phoneNumber": "+254723933322",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 6. Migrate Member 6
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Samuel",
   "lastName": "Matheri",
-  "email": "samuel.matheri@betterlink.com",
-  "phoneNumber": "+254700000006",
+  "email": "samuelmatheri807@gmail.com",
+  "phoneNumber": "+254720807390",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 7. Migrate Member 7
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Gideon",
   "lastName": "Marangu",
-  "email": "gideon.marangu@betterlink.com",
-  "phoneNumber": "+254700000007",
+  "email": "gideonmarangu@gmail.com",
+  "phoneNumber": "+254724158098",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 8. Migrate Member 8
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Stephen",
   "lastName": "Njoroge",
-  "email": "stephen.njoroge@betterlink.com",
-  "phoneNumber": "+254700000008",
+  "email": "snjoroge796@gmail.com",
+  "phoneNumber": "+254722639939",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 9. Migrate Member 9
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Moses",
   "lastName": "Mburu",
-  "email": "moses.mburu@betterlink.com",
-  "phoneNumber": "+254700000009",
+  "email": "njorogemoses860@gmail.com",
+  "phoneNumber": "+254720728738",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
 
 ### 10. Migrate Member 10
-POST http://localhost:8080/api/v1/migration/members
+POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 
 {
   "firstName": "Tarcisio",
   "lastName": "Ngugi",
-  "email": "tarcisio.ngugi@betterlink.com",
-  "phoneNumber": "+254700000010",
+  "email": "ngugimike41@gmail.com",
+  "phoneNumber": "+254720101339",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
