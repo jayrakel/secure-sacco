@@ -175,7 +175,7 @@ jobs:
       # ── Health check — frontend ─────────────────────────────────────────────
       - name: Health check — frontend
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.FRONTEND_URL }}" || echo "000")
+          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" "${{ vars.FRONTEND_URL }}" || echo "000")
           if [ "$STATUS" = "200" ]; then
             echo "Frontend is serving."
           else
