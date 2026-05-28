@@ -57,9 +57,10 @@ public class CoopConnectController {
      */
     @Operation(summary = "Co-op STK push callback (webhook)",
             description = "Called by Co-op Connect after member completes or cancels the STK prompt.")
-    @PostMapping("/coop/stk-callback")
-    public ResponseEntity<IpnAckResponse> handleStkCallback(@RequestBody String rawBody) {
+    @RequestMapping(value = "/coop/stk-callback", method = {RequestMethod.POST, RequestMethod.GET})
+    public ResponseEntity<IpnAckResponse> handleStkCallback(@RequestBody(required = false) String rawBody) {
         log.info("Co-op STK Callback received: {}", rawBody);
+        if (rawBody == null || rawBody.isBlank()) return ResponseEntity.ok(IpnAckResponse.ok());
         try {
             StkCallbackPayload payload = objectMapper.readValue(rawBody, StkCallbackPayload.class);
             paymentService.processStkCallback(rawBody, payload);
@@ -81,9 +82,10 @@ public class CoopConnectController {
      */
     @Operation(summary = "Co-op B2B IPN (Core Banking notification)",
             description = "Called by Co-op CBS when a credit hits the SACCO's Co-op account.")
-    @PostMapping("/coop/ipn")
-    public ResponseEntity<IpnAckResponse> handleCoopIpn(@RequestBody String rawBody) {
+    @RequestMapping(value = "/coop/ipn", method = {RequestMethod.POST, RequestMethod.GET})
+    public ResponseEntity<IpnAckResponse> handleCoopIpn(@RequestBody(required = false) String rawBody) {
         log.info("Co-op IPN received: {}", rawBody);
+        if (rawBody == null || rawBody.isBlank()) return ResponseEntity.ok(IpnAckResponse.ok());
         try {
             CoopIpnPayload payload = objectMapper.readValue(rawBody, CoopIpnPayload.class);
             paymentService.processCoopIpn(rawBody, payload);
