@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -93,6 +94,32 @@ public class CoopConnectController {
         } catch (Exception e) {
             log.error("Failed to process Co-op IPN: {}", e.getMessage(), e);
             return ResponseEntity.ok(IpnAckResponse.error(e.getMessage()));
+        }
+    }
+
+    // ── Real-time account balance ─────────────────────────────────────────────
+
+    @Operation(summary = "Get Co-op bank account balance",
+            description = "Returns the real-time balance of the SACCO Co-op account. Cached for 5 minutes.")
+    @GetMapping("/coop/account-balance")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
+    public ResponseEntity<?> getAccountBalance() {
+        try {
+            var balance = coopConnectService.getAccountBalance();
+            if (balance == null) {
+                return ResponseEntity.status(503)
+                        .body(Map.of("error", "Could not fetch account balance from Co-op Bank"));
+            }
+            return ResponseEntity.ok(Map.of(
+                    "availableBalance", balance.getAvailableBalance() != null ? balance.getAvailableBalance() : "0",
+                    "bookedBalance",    balance.getBookedBalance()    != null ? balance.getBookedBalance()    : "0",
+                    "currency",         balance.getCurrency()         != null ? balance.getCurrency()         : "KES",
+                    "accountNumber",    balance.getAccountNumber()    != null ? balance.getAccountNumber()    : "",
+                    "messageCode",      balance.getMessageCode()      != null ? balance.getMessageCode()      : ""
+            ));
+        } catch (Exception e) {
+            log.error("Failed to get account balance: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "Account balance unavailable"));
         }
     }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { dashboardApi, type StaffDashboardDTO } from '../api/dashboard-api';
+import { CoopAccountBalanceCard } from '../components/CoopAccountBalanceCard';
 import {
     Users, Wallet, Coins, PiggyBank, CalendarClock,
     AlertTriangle, TrendingDown, Banknote, ShieldAlert, Receipt,
@@ -306,6 +307,10 @@ const UnifiedStaffDashboard: React.FC = () => {
                             : 'Refresh'}
                     </button>
                 </div>
+
+                {/* ── Coop account balance card ── */}
+                <CoopAccountBalanceCard />
+
 
                 {/* ── Error ── */}
                 {error && (
