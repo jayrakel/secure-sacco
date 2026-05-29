@@ -1,4 +1,10 @@
-### Login as Admin (Run this first to get the token)
+### ============================================================
+### BETTERLINK VENTURES SACCO — Production Member Migration
+### Environment: prod
+### Run: Login first, then run all member requests
+### ============================================================
+
+### Step 1 — Login as Admin (MUST RUN FIRST)
 POST https://betterlinkventureslimited.co.ke/api/v1/auth/login
 Content-Type: application/json
 
@@ -8,17 +14,32 @@ Content-Type: application/json
 }
 
 > {%
-    const raw = response.headers.valueOf("Set-Cookie");
-    if (raw) {
-        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
-        if (match) client.global.set("csrf_token", match[1]);
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    for (const cookie of cookies) {
+        const match = cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) {
+            client.global.set("csrf_token", decodeURIComponent(match[1]));
+            client.log("✅ CSRF token captured: " + decodeURIComponent(match[1]));
+        }
+    }
+    if (response.status === 200) {
+        client.log("✅ Login successful");
+    } else {
+        client.log("❌ Login failed — check credentials");
     }
 %}
 
-### 1. Migrate Member 1
+###
+
+### ============================================================
+### Step 2 — Migrate all 10 members
+### ============================================================
+
+### Member 1 — Benjamin Muketha (CHAIRPERSON)
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Benjamin",
@@ -29,10 +50,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 2. Migrate Member 2
+###
+
+### Member 2 — Salesio Mwiraria
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Salesio",
@@ -43,10 +67,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 3. Migrate Member 3
+###
+
+### Member 3 — Charles Gicheru (SECRETARY)
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Charles",
@@ -57,10 +84,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 4. Migrate Member 4
+###
+
+### Member 4 — Jacob Mungai
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Jacob",
@@ -71,10 +101,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 5. Migrate Member 5
+###
+
+### Member 5 — Mbuthia Kimere
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Mbuthia",
@@ -85,10 +118,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 6. Migrate Member 6
+###
+
+### Member 6 — Samuel Matheri
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Samuel",
@@ -99,10 +135,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 7. Migrate Member 7
+###
+
+### Member 7 — Gideon Marangu
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Gideon",
@@ -113,10 +152,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 8. Migrate Member 8
+###
+
+### Member 8 — Stephen Njoroge
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Stephen",
@@ -127,10 +169,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 9. Migrate Member 9
+###
+
+### Member 9 — Moses Mburu
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Moses",
@@ -141,10 +186,13 @@ X-XSRF-TOKEN: {{csrf_token}}
   "registrationDate": "2022-09-01"
 }
 
-### 10. Migrate Member 10
+###
+
+### Member 10 — Tarcisio Ngugi (TREASURER)
 POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
+Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 
 {
   "firstName": "Tarcisio",
@@ -154,3 +202,5 @@ X-XSRF-TOKEN: {{csrf_token}}
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"
 }
+
+###
