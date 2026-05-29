@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
+import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -27,9 +28,10 @@ import java.util.UUID;
 @Tag(name = "Payments", description = "Co-op Connect M-Pesa STK push and callback handling")
 public class CoopConnectController {
 
-    private final PaymentService  paymentService;
-    private final ObjectMapper    objectMapper;
-    private final UserRepository  userRepository;
+    private final PaymentService      paymentService;
+    private final ObjectMapper        objectMapper;
+    private final UserRepository      userRepository;
+    private final CoopConnectService  coopConnectService;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
