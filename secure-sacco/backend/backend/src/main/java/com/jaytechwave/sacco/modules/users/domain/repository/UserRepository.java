@@ -47,6 +47,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      */
     Optional<User> findFirstByRolesName(String roleName);
 
+    // Used by PendingPaymentPollingJob to get member name for payment records
+    Optional<User> findByMemberId(UUID memberId);
+
     /**
      * Count how many users have a specific role.
      * Used when changing role permissions to determine how many sessions will be affected.
