@@ -209,6 +209,10 @@ public class CoopConnectService {
             req.put("UserId", props.getOperatorCode());
             req.put("AccountNumber", props.getSaccoAccountNumber());
 
+            // 🟢 ADD THIS SNOOPING LOG:
+            log.error("CO-OP SNOOP: Sending payload to bank -> UserId='{}', Account='{}', Ref='{}'",
+                    req.get("UserId"), req.get("AccountNumber"), req.get("MessageReference"));
+
             AccountBalanceResponse response = restClient.post()
                     .uri(props.getBaseUrl() + "/Enquiry/AccountBalance_v2/2.0.0/")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
