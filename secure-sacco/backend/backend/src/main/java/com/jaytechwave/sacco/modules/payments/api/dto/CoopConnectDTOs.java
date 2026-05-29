@@ -204,4 +204,30 @@ public class CoopConnectDTOs {
             return new IpnAckResponse("500", reason);
         }
     }
+
+    // ── Account Balance response ──────────────────────────────────────────────
+
+    @Data
+    public static class AccountBalanceResponse {
+        @JsonProperty("MessageReference")
+        private String messageReference;
+
+        @JsonProperty("MessageCode")
+        private String messageCode;
+
+        @JsonProperty("MessageDescription")
+        private String messageDescription;
+
+        @JsonProperty("AccountNumber")
+        private String accountNumber;
+
+        @JsonProperty("Currency")
+        private String currency;
+
+        @JsonProperty("AvailableBalance")
+        private String availableBalance;
+
+        @JsonProperty("BookedBalance")
+        private String bookedBalance;
+    }
 }

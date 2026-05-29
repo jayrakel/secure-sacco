@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
+import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -26,9 +28,10 @@ import java.util.UUID;
 @Tag(name = "Payments", description = "Co-op Connect M-Pesa STK push and callback handling")
 public class CoopConnectController {
 
-    private final PaymentService  paymentService;
-    private final ObjectMapper    objectMapper;
-    private final UserRepository  userRepository;
+    private final PaymentService      paymentService;
+    private final ObjectMapper        objectMapper;
+    private final UserRepository      userRepository;
+    private final CoopConnectService  coopConnectService;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
@@ -93,6 +96,32 @@ public class CoopConnectController {
         } catch (Exception e) {
             log.error("Failed to process Co-op IPN: {}", e.getMessage(), e);
             return ResponseEntity.ok(IpnAckResponse.error(e.getMessage()));
+        }
+    }
+
+    // ── Real-time account balance ─────────────────────────────────────────────
+
+    @Operation(summary = "Get Co-op bank account balance",
+            description = "Returns the real-time balance of the SACCO Co-op account. Cached for 5 minutes.")
+    @GetMapping("/coop/account-balance")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
+    public ResponseEntity<?> getAccountBalance() {
+        try {
+            var balance = coopConnectService.getAccountBalance();
+            if (balance == null) {
+                return ResponseEntity.status(503)
+                        .body(Map.of("error", "Could not fetch account balance from Co-op Bank"));
+            }
+            return ResponseEntity.ok(Map.of(
+                    "availableBalance", balance.getAvailableBalance() != null ? balance.getAvailableBalance() : "0",
+                    "bookedBalance",    balance.getBookedBalance()    != null ? balance.getBookedBalance()    : "0",
+                    "currency",         balance.getCurrency()         != null ? balance.getCurrency()         : "KES",
+                    "accountNumber",    balance.getAccountNumber()    != null ? balance.getAccountNumber()    : "",
+                    "messageCode",      balance.getMessageCode()      != null ? balance.getMessageCode()      : ""
+            ));
+        } catch (Exception e) {
+            log.error("Failed to get account balance: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "Account balance unavailable"));
         }
     }
 }

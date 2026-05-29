@@ -100,7 +100,7 @@ public class CoopConnectService {
 
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
             log.error("Co-op Connect: Authentication failed (401/403). " +
-                    "Check your consumer key and secret. Status: {}, Response: {}",
+                            "Check your consumer key and secret. Status: {}, Response: {}",
                     e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("Co-op Connect: Invalid credentials (401/403). " +
                     "Verify COOP_CONSUMER_KEY and COOP_CONSUMER_SECRET are correct.", e);
@@ -189,21 +189,48 @@ public class CoopConnectService {
                 .body(TransactionStatusResponse.class);
     }
 
-    // ── Account balance ───────────────────────────────────────────────────────
+    // ── Account balance (cached for 5 minutes) ───────────────────────────────
 
-    public String getAccountBalance() {
-        var req = new java.util.HashMap<String, String>();
-        req.put("MessageReference", UUID.randomUUID().toString());
-        req.put("UserId", props.getOperatorCode());
-        req.put("AccountNumber", props.getSaccoAccountNumber());
+    private final AtomicReference<AccountBalanceResponse> cachedBalance = new AtomicReference<>();
+    private final AtomicLong balanceCachedAtMs = new AtomicLong(0);
+    private static final long BALANCE_CACHE_MS = 5 * 60 * 1000L;
 
-        return restClient.post()
-                .uri(props.getBaseUrl() + "/Enquiry/AccountBalance_v2/2.0.0/")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(req)
-                .retrieve()
-                .body(String.class);
+    public AccountBalanceResponse getAccountBalance() {
+        long now = System.currentTimeMillis();
+        AccountBalanceResponse cached = cachedBalance.get();
+        if (cached != null && now < balanceCachedAtMs.get()) {
+            log.debug("Co-op Connect: returning cached account balance");
+            return cached;
+        }
+        log.info("Co-op Connect: fetching account balance for account={}", props.getSaccoAccountNumber());
+        try {
+            var req = new java.util.HashMap<String, String>();
+            req.put("MessageReference", UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+            req.put("UserId", props.getOperatorCode());
+            req.put("AccountNumber", props.getSaccoAccountNumber());
+
+            AccountBalanceResponse response = restClient.post()
+                    .uri(props.getBaseUrl() + "/Enquiry/AccountBalance_v2/2.0.0/")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(req)
+                    .retrieve()
+                    .body(AccountBalanceResponse.class);
+
+            if (response != null && "0".equals(response.getMessageCode())) {
+                cachedBalance.set(response);
+                balanceCachedAtMs.set(now + BALANCE_CACHE_MS);
+                log.info("Co-op Connect: balance fetched — available={}", response.getAvailableBalance());
+            } else {
+                log.warn("Co-op Connect: balance fetch failed — code={} desc={}",
+                        response != null ? response.getMessageCode() : "null",
+                        response != null ? response.getMessageDescription() : "null");
+            }
+            return response;
+        } catch (Exception e) {
+            log.error("Co-op Connect: failed to fetch account balance — {}", e.getMessage());
+            return cached; // return stale cache rather than null on error
+        }
     }
 
     // ── Mini statement ────────────────────────────────────────────────────────
