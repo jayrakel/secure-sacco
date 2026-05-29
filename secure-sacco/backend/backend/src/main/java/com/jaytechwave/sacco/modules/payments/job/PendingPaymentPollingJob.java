@@ -7,6 +7,8 @@ import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -16,31 +18,27 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Polls Co-op Connect Transaction Status API every 30 seconds for PENDING STK push payments.
+ * Polls Co-op Connect Transaction Status API every 10 seconds for PENDING STK push payments.
  *
  * Co-op Bank advised using the Transaction Status enquiry API to confirm payment
  * rather than relying solely on the STK callback/IPN delivery.
  *
- * Flow:
- *   1. Member initiates STK push → payment saved as PENDING
- *   2. Every 30 seconds this job queries Co-op for each PENDING payment
- *   3. If Co-op confirms success → mark COMPLETED → publish PaymentCompletedEvent
- *   4. If Co-op confirms failure → mark FAILED → publish PaymentFailedEvent
- *   5. If payment is older than 10 minutes and still pending → expire it
- *
- * Endpoint: POST /Enquiry/STK/1.0.0/
- * Response codes: "0" = success, anything else = failure/pending
+ * On confirmation:
+ * - transactionRef is set to the M-Pesa receipt (e.g. UETA45S0OJ) from Co-op's TransactionID
+ * - senderName is set to the SACCO member's full name (account holder), not the M-Pesa phone owner
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PendingPaymentPollingJob {
 
-    private final PaymentRepository       paymentRepository;
-    private final CoopConnectService      coopConnectService;
+    private final PaymentRepository        paymentRepository;
+    private final CoopConnectService       coopConnectService;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository           userRepository;
 
     // Poll every 10 seconds
     @Scheduled(fixedDelay = 10_000)
@@ -92,21 +90,34 @@ public class PendingPaymentPollingJob {
             return;
         }
 
-        log.info("PendingPaymentPollingJob: ref={} → MessageCode={} Desc={}",
-                payment.getInternalRef(), status.getMessageCode(), status.getMessageDescription());
+        log.info("PendingPaymentPollingJob: ref={} → MessageCode={} Desc={} TxId={}",
+                payment.getInternalRef(), status.getMessageCode(),
+                status.getMessageDescription(), status.getTransactionId());
 
         // MessageCode "0" = transaction completed successfully
         if ("0".equals(status.getMessageCode())) {
+
+            // Set the real M-Pesa receipt number as transactionRef (e.g. UETA45S0OJ)
+            String mpesaRef = status.getTransactionId();
+            payment.setTransactionRef(mpesaRef);
+
+            // Set sender name = the SACCO member's full name (account holder)
+            // NOT the M-Pesa phone owner — one can pay using someone else's phone
+            if (payment.getMemberId() != null) {
+                Optional<User> memberUser = userRepository.findByMemberId(payment.getMemberId());
+                memberUser.ifPresent(user ->
+                        payment.setSenderName(user.getFirstName() + " " + user.getLastName())
+                );
+            }
+
             payment.setStatus(PaymentStatus.COMPLETED);
-            payment.setTransactionRef(status.getTransactionId());
             payment.setProviderMetadata(
-                    "{\"source\":\"poll\",\"messageCode\":\"" + status.getMessageCode()
-                            + "\",\"transactionId\":\"" + status.getTransactionId() + "\"}"
+                    "{\"source\":\"poll\",\"messageCode\":\"0\",\"transactionId\":\"" + mpesaRef + "\"}"
             );
             paymentRepository.save(payment);
 
-            log.info("PendingPaymentPollingJob: ✅ COMPLETED ref={} txId={}",
-                    payment.getInternalRef(), status.getTransactionId());
+            log.info("PendingPaymentPollingJob: ✅ COMPLETED ref={} mpesaRef={} member={}",
+                    payment.getInternalRef(), mpesaRef, payment.getSenderName());
 
             if (payment.getMemberId() != null) {
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
@@ -114,13 +125,11 @@ public class PendingPaymentPollingJob {
                         payment.getMemberId(),
                         payment.getAmount(),
                         payment.getAccountReference(),
-                        status.getTransactionId() != null
-                                ? status.getTransactionId() : payment.getInternalRef()
+                        mpesaRef != null ? mpesaRef : payment.getInternalRef()
                 ));
             }
 
         } else if (isFailureCode(status.getMessageCode())) {
-            // Known failure codes from Co-op
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason(status.getMessageDescription());
             paymentRepository.save(payment);
@@ -135,15 +144,16 @@ public class PendingPaymentPollingJob {
                 ));
             }
         }
-        // Any other code = still processing — leave as PENDING, poll again next cycle
+        // Any other code = still processing — leave PENDING, poll again next cycle
     }
 
     /**
-     * Co-op failure codes:
+     * Co-op STK failure codes:
      * 1032 = Request cancelled by user
      * 1037 = DS timeout user cannot be reached
      * 2001 = Wrong PIN
      * 1019 = Transaction expired
+     * 1001 = Insufficient funds
      */
     private boolean isFailureCode(String code) {
         if (code == null) return false;

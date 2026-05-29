@@ -130,6 +130,12 @@ public class CoopConnectDTOs {
 
         @JsonProperty("TransactionID")
         private String transactionId;
+
+        @JsonProperty("MobileNumber")
+        private String mobileNumber;
+
+        @JsonProperty("Narration")
+        private String narration;
     }
 
     // ── B2B IPN (Co-op CBS posts to our /coop/ipn) ───────────────────────────
