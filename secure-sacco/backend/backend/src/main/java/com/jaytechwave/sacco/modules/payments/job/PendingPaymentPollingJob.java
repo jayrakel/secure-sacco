@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -67,7 +67,7 @@ public class PendingPaymentPollingJob {
     private void processSinglePayment(Payment payment) {
         // Expire payments older than 10 minutes
         if (payment.getCreatedAt() != null
-                && payment.getCreatedAt().isBefore(LocalDateTime.now().minusMinutes(10))) {
+                && payment.getCreatedAt().isBefore(ZonedDateTime.now().minusMinutes(10))) {
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason("Payment expired — no confirmation received within 10 minutes");
             paymentRepository.save(payment);

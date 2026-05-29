@@ -11,7 +11,9 @@ import java.util.UUID;
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByInternalRef(String internalRef);
     Optional<Payment> findByTransactionRef(String transactionRef);
-    Optional<Payment> findBySenderPhoneNumberAndStatus(String senderPhoneNumber, PaymentStatus status);
+
+    // Used by IPN matching — find pending STK payments by phone
+    List<Payment> findBySenderPhoneNumberAndStatus(String senderPhoneNumber, PaymentStatus status);
 
     // Used by PendingPaymentPollingJob to find all pending STK pushes
     List<Payment> findByStatusAndPaymentType(PaymentStatus status, String paymentType);
