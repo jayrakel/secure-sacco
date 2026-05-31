@@ -57,6 +57,8 @@ public class LoanApplicationService {
                 .memberId(user.getMember().getId())
                 .loanProduct(product)
                 .principalAmount(request.principalAmount())
+                .termWeeks(product.getTermWeeks())          // ← copy from product
+                .gracePeriodDays(product.getGracePeriodDays()) // ← copy from product
                 .applicationFee(product.getApplicationFee())
                 .applicationFeePaid(false)
                 .status(LoanStatus.PENDING_FEE)
