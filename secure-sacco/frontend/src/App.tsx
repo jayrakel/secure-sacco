@@ -48,6 +48,7 @@ import SupportPage from './features/legal/pages/SupportPage';
 import StaffExpenseClaimsPage from './features/expense/pages/StaffExpenseClaimsPage';
 import MyExpenseClaimsPage from './features/expense/pages/MyExpenseClaimsPage';
 import StaffAssetsPage from './features/assets/pages/StaffAssetsPage';
+import LoanProductsPage from './features/loans/pages/LoanProductsPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -237,6 +238,12 @@ function App() {
                                 <Route path="loans" element={
                                     <ProtectedRoute requiredPermissions={['LOANS_READ']}>
                                         <LoanManagementPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/loans/products" element={
+                                    <ProtectedRoute requiredPermissions={['LOANS_READ']}>
+                                        <LoanProductsPage />
                                     </ProtectedRoute>
                                 } />
 
