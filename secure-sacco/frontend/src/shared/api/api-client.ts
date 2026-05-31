@@ -45,14 +45,14 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        // ── Expired / unauthenticated session ─────────────────────────────────
-        // Public pages (login, legal pages, etc.) should not be redirected on 401
-        const publicPaths = ['/login', '/privacy-policy', '/terms-of-service', '/support', '/activate', '/reset-password'];
-        const isPublicPage = publicPaths.some(p => window.location.pathname.startsWith(p));
+         // ── Expired / unauthenticated session ─────────────────────────────────
+         // Public pages (login, legal pages, etc.) should not be redirected on 401
+         const publicPaths = ['/', '/login', '/privacy-policy', '/terms-of-service', '/support', '/activate', '/reset-password'];
+         const isPublicPage = publicPaths.some(p => window.location.pathname === p || (p !== '/' && window.location.pathname.startsWith(p)));
 
         if (status === 401) {
             if (!isPublicPage) {
-                window.location.href = '/login';
+                window.location.href = '/';
             }
             return Promise.reject(error);
         }

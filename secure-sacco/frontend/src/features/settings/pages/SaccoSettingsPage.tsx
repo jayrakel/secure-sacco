@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { settingsApi } from '../api/settings-api';
+import { publicApi } from '../../public/api/public-api';
 import { useAuth } from '../../auth/context/AuthProvider';
 import type { SaccoSettings } from '../api/settings-api';
 import { penaltyApi } from '../../penalties/api/penalty-api';
@@ -9,7 +10,7 @@ import {
     Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
     Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
-    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2,
+    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2, Globe,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -33,12 +34,12 @@ interface SecurityPolicy {
 // ─── Navigation tabs ───────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] = [
-    { id: 'identity',      label: 'Identity',      icon: <Building2 size={15} />, desc: 'Name, branding & fees'    },
-    { id: 'security',      label: 'Security',      icon: <Shield size={15} />,    desc: 'Auth, passwords & limits' },
-    { id: 'communication', label: 'Communication', icon: <Bell size={15} />,      desc: 'Email sender settings'    },
-    { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
-    { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
-    { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
+    { id: 'identity',        label: 'Identity',        icon: <Building2 size={15} />,   desc: 'Name, branding & fees'       },
+    { id: 'security',        label: 'Security',        icon: <Shield size={15} />,      desc: 'Auth, passwords & limits'   },
+    { id: 'communication',   label: 'Communication',   icon: <Bell size={15} />,        desc: 'Email sender settings'      },
+    { id: 'schedule',        label: 'Schedule',        icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'    },
+    { id: 'modules',         label: 'Modules',         icon: <Zap size={15} />,         desc: 'Feature flags'              },
+    { id: 'penalties',       label: 'Penalties',       icon: <Gavel size={15} />,       desc: 'Fine rules & thresholds'    },
 ];
 
 const MODULE_CONFIG: Record<string, { label: string; desc: string; icon: React.ReactNode; cls: { bg: string; ring: string; text: string; icon: string } }> = {
@@ -165,11 +166,11 @@ const SaccoSettingsPage: React.FC = () => {
         setDirtySec(true);
     }, []);
 
-    // ── Communication ───────────────────────────────────────────────────────
-    const [fromName, setFromName]     = useState('Secure SACCO');
-    const [suppEmail, setSuppEmail]   = useState('');
-    const [savingComm, setSavingComm] = useState(false);
-    const [dirtyComm, setDirtyComm]   = useState(false);
+     // ── Communication ───────────────────────────────────────────────────────
+     const [fromName, setFromName]     = useState('Secure SACCO');
+     const [suppEmail, setSuppEmail]   = useState('');
+     const [savingComm, setSavingComm] = useState(false);
+     const [dirtyComm, setDirtyComm]   = useState(false);
 
     // ── Savings Schedule ─────────────────────────────────────────────────────
     const DAYS_OF_WEEK = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
@@ -223,26 +224,18 @@ const SaccoSettingsPage: React.FC = () => {
         }).catch(() => flash(false, 'Failed to load settings.')).finally(() => setLoading(false));
     }, []);
 
-    // ── Auto-prefix ──────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (prefixManual || saccoName.trim().length < 2) return;
-        const id = setTimeout(async () => {
-            try { const d = await settingsApi.generatePrefix(saccoName); setPrefix(d.prefix); } catch (error) { console.error('Failed to generate prefix:', error); }
-        }, 500);
-        return () => clearTimeout(id);
-    }, [saccoName, prefixManual]);
+     // ── Auto-prefix ──────────────────────────────────────────────────────────
+     useEffect(() => {
+         if (prefixManual || saccoName.trim().length < 2) return;
+         const id = setTimeout(async () => {
+             try { const d = await settingsApi.generatePrefix(saccoName); setPrefix(d.prefix); } catch (error) { console.error('Failed to generate prefix:', error); }
+         }, 500);
+         return () => clearTimeout(id);
+     }, [saccoName, prefixManual]);
 
-    // Load penalty rules when penalties tab is opened
-    const loadRules = useCallback(async () => {
-        setRulesLoading(true);
-        try { setRules(await penaltyApi.getRules(false)); }
-        catch { flash(false, 'Failed to load penalty rules.'); }
-        finally { setRulesLoading(false); }
-    }, []);
-
-    useEffect(() => {
-        if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
-    }, [tab]); // eslint-disable-line
+     useEffect(() => {
+         if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
+     }, [tab]); // eslint-disable-line
 
     const openEditRule = (rule: PenaltyRule) => {
         setEditingRule(rule);
@@ -353,12 +346,25 @@ const SaccoSettingsPage: React.FC = () => {
         finally { setSavingSched(false); }
     };
 
-    const handleComm = async (e: React.FormEvent) => {
-        e.preventDefault(); setSavingComm(true);
-        try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
-        catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save.')); }
-        finally { setSavingComm(false); }
-    };
+     const handleComm = async (e: React.FormEvent) => {
+         e.preventDefault(); setSavingComm(true);
+         try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
+         catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save.')); }
+         finally { setSavingComm(false); }
+     };
+
+     const handlePublicProfile = async (e: React.FormEvent) => {
+         e.preventDefault(); setSavingProfile(true);
+         try {
+             await publicApi.updateProfile({
+                 tagline, mission, vision, history,
+                 foundedYear, contactPhone, contactEmail, contactAddress,
+             });
+             setDirtyProfile(false);
+             flash(true, 'Public profile saved. Landing page will be updated shortly.');
+         } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save public profile.')); }
+         finally { setSavingProfile(false); }
+     };
 
     const handleModules = async (e: React.FormEvent) => {
         e.preventDefault(); setSavingMods(true);
@@ -396,9 +402,9 @@ const SaccoSettingsPage: React.FC = () => {
                 {/* ── Sidebar nav ─────────────────────────────────────── */}
                 <nav className="w-52 shrink-0 sticky top-6">
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
-                            const active = tab === t.id;
-                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched);
+                         {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
+                             const active = tab === t.id;
+                             const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched);
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
                                         className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-all

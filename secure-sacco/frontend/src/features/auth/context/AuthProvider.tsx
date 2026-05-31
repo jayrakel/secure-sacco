@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Server logout failed, clearing local state anyway', error);
         } finally {
             setUser(null);
-            window.location.href = '/login';
+            window.location.href = '/';
         }
     }, []);
 

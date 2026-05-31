@@ -40,11 +40,10 @@ logging:
 ## ==========================================
 ## ADDED: REDIS CONFIGURATION TO FIX 'NOAUTH'
 ## ==========================================
-#spring:
-#  data:
-#    redis:
-#      host: localhost
-#      port: 6379
+spring:
+  flyway:
+    validate-on-migrate: false
+    out-of-order: true
 #management:
 #  elastic:
 #    metrics:

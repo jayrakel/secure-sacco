@@ -49,6 +49,8 @@ import StaffExpenseClaimsPage from './features/expense/pages/StaffExpenseClaimsP
 import MyExpenseClaimsPage from './features/expense/pages/MyExpenseClaimsPage';
 import StaffAssetsPage from './features/assets/pages/StaffAssetsPage';
 import LoanProductsPage from './features/loans/pages/LoanProductsPage';
+import LandingPage from './features/public/pages/LandingPage';
+import SecretaryPortalPage from './features/public/pages/SecretaryPortalPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -73,6 +75,9 @@ function App() {
                     <SettingsProvider>
 
                         <Routes>
+
+                            <Route path="/" element={<LandingPage />} />
+
                             {/* Wrap Login in GuestRoute */}
                             <Route path="/login" element={
                                 <GuestRoute>
@@ -137,6 +142,12 @@ function App() {
                                     <DashboardLayout />
                                 </SetupGuard>
                             }>
+
+                                <Route path="/secretary-portal" element={
+                                    <ProtectedRoute requiredPermissions={['MEETINGS_MANAGE']}>
+                                        <SecretaryPortalPage />
+                                    </ProtectedRoute>
+                                } />
 
                                 <Route path="/dashboard" element={
                                     <ProtectedRoute>
