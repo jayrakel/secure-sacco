@@ -17,7 +17,7 @@ public class PenaltyJob {
      * Runs automatically every day at 00:30 AM server time.
      * Cron expression: "0 30 0 * * *" -> Second 0, Minute 30, Hour 0, Every day.
      */
-    @Scheduled(cron = "0 30 0 * * *")
+    @Scheduled(cron = "0 30 0 * * *", zone = "Africa/Nairobi")
     public void executeDailyPenaltyInterestAccrual() {
         log.info("Starting Daily Penalty Interest Accrual Check...");
         try {

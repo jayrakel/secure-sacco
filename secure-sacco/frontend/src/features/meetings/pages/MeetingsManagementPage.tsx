@@ -64,7 +64,8 @@ export default function MeetingsManagementPage() {
                     draft[r.memberId] = r.status;
                     if (r.arrivedAt) {
                         // Convert ISO arrivedAt to HH:mm for the time input
-                        arrivedAtDraft[r.memberId] = new Date(r.arrivedAt).toTimeString().slice(0, 5);
+                        // arrivedAt from backend includes EAT offset — extract time directly
+                        arrivedAtDraft[r.memberId] = r.arrivedAt ? r.arrivedAt.slice(11, 16) : '';
                     }
                 });
                 setDraftAttendance(draft);
@@ -81,9 +82,10 @@ export default function MeetingsManagementPage() {
             const records = Object.entries(draftAttendance).map(([memberId, status]) => {
                 let arrivedAt: string | undefined;
                 if (status === 'LATE' && draftArrivedAt[memberId] && selected) {
-                    // Combine meeting date with the time the staff entered
-                    const meetingDate = new Date(selected.startAt).toISOString().slice(0, 10);
-                    arrivedAt = new Date(`${meetingDate}T${draftArrivedAt[memberId]}:00`).toISOString();
+                    // Combine meeting date (in EAT) with the staff-entered time
+                    // Use local date string to avoid UTC conversion — backend is already EAT
+                    const meetingDate = selected.startAt.slice(0, 10); // "2026-05-30"
+                    arrivedAt = `${meetingDate}T${draftArrivedAt[memberId]}:00`;
                 }
                 return { memberId, status, arrivedAt };
             });
