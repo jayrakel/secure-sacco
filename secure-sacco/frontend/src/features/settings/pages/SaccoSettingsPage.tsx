@@ -9,8 +9,8 @@ import { useSettings } from '../context/useSettings';
 import {
     Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
-    Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
-    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2, Globe,
+    Users, PiggyBank, BarChart3, AlertTriangle,
+    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -187,7 +187,7 @@ const SaccoSettingsPage: React.FC = () => {
 
     // ── Penalties state ─────────────────────────────────────────────────────
     const [rules, setRules]             = useState<PenaltyRule[]>([]);
-    const [rulesLoading, setRulesLoading] = useState(false);
+    const [rulesLoading] = useState(false);
     const [editingRule, setEditingRule] = useState<PenaltyRule | null>(null);
     const [isCreatingRule, setIsCreatingRule] = useState(false);
     const [ruleForm, setRuleForm]       = useState<Partial<PenaltyRuleRequest>>({});
@@ -259,11 +259,7 @@ const SaccoSettingsPage: React.FC = () => {
         setSavingRule(true);
         try {
             // Backend requires interestPeriodDays >= 1 — enforce when mode is NONE
-            const payload = {
-                ...ruleForm,
-                interestPeriodDays: ruleForm.interestMode === 'NONE' ? 1 : (ruleForm.interestPeriodDays ?? 1),
-                interestRate: ruleForm.interestMode === 'NONE' ? 0 : (ruleForm.interestRate ?? 0),
-            } as PenaltyRuleRequest;
+            const payload = { ...ruleForm, meetingDate: (ruleForm as any).meetingDate || null } as any;
             if (editingRule) {
                 const updated = await penaltyApi.updateRule(editingRule.id, payload);
                 setRules(prev => prev.map(r => r.id === editingRule.id ? updated : r));
@@ -351,19 +347,6 @@ const SaccoSettingsPage: React.FC = () => {
          try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
          catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save.')); }
          finally { setSavingComm(false); }
-     };
-
-     const handlePublicProfile = async (e: React.FormEvent) => {
-         e.preventDefault(); setSavingProfile(true);
-         try {
-             await publicApi.updateProfile({
-                 tagline, mission, vision, history,
-                 foundedYear, contactPhone, contactEmail, contactAddress,
-             });
-             setDirtyProfile(false);
-             flash(true, 'Public profile saved. Landing page will be updated shortly.');
-         } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save public profile.')); }
-         finally { setSavingProfile(false); }
      };
 
     const handleModules = async (e: React.FormEvent) => {

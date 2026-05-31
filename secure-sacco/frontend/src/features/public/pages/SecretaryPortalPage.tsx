@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { publicApi, type PublicAnnouncement, type PublicDocument, type SaccoProfile } from '../api/public-api';
+import { publicApi, type PublicAnnouncement, type PublicDocument } from '../api/public-api';
 import {
     Bell, FileText, Building2, Plus, Pencil, Trash2, X, Check,
-    Loader2, ToggleLeft, ToggleRight, AlertCircle, Globe,
-    BookOpen, Pin,
+    Loader2, ToggleLeft, ToggleRight, AlertCircle, Pin,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -84,9 +83,9 @@ function AnnouncementsTab({ flash }: { flash: (ok: boolean, msg: string) => void
         try { setItems(await publicApi.listAnnouncements()); }
         catch { flash(false, 'Failed to load announcements.'); }
         finally { setLoading(false); }
-    }, []);
+    }, [flash]);
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, [load]);
 
     const openNew = () => { setForm({ title: '', body: '', isPinned: false }); setEditing('new'); };
     const openEdit = (a: PublicAnnouncement) => { setForm({ title: a.title, body: a.body, isPinned: a.isPinned }); setEditing(a); };
@@ -209,9 +208,9 @@ function DocumentsTab({ flash }: { flash: (ok: boolean, msg: string) => void }) 
         try { setItems(await publicApi.listDocuments()); }
         catch { flash(false, 'Failed to load documents.'); }
         finally { setLoading(false); }
-    }, []);
+    }, [flash]);
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, [load]);
 
     const emptyForm = { title: '', description: '', category: 'MEETING_MINUTES', fileUrl: '', fileName: '', meetingDate: '' };
     const openNew = () => { setForm(emptyForm); setEditing('new'); };
