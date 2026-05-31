@@ -9,11 +9,11 @@ import {
     Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
     Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
-    Gavel, Plus, Pencil, X, Check, TriangleAlert,
+    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────
 
 type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'modules' | 'penalties';
 
@@ -30,7 +30,7 @@ interface SecurityPolicy {
     rateLimitGeneralPerMin: number;
 }
 
-// ─── Navigation tabs ──────────────────────────────────────────────────────────
+// ─── Navigation tabs ───────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] = [
     { id: 'identity',      label: 'Identity',      icon: <Building2 size={15} />, desc: 'Name, branding & fees'    },
@@ -108,7 +108,31 @@ const InfoBanner: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     </div>
 );
 
-// ─── Page component ───────────────────────────────────────────────────────────
+// ─── Penalty rule code formatter ───────────────────────────────────────────────
+// Converts MEETING_LATE_30 → "Late to Meeting (30 min)"
+//           MEETING_ABSENT  → "Absent from Meeting"
+//           SAVINGS_MISSED  → "Missed Savings"
+//           LOAN_MISSED_INSTALLMENT → "Missed Loan Installment"
+function formatRuleCode(code: string): string {
+    const map: Record<string, string> = {
+        MEETING_LATE_30:           'Late to Meeting (≤30 min)',
+        MEETING_LATE_120:          'Late to Meeting (30–120 min)',
+        MEETING_ABSENT:            'Absent from Meeting',
+        SAVINGS_MISSED_CONTRIBUTION: 'Missed Savings Contribution',
+        SAVINGS_LATE_CONTRIBUTION:   'Late Savings Contribution',
+        LOAN_MISSED_INSTALLMENT:   'Missed Loan Installment',
+        LOAN_LATE_INSTALLMENT:     'Late Loan Installment',
+        LOAN_DEFAULT:              'Loan Default',
+    };
+    if (map[code]) return map[code];
+    // Fallback: convert code to title case
+    return code
+        .toLowerCase()
+        .replace(/_/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
 
 const SaccoSettingsPage: React.FC = () => {
     const { refreshSettings } = useSettings();
@@ -120,7 +144,7 @@ const SaccoSettingsPage: React.FC = () => {
     const [settings, setSettings] = useState<SaccoSettings | null>(null);
     const [toast, setToast]   = useState<{ ok: boolean; msg: string } | null>(null);
 
-    // ── Identity ────────────────────────────────────────────────────────────
+    // ── Identity ─────────────────────────────────────────────────────────
     const [saccoName, setSaccoName]   = useState('');
     const [prefix, setPrefix]         = useState('');
     const [padLength, setPadLength]   = useState(7);
@@ -131,7 +155,7 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingId, setSavingId]     = useState(false);
     const [dirtyId, setDirtyId]       = useState(false);
 
-    // ── Security ────────────────────────────────────────────────────────────
+    // ── Security ─────────────────────────────────────────────────────────
     const defaultSec: SecurityPolicy = { maxLoginAttempts: 5, lockoutDurationMinutes: 15, sessionTimeoutMinutes: 30, passwordResetExpiryMin: 15, mfaTokenExpiryMinutes: 5, emailVerifyExpiryHours: 24, minPasswordLength: 12, contactVerifyRateLimit: 3, contactVerifyWindowMin: 15, rateLimitGeneralPerMin: 60 };
     const [sec, setSec] = useState<SecurityPolicy>(defaultSec);
     const [savingSec, setSavingSec] = useState(false);
@@ -156,7 +180,7 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingSched,        setSavingSched]        = useState(false);
     const [dirtySched,         setDirtySched]         = useState(false);
 
-    // ── Modules ─────────────────────────────────────────────────────────────
+    // ── Modules ─────────────────────────────────────────────────────────
     const [mods, setMods]         = useState<Record<string, boolean>>({ members: true, loans: false, savings: false, reports: false });
     const [savingMods, setSavingMods] = useState(false);
 
@@ -167,8 +191,15 @@ const SaccoSettingsPage: React.FC = () => {
     const [isCreatingRule, setIsCreatingRule] = useState(false);
     const [ruleForm, setRuleForm]       = useState<Partial<PenaltyRuleRequest>>({});
     const [savingRule, setSavingRule]   = useState(false);
+    const [deletingRule, setDeletingRule] = useState<string | null>(null);
 
-    // ── Load ────────────────────────────────────────────────────────────────
+    // ── Flash notification helper ───────────────────────────────────────────────
+    const flash = (ok: boolean, msg: string) => {
+        setToast({ ok, msg });
+        setTimeout(() => setToast(null), 4000);
+    };
+
+    // ── Load ─────────────────────────────────────────────────────────────────
     useEffect(() => {
         settingsApi.getSettings().then(d => {
             setSettings(d);
@@ -192,7 +223,7 @@ const SaccoSettingsPage: React.FC = () => {
         }).catch(() => flash(false, 'Failed to load settings.')).finally(() => setLoading(false));
     }, []);
 
-    // ── Auto-prefix ─────────────────────────────────────────────────────────
+    // ── Auto-prefix ──────────────────────────────────────────────────────────
     useEffect(() => {
         if (prefixManual || saccoName.trim().length < 2) return;
         const id = setTimeout(async () => {
@@ -200,11 +231,6 @@ const SaccoSettingsPage: React.FC = () => {
         }, 500);
         return () => clearTimeout(id);
     }, [saccoName, prefixManual]);
-
-    const flash = (ok: boolean, msg: string) => {
-        setToast({ ok, msg });
-        setTimeout(() => setToast(null), 4000);
-    };
 
     // Load penalty rules when penalties tab is opened
     const loadRules = useCallback(async () => {
@@ -239,7 +265,12 @@ const SaccoSettingsPage: React.FC = () => {
         if (!ruleForm.name || !ruleForm.code) return;
         setSavingRule(true);
         try {
-            const payload = ruleForm as PenaltyRuleRequest;
+            // Backend requires interestPeriodDays >= 1 — enforce when mode is NONE
+            const payload = {
+                ...ruleForm,
+                interestPeriodDays: ruleForm.interestMode === 'NONE' ? 1 : (ruleForm.interestPeriodDays ?? 1),
+                interestRate: ruleForm.interestMode === 'NONE' ? 0 : (ruleForm.interestRate ?? 0),
+            } as PenaltyRuleRequest;
             if (editingRule) {
                 const updated = await penaltyApi.updateRule(editingRule.id, payload);
                 setRules(prev => prev.map(r => r.id === editingRule.id ? updated : r));
@@ -252,6 +283,20 @@ const SaccoSettingsPage: React.FC = () => {
             flash(true, editingRule ? 'Penalty rule updated.' : 'Penalty rule created.');
         } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save rule.')); }
         finally { setSavingRule(false); }
+    };
+
+    const handleDeleteRule = async (rule: PenaltyRule) => {
+        if (!confirm(`Delete penalty rule "${rule.name}"? This cannot be undone.\n\nNote: rules applied to existing penalties cannot be deleted — deactivate them instead.`)) return;
+        setDeletingRule(rule.id);
+        try {
+            await penaltyApi.deleteRule(rule.id);
+            setRules(prev => prev.filter(r => r.id !== rule.id));
+            flash(true, `Penalty rule "${rule.name}" deleted.`);
+        } catch (err) {
+            flash(false, getApiErrorMessage(err, 'Failed to delete rule.'));
+        } finally {
+            setDeletingRule(null);
+        }
     };
 
     const toggleRuleActive = async (rule: PenaltyRule) => {
@@ -276,7 +321,7 @@ const SaccoSettingsPage: React.FC = () => {
         r.readAsDataURL(file);
     };
 
-    // ── Submit handlers ─────────────────────────────────────────────────────
+    // ── Submit handlers ──────────────────────────────────────────────────────
     const handleIdentity = async (e: React.FormEvent) => {
         e.preventDefault(); setSavingId(true);
         try {
@@ -463,50 +508,50 @@ const SaccoSettingsPage: React.FC = () => {
                         <form onSubmit={handleSecurity} className="space-y-5">
                             <Section title="Login Protection" desc="Lock accounts after repeated failed login attempts.">
                                 <div className="grid sm:grid-cols-2 gap-5">
-                                    <NumberField label="Max Login Attempts" value={sec.maxLoginAttempts} min={1} max={20} suffix="attempts"
-                                                 hint="Consecutive failures before the account is locked."
+                                    <NumberField label="Wrong password attempts allowed" value={sec.maxLoginAttempts} min={1} max={20} suffix="attempts"
+                                                 hint="How many wrong passwords before the account locks."
                                                  onChange={v => setSP('maxLoginAttempts', v)} />
-                                    <NumberField label="Lockout Duration" value={sec.lockoutDurationMinutes} min={1} max={1440} suffix="minutes"
-                                                 hint="How long the account stays locked after exceeding the limit."
+                                    <NumberField label="Account lock duration" value={sec.lockoutDurationMinutes} min={1} max={1440} suffix="minutes"
+                                                 hint="How long a locked account stays locked before the member can try again."
                                                  onChange={v => setSP('lockoutDurationMinutes', v)} />
                                 </div>
                             </Section>
 
                             <Section title="Session & Token Expiry" desc="Control how long authentication tokens and sessions stay valid.">
                                 <div className="grid sm:grid-cols-2 gap-5">
-                                    <NumberField label="Session Timeout" value={sec.sessionTimeoutMinutes} min={5} max={480} suffix="minutes"
-                                                 warn="Requires a server restart to take effect."
+                                    <NumberField label="Auto log-out after inactivity" value={sec.sessionTimeoutMinutes} min={5} max={480} suffix="minutes"
+                                                 warn="Members will be logged out automatically after this period of inactivity. Requires a server restart."
                                                  onChange={v => setSP('sessionTimeoutMinutes', v)} />
-                                    <NumberField label="MFA Pre-Auth Token" value={sec.mfaTokenExpiryMinutes} min={1} max={60} suffix="minutes"
-                                                 hint="Window to complete MFA after entering credentials."
+                                    <NumberField label="Login verification code expires in" value={sec.mfaTokenExpiryMinutes} min={1} max={60} suffix="minutes"
+                                                 hint="How long a one-time login code stays valid after it's sent."
                                                  onChange={v => setSP('mfaTokenExpiryMinutes', v)} />
-                                    <NumberField label="Password Reset Link" value={sec.passwordResetExpiryMin} min={5} max={1440} suffix="minutes"
-                                                 hint="How long a password reset link stays valid."
+                                    <NumberField label="Password reset link expires in" value={sec.passwordResetExpiryMin} min={5} max={1440} suffix="minutes"
+                                                 hint="Members have this long to use a password reset link before it expires."
                                                  onChange={v => setSP('passwordResetExpiryMin', v)} />
-                                    <NumberField label="Email Verification Link" value={sec.emailVerifyExpiryHours} min={1} max={168} suffix="hours"
-                                                 hint="How long an email-verification link stays valid."
+                                    <NumberField label="Email confirmation link expires in" value={sec.emailVerifyExpiryHours} min={1} max={168} suffix="hours"
+                                                 hint="How long members have to click an email confirmation link."
                                                  onChange={v => setSP('emailVerifyExpiryHours', v)} />
                                 </div>
                             </Section>
 
                             <Section title="Password Policy" desc="Enforce strong passwords for all users.">
                                 <div className="max-w-xs">
-                                    <NumberField label="Minimum Password Length" value={sec.minPasswordLength} min={8} max={64} suffix="chars"
-                                                 hint="Applied at registration and password reset. Uppercase, lowercase, digit and special character are always required."
+                                    <NumberField label="Minimum password length" value={sec.minPasswordLength} min={8} max={64} suffix="chars"
+                                                 hint="Passwords must be at least this many characters. All passwords must include a mix of uppercase, lowercase, number and symbol."
                                                  onChange={v => setSP('minPasswordLength', v)} />
                                 </div>
                             </Section>
 
-                            <Section title="API Rate Limits" desc="Protect the platform from abuse by throttling API requests.">
+                            <Section title="Abuse protection" desc="Limit how many actions can happen per minute to protect the system from misuse.">
                                 <div className="grid sm:grid-cols-2 gap-5">
-                                    <NumberField label="General API Limit" value={sec.rateLimitGeneralPerMin} min={10} max={300} suffix="req / min"
-                                                 hint="Applies to all authenticated endpoints not covered by a stricter rule."
+                                    <NumberField label="Maximum actions per minute" value={sec.rateLimitGeneralPerMin} min={10} max={300} suffix="req / min"
+                                                 hint="The maximum number of requests any user can make per minute."
                                                  onChange={v => setSP('rateLimitGeneralPerMin', v)} />
-                                    <NumberField label="Contact Verification Limit" value={sec.contactVerifyRateLimit} min={1} max={20} suffix="requests"
-                                                 hint="Max verification emails / OTPs within the window below."
+                                    <NumberField label="Verification code limit" value={sec.contactVerifyRateLimit} min={1} max={20} suffix="requests"
+                                                 hint="How many verification codes a member can request within the time window below."
                                                  onChange={v => setSP('contactVerifyRateLimit', v)} />
-                                    <NumberField label="Verification Window" value={sec.contactVerifyWindowMin} min={1} max={60} suffix="minutes"
-                                                 hint="Sliding window used to count contact-verification requests."
+                                    <NumberField label="Verification window" value={sec.contactVerifyWindowMin} min={1} max={60} suffix="minutes"
+                                                 hint="The time period used to count verification code requests."
                                                  onChange={v => setSP('contactVerifyWindowMin', v)} />
                                 </div>
                             </Section>
@@ -520,13 +565,13 @@ const SaccoSettingsPage: React.FC = () => {
                     {/* COMMUNICATION */}
                     {tab === 'communication' && (
                         <form onSubmit={handleComm} className="space-y-5">
-                            <Section title="Email Sender" desc="Controls how outgoing system emails appear to recipients.">
+                            <Section title="Email settings" desc="These details appear on emails sent to members.">
                                 <div className="space-y-5">
-                                    <Field label="Sender Display Name" hint="Shown in the From field of all outgoing emails (e.g. 'Umoja SACCO').">
+                                    <Field label="Your SACCO name (appears in emails)" hint="This is what members see as the sender name in their inbox.">
                                         <input type="text" required value={fromName} placeholder="Secure SACCO" className={inputCls}
                                                onChange={e => { setFromName(e.target.value); setDirtyComm(true); }} />
                                     </Field>
-                                    <Field label="Support Email Address" hint="Shown in member-facing UI and email footers. Leave blank to hide.">
+                                    <Field label="Support email address" hint="Members can contact this address for help. Leave blank to hide it.">
                                         <input type="email" value={suppEmail} placeholder="support@yoursacco.co.ke" className={inputCls}
                                                onChange={e => { setSuppEmail(e.target.value); setDirtyComm(true); }} />
                                     </Field>
@@ -752,7 +797,8 @@ const SaccoSettingsPage: React.FC = () => {
                                                                         {rule.description && (
                                                                             <p className="text-xs text-slate-500 mt-0.5 truncate max-w-sm">{rule.description}</p>
                                                                         )}
-                                                                        <p className="text-[10px] text-slate-400 mt-0.5 font-mono">{rule.code}</p>
+                                                                        <p className="text-[10px] text-slate-400 mt-0.5">{formatRuleCode(rule.code)}</p>
+                                                                        <p className="text-[9px] text-slate-300 font-mono mt-0.5">{rule.code}</p>
                                                                     </div>
 
                                                                     {/* Fine amount */}
@@ -769,11 +815,20 @@ const SaccoSettingsPage: React.FC = () => {
                                                                         )}
                                                                     </div>
 
-                                                                    {/* Edit button */}
-                                                                    <button onClick={() => openEditRule(rule)}
-                                                                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
-                                                                        <Pencil size={13} />
-                                                                    </button>
+                                                                    {/* Edit + Delete buttons */}
+                                                                    <div className="flex items-center gap-1 shrink-0">
+                                                                        <button onClick={() => openEditRule(rule)}
+                                                                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                                                                            <Pencil size={13} />
+                                                                        </button>
+                                                                        <button onClick={() => handleDeleteRule(rule)}
+                                                                                disabled={deletingRule === rule.id}
+                                                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40">
+                                                                            {deletingRule === rule.id
+                                                                                ? <Loader2 size={13} className="animate-spin" />
+                                                                                : <Trash2 size={13} />}
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -810,9 +865,15 @@ const SaccoSettingsPage: React.FC = () => {
                                                                 <div className="text-sm font-bold text-slate-900 shrink-0">
                                                                     {rule.baseAmountType === 'PERCENTAGE' ? `${rule.baseAmountValue}%` : `KES ${rule.baseAmountValue.toLocaleString()}`}
                                                                 </div>
-                                                                <button onClick={() => openEditRule(rule)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
-                                                                    <Pencil size={13} />
-                                                                </button>
+                                                                <div className="flex items-center gap-1 shrink-0">
+                                                                    <button onClick={() => openEditRule(rule)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                                                                        <Pencil size={13} />
+                                                                    </button>
+                                                                    <button onClick={() => handleDeleteRule(rule)} disabled={deletingRule === rule.id}
+                                                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40">
+                                                                        {deletingRule === rule.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>

@@ -297,7 +297,9 @@ public class MigrationService {
 
         // 4. 🚨 SCHEDULE OVERRIDE: If actual historical interest is provided,
         //    rewrite the schedule items to match the real Excel amounts exactly.
-        //    Without this, the system uses the product's annual rate which may differ.
+        //    Uses direct @Modifying JPQL update per item to bypass Hibernate L1 cache
+        //    timing issues — this guarantees the correct values hit the DB regardless
+        //    of Hibernate flush ordering within the outer @Transactional.
         if (request.interest() != null && request.interest().compareTo(BigDecimal.ZERO) > 0) {
             int termWeeks = request.termWeeks() != null ? request.termWeeks() : 104;
             BigDecimal totalInterest = request.interest();
@@ -308,37 +310,50 @@ public class MigrationService {
             BigDecimal interestPerWeek = totalInterest
                     .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP);
 
-            BigDecimal principalAccumulated = BigDecimal.ZERO;
-            BigDecimal interestAccumulated = BigDecimal.ZERO;
+            // Force Hibernate to flush all pending schedule items to DB first
+            entityManager.flush();
 
             var scheduleItems = scheduleItemRepository
                     .findByLoanApplicationIdOrderByWeekNumberAsc(response.id());
 
-            for (int i = 0; i < scheduleItems.size(); i++) {
-                var item = scheduleItems.get(i);
-                boolean isLast = (i == scheduleItems.size() - 1);
+            if (scheduleItems.isEmpty()) {
+                log.error("❌ SCHEDULE OVERRIDE FAILED: No schedule items found for loan {}. " +
+                        "Check that generateWeeklySchedule() committed correctly.", response.id());
+            } else {
+                log.info("🔧 Overriding {} schedule items for loan {} with " +
+                        "principal={}, interest={}", scheduleItems.size(), response.id(), principal, totalInterest);
 
-                BigDecimal p = isLast
-                        ? principal.subtract(principalAccumulated)
-                        : principalPerWeek;
-                BigDecimal ir = isLast
-                        ? totalInterest.subtract(interestAccumulated)
-                        : interestPerWeek;
+                BigDecimal principalAccumulated = BigDecimal.ZERO;
+                BigDecimal interestAccumulated = BigDecimal.ZERO;
 
-                item.setPrincipalDue(p);
-                item.setInterestDue(ir);
-                item.setTotalDue(p.add(ir));
-                scheduleItemRepository.save(item);
+                for (int i = 0; i < scheduleItems.size(); i++) {
+                    var item = scheduleItems.get(i);
+                    boolean isLast = (i == scheduleItems.size() - 1);
 
-                principalAccumulated = principalAccumulated.add(p);
-                interestAccumulated = interestAccumulated.add(ir);
+                    BigDecimal p = isLast
+                            ? principal.subtract(principalAccumulated)
+                            : principalPerWeek;
+                    BigDecimal ir = isLast
+                            ? totalInterest.subtract(interestAccumulated)
+                            : interestPerWeek;
+
+                    // Direct @Modifying JPQL update — bypasses Hibernate dirty-detection
+                    // entirely and writes directly to DB within the current transaction
+                    scheduleItemRepository.updateAmounts(item.getId(), p, ir, p.add(ir));
+
+                    principalAccumulated = principalAccumulated.add(p);
+                    interestAccumulated = interestAccumulated.add(ir);
+                }
+
+                log.info("✅ Schedule overridden with historical amounts for {}. " +
+                                "Principal={}, Interest={}, WeeklyInstallment={}",
+                        request.referenceNumber(), principal, totalInterest,
+                        principal.add(totalInterest)
+                                .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP));
             }
 
-            log.info("✅ Schedule overridden with historical amounts for {}. " +
-                            "Principal={}, Interest={}, WeeklyInstallment={}",
-                    request.referenceNumber(), principal, totalInterest,
-                    principal.add(totalInterest)
-                            .divide(BigDecimal.valueOf(termWeeks), 2, java.math.RoundingMode.HALF_UP));
+            // Clear Hibernate L1 cache so subsequent reads reflect the JPQL-written values
+            entityManager.clear();
         }
 
         // 5. MAGIC BULLET: Force Hibernate to write to DB immediately

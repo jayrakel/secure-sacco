@@ -13,4 +13,9 @@ public interface PenaltyRuleRepository extends JpaRepository<PenaltyRule, UUID> 
     Optional<PenaltyRule> findByCode(String code);
     Optional<PenaltyRule> findByName(String name);
     List<PenaltyRule> findByIsActiveTrue();
+
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT COUNT(p) FROM Penalty p WHERE p.penaltyRule.id = :ruleId"
+    )
+    long countPenaltiesByRuleId(@org.springframework.data.repository.query.Param("ruleId") java.util.UUID ruleId);
 }

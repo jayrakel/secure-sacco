@@ -47,4 +47,5 @@ export const penaltyApi = {
     getRules:   (activeOnly = false): Promise<PenaltyRule[]>  => apiClient.get<PenaltyRule[]>(`/penalties/rules?activeOnly=${activeOnly}`).then(r => r.data),
     createRule: (data: PenaltyRuleRequest): Promise<PenaltyRule> => apiClient.post<PenaltyRule>('/penalties/rules', data).then(r => r.data),
     updateRule: (id: string, data: PenaltyRuleRequest): Promise<PenaltyRule> => apiClient.put<PenaltyRule>(`/penalties/rules/${id}`, data).then(r => r.data),
+    deleteRule: (id: string): Promise<void> => apiClient.delete(`/penalties/rules/${id}`).then(() => undefined),
 };

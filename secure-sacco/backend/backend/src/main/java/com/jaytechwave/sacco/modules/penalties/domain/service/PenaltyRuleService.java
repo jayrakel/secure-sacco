@@ -70,6 +70,21 @@ public class PenaltyRuleService {
         return rules.stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteRule(UUID id) {
+        PenaltyRule rule = penaltyRuleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Rule not found"));
+
+        long usageCount = penaltyRuleRepository.countPenaltiesByRuleId(id);
+        if (usageCount > 0) {
+            throw new IllegalStateException(
+                    "Cannot delete '" + rule.getName() + "' — it has been applied to " +
+                            usageCount + " penalty record(s). Deactivate it instead."
+            );
+        }
+        penaltyRuleRepository.deleteById(id);
+    }
+
     private PenaltyRuleResponse mapToResponse(PenaltyRule rule) {
         return new PenaltyRuleResponse(
                 rule.getId(), rule.getCode(), rule.getName(), rule.getDescription(),
