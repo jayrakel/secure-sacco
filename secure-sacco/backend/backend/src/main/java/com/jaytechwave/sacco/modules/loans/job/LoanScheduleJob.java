@@ -19,7 +19,7 @@ public class LoanScheduleJob {
      * Runs automatically every day at 00:01 AM server time.
      * Cron expression: "0 1 0 * * *" -> Second 0, Minute 1, Hour 0, Every day.
      */
-    @Scheduled(cron = "0 1 0 * * *")
+    @Scheduled(cron = "0 1 0 * * *", zone = "Africa/Nairobi")
     public void executeDailyScheduleCheck() {
         log.info("Starting Daily Loan Schedule Engine Check...");
         try {

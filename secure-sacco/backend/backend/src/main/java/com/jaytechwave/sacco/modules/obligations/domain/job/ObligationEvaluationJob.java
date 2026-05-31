@@ -26,7 +26,7 @@ public class ObligationEvaluationJob {
     /** * 🟢 THE FIX: Runs EVERY NIGHT at 01:00 AM.
      * The evaluation logic will now dynamically check if the (DueDate + Grace Period) has passed.
      */
-    @Scheduled(cron = "0 0 1 * * *")
+    @Scheduled(cron = "0 0 1 * * *", zone = "Africa/Nairobi")
     public void evaluateDaily() {
         log.info("ObligationEvaluationJob: Daily compliance trigger fired.");
         runEvaluation();

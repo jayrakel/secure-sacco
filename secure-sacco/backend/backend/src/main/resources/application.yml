@@ -57,6 +57,12 @@ spring:
 
   jackson:
     time-zone: Africa/Nairobi
+    serialization:
+      write-dates-as-timestamps: false        # serialize as ISO-8601 string not array
+      write-dates-with-zone-id: false         # LocalDateTime gets offset not zone ID
+      write-dates-with-context-time-zone: true # apply the time-zone above to output
+    deserialization:
+      adjust-dates-to-context-time-zone: true # inbound dates adjusted to Africa/Nairobi
 
   # ── Outgoing email (Resend HTTP API) ─────────────────────────────────────
   # Resend sends over HTTPS (port 443) — no SMTP port restrictions.

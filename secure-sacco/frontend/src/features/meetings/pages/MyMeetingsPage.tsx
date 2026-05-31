@@ -5,8 +5,9 @@ import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle, LogIn } from 'luci
 import { format } from 'date-fns';
 import axios from "axios";
 
-const parseUtc = (dateStr: string) =>
-    new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+// Backend sends ISO-8601 with EAT offset e.g. "2026-05-30T02:35:00+03:00"
+// Parse directly — do NOT append 'Z' which would incorrectly treat as UTC
+const parseEat = (dateStr: string) => new Date(dateStr);
 
 const ATTENDANCE_CONFIG: Record<AttendanceStatus, { label: string; color: string; Icon: React.ElementType }> = {
     PRESENT: { label: 'Present',  color: 'text-green-600 bg-green-50',   Icon: CheckCircle2 },
@@ -65,7 +66,7 @@ export default function MyMeetingsPage() {
         : 0;
 
     const renderStatusCell = (m: MyMeetingSummary) => {
-        const startAt = parseUtc(m.startAt);
+        const startAt = parseEat(m.startAt);
         const hasStarted = now >= startAt;
 
         // Completed — show attendance badge
@@ -181,10 +182,10 @@ export default function MyMeetingsPage() {
                                 </td>
                                 <td className="px-4 py-3">
                                     <p className="text-sm text-slate-600">
-                                        {format(parseUtc(m.startAt), 'dd MMM yyyy')}
+                                        {format(parseEat(m.startAt), 'dd MMM yyyy')}
                                     </p>
                                     <p className="text-xs text-slate-400">
-                                        {format(parseUtc(m.startAt), 'HH:mm')}
+                                        {format(parseEat(m.startAt), 'HH:mm')}
                                     </p>
                                 </td>
                                 <td className="px-4 py-3 text-right">
