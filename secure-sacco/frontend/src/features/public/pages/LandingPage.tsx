@@ -83,6 +83,18 @@ export default function LandingPage() {
     const [loading, setLoading] = useState(true);
     const [scrolled, setScrolled] = useState(false);
     const [docFilter, setDocFilter] = useState('all');
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [photoIndex, setPhotoIndex] = useState(0);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    // Mock member photos - in production these would come from the backend
+    const memberPhotos = [
+        { id: 1, name: 'Member 1', role: 'Founder', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
+        { id: 2, name: 'Member 2', role: 'Treasurer', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop' },
+        { id: 3, name: 'Member 3', role: 'Secretary', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop' },
+        { id: 4, name: 'Member 4', role: 'Officer', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop' },
+        { id: 5, name: 'Member 5', role: 'Member', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
+    ];
 
     useEffect(() => {
         publicApi.getLanding()
@@ -93,7 +105,14 @@ export default function LandingPage() {
             .finally(() => setLoading(false));
         const h = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', h, { passive: true });
-        return () => window.removeEventListener('scroll', h);
+
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('scroll', h);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
     const p = data?.profile;
@@ -149,6 +168,45 @@ export default function LandingPage() {
             .lp-contact-card:hover{border-color:${GOLD}66!important;background:rgba(201,168,76,.05)!important}
             .lp-footer-a{color:rgba(255,255,255,.2);font-size:11px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;transition:color .2s}
             .lp-footer-a:hover{color:${GOLD}}
+            .lp-mobile-menu-btn{display:none;background:none;border:none;color:#fff;font-size:24px;cursor:pointer;z-index:300}
+            .lp-mobile-menu{display:none;position:fixed;top:64px;left:0;right:0;background:rgba(11,15,30,.98);border-top:1px solid ${GOLD}22;max-height:calc(100vh-64px);overflow-y:auto;z-index:250}
+            .lp-mobile-menu.open{display:block}
+            .lp-mobile-menu a{display:block;color:rgba(255,255,255,.6);padding:12px 20px;text-decoration:none;font-size:14px;border-bottom:1px solid rgba(201,168,76,.1);transition:color .2s}
+            .lp-mobile-menu a:hover{color:${GOLD}}
+            .lp-photo-gallery{background:#f4f1eb;padding:clamp(40px,8vh,80px) clamp(20px,5vw,56px)}
+            .lp-photo-carousel{position:relative;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+            .lp-photo-carousel-inner{display:flex;transition:transform .5s ease;width:100%}
+            .lp-photo-item{flex:0 0 100%;display:flex;align-items:center;justify-content:center;min-height:400px;background:linear-gradient(135deg,${GOLD},#b8962e)}
+            .lp-photo-item img{width:100%;height:100%;object-fit:cover}
+            .lp-photo-dots{display:flex;gap:8px;justify-content:center;padding:16px 0;margin-top:16px}
+            .lp-photo-dot{width:8px;height:8px;border-radius:50%;background:${GOLD}33;border:1px solid ${GOLD}66;cursor:pointer;transition:all .2s}
+            .lp-photo-dot.active{background:${GOLD};border-color:${GOLD}}
+            .lp-photo-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.3);color:#fff;border:none;padding:12px;cursor:pointer;font-size:20px;z-index:10;transition:background .2s}
+            .lp-photo-nav:hover{background:rgba(0,0,0,.5)}
+            .lp-photo-nav.prev{left:12px}
+            .lp-photo-nav.next{right:12px}
+            .lp-photo-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(11,15,30,.8),transparent);padding:32px 24px;color:#fff}
+            .lp-photo-overlay h4{font-family:'Playfair Display',serif;font-size:20px;margin:0 0 4px;font-weight:700}
+            .lp-photo-overlay p{font-size:13px;margin:0;color:${GOLD}}
+            @keyframes lp-marquee{
+                0%{transform:translateX(0)}
+                100%{transform:translateX(-100%)}
+            }
+            @keyframes lp-float{
+                0%,100%{transform:translateY(0px)}
+                50%{transform:translateY(-12px)}
+            }
+            @media(max-width:767px){
+                .lp-mobile-menu-btn{display:block}
+                .lp-nav-a{display:none}
+                nav{flex-direction:column}
+                .lp-btn-gold{padding:10px 20px;font-size:12px}
+                .lp-hero-grid{grid-template-columns:1fr!important}
+                .lp-hero-stat-panel{min-width:auto;width:100%}
+                .lp-photo-item{min-height:280px}
+                .lp-photo-overlay{padding:20px 16px}
+                .lp-photo-overlay h4{font-size:18px}
+            }
             ::-webkit-scrollbar{width:4px}
             ::-webkit-scrollbar-track{background:transparent}
             ::-webkit-scrollbar-thumb{background:${GOLD}44;border-radius:99px}
@@ -182,21 +240,37 @@ export default function LandingPage() {
                         </div>
                     </div>
 
-                    <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-                        <div style={{ display: 'flex', gap: 28 }}>
+                    <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 32, flex: 1 }}>
+                        <div style={{ display: isMobile ? 'none' : 'flex', gap: 28 }}>
                             {[['#about','About'],['#meetings','Meetings'],['#documents','Documents'],['#contact','Contact']].map(([h,l]) =>
                                 <a key={h} href={h} className="lp-nav-a">{l}</a>
                             )}
                         </div>
-                        <div style={{ display: 'flex', gap: 12 }}>
-                            <Link to="/secretary-portal" className="lp-btn-ghost" style={{ textDecoration: 'none' }}>
+                        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                            <Link to="/secretary-portal" className="lp-btn-ghost" style={{ textDecoration: 'none', display: isMobile ? 'none' : 'block' }}>
                                 Secretary Portal
                             </Link>
                             <Link to="/login" className="lp-btn-gold" style={{ textDecoration: 'none' }}>
                                 User Login
                             </Link>
+                            <button
+                                className="lp-mobile-menu-btn"
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                style={{ display: isMobile ? 'block' : 'none', marginLeft: 8 }}
+                            >
+                                ☰
+                            </button>
                         </div>
                     </nav>
+
+                    {/* ── MOBILE MENU ────────────────────────────────────────────────────────── */}
+                    {isMobile && (
+                        <div className={`lp-mobile-menu${mobileMenuOpen ? ' open' : ''}`}>
+                            {[['#about','About'],['#meetings','Meetings'],['#documents','Documents'],['#contact','Contact']].map(([h,l]) =>
+                                <a key={h} href={h} onClick={() => setMobileMenuOpen(false)}>{l}</a>
+                            )}
+                        </div>
+                    )}
                 </header>
 
                 {/* ── HERO ───────────────────────────────────────────────────────── */}
@@ -223,7 +297,7 @@ export default function LandingPage() {
                     )}
 
                     <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', paddingTop: pinned.length ? 40 : 0 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 48, alignItems: 'center' }}>
+                        <div className="lp-hero-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto', gap: isMobile ? 32 : 48, alignItems: 'center' }}>
                             {/* Left: copy */}
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
@@ -251,7 +325,7 @@ export default function LandingPage() {
                             </div>
 
                             {/* Right: stat panel */}
-                            <div style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${GOLD}22`, borderRadius: 14, padding: '24px 28px', minWidth: 200, backdropFilter: 'blur(16px)' }}>
+                            <div className="lp-hero-stat-panel" style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${GOLD}22`, borderRadius: 14, padding: '24px 28px', minWidth: isMobile ? 'auto' : 200, backdropFilter: 'blur(16px)' }}>
                                 {[
                                     { label: 'Active Members', value: data?.memberCount ?? 0, suffix: '' },
                                     { label: 'Meetings Held',  value: data?.meetingsHeld ?? 0,  suffix: '' },
@@ -339,6 +413,67 @@ export default function LandingPage() {
                     </section>
                 )}
 
+                {/* ── MEMBERS PHOTO GALLERY ──────────────────────────────────────────────────── */}
+                <section id="members" className="lp-photo-gallery">
+                    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+                        <Reveal style={{ marginBottom: 44 }}>
+                            <div className="lp-rule"><span>Our Community</span></div>
+                            <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)', marginBottom: 8 }}>Meet Our Members</h2>
+                            <p style={{ color: '#9a9488', fontSize: 14, lineHeight: 1.65, maxWidth: 520 }}>
+                                Building financial stability together. Meet the dedicated members of our cooperative family.
+                            </p>
+                        </Reveal>
+
+                        <Reveal delay={0.1}>
+                            <div className="lp-photo-carousel">
+                                <div className="lp-photo-carousel-inner" style={{ transform: `translateX(-${photoIndex * 100}%)` }}>
+                                    {memberPhotos.map((photo) => (
+                                        <div key={photo.id} className="lp-photo-item" style={{ position: 'relative' }}>
+                                            <img src={photo.image} alt={photo.name} />
+                                            <div className="lp-photo-overlay">
+                                                <h4>{photo.name}</h4>
+                                                <p>{photo.role}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {memberPhotos.length > 1 && (
+                                    <>
+                                        <button
+                                            className="lp-photo-nav prev"
+                                            onClick={() => setPhotoIndex((photoIndex - 1 + memberPhotos.length) % memberPhotos.length)}
+                                            aria-label="Previous photo"
+                                        >
+                                            ‹
+                                        </button>
+                                        <button
+                                            className="lp-photo-nav next"
+                                            onClick={() => setPhotoIndex((photoIndex + 1) % memberPhotos.length)}
+                                            aria-label="Next photo"
+                                        >
+                                            ›
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </Reveal>
+
+                        {memberPhotos.length > 1 && (
+                            <div className="lp-photo-dots">
+                                {memberPhotos.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        className={`lp-photo-dot${i === photoIndex ? ' active' : ''}`}
+                                        onClick={() => setPhotoIndex(i)}
+                                        aria-label={`Go to photo ${i + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+
                 {/* ── MEETINGS ───────────────────────────────────────────────────── */}
                 <section id="meetings" style={{ background: '#fff', borderTop: '1px solid #e8e4d8', padding: 'clamp(56px,10vh,100px) clamp(20px,5vw,56px)' }}>
                     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -361,7 +496,7 @@ export default function LandingPage() {
                                 </div>
                             </Reveal>
                         ) : (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
                                 {(data?.upcomingMeetings ?? []).map((m, i) => (
                                     <MeetCard key={m.id} m={m} featured={i === 0} delay={i * 0.1} />
                                 ))}
@@ -403,16 +538,17 @@ export default function LandingPage() {
                 {/* ── DOCUMENTS ──────────────────────────────────────────────────── */}
                 <section id="documents" style={{ background: '#fff', borderTop: '1px solid #e8e4d8', padding: 'clamp(56px,10vh,100px) clamp(20px,5vw,56px)' }}>
                     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-                        <Reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
+                        <Reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 20, marginBottom: 28, flexDirection: isMobile ? 'column' : 'row' }}>
                             <div>
                                 <div className="lp-rule"><span>Resources</span></div>
                                 <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>Documents & Minutes</h2>
                             </div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, width: isMobile ? '100%' : 'auto' }}>
                                 {DOC_CATS.map(cat => (
                                     <button key={cat}
                                             onClick={() => setDocFilter(cat)}
-                                            className={`lp-filt-btn${docFilter === cat ? ' active' : ''}`}>
+                                            className={`lp-filt-btn${docFilter === cat ? ' active' : ''}`}
+                                            style={{ flex: isMobile ? '1 1 auto' : 'none' }}>
                                         {cat === 'all' ? 'All' : (DOC_STYLE[cat]?.label ?? formatCategory(cat))}
                                     </button>
                                 ))}
@@ -448,30 +584,30 @@ export default function LandingPage() {
 
                             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16, marginBottom: 56 }}>
                                 {p?.contactPhone && (
-                                    <a href={`tel:${p.contactPhone}`} style={{ textDecoration: 'none' }}>
-                                        <div className="lp-contact-card" style={{ background: 'rgba(255,255,255,.04)', border: `0.5px solid ${GOLD}22`, borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14, minWidth: 200 }}>
-                                            <div style={{ width: 40, height: 40, background: `${GOLD}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📞</div>
+                                    <a href={`tel:${p.contactPhone}`} style={{ textDecoration: 'none', flex: isMobile ? '1 1 100%' : '0 1 auto', minWidth: isMobile ? 'auto' : 200 }}>
+                                        <div className="lp-contact-card" style={{ background: 'rgba(255,255,255,.04)', border: `0.5px solid ${GOLD}22`, borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                                            <div style={{ width: 40, height: 40, background: `${GOLD}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📞</div>
                                             <div style={{ textAlign: 'left' }}>
                                                 <p style={{ color: `${GOLD}88`, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 3 }}>Phone</p>
-                                                <p style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{p.contactPhone}</p>
+                                                <p style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 12 : 14 }}>{p.contactPhone}</p>
                                             </div>
                                         </div>
                                     </a>
                                 )}
                                 {p?.contactEmail && (
-                                    <a href={`mailto:${p.contactEmail}`} style={{ textDecoration: 'none' }}>
-                                        <div className="lp-contact-card" style={{ background: 'rgba(255,255,255,.04)', border: `0.5px solid ${GOLD}22`, borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14, minWidth: 200 }}>
-                                            <div style={{ width: 40, height: 40, background: `${GOLD}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>✉️</div>
+                                    <a href={`mailto:${p.contactEmail}`} style={{ textDecoration: 'none', flex: isMobile ? '1 1 100%' : '0 1 auto', minWidth: isMobile ? 'auto' : 200 }}>
+                                        <div className="lp-contact-card" style={{ background: 'rgba(255,255,255,.04)', border: `0.5px solid ${GOLD}22`, borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                                            <div style={{ width: 40, height: 40, background: `${GOLD}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>✉️</div>
                                             <div style={{ textAlign: 'left' }}>
                                                 <p style={{ color: `${GOLD}88`, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 3 }}>Email</p>
-                                                <p style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>{p.contactEmail}</p>
+                                                <p style={{ color: '#fff', fontWeight: 600, fontSize: isMobile ? 12 : 13 }}>{p.contactEmail}</p>
                                             </div>
                                         </div>
                                     </a>
                                 )}
                                 {p?.contactAddress && (
-                                    <div className="lp-contact-card" style={{ background: 'rgba(255,255,255,.04)', border: `0.5px solid ${GOLD}22`, borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                                        <div style={{ width: 40, height: 40, background: `${GOLD}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>📍</div>
+                                    <div className="lp-contact-card" style={{ background: 'rgba(255,255,255,.04)', border: `0.5px solid ${GOLD}22`, borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 14, flex: isMobile ? '1 1 100%' : '0 1 auto' }}>
+                                        <div style={{ width: 40, height: 40, background: `${GOLD}18`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>📍</div>
                                         <div style={{ textAlign: 'left' }}>
                                             <p style={{ color: `${GOLD}88`, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 3 }}>Location</p>
                                             <p style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{p.contactAddress}</p>
@@ -499,8 +635,8 @@ export default function LandingPage() {
                 </section>
 
                 {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-                <footer style={{ background: '#070b14', borderTop: `1px solid ${GOLD}12`, padding: '24px clamp(20px,5vw,56px)', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <footer style={{ background: '#070b14', borderTop: `1px solid ${GOLD}12`, padding: '24px clamp(20px,5vw,56px)', display: 'flex', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'space-between', alignItems: 'center', gap: 16, textAlign: isMobile ? 'center' : 'left' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, order: isMobile ? 1 : 0 }}>
                         {p?.logoUrl
                             ? <img src={p.logoUrl} alt="logo" style={{ height: 28, width: 'auto', objectFit: 'contain', opacity: .7 }} />
                             : <div style={{ width: 28, height: 28, background: GOLD, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display,serif', fontWeight: 700, color: NAVY, fontSize: 13 }}>{initial}</div>
@@ -510,12 +646,12 @@ export default function LandingPage() {
                             {p?.foundedYear && <p style={{ color: `${GOLD}44`, fontSize: 10 }}>Est. {p.foundedYear}</p>}
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 24 }}>
-                        {[['#about','About'],['#meetings','Meetings'],['#documents','Documents']].map(([h,l]) =>
+                    <div style={{ display: 'flex', gap: 24, order: isMobile ? 2 : 1, flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+                        {[['#about','About'],['#meetings','Meetings'],['#documents','Documents'],['#members','Members']].map(([h,l]) =>
                             <a key={h} href={h} className="lp-footer-a">{l}</a>
                         )}
                     </div>
-                    <p style={{ color: 'rgba(255,255,255,.1)', fontSize: 11 }}>© {new Date().getFullYear()} {name}</p>
+                    <p style={{ color: 'rgba(255,255,255,.1)', fontSize: 11, order: isMobile ? 3 : 2, width: isMobile ? '100%' : 'auto' }}>© {new Date().getFullYear()} {name}</p>
                 </footer>
 
             </div>
