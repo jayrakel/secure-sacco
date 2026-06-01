@@ -230,4 +230,95 @@ public class CoopConnectDTOs {
         @JsonProperty("BookedBalance")
         private String bookedBalance;
     }
+
+    // ── Account Transaction Inquiry ───────────────────────────────────────────
+
+    @Data
+    public static class AccountTransactionRequest {
+        @JsonProperty("MessageReference")
+        private String messageReference;
+
+        @JsonProperty("UserId")
+        private String userId;
+
+        @JsonProperty("AccountNumber")
+        private String accountNumber;
+
+        @JsonProperty("StartDate")   // Format: YYYY-MM-DD
+        private String startDate;
+
+        @JsonProperty("EndDate")     // Format: YYYY-MM-DD
+        private String endDate;
+    }
+
+    @Data
+    public static class AccountTransactionResponse {
+        @JsonProperty("MessageReference")
+        private String messageReference;
+
+        @JsonProperty("MessageCode")
+        private String messageCode;
+
+        @JsonProperty("MessageDescription")
+        private String messageDescription;
+
+        @JsonProperty("AccountNumber")
+        private String accountNumber;
+
+        @JsonProperty("Currency")
+        private String currency;
+
+        @JsonProperty("Transactions")
+        private List<TransactionEntry> transactions;
+    }
+
+    @Data
+    public static class TransactionEntry {
+        @JsonProperty("TransactionId")
+        private String transactionId;
+
+        @JsonProperty("TransactionDate")
+        private String transactionDate;
+
+        @JsonProperty("ValueDate")
+        private String valueDate;
+
+        @JsonProperty("Narration")
+        private String narration;
+
+        @JsonProperty("TransactionType")  // DR or CR
+        private String transactionType;
+
+        @JsonProperty("Amount")
+        private String amount;
+
+        @JsonProperty("RunningBalance")
+        private String runningBalance;
+
+        @JsonProperty("PaymentRef")
+        private String paymentRef;
+    }
+
+    // ── Mini statement response ───────────────────────────────────────────────
+
+    @Data
+    public static class MiniStatementResponse {
+        @JsonProperty("MessageReference")
+        private String messageReference;
+
+        @JsonProperty("MessageCode")
+        private String messageCode;
+
+        @JsonProperty("MessageDescription")
+        private String messageDescription;
+
+        @JsonProperty("AccountNumber")
+        private String accountNumber;
+
+        @JsonProperty("Currency")
+        private String currency;
+
+        @JsonProperty("Transactions")
+        private List<TransactionEntry> transactions;
+    }
 }

@@ -5,10 +5,14 @@ import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.MeetingStatus;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepository;
 import com.jaytechwave.sacco.modules.public_content.domain.entity.PublicAnnouncement;
+import com.jaytechwave.sacco.modules.public_content.domain.entity.PublicMemberSpotlight;
+import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
+import org.springframework.web.multipart.MultipartFile;
 import com.jaytechwave.sacco.modules.public_content.domain.entity.PublicDocument;
 import com.jaytechwave.sacco.modules.public_content.domain.repository.PublicAnnouncementRepository;
+import com.jaytechwave.sacco.modules.public_content.domain.repository.PublicMemberSpotlightRepository;
 import com.jaytechwave.sacco.modules.public_content.domain.repository.PublicDocumentRepository;
-import com.jaytechwave.sacco.modules.public_content.dto.PublicContentDTOs.*;
+import com.jaytechwave.sacco.modules.public_content.api.dto.PublicContentDTOs.*;
 import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.repository.SaccoSettingsRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
@@ -31,6 +35,8 @@ public class PublicService {
     private final MeetingRepository            meetingRepository;
     private final MemberRepository             memberRepository;
     private final UserRepository               userRepository;
+    private final PublicMemberSpotlightRepository spotlightRepository;
+    private final CloudinaryUploadService          cloudinaryUploadService;
 
     // ── Public: full landing page data ───────────────────────────────────
 
@@ -72,8 +78,12 @@ public class PublicService {
         long meetingsHeld   = meetingRepository.findByStatusOrderByStartAtDesc(MeetingStatus.COMPLETED).size();
         long totalDocuments = documentRepository.count();
 
+        List<MemberSpotlightDTO> spotlights = spotlightRepository
+                .findByIsPublishedTrueOrderByDisplayOrderAsc()
+                .stream().map(this::toSpotlightDTO).toList();
+
         return new LandingPageResponse(profile, announcements, documents, meetings,
-                memberCount, meetingsHeld, totalDocuments);
+                spotlights, memberCount, meetingsHeld, totalDocuments);
     }
 
     // ── Secretary: announcements CRUD ────────────────────────────────────
@@ -202,5 +212,91 @@ public class PublicService {
                 m.getEndAt() != null ? m.getEndAt().toString() : null,
                 m.getDescription()
         );
+    }
+
+    // ── Secretary: spotlights CRUD ────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<MemberSpotlightDTO> getAllSpotlights() {
+        return spotlightRepository.findAllByOrderByDisplayOrderAsc()
+                .stream().map(this::toSpotlightDTO).toList();
+    }
+
+    @Transactional
+    public MemberSpotlightDTO createSpotlight(MemberSpotlightRequest req, String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        // Auto-fill name from user if userId provided and displayName is blank
+        String displayName = req.displayName();
+        if ((displayName == null || displayName.isBlank()) && req.userId() != null) {
+            var user2 = userRepository.findByIdAndIsDeletedFalse(req.userId()).orElse(null);
+            if (user2 != null) {
+                displayName = user2.getFirstName() + " " + user2.getLastName();
+            }
+        }
+
+        PublicMemberSpotlight s = PublicMemberSpotlight.builder()
+                .userId(req.userId())
+                .displayName(displayName != null ? displayName : "Member")
+                .roleTitle(req.roleTitle() != null ? req.roleTitle() : "")
+                .photoUrl(req.photoUrl())
+                .displayOrder(req.displayOrder())
+                .isPublished(true)
+                .createdBy(user.getId())
+                .build();
+        return toSpotlightDTO(spotlightRepository.save(s));
+    }
+
+    // ── Secretary: get members for picker dropdown ────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<MemberPickerDTO> getMembersForPicker() {
+        return userRepository.findAllByIsDeletedFalse()
+                .stream()
+                .filter(u -> u.getStatus() == UserStatus.ACTIVE)
+                .map(u -> new MemberPickerDTO(
+                        u.getId(),
+                        u.getEmail(),
+                        u.getFirstName(),
+                        u.getLastName(),
+                        u.getFirstName() + " " + u.getLastName()
+                ))
+                .sorted((a, b) -> a.fullName().compareToIgnoreCase(b.fullName()))
+                .toList();
+    }
+
+    // ── Secretary: upload photo to Cloudinary ─────────────────────────────────
+
+    public PhotoUploadResponse uploadSpotlightPhoto(MultipartFile file) {
+        return cloudinaryUploadService.uploadSpotlightPhoto(file);
+    }
+
+    @Transactional
+    public MemberSpotlightDTO updateSpotlight(UUID id, MemberSpotlightRequest req) {
+        PublicMemberSpotlight s = spotlightRepository.findById(id).orElseThrow();
+        s.setDisplayName(req.displayName());
+        s.setRoleTitle(req.roleTitle() != null ? req.roleTitle() : "");
+        s.setPhotoUrl(req.photoUrl());
+        s.setDisplayOrder(req.displayOrder());
+        return toSpotlightDTO(spotlightRepository.save(s));
+    }
+
+    @Transactional
+    public void toggleSpotlight(UUID id) {
+        PublicMemberSpotlight s = spotlightRepository.findById(id).orElseThrow();
+        s.setPublished(!s.isPublished());
+        spotlightRepository.save(s);
+    }
+
+    @Transactional
+    public void deleteSpotlight(UUID id) {
+        spotlightRepository.deleteById(id);
+    }
+
+    // ── Mapper ────────────────────────────────────────────────────────────
+
+    private MemberSpotlightDTO toSpotlightDTO(PublicMemberSpotlight s) {
+        return new MemberSpotlightDTO(s.getId(), s.getUserId(), s.getDisplayName(),
+                s.getRoleTitle(), s.getPhotoUrl(), s.getDisplayOrder(), s.isPublished());
     }
 }

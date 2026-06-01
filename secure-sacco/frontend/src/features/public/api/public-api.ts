@@ -44,11 +44,30 @@ export interface UpcomingMeeting {
     description: string;
 }
 
+export interface MemberPickerItem {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+}
+
+export interface MemberSpotlight {
+    id: string;
+    userId: string | null;
+    displayName: string;
+    roleTitle: string;
+    photoUrl: string;
+    displayOrder: number;
+    isPublished: boolean;
+}
+
 export interface LandingPageData {
     profile: SaccoProfile | null;
     announcements: PublicAnnouncement[];
     documents: PublicDocument[];
     upcomingMeetings: UpcomingMeeting[];
+    memberSpotlights: MemberSpotlight[];
     memberCount: number;
     meetingsHeld: number;
     totalDocuments: number;
@@ -98,4 +117,29 @@ export const publicApi = {
         apiClient.patch(`/public/admin/documents/${id}/toggle`),
     deleteDocument: (id: string) =>
         apiClient.delete(`/public/admin/documents/${id}`),
+
+    // Members picker (for spotlight creation)
+    getMembersForPicker: () =>
+        apiClient.get<MemberPickerItem[]>('/public/admin/members-list').then(r => r.data),
+
+    // Photo upload to Cloudinary
+    uploadSpotlightPhoto: (file: File): Promise<{ photoUrl: string; publicId: string }> => {
+        const form = new FormData();
+        form.append('file', file);
+        return apiClient.post('/public/admin/spotlights/upload-photo', form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        }).then(r => r.data);
+    },
+
+    // Spotlights
+    listSpotlights: () =>
+        apiClient.get<MemberSpotlight[]>('/public/admin/spotlights').then(r => r.data),
+    createSpotlight: (data: { memberId?: string | null; displayName: string; roleTitle: string; photoUrl: string; displayOrder: number }) =>
+        apiClient.post<MemberSpotlight>('/public/admin/spotlights', data).then(r => r.data),
+    updateSpotlight: (id: string, data: { memberId?: string | null; displayName: string; roleTitle: string; photoUrl: string; displayOrder: number }) =>
+        apiClient.put<MemberSpotlight>(`/public/admin/spotlights/${id}`, data).then(r => r.data),
+    toggleSpotlight: (id: string) =>
+        apiClient.patch(`/public/admin/spotlights/${id}/toggle`),
+    deleteSpotlight: (id: string) =>
+        apiClient.delete(`/public/admin/spotlights/${id}`),
 };
