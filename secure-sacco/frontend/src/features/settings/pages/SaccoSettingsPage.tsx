@@ -132,7 +132,7 @@ function formatRuleCode(code: string): string {
     return code
         .toLowerCase()
         .replace(/_/g, ' ')
-        .replace(/\w/g, c => c.toUpperCase());
+        .replace(/(?:^|\s)\S/g, c => c.toUpperCase());
 }
 
 const SaccoSettingsPage: React.FC = () => {

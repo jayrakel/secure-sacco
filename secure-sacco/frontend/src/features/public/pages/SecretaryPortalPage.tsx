@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { publicApi, type PublicAnnouncement, type PublicDocument, type SaccoProfile } from '../api/public-api';
+import { publicApi, type PublicAnnouncement, type PublicDocument } from '../api/public-api';
 import {
     Bell, FileText, Building2, Plus, Pencil, Trash2, X, Check,
     Loader2, ToggleLeft, ToggleRight, AlertCircle, Globe,
-    BookOpen, Pin,
+    Pin,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
