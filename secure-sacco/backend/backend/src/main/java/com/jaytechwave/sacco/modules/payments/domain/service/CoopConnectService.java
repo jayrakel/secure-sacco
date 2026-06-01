@@ -239,18 +239,63 @@ public class CoopConnectService {
 
     // ── Mini statement ────────────────────────────────────────────────────────
 
-    public String getMiniStatement() {
+    public MiniStatementResponse getMiniStatement() {
         var req = new java.util.HashMap<String, String>();
-        req.put("MessageReference", UUID.randomUUID().toString());
+        req.put("MessageReference", UUID.randomUUID().toString().replace("-", "").substring(0, 12));
         req.put("UserId", props.getOperatorCode());
         req.put("AccountNumber", props.getSaccoAccountNumber());
 
-        return restClient.post()
-                .uri(props.getBaseUrl() + "/Enquiry/MiniStatement/Account_v2/2.0.0/")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(req)
-                .retrieve()
-                .body(String.class);
+        log.info("Co-op Connect: fetching mini-statement for account={}", props.getSaccoAccountNumber());
+        try {
+            MiniStatementResponse response = restClient.post()
+                    .uri(props.getBaseUrl() + "/Enquiry/MiniStatement/Account_v2/2.0.0/")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(req)
+                    .retrieve()
+                    .body(MiniStatementResponse.class);
+            log.info("Co-op Connect: mini-statement fetched — code={}", response != null ? response.getMessageCode() : "null");
+            return response;
+        } catch (Exception e) {
+            log.error("Co-op Connect: mini-statement failed — {}", e.getMessage());
+            throw new RuntimeException("Failed to fetch mini-statement: " + e.getMessage(), e);
+        }
+    }
+
+    // ── Account transaction inquiry (date range) ──────────────────────────────
+
+    /**
+     * Fetch all transactions for the SACCO account between two dates.
+     * Co-op endpoint: POST /Enquiry/AccountTransaction/Account_v2/2.0.0/
+     *
+     * @param fromDate  Start date in YYYY-MM-DD format
+     * @param toDate    End date in YYYY-MM-DD format (inclusive)
+     */
+    public AccountTransactionResponse getAccountTransactions(String fromDate, String toDate) {
+        AccountTransactionRequest req = new AccountTransactionRequest();
+        req.setMessageReference(UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+        req.setUserId(props.getOperatorCode());
+        req.setAccountNumber(props.getSaccoAccountNumber());
+        req.setStartDate(fromDate);
+        req.setEndDate(toDate);
+
+        log.info("Co-op Connect: fetching transactions account={} from={} to={}",
+                props.getSaccoAccountNumber(), fromDate, toDate);
+        try {
+            AccountTransactionResponse response = restClient.post()
+                    .uri(props.getBaseUrl() + "/Enquiry/AccountTransaction/Account_v2/2.0.0/")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(req)
+                    .retrieve()
+                    .body(AccountTransactionResponse.class);
+            log.info("Co-op Connect: transactions fetched — code={} count={}",
+                    response != null ? response.getMessageCode() : "null",
+                    response != null && response.getTransactions() != null ? response.getTransactions().size() : 0);
+            return response;
+        } catch (Exception e) {
+            log.error("Co-op Connect: transaction inquiry failed — {}", e.getMessage());
+            throw new RuntimeException("Failed to fetch account transactions: " + e.getMessage(), e);
+        }
     }
 }

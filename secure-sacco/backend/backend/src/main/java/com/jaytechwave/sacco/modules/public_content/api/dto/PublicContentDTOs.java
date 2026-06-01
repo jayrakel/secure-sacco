@@ -1,4 +1,4 @@
-package com.jaytechwave.sacco.modules.public_content.dto;
+package com.jaytechwave.sacco.modules.public_content.api.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,6 +13,7 @@ public class PublicContentDTOs {
             List<AnnouncementDTO> announcements,
             List<DocumentDTO>    documents,
             List<UpcomingMeetingDTO> upcomingMeetings,
+            List<MemberSpotlightDTO> memberSpotlights,
             long memberCount,
             long meetingsHeld,
             long totalDocuments
@@ -90,5 +91,40 @@ public class PublicContentDTOs {
             String  contactPhone,
             String  contactEmail,
             String  contactAddress
+    ) {}
+
+    // ── Member spotlight ──────────────────────────────────────────────────
+    public record MemberSpotlightDTO(
+            UUID   id,
+            UUID   userId,
+            String displayName,
+            String roleTitle,
+            String photoUrl,
+            int    displayOrder,
+            boolean isPublished
+    ) {}
+
+    // ── Secretary: create/update spotlight ────────────────────────────────
+    public record MemberSpotlightRequest(
+            UUID    userId,
+            String  displayName,
+            String  roleTitle,
+            String  photoUrl,
+            int     displayOrder
+    ) {}
+
+    // ── Member picker (for secretary portal dropdown) ─────────────────────────
+    public record MemberPickerDTO(
+            UUID   id,
+            String email,
+            String firstName,
+            String lastName,
+            String fullName
+    ) {}
+
+    // ── Photo upload response ─────────────────────────────────────────────────
+    public record PhotoUploadResponse(
+            String photoUrl,
+            String publicId
     ) {}
 }

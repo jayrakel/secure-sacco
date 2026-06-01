@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { publicApi, type PublicAnnouncement, type PublicDocument } from '../api/public-api';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { publicApi, type PublicAnnouncement, type PublicDocument, type MemberSpotlight, type MemberPickerItem } from '../api/public-api';
 import {
-    Bell, FileText, Building2, Plus, Pencil, Trash2, X, Check,
+    Bell, FileText, Building2, Users, Plus, Pencil, Trash2, X, Check,
     Loader2, ToggleLeft, ToggleRight, AlertCircle, Globe,
-    Pin,
+    Pin, Upload, ImageIcon,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
-type TabId = 'profile' | 'announcements' | 'documents';
+type TabId = 'profile' | 'announcements' | 'documents' | 'members';
 
 const CATEGORIES = [
     { value: 'MEETING_MINUTES', label: 'Meeting Minutes' },
@@ -52,6 +54,7 @@ export default function SecretaryPortalPage() {
                     { id: 'announcements' as TabId, label: 'Announcements', icon: Bell },
                     { id: 'documents'     as TabId, label: 'Documents',     icon: FileText },
                     { id: 'profile'       as TabId, label: 'SACCO Profile', icon: Building2 },
+                    { id: 'members'       as TabId, label: 'Members',       icon: Users },
                 ] as { id: TabId; label: string; icon: React.ElementType }[]).map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -66,6 +69,7 @@ export default function SecretaryPortalPage() {
             {tab === 'announcements' && <AnnouncementsTab flash={flash} />}
             {tab === 'documents'     && <DocumentsTab flash={flash} />}
             {tab === 'profile'       && <ProfileTab flash={flash} />}
+            {tab === 'members'       && <SpotlightsTab flash={flash} />}
         </div>
     );
 }
@@ -481,6 +485,341 @@ function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message:
         <div className="text-center py-16 bg-slate-50 rounded-xl border border-slate-100">
             <Icon size={28} className="mx-auto text-slate-300 mb-3" />
             <p className="text-sm text-slate-500 font-medium">{message}</p>
+        </div>
+    );
+}
+
+
+// ── Spotlights Tab ────────────────────────────────────────────────────────────
+
+function SpotlightsTab({ flash }: { flash: (ok: boolean, msg: string) => void }) {
+    const [items, setItems] = useState<MemberSpotlight[]>([]);
+    const [members, setMembers] = useState<MemberPickerItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editing, setEditing] = useState<MemberSpotlight | 'new' | null>(null);
+    const [form, setForm] = useState({
+        userId: '' as string,
+        displayName: '', roleTitle: '', photoUrl: '', displayOrder: 0,
+    });
+    const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef<HTMLInputElement>(null);
+    const [cropSrc, setCropSrc] = useState<string | null>(null);
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<Crop>();
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [spots, mems] = await Promise.all([
+                publicApi.listSpotlights(),
+                publicApi.getMembersForPicker(),
+            ]);
+            setItems(spots);
+            setMembers(mems);
+        } catch { flash(false, 'Failed to load data.'); }
+        finally { setLoading(false); }
+    }, [flash]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const openNew  = () => {
+        setForm({ userId: '', displayName: '', roleTitle: '', photoUrl: '', displayOrder: items.length });
+        setEditing('new');
+    };
+    const openEdit = (s: MemberSpotlight) => {
+        setForm({ userId: s.userId ?? '', displayName: s.displayName, roleTitle: s.roleTitle, photoUrl: s.photoUrl, displayOrder: s.displayOrder });
+        setEditing(s);
+    };
+
+    // When member is selected from dropdown, auto-fill display name
+    const handleMemberSelect = (userId: string) => {
+        const member = members.find(m => m.id === userId);
+        setForm(f => ({
+            ...f,
+            userId,
+            displayName: f.displayName || (member ? member.fullName : ''),
+        }));
+    };
+
+    // File selected → open crop modal
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => setCropSrc(reader.result as string);
+        reader.readAsDataURL(file);
+        if (fileRef.current) fileRef.current.value = '';
+    };
+
+    const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
+        const initial = centerCrop(
+            makeAspectCrop({ unit: '%', width: 80 }, 1, width, height),
+            width, height,
+        );
+        setCrop(initial);
+        setCompletedCrop(initial);
+    };
+
+    // Crop confirmed → draw canvas → upload blob
+    const handleCropConfirm = async () => {
+        if (!imgRef.current || !completedCrop) return;
+        const img = imgRef.current;
+        const scaleX = img.naturalWidth  / img.width;
+        const scaleY = img.naturalHeight / img.height;
+        const canvas = document.createElement('canvas');
+        canvas.width  = completedCrop.width  * scaleX;
+        canvas.height = completedCrop.height * scaleY;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(
+            img,
+            completedCrop.x * scaleX, completedCrop.y * scaleY,
+            completedCrop.width * scaleX, completedCrop.height * scaleY,
+            0, 0, canvas.width, canvas.height,
+        );
+        canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            setCropSrc(null);
+            setUploading(true);
+            try {
+                const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+                const result = await publicApi.uploadSpotlightPhoto(file);
+                setForm(f => ({ ...f, photoUrl: result.photoUrl }));
+                flash(true, 'Photo uploaded successfully.');
+            } catch { flash(false, 'Photo upload failed. Check Cloudinary config.'); }
+            finally { setUploading(false); }
+        }, 'image/jpeg', 0.92);
+    };
+
+    const handleSave = async () => {
+        if (!form.displayName.trim() || !form.photoUrl.trim()) return;
+        setSaving(true);
+        try {
+            const payload = { ...form, userId: form.userId || null };
+            if (editing === 'new') {
+                const created = await publicApi.createSpotlight(payload);
+                setItems(prev => [...prev, created].sort((a, b) => a.displayOrder - b.displayOrder));
+                flash(true, 'Member added to landing page.');
+            } else if (editing) {
+                const updated = await publicApi.updateSpotlight((editing as MemberSpotlight).id, payload);
+                setItems(prev => prev.map(s => s.id === updated.id ? updated : s).sort((a, b) => a.displayOrder - b.displayOrder));
+                flash(true, 'Member spotlight updated.');
+            }
+            setEditing(null);
+        } catch { flash(false, 'Failed to save.'); }
+        finally { setSaving(false); }
+    };
+
+    const handleToggle = async (id: string) => {
+        try { await publicApi.toggleSpotlight(id); await load(); flash(true, 'Visibility updated.'); }
+        catch { flash(false, 'Failed to update.'); }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Remove this member from the landing page?')) return;
+        try {
+            await publicApi.deleteSpotlight(id);
+            setItems(prev => prev.filter(s => s.id !== id));
+            flash(true, 'Member removed.');
+        } catch { flash(false, 'Failed to delete.'); }
+    };
+
+    const inputCls = 'w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white placeholder-slate-300';
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <p className="text-sm text-slate-500">
+                    Select members and upload their photos to display on the landing page carousel.
+                </p>
+                <button onClick={openNew}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                    <Plus size={14} /> Add Member
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center py-16 gap-2 text-slate-400">
+                    <Loader2 size={18} className="animate-spin" /><span className="text-sm">Loading…</span>
+                </div>
+            ) : items.length === 0 ? (
+                <div className="text-center py-16 bg-slate-50 rounded-xl border border-slate-100">
+                    <Users size={28} className="mx-auto text-slate-300 mb-3" />
+                    <p className="text-sm text-slate-500 font-medium">No member spotlights yet.</p>
+                    <p className="text-xs text-slate-400 mt-1">Add members to show them in the landing page carousel.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {items.map(s => (
+                        <div key={s.id} className={`bg-white border rounded-xl overflow-hidden ${s.isPublished ? 'border-slate-200' : 'border-slate-100 opacity-60'}`}>
+                            <div className="w-full h-48 bg-slate-100 relative overflow-hidden">
+                                {s.photoUrl ? (
+                                    <img src={s.photoUrl} alt={s.displayName} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <ImageIcon size={32} className="text-slate-300" />
+                                    </div>
+                                )}
+                                {!s.isPublished && (
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                        <span className="text-white text-xs font-bold bg-black/60 px-2 py-1 rounded">Hidden</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-3">
+                                <p className="font-semibold text-slate-900 text-sm">{s.displayName}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{s.roleTitle || '—'}</p>
+                                <p className="text-[10px] text-slate-400 mt-1">Order: {s.displayOrder}</p>
+                            </div>
+                            <div className="flex border-t border-slate-100">
+                                <button onClick={() => openEdit(s)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors border-r border-slate-100">
+                                    <Pencil size={12} /> Edit
+                                </button>
+                                <button onClick={() => handleToggle(s.id)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors border-r border-slate-100">
+                                    {s.isPublished ? <ToggleRight size={14} className="text-emerald-500" /> : <ToggleLeft size={14} />}
+                                    {s.isPublished ? 'Hide' : 'Show'}
+                                </button>
+                                <button onClick={() => handleDelete(s.id)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors">
+                                    <Trash2 size={12} /> Remove
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {editing !== null && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+                            <h3 className="text-sm font-bold text-slate-900">
+                                {editing === 'new' ? 'Add Member to Landing Page' : 'Edit Member Spotlight'}
+                            </h3>
+                            <button onClick={() => setEditing(null)} className="text-slate-400 hover:text-slate-600 p-1"><X size={16} /></button>
+                        </div>
+
+                        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                            {/* Member picker */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Select Member <span className="text-slate-400 font-normal">(auto-fills name)</span>
+                                </label>
+                                <select className={inputCls} value={form.userId}
+                                        onChange={e => handleMemberSelect(e.target.value)}>
+                                    <option value="">— Choose a member —</option>
+                                    {members.map(m => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.fullName} ({m.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Photo upload */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Photo <span className="text-red-500">*</span>
+                                </label>
+
+                                {/* Preview */}
+                                {form.photoUrl && (
+                                    <div className="w-full h-36 rounded-xl overflow-hidden bg-slate-100 mb-3">
+                                        <img src={form.photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+
+                                {/* Upload button */}
+                                <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                                       onChange={handleFileSelect} />
+                                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-200 rounded-xl text-sm text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors disabled:opacity-50">
+                                    {uploading
+                                        ? <><Loader2 size={15} className="animate-spin text-slate-400" /> Uploading to Cloudinary…</>
+                                        : <><Upload size={15} className="text-slate-400" /> {form.photoUrl ? 'Change Photo' : 'Upload Photo'}</>
+                                    }
+                                </button>
+                                {form.photoUrl && (
+                                    <p className="text-[10px] text-slate-400 mt-1 truncate">{form.photoUrl}</p>
+                                )}
+                            </div>
+
+                            {/* Display name */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Display Name <span className="text-red-500">*</span>
+                                </label>
+                                <input className={inputCls} value={form.displayName}
+                                       onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
+                                       placeholder="e.g. Jane Muthoni" />
+                            </div>
+
+                            {/* Role title */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Role / Title</label>
+                                <input className={inputCls} value={form.roleTitle}
+                                       onChange={e => setForm(f => ({ ...f, roleTitle: e.target.value }))}
+                                       placeholder="e.g. Treasurer, Secretary, Chairperson" />
+                            </div>
+
+                            {/* Display order */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Display Order</label>
+                                <input type="number" className={inputCls} value={form.displayOrder} min={0}
+                                       onChange={e => setForm(f => ({ ...f, displayOrder: parseInt(e.target.value) || 0 }))} />
+                                <p className="text-[10px] text-slate-400 mt-1">Lower numbers appear first in the carousel.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 px-6 pb-6 pt-2">
+                            <button onClick={() => setEditing(null)}
+                                    className="flex-1 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button onClick={handleSave}
+                                    disabled={saving || !form.displayName.trim() || !form.photoUrl.trim()}
+                                    className="flex-1 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40">
+                                {saving
+                                    ? <><Loader2 size={13} className="animate-spin" /> Saving…</>
+                                    : <><Check size={13} /> {editing === 'new' ? 'Add to Page' : 'Save'}</>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Crop Modal ── */}
+            {cropSrc && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-6">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-slate-50">
+                            <h3 className="text-sm font-bold text-slate-900">Crop Photo</h3>
+                            <button onClick={() => setCropSrc(null)} className="text-slate-400 hover:text-slate-600 p-1"><X size={16} /></button>
+                        </div>
+                        <div className="p-3 flex justify-center bg-slate-100">
+                            <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)} aspect={1}>
+                                <img ref={imgRef} src={cropSrc} onLoad={onImageLoad}
+                                     style={{ maxHeight: '340px', maxWidth: '100%', display: 'block' }} alt="Crop preview" />
+                            </ReactCrop>
+                        </div>
+                        <div className="flex gap-3 px-5 py-4">
+                            <button onClick={() => setCropSrc(null)}
+                                    className="flex-1 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button onClick={handleCropConfirm}
+                                    className="flex-1 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold flex items-center justify-center gap-2">
+                                <Check size={13} /> Crop &amp; Upload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

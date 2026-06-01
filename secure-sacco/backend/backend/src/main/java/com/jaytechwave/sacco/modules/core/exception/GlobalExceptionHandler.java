@@ -81,7 +81,15 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("Forbidden", null, null, null));
     }
 
-    // 7. Catch-All for Unhandled Bugs / Server Errors (500) - The Ultimate Shield
+    // 7. Service Unavailable — optional dependency not configured (503)
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ErrorResponse> handleUnsupportedOperationException(UnsupportedOperationException ex) {
+        log.warn("Service Unavailable [{}]: {}", getRequestId(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ErrorResponse("Service unavailable", ex.getMessage(), null, null));
+    }
+
+    // 8. Catch-All for Unhandled Bugs / Server Errors (500) - The Ultimate Shield
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllOtherExceptions(Exception ex) {
         String requestId = getRequestId();

@@ -124,4 +124,67 @@ public class CoopConnectController {
             return ResponseEntity.status(503).body(Map.of("error", "Account balance unavailable"));
         }
     }
+
+    // ── Mini statement ────────────────────────────────────────────────────────
+
+    @Operation(summary = "Get Co-op bank mini statement",
+            description = "Returns the last 10 transactions on the SACCO Co-op account.")
+    @GetMapping("/coop/mini-statement")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
+    public ResponseEntity<?> getMiniStatement() {
+        try {
+            var statement = coopConnectService.getMiniStatement();
+            if (statement == null) {
+                return ResponseEntity.status(503)
+                        .body(Map.of("error", "Could not fetch mini-statement from Co-op Bank"));
+            }
+            return ResponseEntity.ok(statement);
+        } catch (Exception e) {
+            log.error("Failed to get mini-statement: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ── Account transaction inquiry ───────────────────────────────────────────
+
+    @Operation(summary = "Get Co-op account transactions for a date range",
+            description = "Returns all transactions for the SACCO account between fromDate and toDate (YYYY-MM-DD).")
+    @GetMapping("/coop/transactions")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
+    public ResponseEntity<?> getAccountTransactions(
+            @RequestParam String fromDate,
+            @RequestParam String toDate) {
+        try {
+            var transactions = coopConnectService.getAccountTransactions(fromDate, toDate);
+            if (transactions == null) {
+                return ResponseEntity.status(503)
+                        .body(Map.of("error", "Could not fetch transactions from Co-op Bank"));
+            }
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            log.error("Failed to get account transactions: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ── Transaction status enquiry ────────────────────────────────────────────
+
+    @Operation(summary = "Check Co-op STK push transaction status",
+            description = "Check whether a specific M-Pesa STK push was completed, by its MessageReference.")
+    @GetMapping("/coop/transaction-status/{messageReference}")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CASHIER','DEPUTY_CASHIER')")
+    public ResponseEntity<?> getTransactionStatus(
+            @PathVariable String messageReference) {
+        try {
+            var status = coopConnectService.checkTransactionStatus(messageReference);
+            if (status == null) {
+                return ResponseEntity.status(503)
+                        .body(Map.of("error", "Could not retrieve transaction status"));
+            }
+            return ResponseEntity.ok(status);
+        } catch (Exception e) {
+            log.error("Failed to get transaction status for ref={}: {}", messageReference, e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

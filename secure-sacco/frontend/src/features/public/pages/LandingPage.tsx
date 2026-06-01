@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
     publicApi, type LandingPageData, type PublicDocument,
-    type UpcomingMeeting, formatCategory,
+    type UpcomingMeeting, type MemberSpotlight, formatCategory,
 } from '../api/public-api';
 import { format } from 'date-fns';
 
@@ -87,14 +87,8 @@ export default function LandingPage() {
     const [photoIndex, setPhotoIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-    // Mock member photos - in production these would come from the backend
-    const memberPhotos = [
-        { id: 1, name: 'Member 1', role: 'Founder', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
-        { id: 2, name: 'Member 2', role: 'Treasurer', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop' },
-        { id: 3, name: 'Member 3', role: 'Secretary', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop' },
-        { id: 4, name: 'Member 4', role: 'Officer', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop' },
-        { id: 5, name: 'Member 5', role: 'Member', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
-    ];
+    // Dynamic member spotlights — managed by secretary via portal
+    const memberPhotos: MemberSpotlight[] = data?.memberSpotlights ?? [];
 
     useEffect(() => {
         publicApi.getLanding()
@@ -413,8 +407,8 @@ export default function LandingPage() {
                     </section>
                 )}
 
-                {/* ── MEMBERS PHOTO GALLERY ──────────────────────────────────────────────────── */}
-                <section id="members" className="lp-photo-gallery">
+                {/* ?? MEMBERS PHOTO GALLERY ???????????????????????????????????????????????????? */}
+                {memberPhotos.length > 0 && <section id="members" className="lp-photo-gallery">
                     <div style={{ maxWidth: 1000, margin: '0 auto' }}>
                         <Reveal style={{ marginBottom: 44 }}>
                             <div className="lp-rule"><span>Our Community</span></div>
@@ -428,16 +422,32 @@ export default function LandingPage() {
                             <div className="lp-photo-carousel">
                                 <div className="lp-photo-carousel-inner" style={{ transform: `translateX(-${photoIndex * 100}%)` }}>
                                     {memberPhotos.map((photo) => (
-                                        <div key={photo.id} className="lp-photo-item" style={{ position: 'relative' }}>
-                                            <img src={photo.image} alt={photo.name} />
+                                        <div key={photo.id} className="lp-photo-item" style={{
+                                            position: 'relative',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            width: '100%'
+                                        }}>
+                                            <img
+                                                src={photo.photoUrl}
+                                                alt={photo.displayName}
+                                                style={{
+                                                    maxWidth: '100%',
+                                                    maxHeight: '600px', // Adjust this value based on your preferred max height
+                                                    width: 'auto',
+                                                    height: 'auto',
+                                                    objectFit: 'contain',
+                                                    display: 'block'
+                                                }}
+                                            />
                                             <div className="lp-photo-overlay">
-                                                <h4>{photo.name}</h4>
-                                                <p>{photo.role}</p>
+                                                <h4>{photo.displayName}</h4>
+                                                <p>{photo.roleTitle}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                                
+
                                 {memberPhotos.length > 1 && (
                                     <>
                                         <button
@@ -445,14 +455,14 @@ export default function LandingPage() {
                                             onClick={() => setPhotoIndex((photoIndex - 1 + memberPhotos.length) % memberPhotos.length)}
                                             aria-label="Previous photo"
                                         >
-                                            ‹
+                                            ?
                                         </button>
                                         <button
                                             className="lp-photo-nav next"
                                             onClick={() => setPhotoIndex((photoIndex + 1) % memberPhotos.length)}
                                             aria-label="Next photo"
                                         >
-                                            ›
+                                            ?
                                         </button>
                                     </>
                                 )}
@@ -472,7 +482,8 @@ export default function LandingPage() {
                             </div>
                         )}
                     </div>
-                </section>
+                </section>}
+
 
                 {/* ── MEETINGS ───────────────────────────────────────────────────── */}
                 <section id="meetings" style={{ background: '#fff', borderTop: '1px solid #e8e4d8', padding: 'clamp(56px,10vh,100px) clamp(20px,5vw,56px)' }}>
