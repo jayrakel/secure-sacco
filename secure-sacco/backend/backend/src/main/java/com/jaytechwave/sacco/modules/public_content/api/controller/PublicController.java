@@ -1,11 +1,12 @@
 package com.jaytechwave.sacco.modules.public_content.api.controller;
 
 import com.jaytechwave.sacco.modules.public_content.domain.service.PublicService;
-import com.jaytechwave.sacco.modules.public_content.dto.PublicContentDTOs.*;
+import com.jaytechwave.sacco.modules.public_content.api.dto.PublicContentDTOs.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
@@ -97,12 +98,42 @@ public class PublicController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/admin/users")
+    @PreAuthorize("hasAnyAuthority('MEETINGS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<List<UserAdminDTO>> listUsers() {
+        return ResponseEntity.ok(publicService.getAllUsersForAdmin());
+    }
+
     // ── SECRETARY: update public profile ──────────────────────────────────
 
     @PutMapping("/admin/profile")
     @PreAuthorize("hasAnyAuthority('MEETINGS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
     public ResponseEntity<Void> updateProfile(@RequestBody PublicProfileRequest req) {
         publicService.updatePublicProfile(req);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── SECRETARY: Minutes & Images ───────────────────────────────────────
+
+    @PostMapping("/admin/minutes/publish")
+    @PreAuthorize("hasAnyAuthority('MEETINGS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<DocumentDTO> publishMinutes(
+            @RequestBody MinuteRequest req, Principal principal) {
+        return ResponseEntity.ok(publicService.publishMinutes(req, principal.getName()));
+    }
+
+    @PostMapping("/admin/users/{id}/image")
+    @PreAuthorize("hasAnyAuthority('MEETINGS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Void> uploadUserImage(
+            @PathVariable UUID id, @RequestParam("file") MultipartFile file) {
+        publicService.uploadUserImage(id, file);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/admin/community/photos")
+    @PreAuthorize("hasAnyAuthority('MEETINGS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    public ResponseEntity<Void> uploadCommunityPhoto(@RequestParam("file") MultipartFile file) {
+        publicService.uploadCommunityPhoto(file);
         return ResponseEntity.noContent().build();
     }
 }

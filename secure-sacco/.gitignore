@@ -55,3 +55,9 @@ build/
 
 # ===== Docker volumes (if any local) =====
 **/data/
+
+.env
+.vscode/
+http-client.private.env.json
+*.zip
+src_backup/

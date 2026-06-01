@@ -87,14 +87,7 @@ export default function LandingPage() {
     const [photoIndex, setPhotoIndex] = useState(0);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-    // Mock member photos - in production these would come from the backend
-    const memberPhotos = [
-        { id: 1, name: 'Member 1', role: 'Founder', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
-        { id: 2, name: 'Member 2', role: 'Treasurer', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop' },
-        { id: 3, name: 'Member 3', role: 'Secretary', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop' },
-        { id: 4, name: 'Member 4', role: 'Officer', image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=400&fit=crop' },
-        { id: 5, name: 'Member 5', role: 'Member', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop' },
-    ];
+    const memberPhotos = data?.members ?? [];
 
     useEffect(() => {
         publicApi.getLanding()
@@ -130,6 +123,20 @@ export default function LandingPage() {
     const DOC_CATS = ['all', 'MEETING_MINUTES', 'NOTICE', 'FINANCIAL_REPORT', 'POLICY', 'OTHER'];
     const hasContact = p?.contactPhone?.trim() || p?.contactEmail?.trim() || p?.contactAddress?.trim();
     const hasAbout   = p?.history?.trim() || p?.mission?.trim() || p?.vision?.trim();
+
+    useEffect(() => {
+        if (p?.logoUrl) {
+            let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            // Add a cache-busting parameter to ensure it updates
+            const cacheBust = p.logoUrl.includes('?') ? `&v=${Date.now()}` : `?v=${Date.now()}`;
+            link.href = p.logoUrl + cacheBust;
+        }
+    }, [p?.logoUrl]);
 
     if (loading) return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: NAVY }}>

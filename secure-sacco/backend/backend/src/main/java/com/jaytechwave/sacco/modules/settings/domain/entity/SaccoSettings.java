@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -200,5 +201,10 @@ public class SaccoSettings {
     @Column(name = "contact_address", columnDefinition = "TEXT DEFAULT ''")
     @Builder.Default
     private String contactAddress = "";
+
+    @Column(name = "community_photos", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Builder.Default
+    private List<String> communityPhotos = new java.util.ArrayList<>();
 
 }
