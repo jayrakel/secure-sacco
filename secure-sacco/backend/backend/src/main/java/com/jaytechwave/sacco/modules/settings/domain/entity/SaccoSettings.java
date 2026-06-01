@@ -167,4 +167,38 @@ public class SaccoSettings {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    // ── Public landing page profile ──────────────────────────────────────────
+
+    @Column(name = "sacco_tagline", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String saccoTagline = "";
+
+    @Column(name = "sacco_history", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String saccoHistory = "";
+
+    @Column(name = "sacco_mission", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String saccoMission = "";
+
+    @Column(name = "sacco_vision", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String saccoVision = "";
+
+    @Column(name = "founded_year")
+    private Integer foundedYear;
+
+    @Column(name = "contact_phone", length = 20)
+    @Builder.Default
+    private String contactPhone = "";
+
+    @Column(name = "contact_email")
+    @Builder.Default
+    private String contactEmail = "";
+
+    @Column(name = "contact_address", columnDefinition = "TEXT DEFAULT ''")
+    @Builder.Default
+    private String contactAddress = "";
+
 }

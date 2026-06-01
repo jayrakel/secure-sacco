@@ -110,6 +110,9 @@ public class SecurityConfig {
                         // --- Public SACCO metadata — login page reads saccoName before auth ---
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/settings/sacco").permitAll()
 
+                        // --- Public landing page --- no auth required ---
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/public/landing").permitAll()
+
                         // --- Actuator: health is public (load balancer probes) ---
                         .requestMatchers("/actuator/health").permitAll()
 
