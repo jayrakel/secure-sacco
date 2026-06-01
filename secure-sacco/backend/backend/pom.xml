@@ -177,12 +177,18 @@
         </dependency>
 
 
-        <!-- Cloudinary: test-scoped to prevent context load failure when CI cache has stale cloudinary jars -->
+        <!-- Cloudinary -->
         <dependency>
             <groupId>com.cloudinary</groupId>
-            <artifactId>cloudinary-core</artifactId>
+            <artifactId>cloudinary-http44</artifactId>
             <version>1.38.0</version>
-            <scope>test</scope>
+        </dependency>
+
+        <!-- PDF generation -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.0.10</version>
         </dependency>
     </dependencies>
 
