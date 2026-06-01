@@ -234,10 +234,10 @@ export default function LandingPage() {
                                 </div>
 
                                 <h1 className="lp-serif" style={{ fontSize: 'clamp(2.6rem,6vw,4.5rem)', color: '#fff', lineHeight: 1.1, marginBottom: 14 }}>
-                                    {p?.heroTitle || name}
+                                    {name}
                                 </h1>
                                 <p className="lp-serif" style={{ fontSize: 'clamp(1.2rem,2vw,1.65rem)', color: `${GOLD}bb`, fontStyle: 'italic', fontWeight: 400, marginBottom: 24 }}>
-                                    {p?.heroTagline || tagline}
+                                    {tagline}
                                 </p>
                                 {p?.mission && (
                                     <p style={{ color: 'rgba(255,255,255,.4)', fontSize: 15, lineHeight: 1.75, maxWidth: 500, marginBottom: 36 }}>
@@ -245,18 +245,18 @@ export default function LandingPage() {
                                     </p>
                                 )}
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                                    <a href="#about" className="lp-btn-gold" style={{ textDecoration: 'none' }}>{p?.heroPrimaryBtnLabel || 'Our Story'}</a>
-                                    <a href="#meetings" className="lp-btn-ghost" style={{ textDecoration: 'none' }}>{p?.heroSecondaryBtnLabel || 'View Meetings →'}</a>
+                                    <a href="#about" className="lp-btn-gold" style={{ textDecoration: 'none' }}>Our Story</a>
+                                    <a href="#meetings" className="lp-btn-ghost" style={{ textDecoration: 'none' }}>View Meetings →</a>
                                 </div>
                             </div>
 
                             {/* Right: stat panel */}
                             <div style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${GOLD}22`, borderRadius: 14, padding: '24px 28px', minWidth: 200, backdropFilter: 'blur(16px)' }}>
                                 {[
-                                    { label: p?.stat1Label || 'Active Members', value: data?.memberCount ?? 0, suffix: '' },
-                                    { label: p?.stat2Label || 'Meetings Held',  value: data?.meetingsHeld ?? 0,  suffix: '' },
-                                    { label: p?.stat3Label || 'Documents',      value: data?.totalDocuments ?? 0, suffix: '' },
-                                    { label: p?.stat4Label || 'Years Active',   value: yearsActive, suffix: '' },
+                                    { label: 'Active Members', value: data?.memberCount ?? 0, suffix: '' },
+                                    { label: 'Meetings Held',  value: data?.meetingsHeld ?? 0,  suffix: '' },
+                                    { label: 'Documents',      value: data?.totalDocuments ?? 0, suffix: '' },
+                                    { label: 'Years Active',   value: yearsActive, suffix: '' },
                                 ].map((s, i) => (
                                     <div key={i} style={{ padding: i === 0 ? '0 0 20px' : i === 3 ? '20px 0 0' : '20px 0', borderBottom: i < 3 ? `1px solid ${GOLD}14` : 'none' }}>
                                         <div className="lp-serif" style={{ fontSize: 42, fontWeight: 700, color: GOLD, lineHeight: 1 }}>
@@ -280,13 +280,13 @@ export default function LandingPage() {
 
                 {/* ── TRUST STRIP ────────────────────────────────────────────────── */}
                 <div id="trust" style={{ background: '#f4f1eb', borderTop: '1px solid #e8e4d8', borderBottom: '1px solid #e8e4d8', padding: '14px clamp(20px,5vw,56px)', display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
-                    <span style={{ color: '#9a9488', fontSize: 11, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{p?.trustSectionTitle || 'Why Trust Us'}</span>
+                    <span style={{ color: '#9a9488', fontSize: 11, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Why Trust Us</span>
                     <div style={{ width: 1, height: 20, background: '#d8d4c8' }} />
                     {[
-                        ['🛡️', p?.trustPoint1 || 'Member-owned cooperative'],
-                        ['🔒', p?.trustPoint2 || 'Secure & transparent'],
-                        ['📋', p?.trustPoint3 || 'Fully documented records'],
-                        ['🤝', p?.trustPoint4 || 'Community-first values'],
+                        ['🛡️', 'Member-owned cooperative'],
+                        ['🔒', 'Secure & transparent'],
+                        ['📋', 'Fully documented records'],
+                        ['🤝', 'Community-first values'],
                     ].map(([icon, label]) => (
                         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#6b6560', fontWeight: 500 }}>
                             <span style={{ fontSize: 15 }}>{icon}</span> {label}
@@ -300,9 +300,8 @@ export default function LandingPage() {
                         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                             <Reveal>
                                 <div className="lp-rule"><span>About Us</span></div>
-                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)', marginBottom: 8 }}>{p?.aboutTitle || 'Who We Are'}</h2>
-                                {p?.aboutDescription && <p style={{ color: '#9a9488', fontSize: 14, lineHeight: 1.65, marginBottom: 40, maxWidth: 520 }}>{p.aboutDescription}</p>}
-                                {!p?.aboutDescription && tagline && <p style={{ color: '#9a9488', fontSize: 14, lineHeight: 1.65, marginBottom: 40, maxWidth: 520 }}>{tagline}</p>}
+                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)', marginBottom: 8 }}>Who We Are</h2>
+                                {tagline && <p style={{ color: '#9a9488', fontSize: 14, lineHeight: 1.65, marginBottom: 40, maxWidth: 520 }}>{tagline}</p>}
                             </Reveal>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20 }}>
@@ -346,10 +345,10 @@ export default function LandingPage() {
                         <Reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 44, flexWrap: 'wrap', gap: 20 }}>
                             <div>
                                 <div className="lp-rule"><span>Schedule</span></div>
-                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>{p?.upcomingMeetingsTitle || 'Upcoming Meetings'}</h2>
+                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>Upcoming Meetings</h2>
                             </div>
                             <p style={{ color: '#9a9488', fontSize: 14, maxWidth: 340, lineHeight: 1.65 }}>
-                                {p?.upcomingMeetingsDescription || 'All active members are expected to attend. Minutes are published after each session.'}
+                                All active members are expected to attend. Minutes are published after each session.
                             </p>
                         </Reveal>
 
@@ -377,7 +376,7 @@ export default function LandingPage() {
                         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                             <Reveal style={{ marginBottom: 36 }}>
                                 <div className="lp-rule"><span>Latest</span></div>
-                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>{p?.announcementsTitle || 'Announcements'}</h2>
+                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>Announcements</h2>
                             </Reveal>
                             <div style={{ display: 'grid', gap: 14 }}>
                                 {regular.map((a, i) => (
@@ -407,7 +406,7 @@ export default function LandingPage() {
                         <Reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
                             <div>
                                 <div className="lp-rule"><span>Resources</span></div>
-                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>{p?.documentsTitle || 'Documents & Minutes'}</h2>
+                                <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,3.5vw,2.8rem)' }}>Documents & Minutes</h2>
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                                 {DOC_CATS.map(cat => (
@@ -443,7 +442,7 @@ export default function LandingPage() {
                                 <div className="lp-rule" style={{ justifyContent: 'center' }}><span>Get In Touch</span></div>
                                 <h2 className="lp-serif" style={{ fontSize: 'clamp(1.8rem,4vw,3rem)', color: '#fff', marginBottom: 10 }}>Contact Us</h2>
                                 <p style={{ color: 'rgba(255,255,255,.3)', fontSize: 14, marginBottom: 48 }}>
-                                    {p?.contactDescription || 'Questions about membership or our services? Reach out directly.'}
+                                    Questions about membership or our services? Reach out directly.
                                 </p>
                             </Reveal>
 
