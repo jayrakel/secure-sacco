@@ -244,7 +244,7 @@ function MembersTab({ flash }: { flash: (ok: boolean, msg: string) => void }) {
             await publicApi.uploadUserImage(selectedUserId, file);
             flash(true, `Profile picture updated.`);
             await load();
-        } catch (err) {
+        } catch {
             flash(false, 'Failed to upload image.');
         } finally {
             setUploadingId(null);
@@ -317,7 +317,7 @@ function MembersTab({ flash }: { flash: (ok: boolean, msg: string) => void }) {
 function CropModal({ image, onCancel, onDone }: { image: string; onCancel: () => void; onDone: (blob: Blob) => void }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
-    const [crop, setCrop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentage
+    const [crop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentage
     const [isSquare, setIsSquare] = useState(true);
 
     const handleDone = () => {
@@ -390,9 +390,9 @@ function AnnouncementsTab({ flash }: { flash: (ok: boolean, msg: string) => void
         try { setItems(await publicApi.listAnnouncements()); }
         catch { flash(false, 'Failed to load announcements.'); }
         finally { setLoading(false); }
-    }, []);
+    }, [flash]); // ✅ Add flash as dependency
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, [load]); // ✅ Add load as dependency
 
     const openNew = () => { setForm({ title: '', body: '', isPinned: false }); setEditing('new'); };
     const openEdit = (a: PublicAnnouncement) => { setForm({ title: a.title, body: a.body, isPinned: a.isPinned }); setEditing(a); };
