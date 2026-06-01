@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { publicApi, type PublicAnnouncement, type PublicDocument } from '../api/public-api';
+import { publicApi, type PublicAnnouncement, type PublicDocument, type SaccoProfile } from '../api/public-api';
 import {
     Bell, FileText, Building2, Plus, Pencil, Trash2, X, Check,
-    Loader2, ToggleLeft, ToggleRight, AlertCircle, Pin,
+    Loader2, ToggleLeft, ToggleRight, AlertCircle, Globe,
+    BookOpen, Pin,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -83,9 +84,9 @@ function AnnouncementsTab({ flash }: { flash: (ok: boolean, msg: string) => void
         try { setItems(await publicApi.listAnnouncements()); }
         catch { flash(false, 'Failed to load announcements.'); }
         finally { setLoading(false); }
-    }, [flash]);
+    }, []);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => { load(); }, []);
 
     const openNew = () => { setForm({ title: '', body: '', isPinned: false }); setEditing('new'); };
     const openEdit = (a: PublicAnnouncement) => { setForm({ title: a.title, body: a.body, isPinned: a.isPinned }); setEditing(a); };
@@ -208,9 +209,9 @@ function DocumentsTab({ flash }: { flash: (ok: boolean, msg: string) => void }) 
         try { setItems(await publicApi.listDocuments()); }
         catch { flash(false, 'Failed to load documents.'); }
         finally { setLoading(false); }
-    }, [flash]);
+    }, []);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => { load(); }, []);
 
     const emptyForm = { title: '', description: '', category: 'MEETING_MINUTES', fileUrl: '', fileName: '', meetingDate: '' };
     const openNew = () => { setForm(emptyForm); setEditing('new'); };
@@ -223,7 +224,7 @@ function DocumentsTab({ flash }: { flash: (ok: boolean, msg: string) => void }) 
         if (!form.title.trim() || !form.fileUrl.trim()) return;
         setSaving(true);
         try {
-            const payload = { ...form, meetingDate: form.meetingDate || null } as any;
+            const payload = { ...form, meetingDate: form.meetingDate || null } as Omit<PublicDocument, 'id' | 'createdAt'>;
             if (editing === 'new') {
                 const created = await publicApi.createDocument(payload);
                 setItems(prev => [created, ...prev]);
@@ -367,7 +368,7 @@ function ProfileTab({ flash }: { flash: (ok: boolean, msg: string) => void }) {
             await publicApi.updateProfile({
                 ...form,
                 foundedYear: form.foundedYear ? parseInt(form.foundedYear) : null,
-            } as any);
+            });
             flash(true, 'Public profile updated.');
         } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save.')); }
         finally { setSaving(false); }

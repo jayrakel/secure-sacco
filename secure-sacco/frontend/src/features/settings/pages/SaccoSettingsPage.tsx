@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { settingsApi } from '../api/settings-api';
-import { publicApi } from '../../public/api/public-api';
 import { useAuth } from '../../auth/context/AuthProvider';
 import type { SaccoSettings } from '../api/settings-api';
 import { penaltyApi } from '../../penalties/api/penalty-api';
@@ -9,12 +8,12 @@ import { useSettings } from '../context/useSettings';
 import {
     Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
-    Users, PiggyBank, BarChart3, AlertTriangle,
+    Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
     Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
-// ─── Types ───────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'modules' | 'penalties';
 
@@ -31,15 +30,15 @@ interface SecurityPolicy {
     rateLimitGeneralPerMin: number;
 }
 
-// ─── Navigation tabs ───────────────────────────────────────────────────────
+// ─── Navigation tabs ──────────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] = [
-    { id: 'identity',        label: 'Identity',        icon: <Building2 size={15} />,   desc: 'Name, branding & fees'       },
-    { id: 'security',        label: 'Security',        icon: <Shield size={15} />,      desc: 'Auth, passwords & limits'   },
-    { id: 'communication',   label: 'Communication',   icon: <Bell size={15} />,        desc: 'Email sender settings'      },
-    { id: 'schedule',        label: 'Schedule',        icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'    },
-    { id: 'modules',         label: 'Modules',         icon: <Zap size={15} />,         desc: 'Feature flags'              },
-    { id: 'penalties',       label: 'Penalties',       icon: <Gavel size={15} />,       desc: 'Fine rules & thresholds'    },
+    { id: 'identity',      label: 'Identity',      icon: <Building2 size={15} />, desc: 'Name, branding & fees'    },
+    { id: 'security',      label: 'Security',      icon: <Shield size={15} />,    desc: 'Auth, passwords & limits' },
+    { id: 'communication', label: 'Communication', icon: <Bell size={15} />,      desc: 'Email sender settings'    },
+    { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
+    { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
+    { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
 ];
 
 const MODULE_CONFIG: Record<string, { label: string; desc: string; icon: React.ReactNode; cls: { bg: string; ring: string; text: string; icon: string } }> = {
@@ -109,7 +108,10 @@ const InfoBanner: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     </div>
 );
 
-// ─── Penalty rule code formatter ───────────────────────────────────────────────
+// ─── Page component ───────────────────────────────────────────────────────────
+
+
+// ── Penalty rule code formatter ───────────────────────────────────────────────
 // Converts MEETING_LATE_30 → "Late to Meeting (30 min)"
 //           MEETING_ABSENT  → "Absent from Meeting"
 //           SAVINGS_MISSED  → "Missed Savings"
@@ -126,13 +128,11 @@ function formatRuleCode(code: string): string {
         LOAN_DEFAULT:              'Loan Default',
     };
     if (map[code]) return map[code];
-    // Fallback: convert code to title case
+    // Fallback: MEETING_LATE_45 → "Late to Meeting (45)"
     return code
         .toLowerCase()
         .replace(/_/g, ' ')
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+        .replace(/\w/g, c => c.toUpperCase());
 }
 
 const SaccoSettingsPage: React.FC = () => {
@@ -145,7 +145,7 @@ const SaccoSettingsPage: React.FC = () => {
     const [settings, setSettings] = useState<SaccoSettings | null>(null);
     const [toast, setToast]   = useState<{ ok: boolean; msg: string } | null>(null);
 
-    // ── Identity ─────────────────────────────────────────────────────────
+    // ── Identity ────────────────────────────────────────────────────────────
     const [saccoName, setSaccoName]   = useState('');
     const [prefix, setPrefix]         = useState('');
     const [padLength, setPadLength]   = useState(7);
@@ -156,7 +156,7 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingId, setSavingId]     = useState(false);
     const [dirtyId, setDirtyId]       = useState(false);
 
-    // ── Security ─────────────────────────────────────────────────────────
+    // ── Security ────────────────────────────────────────────────────────────
     const defaultSec: SecurityPolicy = { maxLoginAttempts: 5, lockoutDurationMinutes: 15, sessionTimeoutMinutes: 30, passwordResetExpiryMin: 15, mfaTokenExpiryMinutes: 5, emailVerifyExpiryHours: 24, minPasswordLength: 12, contactVerifyRateLimit: 3, contactVerifyWindowMin: 15, rateLimitGeneralPerMin: 60 };
     const [sec, setSec] = useState<SecurityPolicy>(defaultSec);
     const [savingSec, setSavingSec] = useState(false);
@@ -166,11 +166,11 @@ const SaccoSettingsPage: React.FC = () => {
         setDirtySec(true);
     }, []);
 
-     // ── Communication ───────────────────────────────────────────────────────
-     const [fromName, setFromName]     = useState('Secure SACCO');
-     const [suppEmail, setSuppEmail]   = useState('');
-     const [savingComm, setSavingComm] = useState(false);
-     const [dirtyComm, setDirtyComm]   = useState(false);
+    // ── Communication ───────────────────────────────────────────────────────
+    const [fromName, setFromName]     = useState('Secure SACCO');
+    const [suppEmail, setSuppEmail]   = useState('');
+    const [savingComm, setSavingComm] = useState(false);
+    const [dirtyComm, setDirtyComm]   = useState(false);
 
     // ── Savings Schedule ─────────────────────────────────────────────────────
     const DAYS_OF_WEEK = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
@@ -181,26 +181,20 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingSched,        setSavingSched]        = useState(false);
     const [dirtySched,         setDirtySched]         = useState(false);
 
-    // ── Modules ─────────────────────────────────────────────────────────
+    // ── Modules ─────────────────────────────────────────────────────────────
     const [mods, setMods]         = useState<Record<string, boolean>>({ members: true, loans: false, savings: false, reports: false });
     const [savingMods, setSavingMods] = useState(false);
 
     // ── Penalties state ─────────────────────────────────────────────────────
     const [rules, setRules]             = useState<PenaltyRule[]>([]);
-    const [rulesLoading] = useState(false);
+    const [rulesLoading, setRulesLoading] = useState(false);
     const [editingRule, setEditingRule] = useState<PenaltyRule | null>(null);
     const [isCreatingRule, setIsCreatingRule] = useState(false);
     const [ruleForm, setRuleForm]       = useState<Partial<PenaltyRuleRequest>>({});
     const [savingRule, setSavingRule]   = useState(false);
     const [deletingRule, setDeletingRule] = useState<string | null>(null);
 
-    // ── Flash notification helper ───────────────────────────────────────────────
-    const flash = (ok: boolean, msg: string) => {
-        setToast({ ok, msg });
-        setTimeout(() => setToast(null), 4000);
-    };
-
-    // ── Load ─────────────────────────────────────────────────────────────────
+    // ── Load ────────────────────────────────────────────────────────────────
     useEffect(() => {
         settingsApi.getSettings().then(d => {
             setSettings(d);
@@ -224,18 +218,31 @@ const SaccoSettingsPage: React.FC = () => {
         }).catch(() => flash(false, 'Failed to load settings.')).finally(() => setLoading(false));
     }, []);
 
-     // ── Auto-prefix ──────────────────────────────────────────────────────────
-     useEffect(() => {
-         if (prefixManual || saccoName.trim().length < 2) return;
-         const id = setTimeout(async () => {
-             try { const d = await settingsApi.generatePrefix(saccoName); setPrefix(d.prefix); } catch (error) { console.error('Failed to generate prefix:', error); }
-         }, 500);
-         return () => clearTimeout(id);
-     }, [saccoName, prefixManual]);
+    // ── Auto-prefix ─────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (prefixManual || saccoName.trim().length < 2) return;
+        const id = setTimeout(async () => {
+            try { const d = await settingsApi.generatePrefix(saccoName); setPrefix(d.prefix); } catch (error) { console.error('Failed to generate prefix:', error); }
+        }, 500);
+        return () => clearTimeout(id);
+    }, [saccoName, prefixManual]);
 
-     useEffect(() => {
-         if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
-     }, [tab]); // eslint-disable-line
+    const flash = (ok: boolean, msg: string) => {
+        setToast({ ok, msg });
+        setTimeout(() => setToast(null), 4000);
+    };
+
+    // Load penalty rules when penalties tab is opened
+    const loadRules = useCallback(async () => {
+        setRulesLoading(true);
+        try { setRules(await penaltyApi.getRules(false)); }
+        catch { flash(false, 'Failed to load penalty rules.'); }
+        finally { setRulesLoading(false); }
+    }, []);
+
+    useEffect(() => {
+        if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
+    }, [tab]); // eslint-disable-line
 
     const openEditRule = (rule: PenaltyRule) => {
         setEditingRule(rule);
@@ -259,7 +266,11 @@ const SaccoSettingsPage: React.FC = () => {
         setSavingRule(true);
         try {
             // Backend requires interestPeriodDays >= 1 — enforce when mode is NONE
-            const payload = { ...ruleForm, meetingDate: (ruleForm as any).meetingDate || null } as any;
+            const payload = {
+                ...ruleForm,
+                interestPeriodDays: ruleForm.interestMode === 'NONE' ? 1 : (ruleForm.interestPeriodDays ?? 1),
+                interestRate: ruleForm.interestMode === 'NONE' ? 0 : (ruleForm.interestRate ?? 0),
+            } as PenaltyRuleRequest;
             if (editingRule) {
                 const updated = await penaltyApi.updateRule(editingRule.id, payload);
                 setRules(prev => prev.map(r => r.id === editingRule.id ? updated : r));
@@ -310,7 +321,7 @@ const SaccoSettingsPage: React.FC = () => {
         r.readAsDataURL(file);
     };
 
-    // ── Submit handlers ──────────────────────────────────────────────────────
+    // ── Submit handlers ─────────────────────────────────────────────────────
     const handleIdentity = async (e: React.FormEvent) => {
         e.preventDefault(); setSavingId(true);
         try {
@@ -342,12 +353,12 @@ const SaccoSettingsPage: React.FC = () => {
         finally { setSavingSched(false); }
     };
 
-     const handleComm = async (e: React.FormEvent) => {
-         e.preventDefault(); setSavingComm(true);
-         try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
-         catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save.')); }
-         finally { setSavingComm(false); }
-     };
+    const handleComm = async (e: React.FormEvent) => {
+        e.preventDefault(); setSavingComm(true);
+        try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
+        catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save.')); }
+        finally { setSavingComm(false); }
+    };
 
     const handleModules = async (e: React.FormEvent) => {
         e.preventDefault(); setSavingMods(true);
@@ -385,9 +396,9 @@ const SaccoSettingsPage: React.FC = () => {
                 {/* ── Sidebar nav ─────────────────────────────────────── */}
                 <nav className="w-52 shrink-0 sticky top-6">
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                         {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
-                             const active = tab === t.id;
-                             const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched);
+                        {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
+                            const active = tab === t.id;
+                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched);
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
                                         className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-all
@@ -984,7 +995,7 @@ const SaccoSettingsPage: React.FC = () => {
 
                                     {/* Active toggle */}
                                     <div className="flex items-center justify-between">
-                                        <label className="text-sm font-medium text-slate-700">Rule is Active</label>
+                                        <label className="text-sm font-medium text-slate-700">Enable this fine rule</label>
                                         <button type="button"
                                                 onClick={() => setRuleForm(f => ({ ...f, isActive: !f.isActive }))}
                                                 className={`relative inline-flex h-5 w-9 rounded-full border-2 border-transparent transition-colors cursor-pointer

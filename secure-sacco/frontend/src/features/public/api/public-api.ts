@@ -70,8 +70,10 @@ export const publicApi = {
         publicAxios.get('/public/landing').then(r => r.data),
 
     // ── Secretary (authenticated) ─────────────────────────────────────────
-    updateProfile: (data: Partial<SaccoProfile & { tagline: string; history: string; mission: string; vision: string; foundedYear: number | null; contactPhone: string; contactEmail: string; contactAddress: string }>) =>
-        apiClient.put('/public/admin/profile', data),
+    updateProfile: (data: {
+        tagline?: string; history?: string; mission?: string; vision?: string;
+        foundedYear?: number | null; contactPhone?: string; contactEmail?: string; contactAddress?: string;
+    }) => apiClient.put('/public/admin/profile', data),
 
     // Announcements
     listAnnouncements: () =>
