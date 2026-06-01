@@ -85,15 +85,20 @@ export default function LandingPage() {
     const [docFilter, setDocFilter] = useState('all');
 
     useEffect(() => {
-        publicApi.getLanding().then(setData).catch(console.error).finally(() => setLoading(false));
+        publicApi.getLanding()
+            .then(setData)
+            .catch(err => {
+                console.error('[LandingPage] Failed to fetch landing data:', err);
+            })
+            .finally(() => setLoading(false));
         const h = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', h, { passive: true });
         return () => window.removeEventListener('scroll', h);
     }, []);
 
     const p = data?.profile;
-    const name   = p?.saccoName   ?? 'Betterlink Ventures SACCO';
-    const tagline = p?.tagline    ?? 'Built on trust. Growing through unity.';
+    const name   = p?.saccoName?.trim() || 'Betterlink Ventures SACCO';
+    const tagline = p?.tagline?.trim() || 'Built on trust. Growing through unity.';
     const initial = name.charAt(0).toUpperCase();
     const yearsActive = p?.foundedYear ? new Date().getFullYear() - p.foundedYear : 0;
 
@@ -104,8 +109,8 @@ export default function LandingPage() {
         : (data?.documents ?? []).filter(d => d.category === docFilter);
 
     const DOC_CATS = ['all', 'MEETING_MINUTES', 'NOTICE', 'FINANCIAL_REPORT', 'POLICY', 'OTHER'];
-    const hasContact = p?.contactPhone || p?.contactEmail || p?.contactAddress;
-    const hasAbout   = p?.history || p?.mission || p?.vision;
+    const hasContact = p?.contactPhone?.trim() || p?.contactEmail?.trim() || p?.contactAddress?.trim();
+    const hasAbout   = p?.history?.trim() || p?.mission?.trim() || p?.vision?.trim();
 
     if (loading) return (
         <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: NAVY }}>
