@@ -1,26 +1,35 @@
 package com.jaytechwave.sacco.modules.public_content.domain.service;
 
+import com.cloudinary.Cloudinary;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.Meeting;
-import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.MeetingStatus;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepository;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.public_content.domain.entity.PublicAnnouncement;
 import com.jaytechwave.sacco.modules.public_content.domain.entity.PublicDocument;
 import com.jaytechwave.sacco.modules.public_content.domain.repository.PublicAnnouncementRepository;
 import com.jaytechwave.sacco.modules.public_content.domain.repository.PublicDocumentRepository;
-import com.jaytechwave.sacco.modules.public_content.dto.PublicContentDTOs.*;
+import com.jaytechwave.sacco.modules.public_content.api.dto.PublicContentDTOs.*;
 import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.repository.SaccoSettingsRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PublicService {
@@ -31,6 +40,7 @@ public class PublicService {
     private final MeetingRepository            meetingRepository;
     private final MemberRepository             memberRepository;
     private final UserRepository               userRepository;
+    private final Cloudinary cloudinary;
 
     // ── Public: full landing page data ───────────────────────────────────
 
@@ -72,7 +82,18 @@ public class PublicService {
         long meetingsHeld   = meetingRepository.findByStatusOrderByStartAtDesc(MeetingStatus.COMPLETED).size();
         long totalDocuments = documentRepository.count();
 
-        return new LandingPageResponse(profile, announcements, documents, meetings,
+        // Community: Fetch users who have profile images to display
+        List<MemberLandingDTO> members = userRepository.findAllByIsDeletedFalse().stream()
+                .filter(u -> u.getProfileImageUrl() != null)
+                .limit(6)
+                .map(u -> new MemberLandingDTO(
+                        u.getId(),
+                        u.getFirstName() + " " + u.getLastName(),
+                        !u.getRoles().isEmpty() ? u.getRoles().iterator().next().getName() : "Team Member",
+                        u.getProfileImageUrl()
+                )).toList();
+
+        return new LandingPageResponse(profile, announcements, documents, meetings, members,
                 memberCount, meetingsHeld, totalDocuments);
     }
 
@@ -124,6 +145,17 @@ public class PublicService {
     public List<DocumentDTO> getAllDocuments() {
         return documentRepository.findAllByOrderByCreatedAtDesc()
                 .stream().map(this::toDocumentDTO).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserAdminDTO> getAllUsersForAdmin() {
+        return userRepository.findAllByIsDeletedFalse().stream()
+                .map(u -> new UserAdminDTO(
+                        u.getId(),
+                        u.getEmail(),
+                        u.getFirstName() + " " + u.getLastName(),
+                        u.getProfileImageUrl()
+                )).toList();
     }
 
     @Transactional
@@ -180,6 +212,107 @@ public class PublicService {
         s.setContactEmail(req.contactEmail());
         s.setContactAddress(req.contactAddress());
         settingsRepository.save(s);
+    }
+
+    // ── Secretary: Minutes to PDF ──────────────────────────────────────────
+
+    @Transactional
+    public DocumentDTO publishMinutes(MinuteRequest req, String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        // 1. Generate PDF
+        byte[] pdfBytes = generateMinutesPdf(req);
+
+        // 2. Upload to Cloudinary
+        String url;
+        try {
+            var uploadResult = cloudinary.uploader().upload(pdfBytes, Map.of(
+                    "resource_type", "auto",
+                    "folder", "minutes",
+                    "public_id", "minutes_" + UUID.randomUUID()
+            ));
+            url = (String) uploadResult.get("secure_url");
+        } catch (IOException e) {
+            log.error("Failed to upload minutes to Cloudinary", e);
+            throw new RuntimeException("Upload failed");
+        }
+
+        // 3. Save as PublicDocument
+        PublicDocument d = PublicDocument.builder()
+                .title(req.title())
+                .description("Meeting Minutes - " + req.meetingDate())
+                .category("MEETING_MINUTES")
+                .fileUrl(url)
+                .fileName(req.title().replaceAll("\\s+", "_") + ".pdf")
+                .meetingDate(req.meetingDate())
+                .isPublished(true)
+                .uploadedBy(user.getId())
+                .build();
+
+        return toDocumentDTO(documentRepository.save(d));
+    }
+
+    private byte[] generateMinutesPdf(MinuteRequest req) {
+        String html = String.format("""
+            <html>
+                <head>
+                    <style>
+                        body { font-family: 'Helvetica', sans-serif; padding: 40px; }
+                        h1 { color: #1a237e; border-bottom: 2px solid #1a237e; padding-bottom: 10px; }
+                        .date { color: #666; margin-bottom: 20px; }
+                        .content { line-height: 1.6; white-space: pre-wrap; }
+                    </style>
+                </head>
+                <body>
+                    <h1>%s</h1>
+                    <div class="date">Meeting Date: %s</div>
+                    <div class="content">%s</div>
+                </body>
+            </html>
+            """, req.title(), req.meetingDate(), req.content());
+
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(html, null);
+            builder.toStream(os);
+            builder.run();
+            return os.toByteArray();
+        } catch (Exception e) {
+            log.error("PDF generation failed", e);
+            throw new RuntimeException("PDF generation failed");
+        }
+    }
+
+    // ── Secretary: Member / Community Images ────────────────────────────────
+
+    @Transactional
+    public void uploadUserImage(UUID userId, MultipartFile file) {
+        User u = userRepository.findById(userId).orElseThrow();
+        try {
+            var result = cloudinary.uploader().upload(file.getBytes(), Map.of(
+                    "folder", "users",
+                    "transformation", "w_600,h_600,c_fill"
+            ));
+            u.setProfileImageUrl((String) result.get("secure_url"));
+            userRepository.save(u);
+        } catch (IOException e) {
+            throw new RuntimeException("Image upload failed");
+        }
+    }
+
+    @Transactional
+    public void uploadCommunityPhoto(MultipartFile file) {
+        SaccoSettings s = settingsRepository.findAll().stream().findFirst().orElseThrow();
+        try {
+            var result = cloudinary.uploader().upload(file.getBytes(), Map.of(
+                    "folder", "community"
+            ));
+            s.getCommunityPhotos().add((String) result.get("secure_url"));
+            settingsRepository.save(s);
+        } catch (IOException e) {
+            throw new RuntimeException("Image upload failed");
+        }
     }
 
     // ── Mappers ───────────────────────────────────────────────────────────

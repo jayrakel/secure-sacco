@@ -1,4 +1,4 @@
-package com.jaytechwave.sacco.modules.public_content.dto;
+package com.jaytechwave.sacco.modules.public_content.api.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,9 +13,26 @@ public class PublicContentDTOs {
             List<AnnouncementDTO> announcements,
             List<DocumentDTO>    documents,
             List<UpcomingMeetingDTO> upcomingMeetings,
+            List<MemberLandingDTO> members,
             long memberCount,
             long meetingsHeld,
             long totalDocuments
+    ) {}
+
+    // ── Member (public landing view) ───────────────────────────────────────
+    public record MemberLandingDTO(
+            UUID id,
+            String name,
+            String role,
+            String image
+    ) {}
+
+    // ── Member (admin view) ────────────────────────────────────────────────
+    public record UserAdminDTO(
+            UUID id,
+            String email,
+            String name,
+            String profileImageUrl
     ) {}
 
     // ── SACCO public profile ───────────────────────────────────────────────
@@ -90,5 +107,12 @@ public class PublicContentDTOs {
             String  contactPhone,
             String  contactEmail,
             String  contactAddress
+    ) {}
+
+    // ── Secretary: Minutes ────────────────────────────────────────────────
+    public record MinuteRequest(
+            String title,
+            String content,
+            LocalDate meetingDate
     ) {}
 }

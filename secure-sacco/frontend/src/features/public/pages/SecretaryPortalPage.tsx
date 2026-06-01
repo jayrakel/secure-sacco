@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
-import { publicApi, type PublicAnnouncement, type PublicDocument } from '../api/public-api';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import { Bold, Italic, Strikethrough, List, ListOrdered, Undo, Redo, Camera, UserCircle, Crop } from 'lucide-react';
+import { publicApi, type PublicAnnouncement, type PublicDocument, type UserAdmin } from '../api/public-api';
 import {
     Bell, FileText, Building2, Plus, Pencil, Trash2, X, Check,
     Loader2, ToggleLeft, ToggleRight, AlertCircle, Globe,
-    Pin,
+    Pin, Edit3, Save, Users
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
-type TabId = 'profile' | 'announcements' | 'documents';
+type TabId = 'profile' | 'announcements' | 'documents' | 'minutes' | 'members';
 
 const CATEGORIES = [
     { value: 'MEETING_MINUTES', label: 'Meeting Minutes' },
@@ -47,10 +50,12 @@ export default function SecretaryPortalPage() {
             )}
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit flex-wrap">
                 {([
                     { id: 'announcements' as TabId, label: 'Announcements', icon: Bell },
+                    { id: 'minutes'       as TabId, label: 'Draft Minutes', icon: Edit3 },
                     { id: 'documents'     as TabId, label: 'Documents',     icon: FileText },
+                    { id: 'members'       as TabId, label: 'Our Members',   icon: Users },
                     { id: 'profile'       as TabId, label: 'SACCO Profile', icon: Building2 },
                 ] as { id: TabId; label: string; icon: React.ElementType }[]).map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)}
@@ -64,8 +69,309 @@ export default function SecretaryPortalPage() {
             </div>
 
             {tab === 'announcements' && <AnnouncementsTab flash={flash} />}
+            {tab === 'minutes'       && <MinutesTab flash={flash} />}
             {tab === 'documents'     && <DocumentsTab flash={flash} />}
+            {tab === 'members'       && <MembersTab flash={flash} />}
             {tab === 'profile'       && <ProfileTab flash={flash} />}
+        </div>
+    );
+}
+// ── NEW: Meeting Minutes Editor Tab (Tiptap) ──────────────────────────────────
+function MinutesTab({ flash }: { flash: (ok: boolean, msg: string) => void }) {
+    const [title, setTitle] = useState('');
+    const [isPublishing, setIsPublishing] = useState(false);
+
+    const editor = useEditor({
+        extensions: [StarterKit],
+        content: '<p>Start typing the meeting minutes here...</p>',
+        editorProps: {
+            attributes: {
+                class: 'prose max-w-none focus:outline-none min-h-[250px] p-4',
+            },
+        },
+    });
+
+    const handlePublish = async () => {
+        if (!editor || !title.trim() || editor.isEmpty) return;
+        setIsPublishing(true);
+        try {
+            await publicApi.publishMinutes({
+                title,
+                content: editor.getText(), // We'll use getText for now as my backend expects plain text/simple HTML
+                meetingDate: new Date().toISOString().split('T')[0]
+            });
+            flash(true, 'Minutes successfully published as PDF!');
+            setTitle('');
+            editor.commands.setContent('<p>Start typing the meeting minutes here...</p>');
+        } catch (error) {
+            flash(false, getApiErrorMessage(error, 'Failed to publish minutes.'));
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
+    return (
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 animate-in fade-in">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
+                    <Edit3 size={18} className="text-violet-600" />
+                </div>
+                <div>
+                    <h2 className="text-base font-bold text-slate-900">Meeting Minutes Editor</h2>
+                    <p className="text-xs text-slate-500">Draft your meeting minutes below. We will automatically convert them to a downloadable PDF.</p>
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Document Title</label>
+                <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Annual General Meeting Minutes - May 2026"
+                    className={inputCls}
+                />
+            </div>
+
+            <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Meeting Minutes</label>
+                <div className="border border-slate-200 rounded-lg overflow-hidden flex flex-col">
+                    {/* Toolbar */}
+                    {editor && (
+                        <div className="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap gap-1">
+                            <button
+                                onClick={() => editor.chain().focus().toggleBold().run()}
+                                className={`p-2 rounded hover:bg-slate-200 transition-colors ${editor.isActive('bold') ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            ><Bold size={16} /></button>
+                            <button
+                                onClick={() => editor.chain().focus().toggleItalic().run()}
+                                className={`p-2 rounded hover:bg-slate-200 transition-colors ${editor.isActive('italic') ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            ><Italic size={16} /></button>
+                            <button
+                                onClick={() => editor.chain().focus().toggleStrike().run()}
+                                className={`p-2 rounded hover:bg-slate-200 transition-colors ${editor.isActive('strike') ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            ><Strikethrough size={16} /></button>
+
+                            <div className="w-px h-6 bg-slate-300 mx-1 my-auto"></div>
+
+                            <button
+                                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                                className={`px-3 py-1 text-sm font-bold rounded hover:bg-slate-200 transition-colors ${editor.isActive('heading', { level: 2 }) ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            >H2</button>
+                            <button
+                                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                                className={`px-3 py-1 text-sm font-bold rounded hover:bg-slate-200 transition-colors ${editor.isActive('heading', { level: 3 }) ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            >H3</button>
+
+                            <div className="w-px h-6 bg-slate-300 mx-1 my-auto"></div>
+
+                            <button
+                                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                                className={`p-2 rounded hover:bg-slate-200 transition-colors ${editor.isActive('bulletList') ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            ><List size={16} /></button>
+                            <button
+                                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                                className={`p-2 rounded hover:bg-slate-200 transition-colors ${editor.isActive('orderedList') ? 'bg-slate-200 text-slate-900' : 'text-slate-600'}`}
+                            ><ListOrdered size={16} /></button>
+
+                            <div className="w-px h-6 bg-slate-300 mx-1 my-auto"></div>
+
+                            <button onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} className="p-2 rounded hover:bg-slate-200 transition-colors text-slate-600 disabled:opacity-30"><Undo size={16} /></button>
+                            <button onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} className="p-2 rounded hover:bg-slate-200 transition-colors text-slate-600 disabled:opacity-30"><Redo size={16} /></button>
+                        </div>
+                    )}
+
+                    {/* Editor Content Area */}
+                    <div className="bg-white cursor-text">
+                        <EditorContent editor={editor} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+                <button
+                    onClick={handlePublish}
+                    disabled={isPublishing || !title.trim() || (editor && editor.isEmpty)}
+                    className="px-6 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 transition flex items-center gap-2 disabled:opacity-50"
+                >
+                    {isPublishing ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                    Publish to Members
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ── NEW: Members Tab (Manage "Meet Our Members") ──────────────────────────────────
+function MembersTab({ flash }: { flash: (ok: boolean, msg: string) => void }) {
+    const [users, setUsers] = useState<UserAdmin[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [uploadingId, setUploadingId] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [cropImage, setCropImage] = useState<string | null>(null);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        try { setUsers(await publicApi.listUsers()); }
+        catch { flash(false, 'Failed to load users.'); }
+        finally { setLoading(false); }
+    }, []);
+
+    useEffect(() => { load(); }, []);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            setCropImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const triggerUpload = (u: UserAdmin) => {
+        setSelectedUserId(u.id);
+        fileInputRef.current?.click();
+    };
+
+    const handleCropped = async (blob: Blob) => {
+        if (!selectedUserId) return;
+        setUploadingId(selectedUserId);
+        setCropImage(null);
+        try {
+            const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+            await publicApi.uploadUserImage(selectedUserId, file);
+            flash(true, `Profile picture updated.`);
+            await load();
+        } catch {
+            flash(false, 'Failed to upload image.');
+        } finally {
+            setUploadingId(null);
+            setSelectedUserId(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 flex gap-3">
+                <Users size={18} className="shrink-0 mt-0.5" />
+                <p>Upload profile pictures for your team here. The landing page "Meet Our Community" section will automatically pick users who have images uploaded.</p>
+            </div>
+
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+
+            {loading ? (
+                <div className="flex items-center justify-center py-16 gap-2 text-slate-400">
+                    <Loader2 size={18} className="animate-spin" /><span className="text-sm">Loading users…</span>
+                </div>
+            ) : users.length === 0 ? (
+                <EmptyState icon={Users} message="No users found in the system." />
+            ) : (
+                <div className="grid sm:grid-cols-2 gap-3">
+                    {users.map(u => (
+                        <div key={u.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+                            <div className="relative group">
+                                {u.profileImageUrl ? (
+                                    <img src={u.profileImageUrl} alt={u.name} className="w-12 h-12 rounded-full object-cover border border-slate-100" />
+                                ) : (
+                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-dashed border-slate-300">
+                                        <UserCircle size={24} />
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => triggerUpload(u)}
+                                    disabled={uploadingId === u.id}
+                                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100"
+                                >
+                                    {uploadingId === u.id ? <Loader2 size={16} className="text-white animate-spin" /> : <Camera size={16} className="text-white" />}
+                                </button>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-slate-900 text-sm truncate">{u.name}</p>
+                                <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                            </div>
+                            <button
+                                onClick={() => triggerUpload(u)}
+                                className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                            >
+                                {u.profileImageUrl ? 'Change Photo' : 'Upload Photo'}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {cropImage && (
+                <CropModal
+                    image={cropImage}
+                    onCancel={() => { setCropImage(null); setSelectedUserId(null); }}
+                    onDone={handleCropped}
+                />
+            )}
+        </div>
+    );
+}
+
+function CropModal({ image, onCancel, onDone }: { image: string; onCancel: () => void; onDone: (blob: Blob) => void }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
+    const [crop] = useState({ x: 10, y: 10, width: 80, height: 80 }); // Percentage
+    const [isSquare, setIsSquare] = useState(true);
+
+    const handleDone = () => {
+        const canvas = canvasRef.current;
+        const img = imgRef.current;
+        if (!canvas || !img) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const realX = (crop.x / 100) * img.naturalWidth;
+        const realY = (crop.y / 100) * img.naturalHeight;
+        const realW = (crop.width / 100) * img.naturalWidth;
+        const realH = (crop.height / 100) * img.naturalHeight;
+
+        canvas.width = realW;
+        canvas.height = realH;
+        ctx.drawImage(img, realX, realY, realW, realH, 0, 0, realW, realH);
+
+        canvas.toBlob((blob) => {
+            if (blob) onDone(blob);
+        }, 'image/jpeg', 0.9);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-900">Crop Profile Photo</h3>
+                    <div className="flex gap-2">
+                        <button onClick={() => setIsSquare(true)} className={`px-2 py-1 text-xs rounded ${isSquare ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>Square</button>
+                        <button onClick={() => setIsSquare(false)} className={`px-2 py-1 text-xs rounded ${!isSquare ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>Rectangle</button>
+                    </div>
+                </div>
+                <div className="relative flex-1 bg-slate-900 overflow-hidden flex items-center justify-center">
+                    <img
+                        ref={imgRef}
+                        src={image}
+                        alt="To crop"
+                        className="max-w-full max-h-full object-contain"
+                    />
+                    {/* Simple Crop Overlay (Visual only for this demo, usually you'd use a library) */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className={`border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] ${isSquare ? 'aspect-square w-2/3' : 'aspect-[4/3] w-3/4'}`}></div>
+                    </div>
+                </div>
+                <div className="p-6 flex gap-3">
+                    <button onClick={onCancel} className="flex-1 py-2.5 rounded-lg border border-slate-200 text-sm font-medium">Cancel</button>
+                    <button onClick={handleDone} className="flex-1 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-bold flex items-center justify-center gap-2">
+                        <Crop size={16} /> Use This Crop
+                    </button>
+                </div>
+                <canvas ref={canvasRef} className="hidden" />
+            </div>
         </div>
     );
 }
@@ -84,9 +390,9 @@ function AnnouncementsTab({ flash }: { flash: (ok: boolean, msg: string) => void
         try { setItems(await publicApi.listAnnouncements()); }
         catch { flash(false, 'Failed to load announcements.'); }
         finally { setLoading(false); }
-    }, []);
+    }, [flash]); // ✅ Add flash as dependency
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, [load]); // ✅ Add load as dependency
 
     const openNew = () => { setForm({ title: '', body: '', isPinned: false }); setEditing('new'); };
     const openEdit = (a: PublicAnnouncement) => { setForm({ title: a.title, body: a.body, isPinned: a.isPinned }); setEditing(a); };
@@ -279,7 +585,7 @@ function DocumentsTab({ flash }: { flash: (ok: boolean, msg: string) => void }) 
                                 <p className="font-semibold text-slate-900 text-sm">{d.title}</p>
                                 <p className="text-xs text-slate-400 mt-0.5">
                                     {CATEGORIES.find(c => c.value === d.category)?.label}
-                                    {d.meetingDate ? ` · ${d.meetingDate}` : ''}
+                                    {d.meetingDate ? ` • ${d.meetingDate}` : ''}
                                 </p>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">

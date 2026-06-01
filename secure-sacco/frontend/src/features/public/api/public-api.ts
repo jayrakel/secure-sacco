@@ -44,11 +44,26 @@ export interface UpcomingMeeting {
     description: string;
 }
 
+export interface MemberLanding {
+    id: string;
+    name: string;
+    role: string;
+    image: string;
+}
+
+export interface UserAdmin {
+    id: string;
+    email: string;
+    name: string;
+    profileImageUrl: string | null;
+}
+
 export interface LandingPageData {
     profile: SaccoProfile | null;
     announcements: PublicAnnouncement[];
     documents: PublicDocument[];
     upcomingMeetings: UpcomingMeeting[];
+    members: MemberLanding[];
     memberCount: number;
     meetingsHeld: number;
     totalDocuments: number;
@@ -98,4 +113,26 @@ export const publicApi = {
         apiClient.patch(`/public/admin/documents/${id}/toggle`),
     deleteDocument: (id: string) =>
         apiClient.delete(`/public/admin/documents/${id}`),
+
+    publishMinutes: (data: { title: string; content: string; meetingDate: string }) =>
+        apiClient.post<PublicDocument>('/public/admin/minutes/publish', data).then(r => r.data),
+
+    uploadUserImage: (id: string, file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.post(`/public/admin/users/${id}/image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+
+    uploadCommunityPhoto: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.post('/public/admin/community/photos', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+
+    listUsers: () =>
+        apiClient.get<UserAdmin[]>('/public/admin/users').then(r => r.data),
 };

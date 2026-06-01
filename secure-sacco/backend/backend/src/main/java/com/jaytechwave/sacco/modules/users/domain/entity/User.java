@@ -79,6 +79,9 @@ public class User {
     @Builder.Default
     private boolean mustChangePassword = false;
 
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
+    private String profileImageUrl;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private com.jaytechwave.sacco.modules.members.domain.entity.Member member;

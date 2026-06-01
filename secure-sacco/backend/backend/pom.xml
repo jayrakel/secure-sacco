@@ -176,6 +176,20 @@
             <version>2.6.0</version>
         </dependency>
 
+
+        <!-- Cloudinary -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.38.0</version>
+        </dependency>
+
+        <!-- PDF generation -->
+        <dependency>
+            <groupId>com.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.0.10</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -265,26 +279,26 @@
 
             <!-- OWASP Dependency Check -->
             <plugin>
-    <groupId>org.owasp</groupId>
-    <artifactId>dependency-check-maven</artifactId>
-    <version>12.2.0</version>
-    <configuration>
-        <failBuildOnCVSS>9</failBuildOnCVSS>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>12.2.0</version>
+                <configuration>
+                    <failBuildOnCVSS>9</failBuildOnCVSS>
 
-        <suppressionFiles>
-            <suppressionFile>${maven.multiModuleProjectDirectory}/.github/owasp-suppressions.xml</suppressionFile>
-        </suppressionFiles>
+                    <suppressionFiles>
+                        <suppressionFile>${maven.multiModuleProjectDirectory}/.github/owasp-suppressions.xml</suppressionFile>
+                    </suppressionFiles>
 
-        <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
-    </configuration>
-    <executions>
-        <execution>
-            <goals>
-                <goal>check</goal>
-            </goals>
-        </execution>
-    </executions>
-</plugin>
+                    <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.springframework.boot</groupId>
