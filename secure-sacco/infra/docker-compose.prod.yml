@@ -99,6 +99,7 @@ services:
 
       # CORS
       FRONTEND_URL: ${FRONTEND_URL}
+      CLOUDINARY_URL: ${CLOUDINARY_URL}
     ports:
       - "127.0.0.1:8080:8080"
     healthcheck:
