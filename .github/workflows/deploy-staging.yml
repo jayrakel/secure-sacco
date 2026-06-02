@@ -78,7 +78,7 @@ jobs:
             VITE_API_BASE_URL=/api/v1
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          no-cache: true
+          no-cache: false
 
       # ── Ensure deploy directory exists on server ─────────────────────────────
       - name: Bootstrap deploy directory
@@ -113,6 +113,7 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           DB_USERNAME: ${{ secrets.STAGING_DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
           APP_OFFICIAL_EMAIL_DOMAIN: ${{ vars.APP_OFFICIAL_EMAIL_DOMAIN }}
           APP_DEFAULT_ADMIN_EMAIL: ${{ vars.APP_DEFAULT_ADMIN_EMAIL }}
           APP_DEFAULT_ADMIN_PASSWORD: ${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}
@@ -157,6 +158,7 @@ jobs:
               printf 'DB_USERNAME=%s\n' "$DB_USERNAME"
               printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
               printf 'DB_NAME=sacco_staging\n'
+              printf 'CLOUDINARY_URL=%s\n' "$CLOUDINARY_URL"
               printf 'APP_OFFICIAL_EMAIL_DOMAIN=%s\n' "$APP_OFFICIAL_EMAIL_DOMAIN"
               printf 'APP_DEFAULT_ADMIN_EMAIL=%s\n' "$APP_DEFAULT_ADMIN_EMAIL"
               printf 'APP_DEFAULT_ADMIN_PASSWORD=%s\n' "$APP_DEFAULT_ADMIN_PASSWORD"
