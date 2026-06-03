@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
 import apiClient from '../../../shared/api/api-client';
 
 interface BalanceData {
@@ -78,9 +78,14 @@ export const CoopAccountBalanceCard: React.FC = () => {
     useEffect(() => { fetchBalance(); }, [fetchBalance]);
 
     useEffect(() => {
-        const t = setInterval(() => fetchBalance(), 5 * 60 * 1000);
+        // When balance is working: poll every 5 minutes (normal operation)
+        // When balance is failing (Co-op warm-up delay): retry every 2 minutes silently
+        const interval = error
+            ? 2 * 60 * 1000   // retry every 2 min while Co-op is warming up
+            : 5 * 60 * 1000;  // normal poll every 5 min once working
+        const t = setInterval(() => fetchBalance(), interval);
         return () => clearInterval(t);
-    }, [fetchBalance]);
+    }, [fetchBalance, error]);
 
     const fmt = (val?: string) => {
         if (!val) return '—';
@@ -105,18 +110,27 @@ export const CoopAccountBalanceCard: React.FC = () => {
 
     if (error) {
         return (
-            <div className="bg-white rounded-xl border border-red-100 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 bg-red-50 rounded-lg">
-                        <AlertCircle size={16} className="text-red-500" />
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-slate-50 rounded-lg">
+                            <Building2 size={15} className="text-slate-400" />
+                        </div>
+                        <span className="text-sm font-medium text-slate-600">Co-op Bank Account</span>
                     </div>
-                    <span className="text-sm font-medium text-slate-700">Co-op Bank Balance</span>
+                    <button onClick={() => fetchBalance(true)} disabled={refreshing}
+                            className="p-1.5 hover:bg-slate-50 rounded-lg transition"
+                            title="Retry">
+                        <RefreshCw size={14} className={`text-slate-400 ${refreshing ? 'animate-spin' : ''}`} />
+                    </button>
                 </div>
-                <p className="text-sm text-red-500 mb-3">{error}</p>
-                <button onClick={() => fetchBalance(true)}
-                        className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 transition">
-                    <RefreshCw size={12} /> Retry
-                </button>
+                <div className="flex items-center gap-2 py-2">
+                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    <p className="text-sm text-slate-500">Balance syncing with Co-op Bank...</p>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">
+                    Auto-retrying every 2 min. Last attempt: {new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+                </p>
             </div>
         );
     }
