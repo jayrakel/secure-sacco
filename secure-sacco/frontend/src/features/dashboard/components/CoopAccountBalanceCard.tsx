@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building2, RefreshCw, AlertCircle } from 'lucide-react';
-import { paymentApi, CoopBalanceResponse } from '../../payments/api/payment-api';
+import { paymentApi, type CoopBalanceResponse } from '../../payments/api/payment-api';
 
 export const CoopAccountBalanceCard: React.FC = () => {
     const [balance, setBalance] = useState<CoopBalanceResponse | null>(null);
