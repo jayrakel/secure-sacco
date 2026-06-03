@@ -13,11 +13,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Logs the complete HTTP request and response for every Co-op Connect API call.
- * Wire into the RestClient builder in CoopConnectService.
- *
- * Output appears in backend logs at INFO level under the tag [CO-OP HTTP].
- * Co-op support can be sent the full block between ──── REQUEST ──── and ──── END ────
+ * Logs every Co-op Connect HTTP exchange in Postman-style JSON format.
+ * Nothing is masked — full token and response body are logged as-is.
+ * Temporary — revert once Co-op investigation is resolved.
  */
 @Slf4j
 public class CoopHttpLogger implements ClientHttpRequestInterceptor {
@@ -27,54 +25,59 @@ public class CoopHttpLogger implements ClientHttpRequestInterceptor {
                                         byte[] body,
                                         ClientHttpRequestExecution execution) throws IOException {
 
-        logRequest(request, body);
+        String requestBody = new String(body, StandardCharsets.UTF_8)
+                .replaceAll("\\r?\\n\\s*", " ").trim();
+
+        String authHeader = request.getHeaders().getFirst("Authorization") != null
+                ? request.getHeaders().getFirst("Authorization")
+                : "none";
+
+        log.info("[CO-OP HTTP] REQUEST:\n" +
+                "{\n" +
+                "  \"name\": \"" + request.getURI().getPath() + "\",\n" +
+                "  \"request\": {\n" +
+                "    \"auth\": { \"type\": \"bearer\", \"bearer\": [{ \"key\": \"token\", \"value\": \"" + authHeader + "\", \"type\": \"string\" }] },\n" +
+                "    \"method\": \"" + request.getMethod() + "\",\n" +
+                "    \"header\": [],\n" +
+                "    \"body\": {\n" +
+                "      \"mode\": \"raw\",\n" +
+                "      \"raw\": " + requestBody + ",\n" +
+                "      \"options\": { \"raw\": { \"language\": \"json\" } }\n" +
+                "    },\n" +
+                "    \"url\": { \"raw\": \"" + request.getURI() + "\" }\n" +
+                "  }\n" +
+                "}");
+
         ClientHttpResponse response = execution.execute(request, body);
         return logResponse(request, response);
     }
 
-    private void logRequest(HttpRequest request, byte[] body) {
-        String bodyStr = new String(body, StandardCharsets.UTF_8);
-        // Mask the Authorization header value for safe sharing
-        String authHeader = request.getHeaders().getFirst("Authorization");
-        String maskedAuth = authHeader != null
-                ? authHeader.substring(0, Math.min(authHeader.length(), 20)) + "...[MASKED]"
-                : "none";
-
-        log.info("""
-                [CO-OP HTTP] ──── REQUEST ────────────────────────────────────────
-                [CO-OP HTTP] {} {}
-                [CO-OP HTTP] Authorization: {}
-                [CO-OP HTTP] Content-Type: {}
-                [CO-OP HTTP] Body: {}
-                [CO-OP HTTP] ──────────────────────────────────────────────────────""",
-                request.getMethod(),
-                request.getURI(),
-                maskedAuth,
-                request.getHeaders().getFirst("Content-Type"),
-                bodyStr);
-    }
-
-    private ClientHttpResponse logResponse(HttpRequest request, ClientHttpResponse response) throws IOException {
+    private ClientHttpResponse logResponse(HttpRequest request,
+                                           ClientHttpResponse response) throws IOException {
         byte[] responseBody = StreamUtils.copyToByteArray(response.getBody());
-        String responseStr = new String(responseBody, StandardCharsets.UTF_8);
+        String responseStr = new String(responseBody, StandardCharsets.UTF_8)
+                .replaceAll("\\r?\\n\\s*", " ").trim();
 
-        log.info("""
-                [CO-OP HTTP] ──── RESPONSE ───────────────────────────────────────
-                [CO-OP HTTP] {} {} → HTTP {}
-                [CO-OP HTTP] Body: {}
-                [CO-OP HTTP] ──── END ────────────────────────────────────────────""",
-                request.getMethod(),
-                request.getURI(),
-                response.getStatusCode().value(),
-                responseStr);
+        log.info("[CO-OP HTTP] RESPONSE (Postman format):\n" +
+                "{\n" +
+                "  \"name\": \"" + request.getURI().getPath() + "\",\n" +
+                "  \"response\": [\n" +
+                "    {\n" +
+                "      \"name\": \"" + request.getURI().getPath() + "\",\n" +
+                "      \"originalRequest\": {\n" +
+                "        \"method\": \"POST\",\n" +
+                "        \"url\": { \"raw\": \"" + request.getURI() + "\" }\n" +
+                "      },\n" +
+                "      \"status\": \"" + response.getStatusCode().value() + "\",\n" +
+                "      \"code\": " + response.getStatusCode().value() + ",\n" +
+                "      \"body\": " + responseStr + "\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}");
 
-        // Return a buffered response since we've consumed the body stream
         return new BufferedClientHttpResponse(response, responseBody);
     }
 
-    /**
-     * Wraps the response to allow the body to be read again after we've already read it.
-     */
     private static class BufferedClientHttpResponse implements ClientHttpResponse {
         private final ClientHttpResponse original;
         private final byte[] body;
