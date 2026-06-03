@@ -4,12 +4,11 @@ import { Camera, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import apiClient from '../../../shared/api/api-client';
 
 interface MeetingQrScannerProps {
-    meetingId: number | string;
     onClose: () => void;
     onScanSuccess: (memberId: number) => void;
 }
 
-export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQrScannerProps) {
+export function MeetingQrScanner({ onClose, onScanSuccess }: MeetingQrScannerProps) {
     const scannerRef   = useRef<HTMLDivElement>(null);
     const html5QrCode  = useRef<Html5Qrcode | null>(null);
     const isStarting   = useRef(false); // prevent double-start race condition

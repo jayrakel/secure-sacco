@@ -108,13 +108,11 @@ export default function MyMeetingsPage() {
         <div className="max-w-4xl mx-auto">
             {/* Render the Scanner Modal when a meeting is selected */}
             {scanningMeetingId && (
-                <MeetingQrScanner
-                    meetingId={scanningMeetingId}
-                    onClose={() => setScanningMeetingId(null)}
-                    onScanSuccess={() => {
-                        setScanningMeetingId(null);
-                        load(); // Reload the list so the UI updates to "Checked In"
-                    }}
+                <MeetingQrScanner onClose={() => setScanningMeetingId(null)}
+                                  onScanSuccess={() => {
+                                      setScanningMeetingId(null);
+                                      load(); // Reload the list so the UI updates to "Checked In"
+                                  }}
                 />
             )}
 
