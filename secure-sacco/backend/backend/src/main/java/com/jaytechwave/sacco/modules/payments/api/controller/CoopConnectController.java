@@ -111,27 +111,47 @@ public class CoopConnectController {
 
     // ── Real-time account balance ─────────────────────────────────────────────
 
-    @Operation(summary = "Get Co-op bank account balance",
-            description = "Returns the real-time balance of the SACCO Co-op account. Cached for 5 minutes.")
-    @GetMapping("/coop/account-balance")
+//    @Operation(summary = "Get Co-op bank account balance",
+//            description = "Returns the real-time balance of the SACCO Co-op account. Cached for 5 minutes.")
+//    @GetMapping("/coop/account-balance")
+//    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
+//    public ResponseEntity<?> getAccountBalance() {
+//        try {
+//            var balance = coopConnectService.getAccountBalance();
+//            if (balance == null) {
+//                return ResponseEntity.status(503)
+//                        .body(Map.of("error", "Could not fetch account balance from Co-op Bank"));
+//            }
+//            return ResponseEntity.ok(Map.of(
+//                    "availableBalance", balance.getAvailableBalance() != null ? balance.getAvailableBalance() : "0",
+//                    "bookedBalance",    balance.getBookedBalance()    != null ? balance.getBookedBalance()    : "0",
+//                    "currency",         balance.getCurrency()         != null ? balance.getCurrency()         : "KES",
+//                    "accountNumber",    balance.getAccountNumber()    != null ? balance.getAccountNumber()    : "",
+//                    "messageCode",      balance.getMessageCode()      != null ? balance.getMessageCode()      : ""
+//            ));
+//        } catch (Exception e) {
+//            log.error("Failed to get account balance: {}", e.getMessage());
+//            return ResponseEntity.status(503).body(Map.of("error", "Account balance unavailable"));
+//        }
+//    }
+
+    // ── Account balance enquiry ───────────────────────────────────────────────
+
+    @Operation(summary = "Get Co-op Account Balance",
+            description = "Fetches the real-time balance of the Sacco's Co-op Connect account.")
+    @GetMapping("/coop/balance")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
     public ResponseEntity<?> getAccountBalance() {
         try {
             var balance = coopConnectService.getAccountBalance();
             if (balance == null) {
                 return ResponseEntity.status(503)
-                        .body(Map.of("error", "Could not fetch account balance from Co-op Bank"));
+                        .body(Map.of("error", "Received empty response from Co-op Bank"));
             }
-            return ResponseEntity.ok(Map.of(
-                    "availableBalance", balance.getAvailableBalance() != null ? balance.getAvailableBalance() : "0",
-                    "bookedBalance",    balance.getBookedBalance()    != null ? balance.getBookedBalance()    : "0",
-                    "currency",         balance.getCurrency()         != null ? balance.getCurrency()         : "KES",
-                    "accountNumber",    balance.getAccountNumber()    != null ? balance.getAccountNumber()    : "",
-                    "messageCode",      balance.getMessageCode()      != null ? balance.getMessageCode()      : ""
-            ));
+            return ResponseEntity.ok(balance);
         } catch (Exception e) {
-            log.error("Failed to get account balance: {}", e.getMessage());
-            return ResponseEntity.status(503).body(Map.of("error", "Account balance unavailable"));
+            log.error("Failed to get Co-op account balance: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "Bank API Error: " + e.getMessage()));
         }
     }
 
