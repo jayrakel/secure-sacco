@@ -13,15 +13,15 @@ export interface InitiateStkResponse {
 }
 
 export interface CoopBalanceResponse {
-    messageReference: string;
-    messageCode: string;
-    messageDescription: string;
-    accountName: string;
-    accountNumber: string;
-    currency: string;
-    availableBalance: number;
-    bookedBalance: number;
-    clearedBalance: number;
+    MessageReference: string;
+    MessageCode: string;
+    MessageDescription: string;
+    AccountName: string;
+    AccountNumber: string;
+    Currency: string;
+    AvailableBalance: number;
+    BookedBalance: number;
+    ClearedBalance: number;
 }
 
 export const paymentApi = {
