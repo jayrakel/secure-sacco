@@ -15,23 +15,45 @@ export const CoopAccountBalanceCard: React.FC = () => {
         return new Intl.NumberFormat('en-KE', { minimumFractionDigits: 2 }).format(val);
     };
 
-    const fetchBalance = useCallback(async (manual = false) => {
-        if (manual) setRefreshing(true);
-        else setLoading(true);
+    const fetchBalance = useCallback(async (isManualRefresh = false) => {
+        if (isManualRefresh) {
+            setRefreshing(true);
+        } else if (!balance) {
+            setLoading(true);
+        }
+
         setError(null);
 
         try {
             const data = await paymentApi.getCoopBalance();
             setBalance(data);
             setLastUpdated(new Date());
-        } catch (err: unknown) { // Change 'any' to 'unknown'
+        } catch (err: unknown) {
             console.error("Failed to fetch balance:", err);
 
-            // Type-guard to safely extract the message
-            const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+            // 1. Extract the raw error message from the Axios response
+            const rawError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+                || (err as { message?: string })?.message
                 || 'Failed to connect to bank.';
 
-            setError(message);
+            // 2. Smart Parser: Clean up the error for the UI
+            let cleanMessage = 'Unable to fetch balance from the bank at this time.';
+
+            if (rawError.includes('ACCOUNT AUTHORIZATION FAILURE') || rawError.includes('-8')) {
+                cleanMessage = 'Authorization Failure: This account number is not whitelisted for your API profile.';
+            } else if (rawError.includes('401') || rawError.includes('Unauthorized')) {
+                cleanMessage = 'Bank Authentication Failed: Please check your API credentials.';
+            } else if (rawError.includes('503')) {
+                cleanMessage = 'Co-op Bank services are currently unavailable. Retrying...';
+            } else if (rawError.includes('{')) {
+                // If it's an ugly JSON string, hide it from the user
+                cleanMessage = 'The bank rejected the request due to a configuration error.';
+            } else {
+                // Truncate any unusually long errors so they don't break the card layout
+                cleanMessage = rawError.length > 80 ? rawError.substring(0, 80) + '...' : rawError;
+            }
+
+            setError(cleanMessage);
         } finally {
             setLoading(false);
             setRefreshing(false);
