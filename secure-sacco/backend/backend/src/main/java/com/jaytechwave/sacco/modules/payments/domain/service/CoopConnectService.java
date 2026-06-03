@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import com.jaytechwave.sacco.modules.payments.infrastructure.CoopHttpLogger;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -48,7 +50,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CoopConnectService {
 
     private final CoopConnectProperties props;
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient = RestClient.builder()
+            .requestInterceptor(new CoopHttpLogger())
+            .build();
 
     // ── Token cache ───────────────────────────────────────────────────────────
     private final AtomicReference<String> cachedToken     = new AtomicReference<>();
