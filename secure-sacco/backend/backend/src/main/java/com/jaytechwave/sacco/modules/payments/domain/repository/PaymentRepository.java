@@ -4,6 +4,12 @@ import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,4 +23,18 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     // Used by PendingPaymentPollingJob to find all pending STK pushes
     List<Payment> findByStatusAndPaymentType(PaymentStatus status, String paymentType);
+
+    // ── Co-op account transaction history (IPN-stored) ───────────────────────
+
+    /** All COMPLETED payments between two dates, newest first — for the transactions card */
+    @Query("SELECT p FROM Payment p WHERE p.status = 'COMPLETED' " +
+            "AND p.createdAt >= :from AND p.createdAt <= :to " +
+            "ORDER BY p.createdAt DESC")
+    Page<Payment> findCompletedBetween(
+            @Param("from") ZonedDateTime from,
+            @Param("to")   ZonedDateTime to,
+            Pageable pageable);
+
+    /** Latest N completed payments regardless of date — for the mini dashboard strip */
+    Page<Payment> findByStatusOrderByCreatedAtDesc(PaymentStatus status, Pageable pageable);
 }

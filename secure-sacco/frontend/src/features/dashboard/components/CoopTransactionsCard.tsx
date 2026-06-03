@@ -6,19 +6,23 @@ import { format, subDays } from 'date-fns';
 interface Transaction {
     transactionId: string;
     transactionDate: string;
-    valueDate: string;
     narration: string;
-    transactionType: string; // DR or CR
+    transactionType: string; // always CR (IPN only stores credits)
     amount: string;
-    runningBalance: string;
+    currency: string;
+    senderName: string;
+    senderPhone: string;
+    paymentMethod: string;
     paymentRef: string;
 }
 
 interface TransactionResponse {
     messageCode: string;
     messageDescription: string;
-    accountNumber: string;
-    currency: string;
+    source: string;
+    totalElements: number;
+    totalPages: number;
+    currentPage: number;
     transactions: Transaction[];
 }
 
@@ -124,8 +128,8 @@ export const CoopTransactionsCard: React.FC = () => {
                         <p className="text-sm font-bold text-emerald-600">KES {fmt(totalIn.toFixed(2))}</p>
                     </div>
                     <div className="px-4 py-3 text-center">
-                        <p className="text-[10px] text-red-400 uppercase tracking-wide mb-0.5">Total Out</p>
-                        <p className="text-sm font-bold text-red-500">KES {fmt(totalOut.toFixed(2))}</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Source</p>
+                        <p className="text-xs font-semibold text-slate-600">Co-op IPN</p>
                     </div>
                 </div>
             )}
@@ -135,7 +139,7 @@ export const CoopTransactionsCard: React.FC = () => {
                 <div className="divide-y divide-slate-50 max-h-96 overflow-y-auto">
                     {transactions.length === 0 ? (
                         <div className="py-10 text-center">
-                            <p className="text-sm text-slate-400">No transactions in this period.</p>
+                            <p className="text-sm text-slate-400">No payments received in this period.</p>
                         </div>
                     ) : (
                         transactions.map((t, i) => {
@@ -165,7 +169,7 @@ export const CoopTransactionsCard: React.FC = () => {
                                             {isCr ? '+' : '-'}KES {fmt(t.amount)}
                                         </p>
                                         <p className="text-[10px] text-slate-400 mt-0.5">
-                                            Bal: {fmt(t.runningBalance)}
+                                            {t.senderName ?? t.paymentMethod ?? ''}
                                         </p>
                                     </div>
                                 </div>
@@ -178,7 +182,7 @@ export const CoopTransactionsCard: React.FC = () => {
             {/* Not yet fetched state */}
             {!fetched && !loading && !error && (
                 <div className="py-8 text-center px-5">
-                    <p className="text-sm text-slate-400">Select a date range and click Fetch to load transactions.</p>
+                    <p className="text-sm text-slate-400">Select a date range and click Fetch to load payment history.</p>
                 </div>
             )}
         </div>
