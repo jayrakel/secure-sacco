@@ -1,187 +1,122 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, RefreshCw } from 'lucide-react';
-import apiClient from '../../../shared/api/api-client';
+import { Building2, RefreshCw, AlertCircle } from 'lucide-react';
+import { paymentApi, type CoopBalanceResponse } from '../../payments/api/payment-api';
 
-interface BalanceData {
-    availableBalance: string;
-    bookedBalance: string;
-    currency: string;
-    accountNumber: string;
-}
-
-/**
- * Real-time Co-op bank account balance card.
- * Only visible to SYSTEM_ADMIN, TREASURER, CHAIRPERSON, LOAN_OFFICER.
- * Auto-refreshes every 5 minutes. Manual refresh button included.
- *
- * Place in UnifiedStaffDashboard alongside existing stat cards:
- *   import { CoopAccountBalanceCard } from '../components/CoopAccountBalanceCard';
- *   <CoopAccountBalanceCard />
- */
 export const CoopAccountBalanceCard: React.FC = () => {
-    const [balance, setBalance]         = useState<BalanceData | null>(null);
-    const [loading, setLoading]         = useState(true);
-    const [error, setError]             = useState<string | null>(null);
+    const [balance, setBalance] = useState<CoopBalanceResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-    const [refreshing, setRefreshing]   = useState(false);
-    const [isCached, setIsCached]       = useState(false);
+
+    // Formatter for Kenyan Shillings
+    const fmt = (val: number | undefined) => {
+        if (val === undefined) return '0.00';
+        return new Intl.NumberFormat('en-KE', { minimumFractionDigits: 2 }).format(val);
+    };
 
     const fetchBalance = useCallback(async (manual = false) => {
         if (manual) setRefreshing(true);
         else setLoading(true);
         setError(null);
 
-        const startMs = performance.now();
-        const requestId = Math.random().toString(36).slice(2, 8).toUpperCase();
-        console.group(`[Co-op Balance] Request ${requestId} — ${manual ? 'manual' : 'auto'}`);
-        console.log('⏱  Started at:', new Date().toISOString());
-
         try {
-            const res = await apiClient.get('/payments/coop/account-balance');
-            const elapsed = Math.round(performance.now() - startMs);
-
-            console.log(`✅ Success in ${elapsed}ms`);
-            console.log('📦 HTTP status:', res.status);
-            console.log('📊 Response data:', res.data);
-            console.log('🔑 Message code:', (res.data as Record<string, unknown>)?.messageCode ?? 'N/A');
-            console.log('💰 Available balance:', (res.data as BalanceData)?.availableBalance);
-            setIsCached(elapsed < 200); // under 200ms = served from backend cache
-            console.log('🏦 Account number:', (res.data as BalanceData)?.accountNumber);
-
-            setBalance(res.data);
+            const data = await paymentApi.getCoopBalance();
+            setBalance(data);
             setLastUpdated(new Date());
-        } catch (err: unknown) {
-            const elapsed = Math.round(performance.now() - startMs);
-            const axiosErr = err as {
-                response?: { status: number; data: unknown };
-                message?: string;
-                code?: string;
-            };
+        } catch (err: unknown) { // Change 'any' to 'unknown'
+            console.error("Failed to fetch balance:", err);
 
-            console.error(`❌ Failed in ${elapsed}ms`);
-            console.error('📛 Error message:', axiosErr?.message);
-            console.error('🔢 HTTP status:', axiosErr?.response?.status);
-            console.error('📦 Response body:', axiosErr?.response?.data);
-            console.error('🔌 Error code:', axiosErr?.code);
+            // Type-guard to safely extract the message
+            const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+                || 'Failed to connect to bank.';
 
-            const serverMsg = (axiosErr?.response?.data as Record<string, string>)?.error
-                ?? axiosErr?.message
-                ?? 'Unable to fetch balance';
-            setError(serverMsg);
+            setError(message);
         } finally {
-            console.groupEnd();
             setLoading(false);
             setRefreshing(false);
         }
-    }, []);
+    }, [balance]);
 
-    useEffect(() => { fetchBalance(); }, [fetchBalance]);
-
+    // Initial load and 5-minute polling interval
     useEffect(() => {
-        // When balance is working: poll every 5 minutes (normal operation)
-        // When balance is failing (Co-op warm-up delay): retry every 2 minutes silently
-        const interval = error
-            ? 2 * 60 * 1000   // retry every 2 min while Co-op is warming up
-            : 5 * 60 * 1000;  // normal poll every 5 min once working
-        const t = setInterval(() => fetchBalance(), interval);
-        return () => clearInterval(t);
-    }, [fetchBalance, error]);
+        // Initial fetch
+        fetchBalance();
 
-    const fmt = (val?: string) => {
-        if (!val) return '—';
-        const n = parseFloat(val);
-        return isNaN(n) ? val : new Intl.NumberFormat('en-KE', {
-            minimumFractionDigits: 2, maximumFractionDigits: 2
-        }).format(n);
-    };
+        // Setup interval to fetch every 5 minutes (300,000 ms)
+        const intervalId = setInterval(() => {
+            fetchBalance(false);
+        }, 300000);
 
-    if (loading) {
-        return (
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 animate-pulse">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="h-4 w-36 bg-slate-200 rounded" />
-                    <div className="h-8 w-8 bg-slate-200 rounded-lg" />
-                </div>
-                <div className="h-8 w-48 bg-slate-200 rounded mb-2" />
-                <div className="h-3 w-28 bg-slate-100 rounded" />
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-slate-50 rounded-lg">
-                            <Building2 size={15} className="text-slate-400" />
-                        </div>
-                        <span className="text-sm font-medium text-slate-600">Co-op Bank Account</span>
-                    </div>
-                    <button onClick={() => fetchBalance(true)} disabled={refreshing}
-                            className="p-1.5 hover:bg-slate-50 rounded-lg transition"
-                            title="Retry">
-                        <RefreshCw size={14} className={`text-slate-400 ${refreshing ? 'animate-spin' : ''}`} />
-                    </button>
-                </div>
-                <div className="flex items-center gap-2 py-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                    <p className="text-sm text-slate-500">Balance syncing with Co-op Bank...</p>
-                </div>
-                <p className="text-[10px] text-slate-400 mt-2">
-                    Auto-retrying every 2 min. Last attempt: {new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-            </div>
-        );
-    }
+        // Cleanup interval on unmount
+        return () => clearInterval(intervalId);
+    }, []); // Empty dependency array prevents the cascading render linting error!
 
     return (
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl shadow-sm p-5 text-white">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-white/20 rounded-lg">
-                        <Building2 size={15} className="text-white" />
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-700 p-5 shadow-lg flex flex-col justify-between h-full relative overflow-hidden text-white">
+
+            {/* Header */}
+            <div className="flex items-start justify-between relative z-10 mb-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/20 rounded-lg">
+                        <Building2 size={20} className="text-emerald-400" />
                     </div>
-                    <span className="text-sm font-medium text-emerald-100">Co-op Bank Account</span>
+                    <div>
+                        <h3 className="font-semibold text-white">Co-op Bank Balance</h3>
+                        <p className="text-xs text-slate-400">Main Sacco Account</p>
+                    </div>
                 </div>
-                <button onClick={() => fetchBalance(true)} disabled={refreshing}
-                        className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition"
-                        title="Refresh balance">
-                    <RefreshCw size={14} className={`text-white ${refreshing ? 'animate-spin' : ''}`} />
+
+                <button
+                    onClick={() => fetchBalance(true)}
+                    disabled={loading || refreshing}
+                    className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+                    title="Refresh Balance"
+                >
+                    <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
                 </button>
             </div>
 
-            <div className="mb-3">
-                <p className="text-emerald-200 text-xs mb-0.5">Available Balance</p>
-                <p className="text-3xl font-bold tracking-tight">
-                    KES {fmt(balance?.availableBalance)}
-                </p>
+            {/* Content Body */}
+            <div className="relative z-10 flex-1 flex flex-col justify-end">
+                {error ? (
+                    <div className="flex items-center gap-2 text-red-400 bg-red-400/10 p-3 rounded-lg text-sm">
+                        <AlertCircle size={16} className="shrink-0" />
+                        <p>{error}</p>
+                    </div>
+                ) : loading && !balance ? (
+                    <div className="animate-pulse space-y-3">
+                        <div className="h-8 bg-white/10 rounded w-1/2"></div>
+                        <div className="h-4 bg-white/10 rounded w-1/3"></div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="mb-4">
+                            <p className="text-emerald-400/80 text-xs font-medium mb-1 uppercase tracking-wider">Available Balance</p>
+                            <p className="text-3xl font-bold tracking-tight text-white">
+                                KES {fmt(balance?.availableBalance)}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-slate-700/50 pt-3">
+                            <div>
+                                <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-0.5">Booked Balance</p>
+                                <p className="text-sm font-semibold text-slate-200">KES {fmt(balance?.bookedBalance)}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-0.5">Last updated</p>
+                                <p className="text-xs text-slate-300">
+                                    {lastUpdated ? lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                                </p>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-white/20 pt-3">
-                <div>
-                    <p className="text-emerald-200 text-[10px]">Booked Balance</p>
-                    <p className="text-sm font-semibold text-white/90">KES {fmt(balance?.bookedBalance)}</p>
-                </div>
-                <div className="text-right">
-                    <p className="text-emerald-200 text-[10px]">Last updated</p>
-                    <p className="text-xs text-white/80">
-                        {lastUpdated
-                            ? lastUpdated.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })
-                            : '—'}
-                    </p>
-                </div>
-            </div>
-
-            <div className="flex items-center justify-between mt-2">
-                <p className="text-[10px] text-emerald-300 font-mono">
-                    Acct: {balance?.accountNumber ?? '—'}
-                </p>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                    isCached ? 'bg-white/10 text-emerald-200' : 'bg-white/10 text-yellow-300'
-                }`}>
-                    {isCached ? '⚡ cached' : '🔴 live'}
-                </span>
+            {/* Background Decoration */}
+            <div className="absolute -bottom-6 -right-6 text-emerald-500/5 rotate-12 pointer-events-none">
+                <Building2 size={120} />
             </div>
         </div>
     );

@@ -53,7 +53,7 @@ Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 ###
 
 ### Member 2 — Salesio Mwiraria
-POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
+POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}

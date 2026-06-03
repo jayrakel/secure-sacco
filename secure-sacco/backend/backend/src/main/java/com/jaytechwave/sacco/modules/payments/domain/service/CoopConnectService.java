@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import com.jaytechwave.sacco.modules.payments.infrastructure.CoopHttpLogger;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -51,14 +50,14 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class CoopConnectService {
 
-    private final CoopConnectProperties    props;
-    private final StringRedisTemplate        redisTemplate;
+    private final CoopConnectProperties props;
+    private final StringRedisTemplate redisTemplate;
     private final RestClient restClient = RestClient.builder()
             .requestInterceptor(new CoopHttpLogger())
             .build();
 
-    // ── Token cache ───────────────────────────────────────────────────────────
-    private final AtomicReference<String> cachedToken     = new AtomicReference<>();
+    // == Token cache ===========================================================
+    private final AtomicReference<String> cachedToken      = new AtomicReference<>();
     private final AtomicLong              tokenExpiresAtMs = new AtomicLong(0);
     private static final long             TOKEN_BUFFER_MS  = 60_000L; // refresh 60s early
 
@@ -66,7 +65,7 @@ public class CoopConnectService {
     private static final String REDIS_TOKEN_KEY   = "coop:access_token";
     private static final String REDIS_EXPIRY_KEY  = "coop:token_expiry_ms";
 
-    // ── Token management ──────────────────────────────────────────────────────
+    // == Token management ======================================================
 
     public synchronized String getAccessToken() {
         long now = System.currentTimeMillis();
@@ -76,7 +75,7 @@ public class CoopConnectService {
             return cachedToken.get();
         }
 
-        // 2. Check Redis cache (survives restarts — prevents Co-op CBS re-activation delay)
+        // 2. Check Redis cache (survives restarts → prevents Co-op CBS re-activation delay)
         try {
             String redisToken  = redisTemplate.opsForValue().get(REDIS_TOKEN_KEY);
             String redisExpiry = redisTemplate.opsForValue().get(REDIS_EXPIRY_KEY);
@@ -91,7 +90,7 @@ public class CoopConnectService {
                 }
             }
         } catch (Exception e) {
-            log.warn("Co-op Connect: Redis token lookup failed — will fetch fresh token: {}", e.getMessage());
+            log.warn("Co-op Connect: Redis token lookup failed → will fetch fresh token: {}", e.getMessage());
         }
 
         log.info("Co-op Connect: fetching new access token from {} /token", props.getBaseUrl());
@@ -163,183 +162,219 @@ public class CoopConnectService {
         }
     }
 
-    // ── STK Push ──────────────────────────────────────────────────────────────
+    /**
+     * Clears the cached Co-op token from memory and Redis when a 401 is encountered.
+     */
+    private void clearTokenCache() {
+        log.warn("Co-op Connect: Clearing expired/revoked token from cache.");
+        cachedToken.set(null);
+        tokenExpiresAtMs.set(0);
+        try {
+            redisTemplate.delete(List.of(REDIS_TOKEN_KEY, REDIS_EXPIRY_KEY));
+        } catch (Exception e) {
+            log.warn("Failed to clear Redis token cache: {}", e.getMessage());
+        }
+    }
 
     /**
-     * Initiates an STK push prompt on the member's phone.
-     *
-     * @param phoneNumber  Member's phone in international format (2547XXXXXXXX)
-     * @param amount       Amount to request
-     * @param reference    Unique payment reference (used as MessageReference)
-     * @param narration    Description shown on the STK prompt
-     * @return Co-op Connect's sync response
+     * Wraps API calls. If Co-op returns a 401 Unauthorized (meaning our token was
+     * revoked elsewhere), it clears the cache and safely retries the request once.
      */
+    private <T> T executeWithTokenRetry(java.util.function.Supplier<T> apiCall) {
+        try {
+            return apiCall.get();
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 401) {
+                log.warn("Co-op Connect: 401 Unauthorized caught. Retrying with fresh token...");
+                clearTokenCache();
+                return apiCall.get(); // Try exactly once more
+            }
+            throw e;
+        }
+    }
+
+    // == STK Push ==============================================================
+
     public StkPushResponse initiateStkPush(String phoneNumber,
                                            BigDecimal amount,
                                            String reference,
                                            String narration) {
-        String callbackUrl = props.getCallbackBaseUrl()
-                + "/api/v1/payments/coop/stk-callback";
+        return executeWithTokenRetry(() -> {
+            String callbackUrl = props.getCallbackBaseUrl() + "/api/v1/payments/coop/stk-callback";
+            String messageDateTime = LocalDateTime.now(SaccoDateUtils.NAIROBI)
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 
-        String messageDateTime = LocalDateTime.now(SaccoDateUtils.NAIROBI)
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+            StkPushRequest request = StkPushRequest.builder()
+                    .messageReference(reference) // Reference is already a UUID from caller
+                    .callBackUrl(callbackUrl)
+                    .operatorCode(props.getOperatorCode())
+                    .transactionCurrency("KES")
+                    .mobileNumber(phoneNumber)
+                    .narration(narration)
+                    .amount(amount)
+                    .messageDateTime(messageDateTime)
+                    .otherDetails(List.of(OtherDetail.of("AccountRef", reference)))
+                    .build();
 
-        StkPushRequest request = StkPushRequest.builder()
-                .messageReference(reference)
-                .callBackUrl(callbackUrl)
-                .operatorCode(props.getOperatorCode())
-                .transactionCurrency("KES")
-                .mobileNumber(phoneNumber)
-                .narration(narration)
-                .amount(amount)
-                .messageDateTime(messageDateTime)
-                .otherDetails(List.of(OtherDetail.of("AccountRef", reference)))
-                .build();
+            log.info("Co-op STK Push → phone={} amount={} ref={} callbackUrl={}",
+                    phoneNumber, amount, reference, callbackUrl);
 
-        log.info("Co-op STK Push → phone={} amount={} ref={} callbackUrl={}",
-                phoneNumber, amount, reference, callbackUrl);
+            try {
+                StkPushResponse response = restClient.post()
+                        .uri(props.getBaseUrl() + "/FT/stk/1.0.0")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(request)
+                        .retrieve()
+                        .body(StkPushResponse.class);
 
-        try {
-            StkPushResponse response = restClient.post()
-                    .uri(props.getBaseUrl() + "/FT/stk/1.0.0")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(request)
-                    .retrieve()
-                    .body(StkPushResponse.class);
+                log.info("Co-op STK Push response: code={} desc={}",
+                        response != null ? response.getMessageCode() : "null",
+                        response != null ? response.getMessageDescription() : "null");
 
-            log.info("Co-op STK Push response: code={} desc={}",
-                    response != null ? response.getMessageCode() : "null",
-                    response != null ? response.getMessageDescription() : "null");
-
-            return response;
-        } catch (HttpClientErrorException e) {
-            log.error("Co-op STK Push failed: HTTP {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("Co-op STK Push failed: " + e.getStatusCode() + " - " +
-                    e.getResponseBodyAsString(), e);
-        } catch (RestClientException e) {
-            log.error("Co-op STK Push connection error: {}", e.getMessage(), e);
-            throw new RuntimeException("Co-op STK Push connection error: " + e.getMessage(), e);
-        }
+                return response;
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() != 401) {
+                    log.error("Co-op STK Push failed: HTTP {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+                    throw new RuntimeException("Co-op STK Push failed: " + e.getStatusCode() + " - " +
+                            e.getResponseBodyAsString(), e);
+                }
+                throw e; // Let the retry wrapper handle 401
+            } catch (RestClientException e) {
+                log.error("Co-op STK Push connection error: {}", e.getMessage(), e);
+                throw new RuntimeException("Co-op STK Push connection error: " + e.getMessage(), e);
+            }
+        });
     }
 
-    // ── Transaction status ────────────────────────────────────────────────────
+    // == Transaction status ====================================================
 
     public TransactionStatusResponse checkTransactionStatus(String messageReference) {
-        TransactionStatusRequest req = new TransactionStatusRequest();
-        req.setMessageReference(messageReference);
+        return executeWithTokenRetry(() -> {
+            TransactionStatusRequest req = new TransactionStatusRequest();
+            req.setMessageReference(messageReference);
 
-        return restClient.post()
-                .uri(props.getBaseUrl() + "/Enquiry/STK/1.0.0/")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(req)
-                .retrieve()
-                .body(TransactionStatusResponse.class);
+            return restClient.post()
+                    .uri(props.getBaseUrl() + "/Enquiry/STK/1.0.0/")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(req)
+                    .retrieve()
+                    .body(TransactionStatusResponse.class);
+        });
     }
 
-    // ── Account balance (live — no cache) ─────────────────────────────────────
+    // == Account balance (live — no cache) =====================================
 
     public AccountBalanceResponse getAccountBalance() {
-        log.info("Co-op Connect: fetching live account balance for account={}",
-                props.getSaccoAccountNumber());
+        log.info("Co-op Connect: fetching live account balance for account={}", props.getSaccoAccountNumber());
 
-        var req = new java.util.HashMap<String, String>();
-        req.put("MessageReference", UUID.randomUUID().toString().replace("-", "").substring(0, 12));
-        req.put("UserId", props.getOperatorCode());
-        req.put("AccountNumber", props.getSaccoAccountNumber());
+        return executeWithTokenRetry(() -> {
+            var req = new java.util.HashMap<String, String>();
+            req.put("MessageReference", UUID.randomUUID().toString()); // FIXED: Full UUID
+            req.put("UserId", "BETTERLINK"); // FIXED: Literal user ID profile, not paybill
+            req.put("AccountNumber", props.getSaccoAccountNumber());
 
-        log.info("CO-OP REQUEST: UserId='{}' Account='{}' Ref='{}'",
-                req.get("UserId"), req.get("AccountNumber"), req.get("MessageReference"));
+            log.info("CO-OP REQUEST: UserId='{}' Account='{}' Ref='{}'",
+                    req.get("UserId"), req.get("AccountNumber"), req.get("MessageReference"));
 
-        try {
-            AccountBalanceResponse response = restClient.post()
-                    .uri(props.getBaseUrl() + "/Enquiry/AccountBalance_v2/2.0.0/")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(req)
-                    .retrieve()
-                    .body(AccountBalanceResponse.class);
+            try {
+                AccountBalanceResponse response = restClient.post()
+                        .uri(props.getBaseUrl() + "/Enquiry/AccountBalance_v2/2.0.0/")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(req)
+                        .retrieve()
+                        .body(AccountBalanceResponse.class);
 
-            if (response != null) {
-                log.info("CO-OP RESPONSE: code='{}' desc='{}' available='{}'",
-                        response.getMessageCode(),
-                        response.getMessageDescription(),
-                        response.getAvailableBalance());
-            } else {
-                log.warn("CO-OP RESPONSE: null response body");
+                if (response != null) {
+                    log.info("CO-OP RESPONSE: code='{}' desc='{}' available='{}'",
+                            response.getMessageCode(),
+                            response.getMessageDescription(),
+                            response.getAvailableBalance());
+                } else {
+                    log.warn("CO-OP RESPONSE: null response body");
+                }
+                return response;
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() != 401) {
+                    log.error("Co-op balance HTTP error: {} → {}", e.getStatusCode(), e.getResponseBodyAsString());
+                    throw new RuntimeException("Co-op balance failed: " + e.getStatusCode()
+                            + " → " + e.getResponseBodyAsString(), e);
+                }
+                throw e; // Let wrapper handle 401
+            } catch (Exception e) {
+                log.error("Co-op balance error: {}", e.getMessage());
+                throw new RuntimeException("Failed to fetch balance: " + e.getMessage(), e);
             }
-            return response;
-        } catch (HttpClientErrorException e) {
-            log.error("Co-op balance HTTP error: {} — {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("Co-op balance failed: " + e.getStatusCode()
-                    + " — " + e.getResponseBodyAsString(), e);
-        } catch (Exception e) {
-            log.error("Co-op balance error: {}", e.getMessage());
-            throw new RuntimeException("Failed to fetch balance: " + e.getMessage(), e);
-        }
+        });
     }
 
-    // ── Mini statement ────────────────────────────────────────────────────────
+    // == Mini statement ========================================================
 
     public MiniStatementResponse getMiniStatement() {
-        var req = new java.util.HashMap<String, String>();
-        req.put("MessageReference", UUID.randomUUID().toString().replace("-", "").substring(0, 12));
-        req.put("UserId", props.getOperatorCode());
-        req.put("AccountNumber", props.getSaccoAccountNumber());
+        return executeWithTokenRetry(() -> {
+            var req = new java.util.HashMap<String, String>();
+            req.put("MessageReference", UUID.randomUUID().toString()); // FIXED: Full UUID
+            req.put("UserId", "BETTERLINK"); // FIXED: Literal user ID profile
+            req.put("AccountNumber", props.getSaccoAccountNumber());
 
-        log.info("Co-op Connect: fetching mini-statement for account={}", props.getSaccoAccountNumber());
-        try {
-            MiniStatementResponse response = restClient.post()
-                    .uri(props.getBaseUrl() + "/Enquiry/MiniStatement/Account_v2/2.0.0/")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(req)
-                    .retrieve()
-                    .body(MiniStatementResponse.class);
-            log.info("Co-op mini-statement: code={}", response != null ? response.getMessageCode() : "null");
-            return response;
-        } catch (Exception e) {
-            log.error("Co-op mini-statement failed: {}", e.getMessage());
-            throw new RuntimeException("Failed to fetch mini-statement: " + e.getMessage(), e);
-        }
+            log.info("Co-op Connect: fetching mini-statement for account={}", props.getSaccoAccountNumber());
+            try {
+                MiniStatementResponse response = restClient.post()
+                        .uri(props.getBaseUrl() + "/Enquiry/MiniStatement/Account_v2/2.0.0/")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(req)
+                        .retrieve()
+                        .body(MiniStatementResponse.class);
+                log.info("Co-op mini-statement: code={}", response != null ? response.getMessageCode() : "null");
+                return response;
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() == 401) throw e;
+                log.error("Co-op mini-statement failed: {}", e.getResponseBodyAsString());
+                throw new RuntimeException("Failed to fetch mini-statement: " + e.getResponseBodyAsString(), e);
+            } catch (Exception e) {
+                log.error("Co-op mini-statement failed: {}", e.getMessage());
+                throw new RuntimeException("Failed to fetch mini-statement: " + e.getMessage(), e);
+            }
+        });
     }
 
-    // ── Account transaction inquiry (date range) ──────────────────────────────
+    // == Account transaction inquiry (date range) ==============================
 
-    /**
-     * Fetch all transactions for the SACCO account between two dates.
-     * Co-op endpoint: POST /Enquiry/AccountTransaction/Account_v2/2.0.0/
-     *
-     * @param fromDate  Start date in YYYY-MM-DD format
-     * @param toDate    End date in YYYY-MM-DD format (inclusive)
-     */
     public AccountTransactionResponse getAccountTransactions(String fromDate, String toDate) {
-        AccountTransactionRequest req = new AccountTransactionRequest();
-        req.setMessageReference(UUID.randomUUID().toString().replace("-", "").substring(0, 12));
-        req.setUserId(props.getOperatorCode());
-        req.setAccountNumber(props.getSaccoAccountNumber());
-        req.setStartDate(fromDate);
-        req.setEndDate(toDate);
+        return executeWithTokenRetry(() -> {
+            AccountTransactionRequest req = new AccountTransactionRequest();
+            req.setMessageReference(UUID.randomUUID().toString()); // FIXED: Full UUID
+            req.setUserId("BETTERLINK"); // FIXED: Literal user ID profile
+            req.setAccountNumber(props.getSaccoAccountNumber());
+            req.setStartDate(fromDate);
+            req.setEndDate(toDate);
 
-        log.info("Co-op transactions: account={} from={} to={}",
-                props.getSaccoAccountNumber(), fromDate, toDate);
-        try {
-            AccountTransactionResponse response = restClient.post()
-                    .uri(props.getBaseUrl() + "/Enquiry/AccountTransaction/Account_v2/2.0.0/")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(req)
-                    .retrieve()
-                    .body(AccountTransactionResponse.class);
-            log.info("Co-op transactions: code={} count={}",
-                    response != null ? response.getMessageCode() : "null",
-                    response != null && response.getTransactions() != null
-                            ? response.getTransactions().size() : 0);
-            return response;
-        } catch (Exception e) {
-            log.error("Co-op transaction inquiry failed: {}", e.getMessage());
-            throw new RuntimeException("Failed to fetch account transactions: " + e.getMessage(), e);
-        }
+            log.info("Co-op transactions: account={} from={} to={}",
+                    props.getSaccoAccountNumber(), fromDate, toDate);
+            try {
+                AccountTransactionResponse response = restClient.post()
+                        .uri(props.getBaseUrl() + "/Enquiry/AccountTransaction/Account_v2/2.0.0/")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(req)
+                        .retrieve()
+                        .body(AccountTransactionResponse.class);
+                log.info("Co-op transactions: code={} count={}",
+                        response != null ? response.getMessageCode() : "null",
+                        response != null && response.getTransactions() != null
+                                ? response.getTransactions().size() : 0);
+                return response;
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() == 401) throw e;
+                log.error("Co-op transaction inquiry failed: {}", e.getResponseBodyAsString());
+                throw new RuntimeException("Failed to fetch account transactions: " + e.getResponseBodyAsString(), e);
+            } catch (Exception e) {
+                log.error("Co-op transaction inquiry failed: {}", e.getMessage());
+                throw new RuntimeException("Failed to fetch account transactions: " + e.getMessage(), e);
+            }
+        });
     }
 }
