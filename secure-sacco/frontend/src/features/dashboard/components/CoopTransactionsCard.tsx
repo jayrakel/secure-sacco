@@ -68,9 +68,7 @@ export const CoopTransactionsCard: React.FC = () => {
 
     const transactions = data?.transactions ?? [];
     const credits = transactions.filter(t => t.transactionType === 'CR');
-    const debits  = transactions.filter(t => t.transactionType === 'DR');
     const totalIn  = credits.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
-    const totalOut = debits.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
 
     return (
         <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
