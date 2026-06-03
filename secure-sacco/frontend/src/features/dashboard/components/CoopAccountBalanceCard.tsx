@@ -15,22 +15,23 @@ export const CoopAccountBalanceCard: React.FC = () => {
         return new Intl.NumberFormat('en-KE', { minimumFractionDigits: 2 }).format(val);
     };
 
-    const fetchBalance = useCallback(async (isManualRefresh = false) => {
-        if (isManualRefresh) {
-            setRefreshing(true);
-        } else if (!balance) {
-            setLoading(true);
-        }
-
+    const fetchBalance = useCallback(async (manual = false) => {
+        if (manual) setRefreshing(true);
+        else setLoading(true);
         setError(null);
 
         try {
             const data = await paymentApi.getCoopBalance();
             setBalance(data);
             setLastUpdated(new Date());
-        } catch (err: any) {
+        } catch (err: unknown) { // Change 'any' to 'unknown'
             console.error("Failed to fetch balance:", err);
-            setError(err.response?.data?.error || 'Failed to connect to bank.');
+
+            // Type-guard to safely extract the message
+            const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+                || 'Failed to connect to bank.';
+
+            setError(message);
         } finally {
             setLoading(false);
             setRefreshing(false);
