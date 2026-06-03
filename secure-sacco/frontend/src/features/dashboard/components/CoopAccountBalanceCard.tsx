@@ -24,18 +24,52 @@ export const CoopAccountBalanceCard: React.FC = () => {
     const [error, setError]             = useState<string | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [refreshing, setRefreshing]   = useState(false);
+    const [isCached, setIsCached]       = useState(false);
 
     const fetchBalance = useCallback(async (manual = false) => {
         if (manual) setRefreshing(true);
         else setLoading(true);
         setError(null);
+
+        const startMs = performance.now();
+        const requestId = Math.random().toString(36).slice(2, 8).toUpperCase();
+        console.group(`[Co-op Balance] Request ${requestId} — ${manual ? 'manual' : 'auto'}`);
+        console.log('⏱  Started at:', new Date().toISOString());
+
         try {
             const res = await apiClient.get('/payments/coop/account-balance');
+            const elapsed = Math.round(performance.now() - startMs);
+
+            console.log(`✅ Success in ${elapsed}ms`);
+            console.log('📦 HTTP status:', res.status);
+            console.log('📊 Response data:', res.data);
+            console.log('🔑 Message code:', (res.data as Record<string, unknown>)?.messageCode ?? 'N/A');
+            console.log('💰 Available balance:', (res.data as BalanceData)?.availableBalance);
+            setIsCached(elapsed < 200); // under 200ms = served from backend cache
+            console.log('🏦 Account number:', (res.data as BalanceData)?.accountNumber);
+
             setBalance(res.data);
             setLastUpdated(new Date());
-        } catch {
-            setError('Unable to fetch balance');
+        } catch (err: unknown) {
+            const elapsed = Math.round(performance.now() - startMs);
+            const axiosErr = err as {
+                response?: { status: number; data: unknown };
+                message?: string;
+                code?: string;
+            };
+
+            console.error(`❌ Failed in ${elapsed}ms`);
+            console.error('📛 Error message:', axiosErr?.message);
+            console.error('🔢 HTTP status:', axiosErr?.response?.status);
+            console.error('📦 Response body:', axiosErr?.response?.data);
+            console.error('🔌 Error code:', axiosErr?.code);
+
+            const serverMsg = (axiosErr?.response?.data as Record<string, string>)?.error
+                ?? axiosErr?.message
+                ?? 'Unable to fetch balance';
+            setError(serverMsg);
         } finally {
+            console.groupEnd();
             setLoading(false);
             setRefreshing(false);
         }
@@ -125,9 +159,16 @@ export const CoopAccountBalanceCard: React.FC = () => {
                 </div>
             </div>
 
-            <p className="text-[10px] text-emerald-300 mt-2 font-mono">
-                Acct: {balance?.accountNumber ?? '01148381964600'}
-            </p>
+            <div className="flex items-center justify-between mt-2">
+                <p className="text-[10px] text-emerald-300 font-mono">
+                    Acct: {balance?.accountNumber ?? '—'}
+                </p>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                    isCached ? 'bg-white/10 text-emerald-200' : 'bg-white/10 text-yellow-300'
+                }`}>
+                    {isCached ? '⚡ cached' : '🔴 live'}
+                </span>
+            </div>
         </div>
     );
 };

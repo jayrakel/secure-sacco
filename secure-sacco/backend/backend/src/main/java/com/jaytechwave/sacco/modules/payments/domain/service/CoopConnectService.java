@@ -51,9 +51,9 @@ public class CoopConnectService {
     private final RestClient restClient = RestClient.create();
 
     // ── Token cache ───────────────────────────────────────────────────────────
-    private final AtomicReference<String> cachedToken      = new AtomicReference<>();
-    private final AtomicLong              tokenExpiresAtMs  = new AtomicLong(0);
-    private static final long             TOKEN_BUFFER_MS   = 60_000L; // refresh 60s early
+    private final AtomicReference<String> cachedToken     = new AtomicReference<>();
+    private final AtomicLong              tokenExpiresAtMs = new AtomicLong(0);
+    private static final long             TOKEN_BUFFER_MS  = 60_000L; // refresh 60s early
 
     // ── Token management ──────────────────────────────────────────────────────
 
@@ -148,7 +148,8 @@ public class CoopConnectService {
                 .otherDetails(List.of(OtherDetail.of("AccountRef", reference)))
                 .build();
 
-        log.info("Co-op STK Push → phone={} amount={} ref={} callbackUrl={}", phoneNumber, amount, reference, callbackUrl);
+        log.info("Co-op STK Push → phone={} amount={} ref={} callbackUrl={}",
+                phoneNumber, amount, reference, callbackUrl);
 
         try {
             StkPushResponse response = restClient.post()
@@ -189,30 +190,21 @@ public class CoopConnectService {
                 .body(TransactionStatusResponse.class);
     }
 
-    // ── Account balance (cached for 5 minutes) ───────────────────────────────
-
-    private final AtomicReference<AccountBalanceResponse> cachedBalance = new AtomicReference<>();
-    private final AtomicLong balanceCachedAtMs = new AtomicLong(0);
-    private static final long BALANCE_CACHE_MS = 5 * 60 * 1000L;
+    // ── Account balance (live — no cache) ─────────────────────────────────────
 
     public AccountBalanceResponse getAccountBalance() {
-        long now = System.currentTimeMillis();
-        AccountBalanceResponse cached = cachedBalance.get();
-        if (cached != null && now < balanceCachedAtMs.get()) {
-            log.debug("Co-op Connect: returning cached account balance");
-            return cached;
-        }
-        log.info("Co-op Connect: fetching account balance for account={}", props.getSaccoAccountNumber());
+        log.info("Co-op Connect: fetching live account balance for account={}",
+                props.getSaccoAccountNumber());
+
+        var req = new java.util.HashMap<String, String>();
+        req.put("MessageReference", UUID.randomUUID().toString().replace("-", "").substring(0, 12));
+        req.put("UserId", props.getOperatorCode());
+        req.put("AccountNumber", props.getSaccoAccountNumber());
+
+        log.info("CO-OP REQUEST: UserId='{}' Account='{}' Ref='{}'",
+                req.get("UserId"), req.get("AccountNumber"), req.get("MessageReference"));
+
         try {
-            var req = new java.util.HashMap<String, String>();
-            req.put("MessageReference", UUID.randomUUID().toString().replace("-", "").substring(0, 12));
-            req.put("UserId", props.getOperatorCode());
-            req.put("AccountNumber", props.getSaccoAccountNumber());
-
-            // 🟢 ADD THIS SNOOPING LOG:
-            log.error("CO-OP SNOOP: Sending payload to bank -> UserId='{}', Account='{}', Ref='{}'",
-                    req.get("UserId"), req.get("AccountNumber"), req.get("MessageReference"));
-
             AccountBalanceResponse response = restClient.post()
                     .uri(props.getBaseUrl() + "/Enquiry/AccountBalance_v2/2.0.0/")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken())
@@ -221,19 +213,22 @@ public class CoopConnectService {
                     .retrieve()
                     .body(AccountBalanceResponse.class);
 
-            if (response != null && "0".equals(response.getMessageCode())) {
-                cachedBalance.set(response);
-                balanceCachedAtMs.set(now + BALANCE_CACHE_MS);
-                log.info("Co-op Connect: balance fetched — available={}", response.getAvailableBalance());
+            if (response != null) {
+                log.info("CO-OP RESPONSE: code='{}' desc='{}' available='{}'",
+                        response.getMessageCode(),
+                        response.getMessageDescription(),
+                        response.getAvailableBalance());
             } else {
-                log.warn("Co-op Connect: balance fetch failed — code={} desc={}",
-                        response != null ? response.getMessageCode() : "null",
-                        response != null ? response.getMessageDescription() : "null");
+                log.warn("CO-OP RESPONSE: null response body");
             }
             return response;
+        } catch (HttpClientErrorException e) {
+            log.error("Co-op balance HTTP error: {} — {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Co-op balance failed: " + e.getStatusCode()
+                    + " — " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            log.error("Co-op Connect: failed to fetch account balance — {}", e.getMessage());
-            return cached; // return stale cache rather than null on error
+            log.error("Co-op balance error: {}", e.getMessage());
+            throw new RuntimeException("Failed to fetch balance: " + e.getMessage(), e);
         }
     }
 
@@ -254,10 +249,10 @@ public class CoopConnectService {
                     .body(req)
                     .retrieve()
                     .body(MiniStatementResponse.class);
-            log.info("Co-op Connect: mini-statement fetched — code={}", response != null ? response.getMessageCode() : "null");
+            log.info("Co-op mini-statement: code={}", response != null ? response.getMessageCode() : "null");
             return response;
         } catch (Exception e) {
-            log.error("Co-op Connect: mini-statement failed — {}", e.getMessage());
+            log.error("Co-op mini-statement failed: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch mini-statement: " + e.getMessage(), e);
         }
     }
@@ -279,7 +274,7 @@ public class CoopConnectService {
         req.setStartDate(fromDate);
         req.setEndDate(toDate);
 
-        log.info("Co-op Connect: fetching transactions account={} from={} to={}",
+        log.info("Co-op transactions: account={} from={} to={}",
                 props.getSaccoAccountNumber(), fromDate, toDate);
         try {
             AccountTransactionResponse response = restClient.post()
@@ -289,12 +284,13 @@ public class CoopConnectService {
                     .body(req)
                     .retrieve()
                     .body(AccountTransactionResponse.class);
-            log.info("Co-op Connect: transactions fetched — code={} count={}",
+            log.info("Co-op transactions: code={} count={}",
                     response != null ? response.getMessageCode() : "null",
-                    response != null && response.getTransactions() != null ? response.getTransactions().size() : 0);
+                    response != null && response.getTransactions() != null
+                            ? response.getTransactions().size() : 0);
             return response;
         } catch (Exception e) {
-            log.error("Co-op Connect: transaction inquiry failed — {}", e.getMessage());
+            log.error("Co-op transaction inquiry failed: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch account transactions: " + e.getMessage(), e);
         }
     }
