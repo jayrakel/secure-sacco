@@ -16,6 +16,14 @@ public class CoopConnectProperties {
     private String consumerSecret;
 
     /**
+     * Optional: pre-computed Basic auth value (Base64 of key:secret).
+     * If set, this is used directly instead of encoding consumerKey + consumerSecret.
+     * Set COOP_BASIC_AUTH in GitHub secrets to the value Co-op provided.
+     * Format: the raw Base64 string only (without the "Basic " prefix).
+     */
+    private String basicAuth;
+
+    /**
      * Operator code assigned by Co-op Bank.
      * For Betterlink Ventures: "BETTERLINK"
      */

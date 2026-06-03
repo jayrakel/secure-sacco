@@ -76,9 +76,17 @@ public class CoopConnectService {
             throw new RuntimeException("Co-op Connect: consumerSecret not configured. Set COOP_CONSUMER_SECRET.");
         }
 
-        String credentials = props.getConsumerKey() + ":" + props.getConsumerSecret();
-        String encoded = Base64.getEncoder()
-                .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+        // Use pre-computed basicAuth if provided, otherwise encode key:secret
+        String encoded;
+        if (props.getBasicAuth() != null && !props.getBasicAuth().isBlank()) {
+            encoded = props.getBasicAuth().trim();
+            log.info("Co-op Connect: using pre-computed basicAuth value");
+        } else {
+            String credentials = props.getConsumerKey() + ":" + props.getConsumerSecret();
+            encoded = Base64.getEncoder()
+                    .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            log.info("Co-op Connect: using encoded consumerKey:consumerSecret");
+        }
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "client_credentials");
