@@ -119,6 +119,7 @@ sacco:
     # Co-op Connect API credentials (from Co-op Bank onboarding)
     consumer-key:      ${COOP_CONSUMER_KEY}
     consumer-secret:   ${COOP_CONSUMER_SECRET}
+    basic-auth:        ${COOP_BASIC_AUTH:}
 
     # Operator code assigned by Co-op Bank to Betterlink Ventures
     operator-code:     ${COOP_OPERATOR_CODE:BETTERLINK}

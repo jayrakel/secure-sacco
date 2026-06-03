@@ -100,6 +100,7 @@ services:
       # CORS
       FRONTEND_URL: ${FRONTEND_URL}
       CLOUDINARY_URL: ${CLOUDINARY_URL}
+      COOP_BASIC_AUTH: ${COOP_BASIC_AUTH:-}
     ports:
       - "127.0.0.1:8080:8080"
     healthcheck:
