@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.meetings.api.controller;
 
 import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.*;
+import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.QrMeetingInfoResponse;
 import com.jaytechwave.sacco.modules.meetings.domain.service.MeetingService;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
@@ -128,5 +129,35 @@ public class MeetingController {
         Member member = memberRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalStateException("No member profile linked to this user."));
         return ResponseEntity.ok(meetingService.memberCheckIn(id, member.getId()));
+    }
+
+    // ── QR Code check-in endpoints ────────────────────────────────────────────
+
+    @Operation(summary = "Get meeting info by QR token",
+            description = "Public endpoint — returns meeting title, time and status for QR scan landing page.")
+    @GetMapping("/qr/{token}")
+    public ResponseEntity<QrMeetingInfoResponse> getMeetingByQrToken(@PathVariable String token) {
+        return ResponseEntity.ok(meetingService.getMeetingByQrToken(token));
+    }
+
+    @Operation(summary = "Check in via QR token",
+            description = "Authenticated member scans QR code and checks in. Determines PRESENT or LATE automatically.")
+    @PostMapping("/qr/{token}/checkin")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AttendanceRecordResponse> checkInByQrToken(
+            @PathVariable String token,
+            @AuthenticationPrincipal UserDetails principal) {
+        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        Member member = memberRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalStateException("No member profile linked to this user."));
+        return ResponseEntity.ok(meetingService.checkInByQrToken(token, member.getId()));
+    }
+
+    @Operation(summary = "Regenerate QR token",
+            description = "Staff only — invalidates the old QR code and generates a fresh one.")
+    @PostMapping("/{id}/regenerate-qr")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SECRETARY','CHAIRPERSON')")
+    public ResponseEntity<QrMeetingInfoResponse> regenerateQrToken(@PathVariable UUID id) {
+        return ResponseEntity.ok(meetingService.regenerateQrToken(id));
     }
 }

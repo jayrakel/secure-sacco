@@ -26,7 +26,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
     // ── Co-op account transaction history (IPN-stored) ───────────────────────
 
-    /** All COMPLETED payments between two dates, newest first — for the transactions card */
+    /** All COMPLETED payments between two dates, newest first — CR and DR */
     @Query("SELECT p FROM Payment p WHERE p.status = 'COMPLETED' " +
             "AND p.createdAt >= :from AND p.createdAt <= :to " +
             "ORDER BY p.createdAt DESC")
@@ -35,6 +35,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             @Param("to")   ZonedDateTime to,
             Pageable pageable);
 
-    /** Latest N completed payments regardless of date — for the mini dashboard strip */
+    /** Latest N completed payments regardless of date — CR and DR */
     Page<Payment> findByStatusOrderByCreatedAtDesc(PaymentStatus status, Pageable pageable);
 }

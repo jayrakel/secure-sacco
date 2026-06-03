@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.meetings.domain.service;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.*;
+import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.QrMeetingInfoResponse;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.*;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.AttendanceStatus;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingAttendanceRepository;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -95,6 +98,7 @@ public class MeetingService {
                 .lateAfterMinutes(req.lateAfterMinutes() != null ? req.lateAfterMinutes() : 15)
                 .status(MeetingStatus.SCHEDULED)
                 .createdByUserId(creator.getId())
+                .qrToken(generateQrToken())
                 .build();
 
         Meeting saved = meetingRepository.save(meeting);
@@ -284,6 +288,42 @@ public class MeetingService {
         log.info("Meeting {} auto-completed by scheduler. Penalties generated.", id);
     }
 
+
+    // ── QR Code check-in ──────────────────────────────────────────────────────
+
+    public QrMeetingInfoResponse getMeetingByQrToken(String token) {
+        Meeting meeting = meetingRepository.findByQrToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired QR code."));
+        return toQrInfo(meeting);
+    }
+
+    public AttendanceRecordResponse checkInByQrToken(String token, UUID memberId) {
+        Meeting meeting = meetingRepository.findByQrToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired QR code."));
+        return memberCheckIn(meeting.getId(), memberId);
+    }
+
+    public QrMeetingInfoResponse regenerateQrToken(UUID meetingId) {
+        Meeting meeting = findOrThrow(meetingId);
+        meeting.setQrToken(generateQrToken());
+        meetingRepository.save(meeting);
+        log.info("QR token regenerated for meeting {}", meetingId);
+        return toQrInfo(meeting);
+    }
+
+    private QrMeetingInfoResponse toQrInfo(Meeting m) {
+        return new QrMeetingInfoResponse(
+                m.getId(), m.getTitle(), m.getDescription(),
+                m.getMeetingType(), m.getStartAt(), m.getEndAt(),
+                m.getStatus(), m.getLateAfterMinutes(), m.getQrToken()
+        );
+    }
+
+    private static String generateQrToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
+    }
 
     private Meeting findOrThrow(UUID id) {
         return meetingRepository.findById(id)

@@ -16,6 +16,7 @@ export interface Meeting {
     lateAfterMinutes: number;
     status: MeetingStatus;
     createdAt: string;
+    qrToken?: string;
 }
 
 export interface AttendanceRecord {
@@ -70,4 +71,9 @@ export const meetingsApi = {
 
     checkIn: (id: string): Promise<AttendanceRecord> =>
         apiClient.post(`${API}/${id}/checkin`).then(r => r.data),
+
+    scanAttendance: async (meetingId: number | string, data: { token: string }) => {
+        const response = await apiClient.post(`/meetings/${meetingId}/attendance/scan`, data);
+        return response.data;
+    },
 };

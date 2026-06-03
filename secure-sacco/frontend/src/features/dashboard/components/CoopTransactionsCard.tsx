@@ -7,7 +7,7 @@ interface Transaction {
     transactionId: string;
     transactionDate: string;
     narration: string;
-    transactionType: string; // always CR (IPN only stores credits)
+    transactionType: string; // CR = credit (in), DR = debit (out)
     amount: string;
     currency: string;
     senderName: string;
@@ -67,8 +67,10 @@ export const CoopTransactionsCard: React.FC = () => {
     };
 
     const transactions = data?.transactions ?? [];
-    const credits = transactions.filter(t => t.transactionType === 'CR');
-    const totalIn  = credits.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+    const credits  = transactions.filter(t => t.transactionType === 'CR');
+    const debits   = transactions.filter(t => t.transactionType === 'DR');
+    const totalIn  = credits.reduce((s, t) => s + (parseFloat(String(t.amount)) || 0), 0);
+    const totalOut = debits.reduce((s, t) => s + (parseFloat(String(t.amount)) || 0), 0);
 
     return (
         <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -126,8 +128,8 @@ export const CoopTransactionsCard: React.FC = () => {
                         <p className="text-sm font-bold text-emerald-600">KES {fmt(totalIn.toFixed(2))}</p>
                     </div>
                     <div className="px-4 py-3 text-center">
-                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mb-0.5">Source</p>
-                        <p className="text-xs font-semibold text-slate-600">Co-op IPN</p>
+                        <p className="text-[10px] text-red-400 uppercase tracking-wide mb-0.5">Total Out</p>
+                        <p className="text-sm font-bold text-red-500">KES {fmt(totalOut.toFixed(2))}</p>
                     </div>
                 </div>
             )}

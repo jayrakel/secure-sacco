@@ -187,7 +187,7 @@ public class CoopConnectController {
                 tx.put("amount",          p.getAmount());
                 tx.put("currency",        p.getCurrency());
                 tx.put("narration",       p.getAccountReference());
-                tx.put("transactionType", "CR");
+                tx.put("transactionType", p.getTransactionType() != null ? p.getTransactionType() : "CR");
                 tx.put("senderName",      p.getSenderName());
                 tx.put("senderPhone",     p.getSenderPhoneNumber());
                 tx.put("paymentMethod",   p.getPaymentMethod());

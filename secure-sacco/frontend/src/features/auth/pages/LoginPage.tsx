@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, Lock, Mail, ChevronRight, AlertTriangle, RefreshCw, X, Loader2, Smartphone, ArrowLeft } from 'lucide-react'; // Added Smartphone & ArrowLeft
 import axios from 'axios';
 
@@ -56,6 +56,8 @@ export default function LoginPage() {
     }, []);
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = new URLSearchParams(location.search).get('redirect') || '/dashboard';
     const { refreshUser } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -80,7 +82,7 @@ export default function LoginPage() {
 
             // 3. Normal Login Success Flow — use returned user to decide where to go
             const userData = await refreshUser();
-            navigate(userData?.mustChangePassword ? '/change-password' : '/dashboard');
+            navigate(userData?.mustChangePassword ? '/change-password' : redirectTo);
 
         } catch (err: unknown) {
             console.error("Login Error:", err);
@@ -110,7 +112,7 @@ export default function LoginPage() {
 
             // Successfully validated MFA, fetch user and redirect
             const userData = await refreshUser();
-            navigate(userData?.mustChangePassword ? '/change-password' : '/dashboard');
+            navigate(userData?.mustChangePassword ? '/change-password' : redirectTo);
         } catch (err: unknown) {
             setError((err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Invalid authenticator code. Please try again.');
         } finally {
