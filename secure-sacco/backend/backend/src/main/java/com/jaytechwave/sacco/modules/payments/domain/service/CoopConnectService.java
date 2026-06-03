@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.payments.domain.service;
 import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.config.CoopConnectProperties;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -49,7 +51,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class CoopConnectService {
 
-    private final CoopConnectProperties props;
+    private final CoopConnectProperties    props;
+    private final StringRedisTemplate        redisTemplate;
     private final RestClient restClient = RestClient.builder()
             .requestInterceptor(new CoopHttpLogger())
             .build();
@@ -59,12 +62,36 @@ public class CoopConnectService {
     private final AtomicLong              tokenExpiresAtMs = new AtomicLong(0);
     private static final long             TOKEN_BUFFER_MS  = 60_000L; // refresh 60s early
 
+    // Redis keys — token persisted across restarts to avoid Co-op CBS re-activation delay
+    private static final String REDIS_TOKEN_KEY   = "coop:access_token";
+    private static final String REDIS_EXPIRY_KEY  = "coop:token_expiry_ms";
+
     // ── Token management ──────────────────────────────────────────────────────
 
     public synchronized String getAccessToken() {
         long now = System.currentTimeMillis();
+
+        // 1. Check in-memory cache first (fastest)
         if (cachedToken.get() != null && now < tokenExpiresAtMs.get()) {
             return cachedToken.get();
+        }
+
+        // 2. Check Redis cache (survives restarts — prevents Co-op CBS re-activation delay)
+        try {
+            String redisToken  = redisTemplate.opsForValue().get(REDIS_TOKEN_KEY);
+            String redisExpiry = redisTemplate.opsForValue().get(REDIS_EXPIRY_KEY);
+            if (redisToken != null && redisExpiry != null) {
+                long expiryMs = Long.parseLong(redisExpiry);
+                if (now < expiryMs) {
+                    log.info("Co-op Connect: reusing token from Redis (expires in {}s)",
+                            (expiryMs - now) / 1000);
+                    cachedToken.set(redisToken);
+                    tokenExpiresAtMs.set(expiryMs);
+                    return redisToken;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Co-op Connect: Redis token lookup failed — will fetch fresh token: {}", e.getMessage());
         }
 
         log.info("Co-op Connect: fetching new access token from {} /token", props.getBaseUrl());
@@ -104,10 +131,19 @@ public class CoopConnectService {
                 throw new RuntimeException("Co-op Connect: token response was null or missing accessToken field");
             }
 
+            long expiryMs = now + ((long) response.expiresIn() * 1000L) - TOKEN_BUFFER_MS;
             cachedToken.set(response.accessToken());
-            // expires_in is in seconds; subtract buffer so we refresh early
-            tokenExpiresAtMs.set(now + ((long) response.expiresIn() * 1000L) - TOKEN_BUFFER_MS);
-            log.info("Co-op Connect: access token cached, expires in {}s", response.expiresIn());
+            tokenExpiresAtMs.set(expiryMs);
+
+            // Persist to Redis so token survives deployments/restarts
+            try {
+                long ttlSeconds = (expiryMs - now) / 1000;
+                redisTemplate.opsForValue().set(REDIS_TOKEN_KEY,  response.accessToken(), Duration.ofSeconds(ttlSeconds));
+                redisTemplate.opsForValue().set(REDIS_EXPIRY_KEY, String.valueOf(expiryMs), Duration.ofSeconds(ttlSeconds));
+                log.info("Co-op Connect: token cached in memory + Redis, expires in {}s", response.expiresIn());
+            } catch (Exception e) {
+                log.warn("Co-op Connect: Redis token persist failed (in-memory only): {}", e.getMessage());
+            }
             return response.accessToken();
 
         } catch (HttpClientErrorException.Unauthorized | HttpClientErrorException.Forbidden e) {
