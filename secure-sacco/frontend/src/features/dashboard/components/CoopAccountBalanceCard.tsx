@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
 import apiClient from '../../../shared/api/api-client';
 
 interface BalanceData {
