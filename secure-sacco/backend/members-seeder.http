@@ -70,7 +70,7 @@ Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 ###
 
 ### Member 3 — Charles Gicheru (SECRETARY)
-POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
+POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
@@ -87,7 +87,7 @@ Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 ###
 
 ### Member 4 — Jacob Mungai
-POST https://betterlinkventureslimited.co.ke/api/v1/migration/members
+POST https://staging.jaytechwavesolutions.co.ke/api/v1/migration/members
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrf_token}}
 Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}

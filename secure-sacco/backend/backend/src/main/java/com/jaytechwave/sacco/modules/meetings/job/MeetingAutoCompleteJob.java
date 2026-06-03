@@ -43,8 +43,8 @@ public class MeetingAutoCompleteJob {
     private final MeetingRepository meetingRepository;
     private final MeetingService    meetingService;
 
-    /** Runs every 5 minutes. */
-    @Scheduled(fixedDelay = 300_000)
+    /** Runs every 30 seconds. */
+    @Scheduled(fixedDelay = 30_000)
     public void autoComplete() {
         LocalDateTime now = LocalDateTime.now();
 
