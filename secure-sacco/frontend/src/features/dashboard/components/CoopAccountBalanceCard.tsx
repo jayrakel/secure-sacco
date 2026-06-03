@@ -94,14 +94,14 @@ export const CoopAccountBalanceCard: React.FC = () => {
                         <div className="mb-4">
                             <p className="text-emerald-400/80 text-xs font-medium mb-1 uppercase tracking-wider">Available Balance</p>
                             <p className="text-3xl font-bold tracking-tight text-white">
-                                KES {fmt(balance?.availableBalance)}
+                                KES {fmt(balance?.AvailableBalance)}
                             </p>
                         </div>
 
                         <div className="flex items-center justify-between border-t border-slate-700/50 pt-3">
                             <div>
                                 <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-0.5">Booked Balance</p>
-                                <p className="text-sm font-semibold text-slate-200">KES {fmt(balance?.bookedBalance)}</p>
+                                <p className="text-sm font-semibold text-slate-200">KES {fmt(balance?.BookedBalance)}</p>
                             </div>
                             <div className="text-right">
                                 <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-0.5">Last updated</p>

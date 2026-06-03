@@ -140,7 +140,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op Account Balance",
             description = "Fetches the real-time balance of the Sacco's Co-op Connect account.")
     @GetMapping("/coop/balance")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER','SECRETARY')")
     public ResponseEntity<?> getAccountBalance() {
         try {
             var balance = coopConnectService.getAccountBalance();
