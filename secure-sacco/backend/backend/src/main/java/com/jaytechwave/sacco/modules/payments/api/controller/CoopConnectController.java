@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
+import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
+import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
+import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
@@ -13,11 +16,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -32,6 +41,7 @@ public class CoopConnectController {
     private final ObjectMapper        objectMapper;
     private final UserRepository      userRepository;
     private final CoopConnectService  coopConnectService;
+    private final PaymentRepository   paymentRepository;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
@@ -145,24 +155,58 @@ public class CoopConnectController {
         }
     }
 
-    // ── Account transaction inquiry ───────────────────────────────────────────
+    // ── Account transaction history (IPN-sourced, stored in our DB) ─────────
 
-    @Operation(summary = "Get Co-op account transactions for a date range",
-            description = "Returns all transactions for the SACCO account between fromDate and toDate (YYYY-MM-DD).")
+    @Operation(summary = "Get SACCO Co-op account transactions (IPN-sourced)",
+            description = "Returns completed payments received via Co-op B2B IPN stored in our database. " +
+                    "Co-op replays historical transactions through the IPN endpoint.")
     @GetMapping("/coop/transactions")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
     public ResponseEntity<?> getAccountTransactions(
-            @RequestParam String fromDate,
-            @RequestParam String toDate) {
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "50") int size) {
         try {
-            var transactions = coopConnectService.getAccountTransactions(fromDate, toDate);
-            if (transactions == null) {
-                return ResponseEntity.status(503)
-                        .body(Map.of("error", "Could not fetch transactions from Co-op Bank"));
+            Page<Payment> payments;
+
+            if (fromDate != null && toDate != null) {
+                ZonedDateTime from = ZonedDateTime.parse(fromDate + "T00:00:00+03:00[Africa/Nairobi]");
+                ZonedDateTime to   = ZonedDateTime.parse(toDate   + "T23:59:59+03:00[Africa/Nairobi]");
+                payments = paymentRepository.findCompletedBetween(from, to, PageRequest.of(page, size));
+            } else {
+                payments = paymentRepository.findByStatusOrderByCreatedAtDesc(
+                        PaymentStatus.COMPLETED, PageRequest.of(page, size));
             }
-            return ResponseEntity.ok(transactions);
+
+            List<Map<String, Object>> transactions = payments.getContent().stream().map(p -> {
+                Map<String, Object> tx = new LinkedHashMap<>();
+                tx.put("transactionId",   p.getTransactionRef());
+                tx.put("transactionDate", p.getCreatedAt() != null
+                        ? p.getCreatedAt().toLocalDate().toString() : null);
+                tx.put("amount",          p.getAmount());
+                tx.put("currency",        p.getCurrency());
+                tx.put("narration",       p.getAccountReference());
+                tx.put("transactionType", "CR");
+                tx.put("senderName",      p.getSenderName());
+                tx.put("senderPhone",     p.getSenderPhoneNumber());
+                tx.put("paymentMethod",   p.getPaymentMethod());
+                tx.put("paymentRef",      p.getInternalRef());
+                return tx;
+            }).toList();
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("messageCode",        "0");
+            response.put("messageDescription", "SUCCESS");
+            response.put("source",             "IPN_DATABASE");
+            response.put("totalElements",      payments.getTotalElements());
+            response.put("totalPages",         payments.getTotalPages());
+            response.put("currentPage",        page);
+            response.put("transactions",       transactions);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Failed to get account transactions: {}", e.getMessage());
+            log.error("Failed to get account transactions from DB: {}", e.getMessage());
             return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
         }
     }
