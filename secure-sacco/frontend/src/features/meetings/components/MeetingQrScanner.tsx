@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import { Camera, X, Loader2, CheckCircle, AlertCircle, RefreshCcw } from 'lucide-react';
+import { Camera, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { meetingsApi } from '../api/meetings-api';
 
 interface MeetingQrScannerProps {
-    meetingId: number;
+    meetingId: number | string;
     onClose: () => void;
     onScanSuccess: (memberId: number) => void;
 }
@@ -13,11 +13,35 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
     const scannerRef = useRef<HTMLDivElement>(null);
     const html5QrCode = useRef<Html5Qrcode | null>(null);
 
-    const [isScanning, setIsScanning] = useState(false);
     const [status, setStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('LOADING');
     const [message, setMessage] = useState('');
-    const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
     const [activeCameraId, setActiveCameraId] = useState<string>('');
+
+    // DECLARE BEFORE USE AND WRAP IN USECALLBACK
+    const handleQrDecode = useCallback(async (qrData: string) => {
+        if (html5QrCode.current?.isScanning) await html5QrCode.current.pause();
+        setStatus('LOADING');
+        setMessage('Verifying attendance...');
+
+        try {
+            const response = await meetingsApi.scanAttendance(Number(meetingId), { token: qrData });
+            setStatus('SUCCESS');
+            setMessage(`${response.memberName} marked as PRESENT.`);
+
+            setTimeout(() => { onScanSuccess(response.memberId); }, 2000);
+        } catch (error: unknown) { // FIXED: Replaced 'any' with 'unknown'
+            setStatus('ERROR');
+            // Safely cast error to access response message
+            const err = error as { response?: { data?: { message?: string } } };
+            setMessage(err.response?.data?.message || 'Invalid or expired QR code.');
+
+            setTimeout(() => {
+                setStatus('IDLE');
+                setMessage('');
+                if (html5QrCode.current?.getState() === 2) html5QrCode.current.resume();
+            }, 3000);
+        }
+    }, [meetingId, onScanSuccess]);
 
     useEffect(() => {
         if (!scannerRef.current) return;
@@ -29,7 +53,6 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
         Html5Qrcode.getCameras()
             .then(devices => {
                 if (devices && devices.length) {
-                    setCameras(devices);
                     const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
                     setActiveCameraId(backCamera ? backCamera.deviceId : devices[0].deviceId);
                 } else {
@@ -56,7 +79,6 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
             try {
                 if (html5QrCode.current?.isScanning) await html5QrCode.current.stop();
                 setStatus('IDLE');
-                setIsScanning(true);
 
                 await html5QrCode.current?.start(
                     activeCameraId,
@@ -64,36 +86,14 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
                     (decodedText) => handleQrDecode(decodedText),
                     () => {}
                 );
-            } catch (err) {
+            } catch { // FIXED: Removed unused 'err' variable
                 setStatus('ERROR');
                 setMessage("Could not access the selected camera.");
             }
         };
 
         startScanning();
-    }, [activeCameraId]);
-
-    const handleQrDecode = async (qrData: string) => {
-        if (html5QrCode.current?.isScanning) await html5QrCode.current.pause();
-        setStatus('LOADING');
-        setMessage('Verifying attendance...');
-
-        try {
-            const response = await meetingsApi.scanAttendance(meetingId, { token: qrData });
-            setStatus('SUCCESS');
-            setMessage(`${response.memberName} marked as PRESENT.`);
-
-            setTimeout(() => { onScanSuccess(response.memberId); }, 2000);
-        } catch (error: any) {
-            setStatus('ERROR');
-            setMessage(error.response?.data?.message || 'Invalid or expired QR code.');
-            setTimeout(() => {
-                setStatus('IDLE');
-                setMessage('');
-                if (html5QrCode.current?.getState() === 2) html5QrCode.current.resume();
-            }, 3000);
-        }
-    };
+    }, [activeCameraId, handleQrDecode, status]);
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
@@ -109,6 +109,7 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
 
                 <div className="relative bg-black w-full aspect-square flex items-center justify-center">
                     <div id="reader" ref={scannerRef} className="w-full h-full" />
+
                     {status === 'LOADING' && (
                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
                             <Loader2 size={40} className="animate-spin mb-3 text-blue-500" />
