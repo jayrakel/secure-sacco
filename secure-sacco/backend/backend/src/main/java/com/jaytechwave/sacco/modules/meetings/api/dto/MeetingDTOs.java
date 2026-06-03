@@ -58,7 +58,8 @@ public class MeetingDTOs {
             LocalDateTime endAt,
             Integer lateAfterMinutes,
             MeetingStatus status,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            String qrToken
     ) {}
 
     public record AttendanceRecordResponse(

@@ -21,6 +21,21 @@ export const MeetingQrModal: React.FC<MeetingQrModalProps> = ({
     const [token, setToken] = React.useState(meeting.qrToken);
     const printRef = useRef<HTMLDivElement>(null);
 
+    // Auto-regenerate if the meeting has no QR token (pre-V78 meetings)
+    React.useEffect(() => {
+        if (!token) {
+            setRegenerating(true);
+            apiClient.post(`/meetings/${meeting.id}/regenerate-qr`)
+                .then(res => {
+                    setToken(res.data.qrToken);
+                    onTokenRegenerated(res.data.qrToken);
+                })
+                .catch(() => setRegenerating(false))
+                .finally(() => setRegenerating(false));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const checkInUrl = `${window.location.origin}/meetings/checkin/${token}`;
 
     const handleRegenerate = async () => {
@@ -91,7 +106,15 @@ export const MeetingQrModal: React.FC<MeetingQrModalProps> = ({
 
                     {/* QR */}
                     <div ref={printRef} className="inline-block p-4 bg-white border-2 border-slate-100 rounded-xl">
-                        <QRCode value={checkInUrl} size={200} />
+                        {token
+                            ? <QRCode value={checkInUrl} size={200} />
+                            : <div className="w-[200px] h-[200px] flex items-center justify-center bg-slate-50 rounded-lg">
+                                <div className="text-center">
+                                    <RefreshCw size={24} className="animate-spin text-emerald-500 mx-auto mb-2" />
+                                    <p className="text-xs text-slate-400">Generating QR code...</p>
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     <p className="text-[10px] text-slate-400 mt-3 font-mono break-all px-2">{checkInUrl}</p>

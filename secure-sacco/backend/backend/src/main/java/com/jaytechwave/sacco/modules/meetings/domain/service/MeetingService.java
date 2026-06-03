@@ -273,11 +273,10 @@ public class MeetingService {
             return;
         }
 
+        // Step 1: Save COMPLETED status first — this MUST succeed regardless of penalties
         meeting.setStatus(MeetingStatus.COMPLETED);
         if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now());
         meetingRepository.save(meeting);
-
-        meetingPenaltyService.generatePenalties(meeting);
 
         securityAuditService.logEvent(
                 "MEETING_AUTO_COMPLETED",
@@ -285,7 +284,17 @@ public class MeetingService {
                 "Meeting auto-completed by scheduler: " + meeting.getTitle()
         );
 
-        log.info("Meeting {} auto-completed by scheduler. Penalties generated.", id);
+        log.info("Meeting {} auto-completed by scheduler.", id);
+
+        // Step 2: Generate penalties in a separate try-catch so a penalty failure
+        // does NOT roll back the COMPLETED status.
+        try {
+            meetingPenaltyService.generatePenalties(meeting);
+            log.info("Penalties generated for meeting {}.", id);
+        } catch (Exception e) {
+            log.error("autoCompleteMeeting: Penalty generation failed for meeting {} — " +
+                    "meeting is COMPLETED but penalties were not applied: {}", id, e.getMessage(), e);
+        }
     }
 
 
@@ -333,7 +342,8 @@ public class MeetingService {
     private MeetingSummaryResponse toSummary(Meeting m) {
         return new MeetingSummaryResponse(
                 m.getId(), m.getTitle(), m.getDescription(), m.getMeetingType(),
-                m.getStartAt(), m.getEndAt(), m.getLateAfterMinutes(), m.getStatus(), m.getCreatedAt()
+                m.getStartAt(), m.getEndAt(), m.getLateAfterMinutes(), m.getStatus(),
+                m.getCreatedAt(), m.getQrToken()
         );
     }
 }
