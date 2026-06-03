@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats, CameraDevice } from 'html5-qrcode';
 import { Camera, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { meetingsApi } from '../api/meetings-api';
 
@@ -29,7 +29,7 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
             setMessage(`${response.memberName} marked as PRESENT.`);
 
             setTimeout(() => { onScanSuccess(response.memberId); }, 2000);
-        } catch (error: unknown) { // FIXED: Replaced 'any' with 'unknown'
+        } catch (error: unknown) {
             setStatus('ERROR');
             // Safely cast error to access response message
             const err = error as { response?: { data?: { message?: string } } };
@@ -47,14 +47,16 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
         if (!scannerRef.current) return;
 
         html5QrCode.current = new Html5Qrcode("reader", {
-            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+            verbose: false
         });
 
         Html5Qrcode.getCameras()
-            .then(devices => {
+            .then((devices: CameraDevice[]) => {
                 if (devices && devices.length) {
                     const backCamera = devices.find(d => d.label.toLowerCase().includes('back'));
-                    setActiveCameraId(backCamera ? backCamera.deviceId : devices[0].deviceId);
+                    // FIXED: Changed from .deviceId to .id
+                    setActiveCameraId(backCamera ? backCamera.id : devices[0].id);
                 } else {
                     setStatus('ERROR');
                     setMessage('No cameras found on this device.');
@@ -86,7 +88,7 @@ export function MeetingQrScanner({ meetingId, onClose, onScanSuccess }: MeetingQ
                     (decodedText) => handleQrDecode(decodedText),
                     () => {}
                 );
-            } catch { // FIXED: Removed unused 'err' variable
+            } catch {
                 setStatus('ERROR');
                 setMessage("Could not access the selected camera.");
             }
