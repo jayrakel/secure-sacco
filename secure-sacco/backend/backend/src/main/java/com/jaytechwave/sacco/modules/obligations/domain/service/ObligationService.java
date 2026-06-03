@@ -150,8 +150,23 @@ public class ObligationService {
         List<SavingsObligation> obligations = obligationRepository.findByMemberIdAndStatus(memberId, ObligationStatus.ACTIVE);
         List<ObligationResponse> responses  = new ArrayList<>();
 
+        LocalDate today = LocalDate.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI);
         for (SavingsObligation obligation : obligations) {
             ObligationResponse response = ObligationResponse.from(obligation);
+
+            // Obligation hasn't started yet — show as UPCOMING, don't look for DB periods
+            if (obligation.getStartDate().isAfter(today)) {
+                ObligationPeriodResponse upcoming = new ObligationPeriodResponse();
+                upcoming.setPeriodStart(obligation.getStartDate());
+                upcoming.setRequiredAmount(obligation.getAmountDue());
+                upcoming.setPaidAmount(java.math.BigDecimal.ZERO);
+                upcoming.setStatus(com.jaytechwave.sacco.modules.obligations.domain.entity.PeriodStatus.DUE);
+                upcoming.setComputedStatus(com.jaytechwave.sacco.modules.obligations.domain.entity.PeriodStatus.UPCOMING);
+                response.setCurrentPeriod(upcoming);
+                responses.add(response);
+                continue;
+            }
+
             LocalDate periodStart = currentPeriodStart(obligation);
             periodRepository.findByObligationIdAndPeriodStart(obligation.getId(), periodStart)
                     .ifPresent(p -> {
@@ -187,7 +202,7 @@ public class ObligationService {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private LocalDate currentPeriodStart(SavingsObligation obligation) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI);
         LocalDate start = obligation.getStartDate();
 
         if (today.isBefore(start)) return start;
