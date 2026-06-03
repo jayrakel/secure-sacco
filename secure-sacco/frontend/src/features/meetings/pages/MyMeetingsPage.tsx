@@ -3,10 +3,8 @@ import { meetingsApi } from '../api/meetings-api';
 import type { MyMeetingSummary, AttendanceStatus } from '../api/meetings-api';
 import { Calendar, CheckCircle2, Clock, XCircle, AlertCircle, LogIn } from 'lucide-react';
 import { format } from 'date-fns';
-import axios from "axios";
+import { MeetingQrScanner } from '../components/MeetingQrScanner'; // Import the scanner
 
-// Backend sends ISO-8601 with EAT offset e.g. "2026-05-30T02:35:00+03:00"
-// Parse directly — do NOT append 'Z' which would incorrectly treat as UTC
 const parseEat = (dateStr: string) => new Date(dateStr);
 
 const ATTENDANCE_CONFIG: Record<AttendanceStatus, { label: string; color: string; Icon: React.ElementType }> = {
@@ -20,8 +18,9 @@ export default function MyMeetingsPage() {
     const [meetings, setMeetings] = useState<MyMeetingSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [checkingIn, setCheckingIn] = useState<string | null>(null);
-    const [checkInErrors, setCheckInErrors] = useState<Record<string, string>>({});
+
+    // Replace checkingIn/checkInErrors with a single state for the scanner modal
+    const [scanningMeetingId, setScanningMeetingId] = useState<string | null>(null);
     const now = new Date();
 
     const load = () => {
@@ -33,27 +32,6 @@ export default function MyMeetingsPage() {
 
     useEffect(() => { load(); }, []);
 
-    const handleCheckIn = async (meetingId: string) => {
-        setCheckingIn(meetingId);
-        setCheckInErrors(prev => ({ ...prev, [meetingId]: '' }));
-        try {
-            await meetingsApi.checkIn(meetingId);
-            load(); // refresh to get updated status
-        } catch (error: unknown) {
-            setCheckInErrors((prev) => ({
-                ...prev,
-                [meetingId]:
-                    axios.isAxiosError<{ message?: string }>(error)
-                        ? (error.response?.data?.message ?? error.message ?? 'Check-in failed. Please try again.')
-                        : error instanceof Error
-                            ? error.message
-                            : 'Check-in failed. Please try again.',
-            }));
-        } finally {
-            setCheckingIn(null);
-        }
-    };
-
     const completed = meetings.filter(m => m.meetingStatus === 'COMPLETED');
     const stats = {
         total:   completed.length,
@@ -61,13 +39,17 @@ export default function MyMeetingsPage() {
         late:    completed.filter(m => m.myStatus === 'LATE').length,
         absent:  completed.filter(m => m.myStatus === 'ABSENT').length,
     };
+
     const attendanceRate = stats.total > 0
         ? Math.round(((stats.present + stats.late) / stats.total) * 100)
         : 0;
 
     const renderStatusCell = (m: MyMeetingSummary) => {
         const startAt = parseEat(m.startAt);
-        const hasStarted = now >= startAt;
+
+        // Loosen the window: allow check-in 30 minutes before the start time
+        const checkInStartTime = new Date(startAt.getTime() - 30 * 60 * 1000);
+        const canCheckIn = now >= checkInStartTime;
 
         // Completed — show attendance badge
         if (m.meetingStatus === 'COMPLETED' && m.myStatus) {
@@ -101,8 +83,8 @@ export default function MyMeetingsPage() {
             );
         }
 
-        // Scheduled + not started yet
-        if (!hasStarted) {
+        // Scheduled + not within the 30-minute window yet
+        if (!canCheckIn) {
             return (
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full text-blue-600 bg-blue-50">
                     <Clock size={11} /> {format(startAt, 'HH:mm')}
@@ -110,26 +92,32 @@ export default function MyMeetingsPage() {
             );
         }
 
-        // Scheduled + started → show Check In button
+        // Scheduled + within 30 min window — show Check In button
         return (
-            <div className="flex flex-col items-end gap-1">
-                <button
-                    onClick={() => handleCheckIn(m.meetingId)}
-                    disabled={checkingIn === m.meetingId}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
-                >
-                    <LogIn size={11} />
-                    {checkingIn === m.meetingId ? 'Checking in…' : 'Check In'}
-                </button>
-                {checkInErrors[m.meetingId] && (
-                    <p className="text-xs text-red-500">{checkInErrors[m.meetingId]}</p>
-                )}
-            </div>
+            <button
+                onClick={() => setScanningMeetingId(m.meetingId)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
+            >
+                <LogIn size={11} />
+                Check In
+            </button>
         );
     };
 
     return (
         <div className="max-w-4xl mx-auto">
+            {/* Render the Scanner Modal when a meeting is selected */}
+            {scanningMeetingId && (
+                <MeetingQrScanner
+                    meetingId={scanningMeetingId}
+                    onClose={() => setScanningMeetingId(null)}
+                    onScanSuccess={() => {
+                        setScanningMeetingId(null);
+                        load(); // Reload the list so the UI updates to "Checked In"
+                    }}
+                />
+            )}
+
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">My Meetings</h1>
                 <p className="text-slate-500 text-sm mt-1">
@@ -139,10 +127,10 @@ export default function MyMeetingsPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {[
-                    { label: 'Meetings Held',  value: stats.total,                color: 'text-blue-600' },
-                    { label: 'Attended',        value: stats.present + stats.late, color: 'text-green-600' },
-                    { label: 'Absent',          value: stats.absent,              color: 'text-red-600' },
-                    { label: 'Attendance Rate', value: `${attendanceRate}%`,      color: 'text-indigo-600' },
+                    { label: 'Meetings Held',  value: stats.total,                 color: 'text-blue-600' },
+                    { label: 'Attended',       value: stats.present + stats.late,  color: 'text-green-600' },
+                    { label: 'Absent',         value: stats.absent,                color: 'text-red-600' },
+                    { label: 'Attendance Rate', value: `${attendanceRate}%`,       color: 'text-indigo-600' },
                 ].map(s => (
                     <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-4">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>

@@ -46,6 +46,11 @@ public class Payment {
     @Column(name = "payment_type", nullable = false, length = 50)
     private String paymentType; // e.g., STK_PUSH
 
+    /** CR = credit (money in), DR = debit (money out). Derived from Co-op IPN EventType. */
+    @Column(name = "transaction_type", nullable = false, length = 2)
+    @Builder.Default
+    private String transactionType = "CR";
+
     @Column(name = "account_reference", length = 100)
     private String accountReference;
 

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
@@ -45,6 +46,8 @@ public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
      * Finds SCHEDULED meetings that have an explicit endAt and whose
      * end time has passed.
      */
+    Optional<Meeting> findByQrToken(String qrToken);
+
     List<Meeting> findByStatusAndEndAtLessThanEqual(
             MeetingStatus status, LocalDateTime now);
 

@@ -79,4 +79,17 @@ public class MeetingDTOs {
             AttendanceStatus myStatus,
             MeetingStatus meetingStatus
     ) {}
+
+    /** Returned by the public QR endpoint — safe to expose without auth */
+    public record QrMeetingInfoResponse(
+            UUID meetingId,
+            String title,
+            String description,
+            MeetingType meetingType,
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            MeetingStatus status,
+            Integer lateAfterMinutes,
+            String qrToken
+    ) {}
 }

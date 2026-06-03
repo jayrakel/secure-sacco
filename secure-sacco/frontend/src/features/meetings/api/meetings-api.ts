@@ -16,6 +16,7 @@ export interface Meeting {
     lateAfterMinutes: number;
     status: MeetingStatus;
     createdAt: string;
+    qrToken?: string;
 }
 
 export interface AttendanceRecord {

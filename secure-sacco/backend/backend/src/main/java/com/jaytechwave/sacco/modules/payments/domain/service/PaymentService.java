@@ -115,14 +115,16 @@ public class PaymentService {
 
     @Transactional
     public void processCoopIpn(String rawJson, CoopIpnPayload ipn) {
-        // Only process CREDIT events
-        if (!"CREDIT".equalsIgnoreCase(ipn.getEventType())) {
-            log.info("Co-op IPN: ignoring non-CREDIT event '{}' for AcctNo={}",
+        boolean isCredit = "CREDIT".equalsIgnoreCase(ipn.getEventType());
+        boolean isDebit  = "DEBIT".equalsIgnoreCase(ipn.getEventType());
+
+        if (!isCredit && !isDebit) {
+            log.info("Co-op IPN: ignoring unknown event type '{}' for AcctNo={}",
                     ipn.getEventType(), ipn.getAcctNo());
             return;
         }
 
-        // Idempotency: one payment per TransactionId
+        // Idempotency: one record per TransactionId
         String txId = ipn.getTransactionId();
         if (paymentRepository.findByTransactionRef(txId).isPresent()) {
             log.info("Co-op IPN: duplicate TransactionId={} — skipping", txId);
@@ -137,62 +139,86 @@ public class PaymentService {
             return;
         }
 
-        // Extract phone from CustMemoLine1 (format: "TIP6V5IRAE~254707919065~0")
-        String phone       = extractPhone(ipn.getCustMemoLine1());
-        String senderName  = extractSenderName(ipn.getCustMemoLine3());
+        String phone      = extractPhone(ipn.getCustMemoLine1());
+        String senderName = extractSenderName(ipn.getCustMemoLine3());
+        String txType     = isCredit ? "CR" : "DR";
 
-        log.info("Co-op IPN: CREDIT KES {} from {} ({}). PaymentRef={} TxId={}",
-                amount, senderName, phone, ipn.getPaymentRef(), txId);
+        log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={}",
+                txType, amount, senderName, phone, ipn.getPaymentRef(), txId);
 
-        // ── Try to match to a pending STK push payment ─────────────────────
-        //
-        // Co-op routes STK push results through the IPN, so we look for the
-        // most recent PENDING payment for this phone number and link it.
-        Payment payment = null;
-        if (phone != null) {
-            List<Payment> pending = paymentRepository
-                    .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.PENDING);
-            if (!pending.isEmpty()) {
-                payment = pending.get(0); // most recent PENDING for this phone
-                log.info("Co-op IPN: matched to pending STK payment id={} ref={}",
-                        payment.getId(), payment.getInternalRef());
+        if (isCredit) {
+            // ── Try to match to a pending STK push payment ─────────────────
+            Payment payment = null;
+            if (phone != null) {
+                List<Payment> pending = paymentRepository
+                        .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.PENDING);
+                if (!pending.isEmpty()) {
+                    payment = pending.get(0);
+                    log.info("Co-op IPN: matched to pending STK payment id={} ref={}",
+                            payment.getId(), payment.getInternalRef());
+                }
             }
-        }
 
-        if (payment != null) {
-            // Update the existing STK push payment record
-            payment.setTransactionRef(txId);
-            payment.setProviderMetadata(rawJson);
-            payment.setSenderName(senderName);
-            markCompleted(payment, txId, rawJson);
+            if (payment != null) {
+                payment.setTransactionRef(txId);
+                payment.setProviderMetadata(rawJson);
+                payment.setSenderName(senderName);
+                payment.setTransactionType("CR");
+                markCompleted(payment, txId, rawJson);
+            } else {
+                // New record — manual paybill payment
+                payment = Payment.builder()
+                        .transactionRef(txId)
+                        .internalRef("IPN-" + txId)
+                        .amount(amount)
+                        .paymentMethod("MPESA_COOP_IPN")
+                        .paymentType("PAYBILL_DEPOSIT")
+                        .transactionType("CR")
+                        .senderPhoneNumber(phone)
+                        .senderName(senderName)
+                        .accountReference(ipn.getPaymentRef())
+                        .status(PaymentStatus.COMPLETED)
+                        .providerMetadata(rawJson)
+                        .build();
+
+                paymentRepository.save(payment);
+                log.info("Co-op IPN: new CREDIT KES {} from {} saved.", amount, senderName);
+
+                securityAuditService.logEvent(
+                        "IPN_PAYMENT_RECEIVED", "COOP_IPN",
+                        "Co-op IPN credit KES " + amount + " from " + senderName
+                                + " (" + phone + "). TxId: " + txId
+                );
+
+                eventPublisher.publishEvent(new PaymentCompletedEvent(
+                        payment.getId(), null, amount, ipn.getPaymentRef(), txId
+                ));
+            }
         } else {
-            // No matching STK push — create a new record (manual paybill payment)
-            payment = Payment.builder()
+            // ── DEBIT — money going out of SACCO account ───────────────────
+            // Store for transaction history display only; no member account impact
+            Payment payment = Payment.builder()
                     .transactionRef(txId)
-                    .internalRef("IPN-" + txId)
+                    .internalRef("IPN-DR-" + txId)
                     .amount(amount)
-                    .paymentMethod("MPESA_COOP_IPN")
-                    .paymentType("PAYBILL_DEPOSIT")
-                    .senderPhoneNumber(phone)
+                    .paymentMethod("COOP_DEBIT")
+                    .paymentType("ACCOUNT_DEBIT")
+                    .transactionType("DR")
                     .senderName(senderName)
+                    .senderPhoneNumber(phone)
                     .accountReference(ipn.getPaymentRef())
                     .status(PaymentStatus.COMPLETED)
                     .providerMetadata(rawJson)
                     .build();
 
             paymentRepository.save(payment);
-            log.info("Co-op IPN: new paybill payment KES {} from {} saved.", amount, senderName);
+            log.info("Co-op IPN: new DEBIT KES {} — {} saved.", amount, ipn.getNarration());
 
             securityAuditService.logEvent(
-                    "IPN_PAYMENT_RECEIVED", "COOP_IPN",
-                    "Co-op IPN credit KES " + amount + " from " + senderName
-                            + " (" + phone + "). TxId: " + txId
+                    "IPN_DEBIT_RECEIVED", "COOP_IPN",
+                    "Co-op IPN debit KES " + amount + ". Narration: "
+                            + ipn.getNarration() + ". TxId: " + txId
             );
-
-            // Publish event so SavingsPaymentListener can pick it up
-            eventPublisher.publishEvent(new PaymentCompletedEvent(
-                    payment.getId(), null, amount, ipn.getPaymentRef(), txId
-            ));
         }
     }
 

@@ -36,6 +36,7 @@ import { MemberStatementPage } from './features/reports/pages/MemberStatementPag
 import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
+import MeetingCheckInPage from './features/meetings/pages/MeetingCheckInPage';
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
@@ -135,6 +136,7 @@ function App() {
                             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                             <Route path="/terms-of-service" element={<TermsOfServicePage />} />
                             <Route path="/support" element={<SupportPage />} />
+                            <Route path="/meetings/checkin/:token" element={<MeetingCheckInPage />} />
 
                             {/* All routes inside here will render with the Dashboard Sidebar/Header */}
                             <Route element={
