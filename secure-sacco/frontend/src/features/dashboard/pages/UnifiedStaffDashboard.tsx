@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { dashboardApi, type StaffDashboardDTO } from '../api/dashboard-api';
 import { CoopAccountBalanceCard } from '../components/CoopAccountBalanceCard';
+import { CoopTransactionsCard } from '../components/CoopTransactionsCard';
 import {
     Users, Wallet, Coins, PiggyBank, CalendarClock,
     AlertTriangle, TrendingDown, Banknote, ShieldAlert, Receipt,
@@ -75,7 +76,7 @@ const StatCard: React.FC<{
                 ? <Sk h="h-8" w="w-28" />
                 : <p className={`text-2xl font-bold leading-none truncate ${highlight ? 'text-white' : 'text-slate-900'}`}>
                     {value}
-                  </p>}
+                </p>}
 
             <div>
                 <p className={`text-sm font-medium leading-none ${highlight ? 'text-white/75' : 'text-slate-500'}`}>{label}</p>
@@ -105,7 +106,7 @@ const Section: React.FC<{
             </div>
             {linkTo && (
                 <Link to={linkTo}
-                    className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors">
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors">
                     {linkLabel ?? 'View all'} <ArrowUpRight size={11} />
                 </Link>
             )}
@@ -147,9 +148,9 @@ const buildSections = (): DashboardSection[] => [
                 <StatCard label="Total Members"      value={fmtCount(data?.totalMembers)}      icon={Users}         color="blue"   loading={loading} linkTo="/members" />
                 <StatCard label="Active Members"     value={fmtCount(data?.activeMembers)}     icon={CheckCircle2}  color="emerald" loading={loading} sub="Fully registered" />
                 <StatCard label="Pending Activation" value={fmtCount(data?.pendingActivations)} icon={ClipboardList} color="amber"  loading={loading}
-                    sub="Awaiting registration fee"
-                    badge={data?.pendingActivations} badgeColor="amber" linkTo="/members"
-                    highlight={!!data?.pendingActivations} />
+                          sub="Awaiting registration fee"
+                          badge={data?.pendingActivations} badgeColor="amber" linkTo="/members"
+                          highlight={!!data?.pendingActivations} />
                 <StatCard label="Upcoming Meetings"  value={fmtCount(data?.upcomingMeetings)}  icon={CalendarClock} color="violet" loading={loading} linkTo="/meetings" />
             </div>
         ),
@@ -164,13 +165,13 @@ const buildSections = (): DashboardSection[] => [
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard label="Active Loans"         value={fmtCount(data?.activeLoans)}             icon={Coins}        color="blue"   loading={loading} linkTo="/loans" />
                 <StatCard label="Pending Applications" value={fmtCount(data?.pendingLoanApplications)}  icon={ClipboardList} color="amber"  loading={loading}
-                    sub="Awaiting review"
-                    badge={data?.pendingLoanApplications} badgeColor="amber" linkTo="/loans"
-                    highlight={!!data?.pendingLoanApplications} />
+                          sub="Awaiting review"
+                          badge={data?.pendingLoanApplications} badgeColor="amber" linkTo="/loans"
+                          highlight={!!data?.pendingLoanApplications} />
                 <StatCard label="Loans in Arrears"     value={fmtCount(data?.loansInArrears)}           icon={TrendingDown}  color="red"    loading={loading}
-                    sub="Past due date"
-                    badge={data?.loansInArrears} badgeColor="red"
-                    highlight={!!data?.loansInArrears} />
+                          sub="Past due date"
+                          badge={data?.loansInArrears} badgeColor="red"
+                          highlight={!!data?.loansInArrears} />
                 <StatCard label="Loan Portfolio"       value={fmtKES(data?.loanPortfolio)}               icon={Banknote}      color="green"  loading={loading} />
             </div>
         ),
@@ -198,12 +199,12 @@ const buildSections = (): DashboardSection[] => [
         render: (data, loading) => (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard label="Open Penalties"      value={fmtCount(data?.openPenalties)}      icon={AlertTriangle} color="red"    loading={loading}
-                    sub="Requires attention"
-                    badge={data?.openPenalties} badgeColor="red" linkTo="/staff/penalties"
-                    highlight={!!data?.openPenalties} />
+                          sub="Requires attention"
+                          badge={data?.openPenalties} badgeColor="red" linkTo="/staff/penalties"
+                          highlight={!!data?.openPenalties} />
                 <StatCard label="Outstanding Amount"  value={fmtKES(data?.outstandingPenalties)}  icon={Receipt}       color="rose"   loading={loading} linkTo="/staff/penalties" />
                 <StatCard label="Loans in Arrears"    value={fmtCount(data?.loansInArrears)}      icon={TrendingDown}  color="orange" loading={loading}
-                    badge={data?.loansInArrears} badgeColor="orange" />
+                          badge={data?.loansInArrears} badgeColor="orange" />
             </div>
         ),
     },
@@ -216,7 +217,7 @@ const buildSections = (): DashboardSection[] => [
         render: (data, loading) => (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard label="Upcoming Meetings"   value={fmtCount(data?.upcomingMeetings)}  icon={CalendarClock} color="violet" loading={loading}
-                    badge={data?.upcomingMeetings} badgeColor="amber" linkTo="/meetings" highlight />
+                          badge={data?.upcomingMeetings} badgeColor="amber" linkTo="/meetings" highlight />
                 <StatCard label="Meetings This Month" value={fmtCount(data?.meetingsThisMonth)} icon={CalendarDays}  color="blue"   loading={loading} linkTo="/meetings" />
                 <StatCard label="Active Members"      value={fmtCount(data?.activeMembers)}      icon={CheckCircle2}  color="emerald" loading={loading} />
             </div>
@@ -300,7 +301,7 @@ const UnifiedStaffDashboard: React.FC = () => {
                         <p className="text-sm text-slate-400 mt-1">{today}</p>
                     </div>
                     <button onClick={fetchDashboard} disabled={loading}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50 hover:shadow">
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50 hover:shadow">
                         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                         {loading ? 'Refreshing…' : refreshedAt
                             ? `Updated ${refreshedAt.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}`
@@ -310,6 +311,9 @@ const UnifiedStaffDashboard: React.FC = () => {
 
                 {/* ── Coop account balance card ── */}
                 <CoopAccountBalanceCard />
+
+                {/* ── Coop account transactions ── */}
+                <CoopTransactionsCard />
 
 
                 {/* ── Error ── */}
@@ -327,7 +331,7 @@ const UnifiedStaffDashboard: React.FC = () => {
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                         {QUICK_LINKS.map(({ to, icon: Icon, label, color }) => (
                             <Link key={to} to={to}
-                                className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-150 ${color}`}>
+                                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-150 ${color}`}>
                                 <Icon size={20} />
                                 <span className="text-xs font-semibold">{label}</span>
                             </Link>
@@ -365,7 +369,7 @@ const UnifiedStaffDashboard: React.FC = () => {
                 {/* ── Dashboard sections ── */}
                 {sections.map(section => (
                     <Section key={section.id} title={section.title} icon={section.icon}
-                        linkTo={section.linkTo} linkLabel="View all">
+                             linkTo={section.linkTo} linkLabel="View all">
                         {section.render(data, loading)}
                     </Section>
                 ))}
