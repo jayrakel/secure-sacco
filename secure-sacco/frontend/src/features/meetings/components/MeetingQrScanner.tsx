@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats, CameraDevice } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats, type CameraDevice } from 'html5-qrcode';
 import { Camera, X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { meetingsApi } from '../api/meetings-api';
 
