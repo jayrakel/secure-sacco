@@ -286,18 +286,28 @@ public class CoopConnectDTOs {
         @JsonProperty("Narration")
         private String narration;
 
-        @JsonProperty("TransactionType")  // DR or CR
+        /** Co-op sends "C" for credit, "D" for debit */
+        @JsonProperty("TransactionType")
         private String transactionType;
 
-        @JsonProperty("Amount")
-        private String amount;
+        /** Co-op sends CreditAmount and DebitAmount separately */
+        @JsonProperty("CreditAmount")
+        private Double creditAmount;
 
-        @JsonProperty("RunningBalance")
-        private String runningBalance;
+        @JsonProperty("DebitAmount")
+        private Double debitAmount;
 
-        @JsonProperty("PaymentRef")
-        private String paymentRef;
+        @JsonProperty("RunningClearedBalance")
+        private Double runningClearedBalance;
+
+        @JsonProperty("TransactionReference")
+        private String transactionReference;
+
+        @JsonProperty("ServicePoint")
+        private String servicePoint;
     }
+
+    // ── Mini statement response ───────────────────────────────────────────────
 
     // ── Mini statement response ───────────────────────────────────────────────
 
@@ -314,6 +324,9 @@ public class CoopConnectDTOs {
 
         @JsonProperty("AccountNumber")
         private String accountNumber;
+
+        @JsonProperty("AccountName")
+        private String accountName;
 
         @JsonProperty("Currency")
         private String currency;

@@ -140,7 +140,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op Account Balance",
             description = "Fetches the real-time balance of the Sacco's Co-op Connect account.")
     @GetMapping("/coop/balance")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER', 'SECRETARY')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
     public ResponseEntity<?> getAccountBalance() {
         try {
             var balance = coopConnectService.getAccountBalance();
@@ -176,19 +176,42 @@ public class CoopConnectController {
                 ));
             }
 
-            // Normalise to camelCase so the frontend interface is consistent
+            // Normalise to camelCase and fix field names to match actual Co-op response
             var transactions = statement.getTransactions() == null
                     ? List.of()
                     : statement.getTransactions().stream().map(t -> {
                 Map<String, Object> tx = new LinkedHashMap<>();
-                tx.put("transactionId",   t.getTransactionId());
-                tx.put("transactionDate", t.getTransactionDate());
-                tx.put("valueDate",        t.getValueDate());
-                tx.put("narration",        t.getNarration());
-                tx.put("transactionType",  t.getTransactionType()); // DR or CR
-                tx.put("amount",           t.getAmount());
-                tx.put("runningBalance",   t.getRunningBalance());
-                tx.put("paymentRef",       t.getPaymentRef());
+
+                // Co-op sends "C"/"D" — normalise to "CR"/"DR" for frontend
+                boolean isCredit = "C".equalsIgnoreCase(t.getTransactionType());
+                double amount = isCredit
+                        ? (t.getCreditAmount() != null ? t.getCreditAmount() : 0.0)
+                        : (t.getDebitAmount()  != null ? t.getDebitAmount()  : 0.0);
+
+                // Parse sender phone from Narration: "REF~ACCOUNT~PHONE~..."
+                String narration = t.getNarration() != null ? t.getNarration() : "";
+                String[] parts   = narration.split("~");
+                String display   = narration; // default: show full narration
+                String phone     = null;
+                if (parts.length >= 3) {
+                    // M-Pesa format: REF~AccountName~Phone
+                    phone   = parts[2].trim();
+                    display = parts[1].trim(); // account/sender name
+                } else if (parts.length == 2) {
+                    display = parts[1].trim();
+                }
+
+                tx.put("transactionId",      t.getTransactionId());
+                tx.put("transactionDate",    t.getTransactionDate());
+                tx.put("valueDate",          t.getValueDate());
+                tx.put("narration",          display);
+                tx.put("rawNarration",       narration);
+                tx.put("transactionType",    isCredit ? "CR" : "DR");
+                tx.put("amount",             String.format("%.2f", amount));
+                tx.put("runningBalance",     t.getRunningClearedBalance() != null
+                                             ? String.format("%.2f", t.getRunningClearedBalance()) : null);
+                tx.put("reference",          t.getTransactionReference());
+                tx.put("senderPhone",        phone);
                 return tx;
             }).toList();
 
@@ -196,6 +219,7 @@ public class CoopConnectController {
             response.put("messageCode",        statement.getMessageCode());
             response.put("messageDescription", statement.getMessageDescription());
             response.put("accountNumber",      statement.getAccountNumber());
+            response.put("accountName",        statement.getAccountName());
             response.put("currency",           statement.getCurrency());
             response.put("transactions",       transactions);
             return ResponseEntity.ok(response);
@@ -212,7 +236,7 @@ public class CoopConnectController {
             description = "Returns completed payments received via Co-op B2B IPN stored in our database. " +
                     "Co-op replays historical transactions through the IPN endpoint.")
     @GetMapping("/coop/transactions")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON', 'SECRETARY')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
     public ResponseEntity<?> getAccountTransactions(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
@@ -267,7 +291,7 @@ public class CoopConnectController {
     @Operation(summary = "Check Co-op STK push transaction status",
             description = "Check whether a specific M-Pesa STK push was completed, by its MessageReference.")
     @GetMapping("/coop/transaction-status/{messageReference}")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','SECRETARY')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CASHIER','DEPUTY_CASHIER')")
     public ResponseEntity<?> getTransactionStatus(
             @PathVariable String messageReference) {
         try {
