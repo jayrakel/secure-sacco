@@ -154,12 +154,17 @@ public class ObligationService {
         for (SavingsObligation obligation : obligations) {
             ObligationResponse response = ObligationResponse.from(obligation);
 
-            // Obligation hasn't started yet — show as UPCOMING, don't look for DB periods
-            if (obligation.getStartDate().isAfter(today)) {
+            // Obligation hasn't started yet — show as UPCOMING with correct period dates
+            java.time.LocalDate firstPeriodStart = obligation.getFrequency() == ObligationFrequency.WEEKLY
+                    ? obligation.getStartDate().minusDays(5)  // Saturday
+                    : obligation.getStartDate();
+            if (firstPeriodStart.isAfter(today)) {
                 ObligationPeriodResponse upcoming = new ObligationPeriodResponse();
-                upcoming.setPeriodStart(obligation.getStartDate());
+                upcoming.setPeriodStart(firstPeriodStart);
+                upcoming.setPeriodEnd(obligation.getStartDate()); // Thursday
                 upcoming.setRequiredAmount(obligation.getAmountDue());
                 upcoming.setPaidAmount(java.math.BigDecimal.ZERO);
+                upcoming.setRemaining(obligation.getAmountDue());
                 upcoming.setStatus(com.jaytechwave.sacco.modules.obligations.domain.entity.PeriodStatus.DUE);
                 upcoming.setComputedStatus(com.jaytechwave.sacco.modules.obligations.domain.entity.PeriodStatus.UPCOMING);
                 response.setCurrentPeriod(upcoming);
@@ -201,20 +206,27 @@ public class ObligationService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
+    // startDate = first period END date. Mirrors ObligationPeriodService.currentPeriodStart.
     private LocalDate currentPeriodStart(SavingsObligation obligation) {
         LocalDate today = LocalDate.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI);
-        LocalDate start = obligation.getStartDate();
-
-        if (today.isBefore(start)) return start;
+        LocalDate start = obligation.getStartDate(); // savings day (Thursday for weekly)
 
         if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
-            long months = ChronoUnit.MONTHS.between(start, today);
-            LocalDate calcStart = start.plusMonths(months);
-            return calcStart.isAfter(today) ? calcStart.minusMonths(1) : calcStart;
+            if (today.isBefore(start)) return start;
+            long months   = ChronoUnit.MONTHS.between(start, today);
+            LocalDate calc = start.plusMonths(months);
+            return calc.isAfter(today) ? calc.minusMonths(1) : calc;
         } else {
-            long weeks = ChronoUnit.WEEKS.between(start, today);
-            LocalDate calcStart = start.plusWeeks(weeks);
-            return calcStart.isAfter(today) ? calcStart.minusWeeks(1) : calcStart;
+            // WEEKLY: start = Thursday (savings day = period end).
+            // Return the Saturday (periodStart stored in DB) for the period containing today.
+            LocalDate firstSaturday = start.minusDays(5);
+            if (today.isBefore(firstSaturday)) return firstSaturday; // before first period
+
+            long weeks   = ChronoUnit.WEEKS.between(start, today);
+            LocalDate cursor = start.plusWeeks(weeks); // candidate Thursday
+            if (today.isBefore(cursor.minusDays(5))) cursor = cursor.minusWeeks(1);
+            if (today.isAfter(cursor))               cursor = cursor.plusWeeks(1);
+            return cursor.minusDays(5); // Saturday = periodStart in DB
         }
     }
 }

@@ -94,9 +94,17 @@ public class ObligationPeriodService {
                     resp.setPenaltyStatus(p.getStatus().name());
                 });
 
+        LocalDate today2 = LocalDate.now(SaccoDateUtils.NAIROBI);
+
+        // Period hasn't started yet (Saturday is in the future) → UPCOMING
+        if (resp.getPeriodStart() != null && resp.getPeriodStart().isAfter(today2)) {
+            resp.setComputedStatus(PeriodStatus.UPCOMING);
+            return resp;
+        }
+        // Period end (Thursday) is still in the future and status is DUE → use deadline check
         if (isCurrentPeriod && resp.getStatus() == PeriodStatus.DUE) {
             LocalDateTime now = LocalDateTime.now(SaccoDateUtils.NAIROBI);
-            LocalDateTime dl  = savingsDeadlineFor(LocalDate.now(SaccoDateUtils.NAIROBI));
+            LocalDateTime dl  = savingsDeadlineFor(today2);
             resp.setComputedStatus(now.isBefore(dl) ? PeriodStatus.UPCOMING : PeriodStatus.DUE);
         } else {
             resp.setComputedStatus(resp.getStatus());
@@ -172,15 +180,26 @@ public class ObligationPeriodService {
 
     LocalDate currentPeriodStart(SavingsObligation obligation, LocalDate today) {
         LocalDate start = obligation.getStartDate();
-        if (today.isBefore(start)) return start;
+
         if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
+            if (today.isBefore(start)) return start;
             long months   = ChronoUnit.MONTHS.between(start, today);
             LocalDate calc = start.plusMonths(months);
             return calc.isAfter(today) ? calc.minusMonths(1) : calc;
         } else {
-            long weeks    = ChronoUnit.WEEKS.between(start, today);
-            LocalDate calc = start.plusWeeks(weeks);
-            return calc.isAfter(today) ? calc.minusWeeks(1) : calc;
+            // WEEKLY: start = savings day (Thursday = period end).
+            // Period runs Sat (start-5) → Thu (start).
+            // Return the Saturday of the period containing today.
+            LocalDate firstPeriodStart = start.minusDays(5); // first Saturday
+            if (today.isBefore(firstPeriodStart)) return firstPeriodStart; // not started yet
+
+            long weeks   = ChronoUnit.WEEKS.between(start, today);
+            LocalDate cursor = start.plusWeeks(weeks); // candidate Thursday
+            // If today is before the period's Saturday, step back one week
+            if (today.isBefore(cursor.minusDays(5))) cursor = cursor.minusWeeks(1);
+            // If today is after the Thursday, step forward one week
+            if (today.isAfter(cursor)) cursor = cursor.plusWeeks(1);
+            return cursor.minusDays(5); // Saturday = period start stored in DB
         }
     }
 
