@@ -140,7 +140,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op Account Balance",
             description = "Fetches the real-time balance of the Sacco's Co-op Connect account.")
     @GetMapping("/coop/balance")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER','SECRETARY')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER', 'SECRETARY')")
     public ResponseEntity<?> getAccountBalance() {
         try {
             var balance = coopConnectService.getAccountBalance();
@@ -158,9 +158,9 @@ public class CoopConnectController {
     // ── Mini statement ────────────────────────────────────────────────────────
 
     @Operation(summary = "Get Co-op bank mini statement",
-            description = "Returns the last 10 transactions on the SACCO Co-op account.")
+            description = "Returns the last 10 transactions on the SACCO Co-op account (camelCase normalised for frontend).")
     @GetMapping("/coop/mini-statement")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','SECRETARY')")
     public ResponseEntity<?> getMiniStatement() {
         try {
             var statement = coopConnectService.getMiniStatement();
@@ -168,7 +168,38 @@ public class CoopConnectController {
                 return ResponseEntity.status(503)
                         .body(Map.of("error", "Could not fetch mini-statement from Co-op Bank"));
             }
-            return ResponseEntity.ok(statement);
+            if (!"0".equals(statement.getMessageCode())) {
+                return ResponseEntity.status(503).body(Map.of(
+                        "error", statement.getMessageDescription() != null
+                                ? statement.getMessageDescription()
+                                : "Co-op returned an error: " + statement.getMessageCode()
+                ));
+            }
+
+            // Normalise to camelCase so the frontend interface is consistent
+            var transactions = statement.getTransactions() == null
+                    ? List.of()
+                    : statement.getTransactions().stream().map(t -> {
+                Map<String, Object> tx = new LinkedHashMap<>();
+                tx.put("transactionId",   t.getTransactionId());
+                tx.put("transactionDate", t.getTransactionDate());
+                tx.put("valueDate",        t.getValueDate());
+                tx.put("narration",        t.getNarration());
+                tx.put("transactionType",  t.getTransactionType()); // DR or CR
+                tx.put("amount",           t.getAmount());
+                tx.put("runningBalance",   t.getRunningBalance());
+                tx.put("paymentRef",       t.getPaymentRef());
+                return tx;
+            }).toList();
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("messageCode",        statement.getMessageCode());
+            response.put("messageDescription", statement.getMessageDescription());
+            response.put("accountNumber",      statement.getAccountNumber());
+            response.put("currency",           statement.getCurrency());
+            response.put("transactions",       transactions);
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             log.error("Failed to get mini-statement: {}", e.getMessage());
             return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
@@ -181,7 +212,7 @@ public class CoopConnectController {
             description = "Returns completed payments received via Co-op B2B IPN stored in our database. " +
                     "Co-op replays historical transactions through the IPN endpoint.")
     @GetMapping("/coop/transactions")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON', 'SECRETARY')")
     public ResponseEntity<?> getAccountTransactions(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
@@ -236,7 +267,7 @@ public class CoopConnectController {
     @Operation(summary = "Check Co-op STK push transaction status",
             description = "Check whether a specific M-Pesa STK push was completed, by its MessageReference.")
     @GetMapping("/coop/transaction-status/{messageReference}")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CASHIER','DEPUTY_CASHIER')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','SECRETARY')")
     public ResponseEntity<?> getTransactionStatus(
             @PathVariable String messageReference) {
         try {
