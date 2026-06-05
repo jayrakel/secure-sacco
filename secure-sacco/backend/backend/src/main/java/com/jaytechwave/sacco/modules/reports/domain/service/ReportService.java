@@ -491,7 +491,7 @@ public class ReportService {
             FROM journal_entry_lines jel
             JOIN accounts a ON jel.account_id = a.id
             JOIN journal_entries je ON jel.journal_entry_id = je.id
-            WHERE a.account_type = 'INCOME'
+            WHERE a.account_type = 'REVENUE'
               AND je.status = 'POSTED'
             """);
 
