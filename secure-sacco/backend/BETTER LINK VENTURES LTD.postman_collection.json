@@ -1,0 +1,226 @@
+{
+  "info": {
+    "_postman_id": "YOUR_POSTMAN_ID",
+    "name": "BETTER LINK VENTURES LTD",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "EXPORTER_ID"
+  },
+  "item": [
+    {
+      "name": "Generate Token",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Basic YOUR_VALUE",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "grant_type=client_credentials",
+          "options": {
+            "raw": {
+              "language": "text"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.co-opbank.co.ke/token",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "co-opbank",
+            "co",
+            "ke"
+          ],
+          "path": [
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "STK Push",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "YOUR_VALUE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"MessageReference\": \"d23WQEEe7dd7\",\r\n    \"CallBackUrl\": \"https://betterlinkventureslimited.co.ke/ft-callback\",\r\n    \"OperatorCode\": \"BETTERLINK\",\r\n    \"TransactionCurrency\": \"KES\",\r\n    \"MobileNumber\": \"254707919065\",\r\n    \"Narration\": \"BETTER LINK VENTURES\",\r\n    \"Amount\": 1,\r\n    \"MessageDateTime\": \"2026-05-25T09:22:25.420Z\",\r\n    \"OtherDetails\": [\r\n        {\r\n            \"Name\": \"COOPtest\",\r\n            \"Value\": \"1\"\r\n        }\r\n    ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.co-opbank.co.ke/FT/stk/1.0.0",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "co-opbank",
+            "co",
+            "ke"
+          ],
+          "path": [
+            "FT",
+            "stk",
+            "1.0.0"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transaction Status",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "YOUR_VALUE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"MessageReference\": \"d23WQEEe7dd7\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.co-opbank.co.ke/Enquiry/STK/1.0.0/",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "co-opbank",
+            "co",
+            "ke"
+          ],
+          "path": [
+            "Enquiry",
+            "STK",
+            "1.0.0",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Account Balance",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "YOUR_VALUE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"MessageReference\": \"416b-94fb-4b61b01c945d\",\r\n  \"UserId\": \"BETTERLINK\",\r\n  \"AccountNumber\": \"01148381964600\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.co-opbank.co.ke/Enquiry/AccountBalance_v2/2.0.0/",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "co-opbank",
+            "co",
+            "ke"
+          ],
+          "path": [
+            "Enquiry",
+            "AccountBalance_v2",
+            "2.0.0",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Account Ministatement",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "YOUR_VALUE",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"MessageReference\": \"b02a6ae7-cf8f-4fee-b93f-e485fc180254\",\r\n  \"UserId\": \"BETTERLINK\",\r\n  \"AccountNumber\": \"01148381964600\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.co-opbank.co.ke/Enquiry/MiniStatement/Account_v2/2.0.0/",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "co-opbank",
+            "co",
+            "ke"
+          ],
+          "path": [
+            "Enquiry",
+            "MiniStatement",
+            "Account_v2",
+            "2.0.0",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
