@@ -485,9 +485,9 @@ public class ReportService {
         report.setToDate(toDateStr);
 
         StringBuilder sql = new StringBuilder("""
-            SELECT 
+            SELECT
                 a.account_name AS category,
-                SUM(CASE WHEN jel.type = 'CREDIT' THEN jel.amount ELSE -jel.amount END) AS total_income
+                SUM(jel.credit_amount - jel.debit_amount) AS total_income
             FROM journal_entry_lines jel
             JOIN accounts a ON jel.account_id = a.id
             JOIN journal_entries je ON jel.journal_entry_id = je.id
