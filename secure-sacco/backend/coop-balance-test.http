@@ -1,0 +1,93 @@
+### ============================================================
+### BETTERLINK VENTURES — Co-op Balance Real-Time Test
+### ============================================================
+### HOW TO USE:
+### 1. Replace YOUR_BASIC_AUTH_VALUE below with your Base64
+###    encoded consumerKey:consumerSecret
+### 2. Run "Step 1" first to get a token
+### 3. Copy the access_token value from the response
+### 4. Paste it as @token below
+### 5. Run each step in order
+### ============================================================
+
+@baseUrl = https://openapi.co-opbank.co.ke
+@basicAuth = c0NScXdOVlRrcTNDTzFUTTFOUHplSEhGcW0wYTpHa0NGQVJianZTa3U0dHluTDFqMlJlSjR1Smth
+@token = eyJ4NXQiOiJOekUxTUdaaVpHTTVaRGd4TURWbE1qRmtObVZoT0dVMU9XVXpZVEJrWlRrMk5UWXpOVFEwT1RNME5EaGlNREU0WkRrM1lUaGhZekl4WmpnNVptUTNPUSIsImtpZCI6Ik56RTFNR1ppWkdNNVpEZ3hNRFZsTWpGa05tVmhPR1UxT1dVellUQmtaVGsyTlRZek5UUTBPVE0wTkRoaU1ERTRaRGszWVRoaFl6SXhaamc1Wm1RM09RX1JTMjU2IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJCSVRXSVNFRElHSVRBTEBjYXJib24uc3VwZXIiLCJhdWQiOiJzQ1Jxd05WVGtxM0NPMVRNMU5QemVISEZxbTBhIiwibmJmIjoxNzgwNDc2MTg1LCJhenAiOiJzQ1Jxd05WVGtxM0NPMVRNMU5QemVISEZxbTBhIiwic2NvcGUiOiJhbV9hcHBsaWNhdGlvbl9zY29wZSBkZWZhdWx0IiwiaXNzIjoiaHR0cHM6XC9cLzE5Mi4xNjguNC4xNzI6OTQ0M1wvb2F1dGgyXC90b2tlbiIsImV4cCI6MTc4MDQ3OTc4NSwiaWF0IjoxNzgwNDc2MTg1LCJqdGkiOiJhNWFkMDg3MS1mMDcwLTQ1MjUtYjUwYS00MGFjNDllN2QyOGQifQ.W6hF9XDzAY85blWB-pFwK3XylBfdG2S1CcYTMWxW6bcAE49yMjs_3gZGYPApBiW4PAiyplHDaVUEc4HnZRiqR1QCUl1Jwpyh5uZF6NQbMEaSWLg3dJ2ijXMW7m1Yclo-Mwcp-4qRAxCXMqBNZ4O3J92OV_BrEOPOYetl6uTYB0v7vQC3LidB9nGjKNGs5jbagL5KonEkaDFNWHReR4bemxwqz1wwfxN-cC78z_3ydj9HSHKwiGTUer9dwJXLX9kd15RJOGBCZs7UtZ8i9h8FmgB-0Hc8-Iqd6dJ2Wx3JEB2VX-rw61ugEwRwesoU2E_Dz62uhEDARbJai-Stfekzgw
+@accountNumber = 01148381964600
+@userId = BETTERLINK
+
+
+### ============================================================
+### STEP 1 — Generate Fresh Token
+### ============================================================
+# @name generateToken
+POST {{baseUrl}}/token
+Authorization: Basic {{basicAuth}}
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+
+
+### ============================================================
+### STEP 2 — Balance Inquiry (Run IMMEDIATELY after Step 1)
+### Expected: 200 OK with MessageCode "0"
+### This rules out whether the token itself is the issue
+### ============================================================
+POST {{baseUrl}}/Enquiry/AccountBalance_v2/2.0.0/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "MessageReference": "BVL001TEST01",
+  "UserId": "{{userId}}",
+  "AccountNumber": "{{accountNumber}}"
+}
+
+
+### ============================================================
+### STEP 3 — Balance Inquiry (Run 30 SECONDS after Step 2)
+### Same token, different MessageReference
+### Expected: Still 200 OK
+### If this returns 401 → token is being invalidated mid-session
+### ============================================================
+POST {{baseUrl}}/Enquiry/AccountBalance_v2/2.0.0/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "MessageReference": "BVL001TEST02",
+  "UserId": "{{userId}}",
+  "AccountNumber": "{{accountNumber}}"
+}
+
+
+### ============================================================
+### STEP 4 — Deposit KES 100, then run this IMMEDIATELY
+### Check if AvailableBalance reflects the deposit
+### If it does → real-time works in direct API calls
+### If it does not → Co-op CBS has posting delay (not our bug)
+### ============================================================
+POST {{baseUrl}}/Enquiry/AccountBalance_v2/2.0.0/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "MessageReference": "BVL001TEST03",
+  "UserId": "{{userId}}",
+  "AccountNumber": "{{accountNumber}}"
+}
+
+
+### ============================================================
+### STEP 5 — Mini Statement (confirm last 10 transactions)
+### Check if the deposit appears here even if balance is stale
+### ============================================================
+POST {{baseUrl}}/Enquiry/MiniStatement/Account_v2/2.0.0/
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "MessageReference": "BVL001TEST04",
+  "UserId": "{{userId}}",
+  "AccountNumber": "{{accountNumber}}"
+}

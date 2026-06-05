@@ -5,12 +5,12 @@
 ### ============================================================
 
 ### Step 1 — Login as Admin (MUST RUN FIRST)
-POST https://betterlinkventureslimited.co.ke/api/v1/auth/login
+POST https://staging.jaytechwavesolutions.co.ke/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "betterlinkventures@gmail.com",
-  "password": "Michira._2000"
+  "identifier": "admin@jaytechwavesolutions.co.ke",
+  "password": "M1chira._2000"
 }
 
 > {%
