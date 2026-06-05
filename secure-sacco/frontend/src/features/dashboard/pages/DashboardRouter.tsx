@@ -15,12 +15,16 @@ import UnifiedStaffDashboard from './UnifiedStaffDashboard';
  */
 const DashboardRouter = () => {
     const { user } = useAuth();
-    const roles = user?.roles ?? [];
+    const permissions = user?.permissions ?? [];
 
-    const isMemberOnly = roles.length > 0 && roles.every(r => r === 'ROLE_MEMBER');
+    // Permission-based routing — no role name checks
+    // Member-only users have MEMBER_DASHBOARD_VIEW but no staff permissions
+    const isMemberOnly = permissions.includes('MEMBER_DASHBOARD_VIEW')
+        && !permissions.some(p => ['MEMBERS_READ','SAVINGS_READ','LOANS_READ',
+            'ACCOUNTING_READ','REPORTS_READ','SAVINGS_MANUAL_POST'].includes(p));
     if (isMemberOnly) return <MemberDashboardPage />;
 
-    // All staff (any non-member role) → unified permission-driven dashboard
+    // All staff (any staff permission) → unified permission-driven dashboard
     return <UnifiedStaffDashboard />;
 };
 

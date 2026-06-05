@@ -40,7 +40,7 @@ public class ReportController {
     // --- NEW: MINI SUMMARY WIDGET ENDPOINT ---
     @Operation(summary = "My financial summary", description = "Returns a mini summary widget for the authenticated member.")
     @GetMapping("/me/summary")
-    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    @PreAuthorize("hasAuthority('MEMBER_LOANS_VIEW')")
     public ResponseEntity<MemberMiniSummaryDTO> getMySummary() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = userRepository.findByEmail(auth.getName())

@@ -20,11 +20,6 @@ export default function HasPermission({
 
     if (!user) return <>{fallback}</>;
 
-    // FIX: Check roles[] for ROLE_SYSTEM_ADMIN, NOT permissions[]
-    if (user.roles?.includes('ROLE_SYSTEM_ADMIN')) {
-        return <>{children}</>;
-    }
-
     if (!user.permissions) return <>{fallback}</>;
 
     const permsToCheck = permissions || (permission ? [permission] : []);

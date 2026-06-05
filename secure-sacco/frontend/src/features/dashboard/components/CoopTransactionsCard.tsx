@@ -16,6 +16,7 @@ interface TransactionEntry {
     runningBalance:  string | null;
     reference:       string | null;
     senderPhone:     string | null;
+    senderName:      string | null; // null = not a member
 }
 
 interface MiniStatementData {
@@ -181,23 +182,24 @@ export const CoopTransactionsCard: React.FC = () => {
 
                                     {/* Narration + meta */}
                                     <div className="flex-1 min-w-0">
+                                        {/* Name — member match, phone fallback, narration last */}
                                         <p className="text-xs font-medium text-slate-800 truncate">
-                                            {t.narration || '—'}
+                                            {t.senderName || t.narration || '—'}
                                         </p>
-                                        <p className="text-[10px] text-slate-400 mt-0.5">
-                                            {fmtDate(t.valueDate || t.transactionDate)}
-                                        </p>
+                                        {/* Phone — always show if available */}
                                         {t.senderPhone && (
                                             <p className="text-[10px] text-slate-400 flex items-center gap-0.5 mt-0.5">
                                                 <Phone size={9} />
                                                 {t.senderPhone}
+                                                {!t.senderName && (
+                                                    <span className="ml-1 text-slate-300 italic">· not a member</span>
+                                                )}
                                             </p>
                                         )}
-                                        {t.reference && (
-                                            <p className="text-[10px] text-slate-300 mt-0.5 font-mono">
-                                                {t.reference}
-                                            </p>
-                                        )}
+                                        <p className="text-[10px] text-slate-300 mt-0.5">
+                                            {fmtDate(t.valueDate || t.transactionDate)}
+                                            {t.reference ? ` · ${t.reference}` : ''}
+                                        </p>
                                     </div>
 
                                     {/* Amount + running balance */}

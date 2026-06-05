@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/time-travel")
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "app.time-travel.enabled", havingValue = "true")
-@PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+@PreAuthorize("hasAuthority('SETTINGS_EDIT')")
 public class TimeTravelController {
 
     private final TimeTravelerService timeTravelerService;
@@ -246,4 +246,3 @@ public class TimeTravelController {
             String message
     ) {}
 }
-

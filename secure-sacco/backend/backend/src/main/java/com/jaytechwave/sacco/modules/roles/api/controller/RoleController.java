@@ -64,7 +64,7 @@ public class RoleController {
     }
 
     @Operation(summary = "Delete role")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_UPDATE')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteRole(@PathVariable UUID id) {
         roleService.deleteRole(id);

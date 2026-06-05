@@ -34,9 +34,9 @@ public class LoanApplicationController {
     private final LoanRepaymentService loanRepaymentService;
 
     @Operation(summary = "Submit loan application", description = "Creates a new loan application for the authenticated member. Starts in DRAFT status.",
-        responses = { @ApiResponse(responseCode = "200", description = "Application created"),
-                      @ApiResponse(responseCode = "400", description = "Validation error"),
-                      @ApiResponse(responseCode = "403", description = "Not an active member") })
+            responses = { @ApiResponse(responseCode = "200", description = "Application created"),
+                    @ApiResponse(responseCode = "400", description = "Validation error"),
+                    @ApiResponse(responseCode = "403", description = "Not an active member") })
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<LoanApplicationResponse> createApplication(
@@ -98,7 +98,7 @@ public class LoanApplicationController {
 
     @Operation(summary = "Get all loan applications", description = "Returns all applications. Requires loan officer or approver permission.")
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")
+    @PreAuthorize("hasAnyAuthority('LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")
     public ResponseEntity<PagedResponse<LoanApplicationResponse>> getAllApplications(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         PageSizeValidator.validated(pageable);
@@ -108,7 +108,7 @@ public class LoanApplicationController {
 
     @Operation(summary = "Get applications queue by status", description = "Returns applications filtered by status (e.g. PENDING_APPROVAL, VERIFIED).")
     @GetMapping("/queue/{status}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SYSTEM_ADMIN', 'LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")
+    @PreAuthorize("hasAnyAuthority('LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")
     public ResponseEntity<PagedResponse<LoanApplicationResponse>> getApplicationsByStatus(
             @PathVariable LoanStatus status,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -167,7 +167,7 @@ public class LoanApplicationController {
     }
 
     @PostMapping("/refinance")
-    @PreAuthorize("hasAnyAuthority('LOANS_DISBURSE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('LOANS_DISBURSE')")
     public ResponseEntity<LoanDTOs.LoanApplicationResponse> refinanceLoan(
             @Valid @RequestBody LoanDTOs.RefinanceRequest request,
             Authentication authentication) {
