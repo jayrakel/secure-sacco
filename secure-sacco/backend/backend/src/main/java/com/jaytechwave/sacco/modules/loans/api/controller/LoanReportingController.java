@@ -24,7 +24,7 @@ public class LoanReportingController {
 
     @Operation(summary = "Member loan summary", description = "Returns a summary of a specific loan for the authenticated member.")
     @GetMapping("/{id}/summary/member")
-    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    @PreAuthorize("hasAuthority('MEMBER_LOANS_VIEW')")
     public ResponseEntity<LoanSummaryResponse> getMemberLoanSummary(
             @PathVariable UUID id, Authentication authentication) {
         return ResponseEntity.ok(loanReportingService.getMemberLoanSummary(id, authentication.getName()));

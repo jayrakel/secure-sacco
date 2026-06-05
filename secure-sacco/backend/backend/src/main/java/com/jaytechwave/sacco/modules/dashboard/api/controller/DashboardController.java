@@ -21,17 +21,17 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
-    // Accessible to any authenticated staff user (anyone who is not exclusively a ROLE_MEMBER).
+    // Accessible to any authenticated staff user (anyone who is not a member-only user).
     @Operation(summary = "Staff dashboard metrics", description = "Returns 15 aggregated KPIs for the staff dashboard. Cached in Redis for 5 minutes. Requires any staff role.")
     @GetMapping("/staff")
-    @PreAuthorize("isAuthenticated() && !hasAuthority('ROLE_MEMBER')")
+    @PreAuthorize("hasAnyAuthority('MEMBERS_READ','SAVINGS_READ','LOANS_READ','REPORTS_READ','ACCOUNTING_READ')")
     public ResponseEntity<StaffDashboardDTO> getStaffDashboard() {
         return ResponseEntity.ok(dashboardService.getStaffDashboardMetrics());
     }
 
-    @Operation(summary = "Member dashboard metrics", description = "Returns personalised KPIs for the authenticated member. Requires ROLE_MEMBER.")
+    @Operation(summary = "Member dashboard metrics", description = "Returns personalised KPIs for the authenticated member. Requires MEMBER_DASHBOARD_VIEW.")
     @GetMapping("/member")
-    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    @PreAuthorize("hasAuthority('MEMBER_DASHBOARD_VIEW')")
     public ResponseEntity<DashboardDTOs.MemberDashboardDTO> getMemberDashboard(Authentication authentication) {
         // authentication.getName() securely yields the identifier (email/phone) from the session
         return ResponseEntity.ok(dashboardService.getMemberDashboardMetrics(authentication.getName()));

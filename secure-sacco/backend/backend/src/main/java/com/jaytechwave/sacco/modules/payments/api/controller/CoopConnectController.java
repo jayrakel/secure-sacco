@@ -48,7 +48,7 @@ public class CoopConnectController {
     @Operation(summary = "Initiate M-Pesa STK push via Co-op Connect",
             description = "Sends an M-Pesa STK prompt to the member's phone through Co-op Bank.")
     @PostMapping("/stk-push")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('MEMBER_SAVINGS_VIEW')")
     public ResponseEntity<InitiateStkResponse> initiateStkPush(
             @Valid @RequestBody InitiateStkRequest request,
             Authentication authentication) {
@@ -140,7 +140,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op Account Balance",
             description = "Fetches the real-time balance of the Sacco's Co-op Connect account.")
     @GetMapping("/coop/balance")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> getAccountBalance() {
         try {
             var balance = coopConnectService.getAccountBalance();
@@ -160,7 +160,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op bank mini statement",
             description = "Returns the last 10 transactions on the SACCO Co-op account (camelCase normalised for frontend).")
     @GetMapping("/coop/mini-statement")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','SECRETARY')")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> getMiniStatement() {
         try {
             var statement = coopConnectService.getMiniStatement();
@@ -236,7 +236,7 @@ public class CoopConnectController {
             description = "Returns completed payments received via Co-op B2B IPN stored in our database. " +
                     "Co-op replays historical transactions through the IPN endpoint.")
     @GetMapping("/coop/transactions")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> getAccountTransactions(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
@@ -291,7 +291,7 @@ public class CoopConnectController {
     @Operation(summary = "Check Co-op STK push transaction status",
             description = "Check whether a specific M-Pesa STK push was completed, by its MessageReference.")
     @GetMapping("/coop/transaction-status/{messageReference}")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CASHIER','DEPUTY_CASHIER')")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> getTransactionStatus(
             @PathVariable String messageReference) {
         try {

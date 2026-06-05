@@ -33,7 +33,7 @@ public class PenaltyRuleController {
     @Operation(summary = "Create penalty rule",
             description = "Define a new penalty rule. Requires PENALTIES_MANAGE_RULES or SYSTEM_ADMIN.")
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('PENALTIES_MANAGE_RULES', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('PENALTIES_MANAGE_RULES')")
     public ResponseEntity<PenaltyRuleResponse> createRule(@Valid @RequestBody PenaltyRuleRequest request) {
         return ResponseEntity.ok(penaltyRuleService.createRule(request));
     }
@@ -41,7 +41,7 @@ public class PenaltyRuleController {
     @Operation(summary = "Delete penalty rule",
             description = "Permanently remove a penalty rule. Blocked if the rule has been applied to any penalties.")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('PENALTIES_MANAGE_RULES', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('PENALTIES_MANAGE_RULES')")
     public ResponseEntity<Void> deleteRule(@PathVariable UUID id) {
         penaltyRuleService.deleteRule(id);
         return ResponseEntity.noContent().build();
@@ -50,7 +50,7 @@ public class PenaltyRuleController {
     @Operation(summary = "Update penalty rule",
             description = "Modify an existing penalty rule. Requires PENALTIES_MANAGE_RULES or SYSTEM_ADMIN.")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('PENALTIES_MANAGE_RULES', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('PENALTIES_MANAGE_RULES')")
     public ResponseEntity<PenaltyRuleResponse> updateRule(
             @PathVariable UUID id,
             @Valid @RequestBody PenaltyRuleRequest request) {

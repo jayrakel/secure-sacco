@@ -37,7 +37,7 @@ public class ObligationController {
 
     @Operation(summary = "Create a savings obligation for a member")
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<ObligationResponse> createObligation(
             @Valid @RequestBody CreateObligationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -50,7 +50,7 @@ public class ObligationController {
             description = "Only the fields included in the request body are changed. " +
                     "Send only what you want to update — all fields are optional.")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<ObligationResponse> updateObligation(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateObligationRequest request) {
@@ -61,7 +61,7 @@ public class ObligationController {
 
     @Operation(summary = "Pause or resume an obligation")
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<ObligationResponse> updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateObligationStatusRequest request) {
@@ -72,14 +72,14 @@ public class ObligationController {
 
     @Operation(summary = "Get all obligations for a specific member (staff view)")
     @GetMapping("/member/{memberId}")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<List<ObligationResponse>> getByMember(@PathVariable UUID memberId) {
         return ResponseEntity.ok(obligationService.getObligationsByMemberId(memberId));
     }
 
     @Operation(summary = "Get obligation period history for a specific member (staff view)")
     @GetMapping("/member/{memberId}/history")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<PagedResponse<ObligationPeriodResponse>> getMemberHistory(
             @PathVariable UUID memberId,
             @RequestParam(defaultValue = "0")  int page,
@@ -94,7 +94,7 @@ public class ObligationController {
     @Operation(summary = "Staff compliance report — who is behind on savings",
             description = "Returns all active obligations with overdue period counts and total shortfall.")
     @GetMapping("/compliance")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_MANAGE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<PagedResponse<ObligationComplianceEntry>> getComplianceReport(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -108,7 +108,7 @@ public class ObligationController {
     @Operation(summary = "Manually trigger the obligation evaluation job",
             description = "Evaluates all active obligations right now. Admin only.")
     @PostMapping("/evaluate")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_OBLIGATIONS_MANAGE')")
     public ResponseEntity<Map<String, String>> triggerEvaluation() {
         periodService.evaluateAll();
         return ResponseEntity.ok(Map.of("message", "Obligation evaluation triggered successfully."));
@@ -119,7 +119,7 @@ public class ObligationController {
     @Operation(summary = "My current savings obligations",
             description = "Returns the authenticated member's active obligation(s) with current period status.")
     @GetMapping("/my")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_READ', 'ROLE_MEMBER', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER_OBLIGATIONS_VIEW')")
     public ResponseEntity<List<ObligationResponse>> getMyObligations(Authentication authentication) {
         UUID memberId = resolveMemberId(authentication);
         return ResponseEntity.ok(obligationService.getMyObligations(memberId));
@@ -127,7 +127,7 @@ public class ObligationController {
 
     @Operation(summary = "My savings obligation period history")
     @GetMapping("/my/history")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_OBLIGATIONS_READ', 'ROLE_MEMBER', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER_OBLIGATIONS_VIEW')")
     public ResponseEntity<PagedResponse<ObligationPeriodResponse>> getMyHistory(
             Authentication authentication,
             @RequestParam(defaultValue = "0")  int page,

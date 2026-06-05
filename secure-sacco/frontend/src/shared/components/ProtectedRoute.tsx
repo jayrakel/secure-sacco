@@ -31,11 +31,6 @@ export default function ProtectedRoute({
     }
 
     if (requiredPermissions && requiredPermissions.length > 0) {
-        // FIX: Check roles[] for ROLE_SYSTEM_ADMIN, NOT permissions[]
-        if (user.roles?.includes('ROLE_SYSTEM_ADMIN')) {
-            return <>{children}</>;
-        }
-
         const hasAccess = requireAll
             ? requiredPermissions.every(p => user.permissions?.includes(p))
             : requiredPermissions.some(p => user.permissions?.includes(p));

@@ -29,7 +29,7 @@ public class MemberController {
 
     @Operation(summary = "Create member", description = "Register a new SACCO member. Requires MEMBERS_WRITE.")
     @PostMapping
-    @PreAuthorize("hasAuthority('MEMBERS_WRITE') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBERS_WRITE')")
     public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody CreateMemberRequest request, Authentication auth, HttpServletRequest httpRequest) {
         MemberResponse response = memberService.createMember(request);
         auditService.logEventWithActorAndIp(auth.getName(), "MEMBER_CREATED", "Members", getClientIP(httpRequest), "Created member: " + response.getMemberNumber());
@@ -38,7 +38,7 @@ public class MemberController {
 
     @Operation(summary = "List members", description = "Paginated member list with optional search and status filter.")
     @GetMapping
-    @PreAuthorize("hasAuthority('MEMBERS_READ') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBERS_READ')")
     public ResponseEntity<Page<MemberResponse>> getMembers(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) MemberStatus status,
@@ -48,14 +48,14 @@ public class MemberController {
 
     @Operation(summary = "Get member by ID")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEMBERS_READ') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBERS_READ')")
     public ResponseEntity<MemberResponse> getMember(@PathVariable UUID id) {
         return ResponseEntity.ok(memberService.getMemberById(id));
     }
 
     @Operation(summary = "Update member details")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEMBERS_WRITE') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBERS_WRITE')")
     public ResponseEntity<MemberResponse> updateMember(@PathVariable UUID id, @Valid @RequestBody UpdateMemberRequest request, Authentication auth, HttpServletRequest httpRequest) {
         MemberResponse response = memberService.updateMember(id, request);
         auditService.logEventWithActorAndIp(auth.getName(), "MEMBER_UPDATED", "Members", getClientIP(httpRequest), "Updated member: " + response.getMemberNumber());
@@ -64,7 +64,7 @@ public class MemberController {
 
     @Operation(summary = "Change member status", description = "Activate, suspend, or close a member account.")
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('MEMBERS_WRITE') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBERS_WRITE')")
     public ResponseEntity<MemberResponse> updateStatus(@PathVariable UUID id, @RequestBody UpdateStatusRequest request, Authentication auth, HttpServletRequest httpRequest) {
         MemberResponse response = memberService.updateStatus(id, request.getStatus());
         auditService.logEventWithActorAndIp(auth.getName(), "MEMBER_STATUS_CHANGED", "Members", getClientIP(httpRequest), "Changed status of " + response.getMemberNumber() + " to " + request.getStatus());
@@ -73,7 +73,7 @@ public class MemberController {
 
     @Operation(summary = "Delete member", description = "Soft-deletes a member record.")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEMBERS_WRITE') or hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBERS_WRITE')")
     public ResponseEntity<Void> deleteMember(@PathVariable UUID id, Authentication auth, HttpServletRequest httpRequest) {
         memberService.softDeleteMember(id);
         auditService.logEventWithActorAndIp(auth.getName(), "MEMBER_DELETED", "Members", getClientIP(httpRequest), "Soft deleted member ID: " + id);

@@ -60,7 +60,7 @@ public class ExpenseClaimController {
     @Operation(summary = "Submit an expense claim (staff)",
             description = "Staff submits an expense claim on behalf of a member. Requires EXPENSE_CLAIMS_APPROVE.")
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('EXPENSE_CLAIMS_APPROVE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('EXPENSE_CLAIMS_APPROVE')")
     public ResponseEntity<ExpenseClaimResponse> submitClaim(
             @Valid @RequestBody SubmitExpenseClaimRequest request,
             Authentication auth) {
@@ -70,7 +70,7 @@ public class ExpenseClaimController {
     @Operation(summary = "List all expense claims (staff)",
             description = "Returns all claims across all members. Requires EXPENSE_CLAIMS_READ.")
     @GetMapping("/staff")
-    @PreAuthorize("hasAnyAuthority('EXPENSE_CLAIMS_READ', 'EXPENSE_CLAIMS_APPROVE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('EXPENSE_CLAIMS_READ', 'EXPENSE_CLAIMS_APPROVE')")
     public ResponseEntity<List<ExpenseClaimResponse>> getAllClaims() {
         return ResponseEntity.ok(expenseClaimService.getAllClaims());
     }
@@ -78,7 +78,7 @@ public class ExpenseClaimController {
     @Operation(summary = "Approve or reject an expense claim",
             description = "Reviews a PENDING claim. On approval, a GL journal entry is automatically posted. Requires EXPENSE_CLAIMS_APPROVE.")
     @PostMapping("/{id}/review")
-    @PreAuthorize("hasAnyAuthority('EXPENSE_CLAIMS_APPROVE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('EXPENSE_CLAIMS_APPROVE')")
     public ResponseEntity<ExpenseClaimResponse> reviewClaim(
             @PathVariable UUID id,
             @Valid @RequestBody ReviewExpenseClaimRequest request,

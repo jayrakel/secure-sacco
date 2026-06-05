@@ -27,15 +27,15 @@ public class SavingsController {
 
     @Operation(summary = "Manual deposit", description = "Post a manual savings deposit for a member. Requires SAVINGS_MANUAL_POST.")
     @PostMapping("/deposits/manual")
-    // Fallback to ROLE_SYSTEM_ADMIN to ensure it works for you right away while building!
-    @PreAuthorize("hasAnyAuthority('SAVINGS_MANUAL_POST', 'ROLE_SYSTEM_ADMIN')")
+    // Authorization via DATA_MIGRATION permission
+    @PreAuthorize("hasAuthority('SAVINGS_MANUAL_POST')")
     public ResponseEntity<SavingsTransactionResponse> manualDeposit(@Valid @RequestBody ManualDepositRequest request) {
         return ResponseEntity.ok(savingsService.processManualDeposit(request));
     }
 
     @Operation(summary = "Manual withdrawal", description = "Post a manual savings withdrawal for a member. Requires SAVINGS_MANUAL_POST.")
     @PostMapping("/withdrawals/manual")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_MANUAL_POST', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_MANUAL_POST')")
     public ResponseEntity<SavingsTransactionResponse> manualWithdrawal(@Valid @RequestBody ManualWithdrawalRequest request) {
         return ResponseEntity.ok(savingsService.processManualWithdrawal(request));
     }
@@ -72,7 +72,7 @@ public class SavingsController {
     // Accountant/Staff Endpoint
     @Operation(summary = "Get member statement (staff)", description = "Returns a specific member's transaction statement. Requires SAVINGS_READ.")
     @GetMapping("/members/{memberId}/statement")
-    @PreAuthorize("hasAnyAuthority('SAVINGS_READ', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SAVINGS_READ')")
     public ResponseEntity<List<StatementTransactionResponse>> getMemberStatement(
             @PathVariable UUID memberId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

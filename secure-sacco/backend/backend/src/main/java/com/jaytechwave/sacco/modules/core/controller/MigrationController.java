@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Historical data migration endpoints.
  *
- * <p>All endpoints accept either {@code ROLE_SYSTEM_ADMIN} (always authorised)
+ * <p>All endpoints accept either {@code DATA_MIGRATION} or
  * or the grantable {@code DATA_MIGRATION} permission, allowing System Admins to
  * delegate migration duties to trusted staff without giving full admin access.</p>
  */
@@ -28,7 +28,7 @@ public class MigrationController {
     // ── Members ───────────────────────────────────────────────────────────────
 
     @PostMapping("/members")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<Map<String, String>> seedHistoricalMember(
             @Valid @RequestBody HistoricalMemberRequest request) {
         String generatedMemberNumber = migrationService.seedHistoricalMember(request);
@@ -41,7 +41,7 @@ public class MigrationController {
     // ── Savings ───────────────────────────────────────────────────────────────
 
     @PostMapping("/savings")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<Map<String, String>> seedHistoricalSavings(
             @Valid @RequestBody com.jaytechwave.sacco.modules.core.dto.HistoricalSavingsRequest request) {
         String reference = migrationService.seedHistoricalSavings(request);
@@ -54,7 +54,7 @@ public class MigrationController {
     // ── Withdrawals ───────────────────────────────────────────────────────────
 
     @PostMapping("/withdrawals")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<Map<String, String>> seedHistoricalWithdrawal(
             @Valid @RequestBody com.jaytechwave.sacco.modules.core.dto.HistoricalWithdrawalRequest request) {
         String reference = migrationService.seedHistoricalWithdrawal(request);
@@ -67,7 +67,7 @@ public class MigrationController {
     // ── Loans ─────────────────────────────────────────────────────────────────
 
     @PostMapping("/loans/disburse")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<Map<String, String>> migrateLoanDisbursement(
             @RequestBody HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
         String loanId = migrationService.seedHistoricalLoanDisbursement(request);
@@ -75,14 +75,14 @@ public class MigrationController {
     }
 
     @PostMapping("/loans/repay")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<String> migrateLoanRepayment(
             @RequestBody HistoricalLoanDTOs.HistoricalLoanRepaymentRequest request) {
         return ResponseEntity.ok(migrationService.seedHistoricalLoanRepayment(request));
     }
 
     @GetMapping("/loans/active/{memberNumber}")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<Map<String, String>> getActiveLoanId(
             @PathVariable String memberNumber) {
         String loanId = migrationService.getActiveLoanIdByMemberNumber(memberNumber);
@@ -99,7 +99,7 @@ public class MigrationController {
     ) {}
 
     @PostMapping("/penalties/apply")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<Map<String, String>> applyHistoricalPenalty(
             @RequestBody HistoricalPenaltyRequest request) {
         migrationService.migrateHistoricalPenalty(
@@ -116,7 +116,7 @@ public class MigrationController {
     public record CronRequest(java.time.LocalDate evaluationDate) {}
 
     @PostMapping("/cron/evaluate-penalties")
-    @PreAuthorize("hasAnyAuthority('DATA_MIGRATION', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('DATA_MIGRATION')")
     public ResponseEntity<java.util.Map<String, Object>> runTimeMachineCron(
             @RequestBody CronRequest request) {
         return ResponseEntity.ok(migrationService.evaluatePenaltiesUpToDate(request.evaluationDate()));
