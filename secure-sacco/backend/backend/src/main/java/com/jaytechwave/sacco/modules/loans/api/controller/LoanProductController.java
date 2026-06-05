@@ -24,14 +24,14 @@ public class LoanProductController {
 
     @Operation(summary = "Create loan product", description = "Define a new loan product (term, interest, fees). Requires SYSTEM_ADMIN.")
     @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('LOAN_PRODUCTS_MANAGE')")
     public ResponseEntity<LoanProductResponse> createProduct(@Valid @RequestBody LoanProductRequest request) {
         return ResponseEntity.ok(loanProductService.createLoanProduct(request));
     }
 
     @Operation(summary = "Update loan product")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('LOAN_PRODUCTS_MANAGE')")
     public ResponseEntity<LoanProductResponse> updateProduct(
             @PathVariable UUID id,
             @Valid @RequestBody LoanProductRequest request) {

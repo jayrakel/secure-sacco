@@ -76,7 +76,7 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Preview member number prefix auto-generation")
     @GetMapping("/generate-prefix")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> generatePrefixPreview(@RequestParam String name) {
         return ResponseEntity.ok(Map.of("prefix", prefixGeneratorService.generate(name)));
     }
@@ -85,7 +85,7 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Initialize SACCO (one-time setup)")
     @PostMapping("/initialize")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> initializeSettings(
             @Valid @RequestBody InitializeRequest req,
             Authentication auth, HttpServletRequest httpReq) {
@@ -103,7 +103,7 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Update SACCO identity & financial settings")
     @PutMapping
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> updateCoreSettings(
             @Valid @RequestBody UpdateCoreRequest req,
             Authentication auth, HttpServletRequest httpReq) {
@@ -120,7 +120,7 @@ public class SaccoSettingsController {
     @Operation(summary = "Update security policy settings",
             description = "Controls login lockout, session lifetime, password rules, token TTLs and rate limits.")
     @PutMapping("/security")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> updateSecurityPolicy(
             @Valid @RequestBody UpdateSecurityPolicyRequest req,
             Authentication auth, HttpServletRequest httpReq) {
@@ -134,7 +134,7 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Update communication / email settings")
     @PutMapping("/communication")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> updateCommunication(
             @Valid @RequestBody UpdateCommunicationRequest req,
             Authentication auth, HttpServletRequest httpReq) {
@@ -148,7 +148,7 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Update feature flags", description = "Enable or disable SACCO modules.")
     @PutMapping("/flags")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> updateFeatureFlags(
             @Valid @RequestBody UpdateFlagsRequest req,
             Authentication auth, HttpServletRequest httpReq) {
@@ -171,7 +171,7 @@ public class SaccoSettingsController {
 
     @Operation(summary = "Update savings day and deadline settings")
     @PutMapping("/savings-schedule")
-    @PreAuthorize("hasAuthority('ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
     public ResponseEntity<?> updateSavingsSchedule(
             @Valid @RequestBody UpdateSavingsScheduleRequest req) {
         try {

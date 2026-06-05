@@ -22,7 +22,7 @@ public class JournalEntryController {
 
     /** Post a manual journal entry. Requires ACCOUNTING_JOURNAL_POST. */
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ACCOUNTING_JOURNAL_POST', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('ACCOUNTING_JOURNAL_POST')")
     public ResponseEntity<JournalEntryResponse> createManualJournalEntry(
             @Valid @RequestBody CreateJournalEntryRequest request) {
         return ResponseEntity.ok(journalEntryService.postEntry(request));
@@ -30,7 +30,7 @@ public class JournalEntryController {
 
     /** List all journal entries. Requires ACCOUNTING_READ. */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ACCOUNTING_READ', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('ACCOUNTING_READ')")
     public ResponseEntity<PagedResponse<JournalEntryResponse>> getAllJournalEntries(
             @PageableDefault(size = 20, sort = "transactionDate", direction = Sort.Direction.DESC) Pageable pageable) {
         PageSizeValidator.validated(pageable);

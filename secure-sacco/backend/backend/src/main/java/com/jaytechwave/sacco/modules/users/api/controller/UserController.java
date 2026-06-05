@@ -65,7 +65,7 @@ public class UserController {
     @Operation(summary = "Change user email (admin)",
             description = "Changes a user's login email address. The new email must be unique. " +
                     "The user will need to re-verify their email. Requires USER_UPDATE.")
-    @PreAuthorize("hasAnyAuthority('USER_UPDATE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @PatchMapping("/{id}/email")
     public ResponseEntity<?> changeUserEmail(
             @PathVariable UUID id,

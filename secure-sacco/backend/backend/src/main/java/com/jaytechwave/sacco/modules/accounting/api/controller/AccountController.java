@@ -20,21 +20,21 @@ public class AccountController {
 
     /** Create a new GL account. Requires ACCOUNTING_WRITE. */
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ACCOUNTING_WRITE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('ACCOUNTING_WRITE')")
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         return ResponseEntity.ok(accountService.createAccount(request));
     }
 
     /** List all GL accounts. Requires ACCOUNTING_READ. */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ACCOUNTING_READ', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('ACCOUNTING_READ')")
     public ResponseEntity<List<AccountResponse>> getAllAccounts() {
         return ResponseEntity.ok(accountService.getAllAccounts());
     }
 
     /** Edit a GL account. Requires ACCOUNTING_WRITE. */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ACCOUNTING_WRITE', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('ACCOUNTING_WRITE')")
     public ResponseEntity<AccountResponse> updateAccount(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAccountRequest request) {

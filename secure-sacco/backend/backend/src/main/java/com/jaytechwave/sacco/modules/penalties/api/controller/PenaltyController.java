@@ -63,7 +63,7 @@ public class PenaltyController {
     @Operation(summary = "List all open penalties (staff)",
             description = "Returns all OPEN penalties across all members. Requires PENALTIES_WAIVE_ADJUST.")
     @GetMapping("/staff")
-    @PreAuthorize("hasAnyAuthority('PENALTIES_WAIVE_ADJUST', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('PENALTIES_WAIVE_ADJUST')")
     public ResponseEntity<List<Map<String, Object>>> getAllOpenPenalties() {
         List<Penalty> open = penaltyRepository.findByStatusWithPenaltyRule(PenaltyStatus.OPEN);
 
@@ -95,7 +95,7 @@ public class PenaltyController {
     @Operation(summary = "Waive penalty",
             description = "Partially or fully waive a penalty. Requires PENALTIES_WAIVE_ADJUST.")
     @PostMapping("/{id}/waive")
-    @PreAuthorize("hasAnyAuthority('PENALTIES_WAIVE_ADJUST', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('PENALTIES_WAIVE_ADJUST')")
     public ResponseEntity<PenaltySummaryResponse> waivePenalty(
             @PathVariable UUID id,
             @Valid @RequestBody PenaltyDTOs.WaivePenaltyRequest request,

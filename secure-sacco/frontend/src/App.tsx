@@ -305,12 +305,12 @@ function App() {
 
                                 {/* Permissions Registry */}
                                 <Route path="/permissions-registry" element={
-                                    <ProtectedRoute requiredPermissions={['ROLE_SYSTEM_ADMIN']}>
+                                    <ProtectedRoute requiredPermissions={['SETTINGS_EDIT']}>
                                         <PermissionsRegistryPage />
                                     </ProtectedRoute>
                                 } />
 
-                                {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
+                                {/* Shielded: Requires SETTINGS_EDIT */}
                                 <Route path="/audit/logs" element={
                                     <ProtectedRoute requiredPermissions={['AUDIT_LOG_READ']}>
                                         <AuditLogPage />
@@ -339,7 +339,7 @@ function App() {
                                 {/* SAC-220: Expense Reimbursement Module */}
                                 <Route path="/expense/claims" element={
                                     <ProtectedRoute>
-                                        <HasPermission permissions={['EXPENSE_CLAIMS_APPROVE', 'ROLE_SYSTEM_ADMIN']} fallback={
+                                        <HasPermission permissions={['EXPENSE_CLAIMS_APPROVE']} fallback={
                                             <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
                                                 Access Denied: You need the EXPENSE_CLAIMS_APPROVE permission.
                                             </div>
@@ -358,7 +358,7 @@ function App() {
                                 {/* SAC-221: Asset Management Module */}
                                 <Route path="/assets" element={
                                     <ProtectedRoute>
-                                        <HasPermission permissions={['ASSET_READ', 'ROLE_SYSTEM_ADMIN']} fallback={
+                                        <HasPermission permissions={['ASSET_READ']} fallback={
                                             <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
                                                 Access Denied: You need the ASSET_READ permission.
                                             </div>
@@ -368,10 +368,10 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
-                                {/* Shielded: Requires ROLE_SYSTEM_ADMIN */}
+                                {/* Shielded: Requires SETTINGS_EDIT */}
                                 <Route path="/settings" element={
                                     <ProtectedRoute>
-                                        <HasPermission permissions={['ROLE_SYSTEM_ADMIN', 'PENALTIES_MANAGE_RULES']} fallback={
+                                        <HasPermission permissions={['SETTINGS_EDIT', 'PENALTIES_MANAGE_RULES']} fallback={
                                             <div className="p-8 text-center text-red-600 font-semibold bg-white rounded shadow m-6">
                                                 Access Denied: You do not have permission to view global settings.
                                             </div>

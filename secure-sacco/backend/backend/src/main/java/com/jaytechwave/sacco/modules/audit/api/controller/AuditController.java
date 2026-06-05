@@ -31,7 +31,7 @@ public class AuditController {
     @Operation(summary = "Get audit logs",
             description = "Paginated, filterable audit log. Requires AUDIT_LOG_READ or SYSTEM_ADMIN.")
     @GetMapping("/logs")
-    @PreAuthorize("hasAnyAuthority('AUDIT_LOG_READ', 'ROLE_SYSTEM_ADMIN')")
+    @PreAuthorize("hasAuthority('AUDIT_LOG_READ')")
     public ResponseEntity<Map<String, Object>> getLogs(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "50") int size,
