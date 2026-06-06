@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
+import com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ class PaymentServiceTest {
     @Mock PaymentRepository     paymentRepository;
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock SecurityAuditService  securityAuditService;
+    @Mock CoopEventNormalizer coopEventNormalizer;
 
     @InjectMocks
     private PaymentService service;
