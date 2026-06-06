@@ -13,6 +13,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import com.jaytechwave.sacco.modules.payments.infrastructure.CoopHttpLogger;
 import org.springframework.web.client.HttpClientErrorException;
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -50,7 +52,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class CoopConnectService {
 
-    private final CoopConnectProperties props;
+    private final CoopConnectProperties   props;
+    private final UserRepository           userRepository;
+    private final PiiSearchHashConverter   piiHashConverter;
     private final StringRedisTemplate redisTemplate;
     private final RestClient restClient = RestClient.builder()
             .requestInterceptor(new CoopHttpLogger())
@@ -377,4 +381,25 @@ public class CoopConnectService {
             }
         });
     }
+
+    /**
+     * Resolves a normalised phone number (254XXXXXXXXX) to a member's full name
+     * by hashing the phone and looking it up in the users table.
+     * Returns null if the phone is null or no matching member is found.
+     */
+    public String resolvePhoneToMemberName(String normalizedPhone) {
+        if (normalizedPhone == null || normalizedPhone.isBlank()) return null;
+        try {
+            String hash = piiHashConverter.convertToDatabaseColumn(normalizedPhone);
+            return userRepository.findByPhoneNumberHash(hash)
+                    .filter(u -> u.getMember() != null)
+                    .map(u -> u.getFirstName() + " " + u.getLastName())
+                    .orElse(null);
+        } catch (Exception e) {
+            log.warn("resolvePhoneToMemberName: lookup failed for {}: {}", normalizedPhone, e.getMessage());
+            return null;
+        }
+    }
+
+
 }

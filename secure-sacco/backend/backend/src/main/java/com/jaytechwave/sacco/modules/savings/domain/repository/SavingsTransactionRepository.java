@@ -18,6 +18,7 @@ public interface SavingsTransactionRepository extends JpaRepository<SavingsTrans
     List<SavingsTransaction> findBySavingsAccountIdOrderByCreatedAtAsc(UUID savingsAccountId);
 
     Optional<SavingsTransaction> findByReference(String reference);
+    boolean existsByReference(String reference);
 
     @Query("SELECT COALESCE(SUM(CASE " +
             "WHEN t.type = 'DEPOSIT' THEN t.amount " +
