@@ -18,6 +18,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     Optional<User> findByPhoneNumberHash(String phoneNumberHash);
 
+    /**
+     * Like findByPhoneNumberHash but only returns accounts that have a
+     * member_id set — skips orphan/duplicate user accounts that share
+     * the same name but were never linked to a member record.
+     * Used by CoopEventNormalizer to resolve phone → member name.
+     */
+    Optional<User> findFirstByPhoneNumberHashAndMemberIdIsNotNull(String phoneNumberHash);
+
     @EntityGraph(attributePaths = {"member"})
     Optional<User> findWithMemberByEmail(String email);
 
