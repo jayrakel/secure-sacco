@@ -139,12 +139,30 @@ public class PaymentService {
             return;
         }
 
-        String phone      = extractPhone(ipn.getCustMemoLine1());
-        String senderName = extractSenderName(ipn.getCustMemoLine3());
-        String txType     = isCredit ? "CR" : "DR";
+        // ── Parse the Narration field (most reliable source) ──────────────────
+        // IPN Narration format: "UF5BY709I7~BETTER LINK VENTURES SACCO~254717921562~AccountRef..."
+        //   parts[0] = M-Pesa receipt/reference (e.g. "UF5BY709I7")
+        //   parts[1] = SACCO destination name (skip)
+        //   parts[2] = sender phone number (e.g. "254717921562")
+        //   parts[3] = account reference (e.g. "AccountRef0d7fee8abc5f4ecc819")
+        //
+        // NOTE: Do NOT use CustMemoLine1/2/3 for phone extraction — Co-op splits the
+        // narration across memo lines at 20-char boundaries, making them unreliable.
+        String narration = ipn.getNarration() != null ? ipn.getNarration() : "";
+        String[] narParts = narration.split("~", -1);
 
-        log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={}",
-                txType, amount, senderName, phone, ipn.getPaymentRef(), txId);
+        String mpesaRef  = narParts.length >= 1 && !narParts[0].isBlank() ? narParts[0].trim() : null;
+        String phone     = narParts.length >= 3 ? normalisePhone(narParts[2].trim()) : null;
+
+        // ── Resolve sender: member name from DB, fallback to phone number ──────
+        String resolvedName = coopConnectService.resolvePhoneToMemberName(phone);
+        String senderName   = resolvedName != null ? resolvedName
+                : (phone != null && !phone.isBlank() ? phone : null);
+
+        String txType = isCredit ? "CR" : "DR";
+
+        log.info("Co-op IPN: {} KES {} — {} (phone={}) mpesaRef={}. PaymentRef={} TxId={}",
+                txType, amount, senderName, phone, mpesaRef, ipn.getPaymentRef(), txId);
 
         if (isCredit) {
             // ── Try to match to a pending STK push payment ─────────────────
@@ -161,6 +179,7 @@ public class PaymentService {
 
             if (payment != null) {
                 payment.setTransactionRef(txId);
+                payment.setMpesaRef(mpesaRef);
                 payment.setProviderMetadata(rawJson);
                 payment.setSenderName(senderName);
                 payment.setTransactionType("CR");
@@ -169,6 +188,7 @@ public class PaymentService {
                 // New record — manual paybill payment
                 payment = Payment.builder()
                         .transactionRef(txId)
+                        .mpesaRef(mpesaRef)
                         .internalRef("IPN-" + txId)
                         .amount(amount)
                         .paymentMethod("MPESA_COOP_IPN")
@@ -182,12 +202,13 @@ public class PaymentService {
                         .build();
 
                 paymentRepository.save(payment);
-                log.info("Co-op IPN: new CREDIT KES {} from {} saved.", amount, senderName);
+                log.info("Co-op IPN: new CREDIT KES {} from {} (mpesaRef={}) saved.",
+                        amount, senderName, mpesaRef);
 
                 securityAuditService.logEvent(
                         "IPN_PAYMENT_RECEIVED", "COOP_IPN",
                         "Co-op IPN credit KES " + amount + " from " + senderName
-                                + " (" + phone + "). TxId: " + txId
+                                + " (" + phone + "). MpesaRef: " + mpesaRef + ". TxId: " + txId
                 );
 
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
@@ -199,6 +220,7 @@ public class PaymentService {
             // Store for transaction history display only; no member account impact
             Payment payment = Payment.builder()
                     .transactionRef(txId)
+                    .mpesaRef(mpesaRef)
                     .internalRef("IPN-DR-" + txId)
                     .amount(amount)
                     .paymentMethod("COOP_DEBIT")
@@ -264,29 +286,10 @@ public class PaymentService {
     }
 
     private String normalisePhone(String raw) {
+        if (raw == null || raw.isBlank()) return null;
         String phone = raw.replaceAll("\\s+", "");
         if (phone.startsWith("+"))  return phone.substring(1);
         if (phone.startsWith("0"))  return "254" + phone.substring(1);
-        return phone;
-    }
-
-    /**
-     * Extracts phone number from CustMemoLine1.
-     * Format: "TIP6V5IRAE~254707919065~0" → "254707919065"
-     */
-    private String extractPhone(String memoLine1) {
-        if (memoLine1 == null) return null;
-        String[] parts = memoLine1.split("~");
-        return parts.length >= 2 ? parts[1].trim() : null;
-    }
-
-    /**
-     * Extracts sender name from CustMemoLine3.
-     * Format: "0200~MELVIN WANJIKU" → "MELVIN WANJIKU"
-     */
-    private String extractSenderName(String memoLine3) {
-        if (memoLine3 == null) return null;
-        String[] parts = memoLine3.split("~");
-        return parts.length >= 2 ? parts[1].trim() : null;
+        return phone.isEmpty() ? null : phone;
     }
 }

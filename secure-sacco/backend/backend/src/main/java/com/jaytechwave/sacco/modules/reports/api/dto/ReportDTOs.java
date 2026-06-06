@@ -83,11 +83,12 @@ public class ReportDTOs {
     @Data
     public static class PaymentLineDTO {
         private String id;
-        private String transactionRef;    // M-Pesa receipt number (e.g. NLJ7RT615V)
+        private String transactionRef;    // Co-op CBS TransactionId (e.g. CB1287153_05062026_2) — used for idempotency
+        private String mpesaRef;          // M-Pesa receipt/reference code (e.g. UF5BY709I7) — shown in UI
         private String internalRef;       // Internal tracking reference
         private BigDecimal amount;
-        private String paymentMethod;     // MPESA, BANK_TRANSFER
-        private String paymentType;       // C2B, STK_PUSH
+        private String paymentMethod;     // MPESA_COOP_IPN, MPESA_COOP
+        private String paymentType;       // PAYBILL_DEPOSIT, STK_PUSH
         private String accountReference;  // Member number typed by payer
         private String senderName;
         private String senderPhoneNumber;

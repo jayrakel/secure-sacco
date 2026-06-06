@@ -412,13 +412,14 @@ public class ReportService {
                 ? java.time.LocalDate.now().toString()
                 : dateStr;
 
-        // 🟢 THE FIX: Include BOTH M-Pesa payments AND loan repayments (including historical migrations)
+        // 🟢 Include BOTH M-Pesa payments AND loan repayments (including historical migrations)
         String sql = """
                 SELECT * FROM (
                     -- M-Pesa and other payment gateway transactions
                     SELECT
                         id,
                         transaction_ref,
+                        mpesa_ref,
                         internal_ref,
                         amount,
                         payment_method,
@@ -438,6 +439,7 @@ public class ReportService {
                     SELECT
                         lr.id,
                         NULL AS transaction_ref,
+                        NULL AS mpesa_ref,
                         lr.receipt_number AS internal_ref,
                         lr.amount,
                         'MANUAL_ENTRY' AS payment_method,
@@ -461,6 +463,7 @@ public class ReportService {
             var dto = new com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.PaymentLineDTO();
             dto.setId(rs.getString("id"));
             dto.setTransactionRef(rs.getString("transaction_ref"));
+            dto.setMpesaRef(rs.getString("mpesa_ref"));
             dto.setInternalRef(rs.getString("internal_ref"));
             dto.setAmount(rs.getBigDecimal("amount"));
             dto.setPaymentMethod(rs.getString("payment_method"));
