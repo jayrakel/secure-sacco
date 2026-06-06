@@ -110,6 +110,7 @@ export const DailyCollectionsPage: React.FC = () => {
         if (search.trim()) {
             const q = search.trim().toLowerCase();
             rows = rows.filter(r =>
+                r.mpesaRef?.toLowerCase().includes(q)         ||
                 r.transactionRef?.toLowerCase().includes(q)   ||
                 r.accountReference?.toLowerCase().includes(q) ||
                 r.senderName?.toLowerCase().includes(q)       ||
@@ -436,11 +437,19 @@ export const DailyCollectionsPage: React.FC = () => {
                                                     {fmtTime(row.createdAt)}
                                                 </td>
 
-                                                {/* Transaction ref */}
+                                                {/* Transaction ref — shows M-Pesa receipt (mpesaRef) first */}
                                                 <td className="px-5 py-3.5 whitespace-nowrap">
+                                                    {row.mpesaRef ? (
                                                         <span className="text-xs font-mono font-semibold text-slate-700">
-                                                            {row.transactionRef ?? <span className="text-slate-300 italic">pending</span>}
+                                                            {row.mpesaRef}
                                                         </span>
+                                                    ) : row.transactionRef ? (
+                                                        <span className="text-xs font-mono font-semibold text-slate-500">
+                                                            {row.transactionRef}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-300 italic text-xs">pending</span>
+                                                    )}
                                                 </td>
 
                                                 {/* Account ref */}

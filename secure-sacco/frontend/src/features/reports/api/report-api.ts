@@ -52,11 +52,12 @@ export interface DailyCollectionDTO {
 
 export interface PaymentLineDTO {
     id: string;
-    transactionRef:    string | null; // M-Pesa receipt, e.g. NLJ7RT615V
+    transactionRef:    string | null; // Co-op CBS TransactionId (e.g. CB1287153_05062026_2) — for idempotency
+    mpesaRef:          string | null; // M-Pesa receipt code (e.g. UF5BY709I7) — shown in UI
     internalRef:       string;
     amount:            number;
-    paymentMethod:     string;        // MPESA, BANK_TRANSFER
-    paymentType:       string;        // C2B, STK_PUSH
+    paymentMethod:     string;        // MPESA_COOP_IPN, MPESA_COOP
+    paymentType:       string;        // PAYBILL_DEPOSIT, STK_PUSH
     accountReference:  string | null; // Member number typed by payer
     senderName:        string | null;
     senderPhoneNumber: string | null;

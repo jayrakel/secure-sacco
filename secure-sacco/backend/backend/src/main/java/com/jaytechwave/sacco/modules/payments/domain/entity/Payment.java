@@ -54,6 +54,12 @@ public class Payment {
     @Column(name = "account_reference", length = 100)
     private String accountReference;
 
+    /** M-Pesa receipt/reference code (e.g. "UF5BY709I7") extracted from the Co-op narration.
+     *  Distinct from {@code transactionRef} which holds Co-op's internal CBS TransactionId
+     *  used for idempotency. This is the code members see on their M-Pesa confirmation SMS. */
+    @Column(name = "mpesa_ref", length = 50)
+    private String mpesaRef;
+
     @Column(name = "sender_phone_number", length = 20)
     private String senderPhoneNumber;
 
