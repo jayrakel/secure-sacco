@@ -248,18 +248,21 @@ public class CoopEventNormalizer {
             List<String> candidates = buildPhoneCandidates(rawPhone);
             for (String candidate : candidates) {
                 String hash = piiHashConverter.convertToDatabaseColumn(candidate);
-                Optional<User> found = userRepository.findByPhoneNumberHash(hash);
-                if (found.isPresent() && found.get().getMember() != null) {
+                // Use member-safe lookup — skips orphan accounts with no member_id
+                Optional<User> found = userRepository.findFirstByPhoneNumberHashAndMemberIdIsNotNull(hash);
+                if (found.isPresent()) {
                     User user = found.get();
                     String name = user.getFirstName() + " " + user.getLastName();
                     tx.setSenderName(name);
                     tx.setMemberId(user.getMember().getId());
                     tx.setDisplayNarration(name);
-                    log.debug("CoopEventNormalizer: phone {} → member {} (format: {})",
+                    log.info("CoopEventNormalizer: ✅ phone {} → member {} (matched format: {})",
                             rawPhone, name, candidate);
                     return;
                 }
             }
+            log.info("CoopEventNormalizer: ❌ no member found for phone {} (tried {} formats)",
+                    rawPhone, candidates.size());
         } catch (Exception e) {
             log.warn("CoopEventNormalizer: member lookup failed for {}: {}", rawPhone, e.getMessage());
         }
