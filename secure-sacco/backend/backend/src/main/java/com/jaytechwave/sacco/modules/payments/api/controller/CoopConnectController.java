@@ -7,7 +7,6 @@ import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRes
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
-import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
@@ -43,7 +42,6 @@ public class CoopConnectController {
     private final UserRepository      userRepository;
     private final CoopConnectService  coopConnectService;
     private final PaymentRepository        paymentRepository;
-    private final PiiSearchHashConverter   piiSearchHashConverter;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
@@ -208,16 +206,8 @@ public class CoopConnectController {
                     phone    = normalizePhone(parts[1].trim());
                 }
 
-                // Lookup member by phone hash
-                String senderName = null;
-                if (phone != null) {
-                    try {
-                        String hash = piiSearchHashConverter.convertToDatabaseColumn(phone);
-                        senderName = userRepository.findByPhoneNumberHash(hash)
-                                .map(u -> u.getFirstName() + " " + u.getLastName())
-                                .orElse(null);
-                    } catch (Exception ignored) { }
-                }
+                // Lookup member name — delegate to service layer
+                String senderName = coopConnectService.resolvePhoneToMemberName(phone);
 
                 // Display: member name → phone (fallback) → raw narration (bank charges)
                 String display = senderName != null ? senderName

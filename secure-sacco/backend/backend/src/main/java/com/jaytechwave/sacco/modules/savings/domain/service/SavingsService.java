@@ -96,6 +96,74 @@ public class SavingsService {
         );
     }
 
+
+    /**
+     * Credits a member's savings account from a Co-op paybill (non-STK) M-Pesa payment.
+     * Called by {@link com.jaytechwave.sacco.modules.payments.job.MiniStatementPollingJob}
+     * when a new credit is matched to a member by phone number.
+     * The transaction is immediately POSTED — no pending state needed since
+     * the money has already landed in the SACCO's Co-op account.
+     */
+    @Transactional
+    public void processMpesaPaybillDeposit(UUID memberId, java.math.BigDecimal amount,
+                                           String mpesaRef, String senderPhone) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberId));
+
+        if (member.getStatus() != MemberStatus.ACTIVE) {
+            log.warn("processMpesaPaybillDeposit: member {} is not ACTIVE — skipping auto-credit", memberId);
+            return;
+        }
+
+        SavingsAccount account = savingsAccountRepository.findByMemberId(memberId)
+                .orElseGet(() -> {
+                    log.info("Auto-creating savings account for member {}", memberId);
+                    return savingsAccountRepository.save(SavingsAccount.builder()
+                            .memberId(memberId)
+                            .status(SavingsAccountStatus.ACTIVE)
+                            .build());
+                });
+
+        if (account.getStatus() == SavingsAccountStatus.FROZEN) {
+            log.warn("processMpesaPaybillDeposit: savings account frozen for member {} — skipping", memberId);
+            return;
+        }
+
+        // Use M-Pesa reference directly as the transaction reference
+        String ref = mpesaRef != null ? mpesaRef : "PAYBILL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        // Prevent double-posting — idempotent check
+        if (savingsTransactionRepository.existsByReference(ref)) {
+            log.info("processMpesaPaybillDeposit: transaction {} already posted — skipping duplicate", ref);
+            return;
+        }
+
+        SavingsTransaction transaction = SavingsTransaction.builder()
+                .savingsAccountId(account.getId())
+                .type(TransactionType.DEPOSIT)
+                .channel(TransactionChannel.MPESA)
+                .amount(amount)
+                .reference(ref)
+                .status(TransactionStatus.POSTED)
+                .postedAt(java.time.LocalDateTime.now())
+                .build();
+
+        savingsTransactionRepository.save(transaction);
+
+        journalEntryService.postSavingsTransaction(
+                memberId, amount, "DEPOSIT", "MPESA_PAYBILL", ref
+        );
+
+        securityAuditService.logEvent(
+                "SAVINGS_MPESA_PAYBILL_DEPOSIT",
+                member.getMemberNumber(),
+                String.format("M-Pesa paybill deposit of KES %s from %s auto-credited. Ref: %s",
+                        amount, senderPhone, ref)
+        );
+
+        log.info("Auto-credited KES {} to member {} via paybill. Ref: {}", amount, member.getMemberNumber(), ref);
+    }
+
     @Transactional
     public SavingsTransactionResponse processManualWithdrawal(ManualWithdrawalRequest request) {
         Member member = memberRepository.findById(request.memberId())
