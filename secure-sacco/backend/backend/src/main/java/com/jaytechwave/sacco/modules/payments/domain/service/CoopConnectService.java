@@ -407,15 +407,15 @@ public class CoopConnectService {
                 java.util.Optional<com.jaytechwave.sacco.modules.users.domain.entity.User> found =
                         userRepository.findByPhoneNumberHash(hash);
                 if (found.isPresent() && found.get().getMember() != null) {
-                    log.debug("resolvePhoneToMemberName: matched '{}' → '{}' via format '{}'",
+                    log.info("resolvePhoneToMemberName: ✅ matched '{}' → '{}' via format '{}'",
                             rawPhone,
                             found.get().getFirstName() + " " + found.get().getLastName(),
                             candidate);
                     return found.get().getFirstName() + " " + found.get().getLastName();
                 }
             }
-            log.debug("resolvePhoneToMemberName: no member found for '{}' (tried {} formats)",
-                    rawPhone, candidates.size());
+            log.info("resolvePhoneToMemberName: ❌ no member found for '{}' (tried formats: {})",
+                    rawPhone, candidates);
             return null;
         } catch (Exception e) {
             log.warn("resolvePhoneToMemberName: lookup failed for {}: {}", rawPhone, e.getMessage());
