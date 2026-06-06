@@ -383,22 +383,107 @@ public class CoopConnectService {
     }
 
     /**
-     * Resolves a normalised phone number (254XXXXXXXXX) to a member's full name
-     * by hashing the phone and looking it up in the users table.
-     * Returns null if the phone is null or no matching member is found.
+     * Resolves any Kenyan phone number format to a SACCO member's full name.
+     *
+     * <p>The fundamental problem: members register with whichever format they type
+     * (e.g. "0717921562"), and that exact string gets hashed and stored.
+     * Co-op's IPN narration always delivers the phone in international format
+     * ("254717921562"). Because HMAC-SHA256 is format-sensitive, these two strings
+     * produce completely different hashes — so a straight lookup always misses.
+     *
+     * <p>Fix: generate every valid Kenyan format of the same number and hash each
+     * one, stopping as soon as one matches a user record.
+     *
+     * @param rawPhone any format: "0717921562", "254717921562", "+254717921562"
+     * @return member full name, or null if no match found
      */
-    public String resolvePhoneToMemberName(String normalizedPhone) {
-        if (normalizedPhone == null || normalizedPhone.isBlank()) return null;
+    public String resolvePhoneToMemberName(String rawPhone) {
+        if (rawPhone == null || rawPhone.isBlank()) return null;
         try {
-            String hash = piiHashConverter.convertToDatabaseColumn(normalizedPhone);
-            return userRepository.findByPhoneNumberHash(hash)
-                    .filter(u -> u.getMember() != null)
-                    .map(u -> u.getFirstName() + " " + u.getLastName())
-                    .orElse(null);
+            // Build all candidate formats for this number
+            java.util.List<String> candidates = buildPhoneCandidates(rawPhone);
+            for (String candidate : candidates) {
+                String hash = piiHashConverter.convertToDatabaseColumn(candidate);
+                java.util.Optional<com.jaytechwave.sacco.modules.users.domain.entity.User> found =
+                        userRepository.findByPhoneNumberHash(hash);
+                if (found.isPresent() && found.get().getMember() != null) {
+                    log.debug("resolvePhoneToMemberName: matched '{}' → '{}' via format '{}'",
+                            rawPhone,
+                            found.get().getFirstName() + " " + found.get().getLastName(),
+                            candidate);
+                    return found.get().getFirstName() + " " + found.get().getLastName();
+                }
+            }
+            log.debug("resolvePhoneToMemberName: no member found for '{}' (tried {} formats)",
+                    rawPhone, candidates.size());
+            return null;
         } catch (Exception e) {
-            log.warn("resolvePhoneToMemberName: lookup failed for {}: {}", normalizedPhone, e.getMessage());
+            log.warn("resolvePhoneToMemberName: lookup failed for {}: {}", rawPhone, e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Generates all plausible storage formats for a Kenyan mobile number so that
+     * a hash lookup succeeds regardless of how the number was originally saved.
+     *
+     * <p>Kenyan mobile prefixes are 07X or 01X.  International prefix is 254.
+     * All carriers (Safaricom 07/01, Airtel 07, Telkom 07) follow this pattern.
+     *
+     * <p>Formats produced (example input: "254717921562"):
+     * <ul>
+     *   <li>254717921562  — E.164 without '+'</li>
+     *   <li>+254717921562 — E.164 with '+'</li>
+     *   <li>0717921562    — local 07/01 format</li>
+     *   <li>717921562     — 9-digit trunk-stripped</li>
+     * </ul>
+     */
+    private java.util.List<String> buildPhoneCandidates(String rawPhone) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+
+        // Normalise: strip everything except digits and leading '+'
+        String cleaned = rawPhone.trim();
+        boolean hadPlus = cleaned.startsWith("+");
+        String digits   = cleaned.replaceAll("[^0-9]", "");
+
+        // Derive the 9-digit local suffix (e.g. "717921562")
+        String nineSuffix = null;
+        if (digits.startsWith("254") && digits.length() == 12) {
+            nineSuffix = digits.substring(3);           // 254XXXXXXXXX → XXXXXXXXX
+        } else if ((digits.startsWith("07") || digits.startsWith("01")) && digits.length() == 10) {
+            nineSuffix = digits.substring(1);           // 07XXXXXXXX → 7XXXXXXXX
+        } else if (digits.length() == 9) {
+            nineSuffix = digits;                        // already trunk-stripped
+        }
+
+        if (nineSuffix == null) {
+            // Unknown format — just try the raw string and its digits-only form
+            out.add(rawPhone.trim());
+            if (!rawPhone.trim().equals(digits)) out.add(digits);
+            return out;
+        }
+
+        // All four canonical formats
+        String international   = "254"  + nineSuffix;   // 254717921562
+        String internationalE  = "+254" + nineSuffix;   // +254717921562
+        String local07or01;
+        if (nineSuffix.startsWith("7") || nineSuffix.startsWith("1")) {
+            local07or01 = "0" + nineSuffix;             // 0717921562
+        } else {
+            local07or01 = "0" + nineSuffix;
+        }
+        String trunkStripped  = nineSuffix;             // 717921562
+
+        // The most common storage formats first (local 07 form was historically popular)
+        out.add(local07or01);
+        out.add(international);
+        out.add(internationalE);
+        out.add(trunkStripped);
+
+        // If the original input had a leading '+', also try the plain form
+        if (hadPlus && !out.contains(cleaned)) out.add(cleaned);
+
+        return out;
     }
 
 
