@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkReq
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
+import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
@@ -41,7 +42,8 @@ public class CoopConnectController {
     private final ObjectMapper        objectMapper;
     private final UserRepository      userRepository;
     private final CoopConnectService  coopConnectService;
-    private final PaymentRepository        paymentRepository;
+    private final PaymentRepository   paymentRepository;
+    private final CoopTransactionRepository coopTransactionRepository;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
@@ -109,32 +111,6 @@ public class CoopConnectController {
         }
     }
 
-    // ── Real-time account balance ─────────────────────────────────────────────
-
-//    @Operation(summary = "Get Co-op bank account balance",
-//            description = "Returns the real-time balance of the SACCO Co-op account. Cached for 5 minutes.")
-//    @GetMapping("/coop/account-balance")
-//    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
-//    public ResponseEntity<?> getAccountBalance() {
-//        try {
-//            var balance = coopConnectService.getAccountBalance();
-//            if (balance == null) {
-//                return ResponseEntity.status(503)
-//                        .body(Map.of("error", "Could not fetch account balance from Co-op Bank"));
-//            }
-//            return ResponseEntity.ok(Map.of(
-//                    "availableBalance", balance.getAvailableBalance() != null ? balance.getAvailableBalance() : "0",
-//                    "bookedBalance",    balance.getBookedBalance()    != null ? balance.getBookedBalance()    : "0",
-//                    "currency",         balance.getCurrency()         != null ? balance.getCurrency()         : "KES",
-//                    "accountNumber",    balance.getAccountNumber()    != null ? balance.getAccountNumber()    : "",
-//                    "messageCode",      balance.getMessageCode()      != null ? balance.getMessageCode()      : ""
-//            ));
-//        } catch (Exception e) {
-//            log.error("Failed to get account balance: {}", e.getMessage());
-//            return ResponseEntity.status(503).body(Map.of("error", "Account balance unavailable"));
-//        }
-//    }
-
     // ── Account balance enquiry ───────────────────────────────────────────────
 
     @Operation(summary = "Get Co-op Account Balance",
@@ -160,7 +136,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op bank mini statement",
             description = "Returns the last 10 transactions on the SACCO Co-op account (camelCase normalised for frontend).")
     @GetMapping("/coop/mini-statement")
-    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','SECRETARY')")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> getMiniStatement() {
         try {
             var statement = coopConnectService.getMiniStatement();
@@ -188,10 +164,9 @@ public class CoopConnectController {
                         ? (t.getCreditAmount() != null ? t.getCreditAmount() : 0.0)
                         : (t.getDebitAmount()  != null ? t.getDebitAmount()  : 0.0);
 
-                // Parse narration format:
-                // STK/C2B:  "REF~SACCO_NAME~SENDER_PHONE~AccountRef..."
-                // Paybill:  "REF~ACCOUNT_NUMBER~SENDER_PHONE~CHANNEL~..."
-                // Bank chg: "Plain text narration" (no tildes)
+                // Narration format: "REF~SACCO_NAME~SENDER_PHONE~..."
+                // parts[0] = M-Pesa ref, parts[1] = SACCO name (destination, skip),
+                // parts[2] = sender phone
                 String narration = t.getNarration() != null ? t.getNarration() : "";
                 String[] parts   = narration.split("~");
                 String mpesaRef  = null;
@@ -199,17 +174,17 @@ public class CoopConnectController {
 
                 if (parts.length >= 3) {
                     mpesaRef = parts[0].trim();
-                    // parts[1] = SACCO destination name — NOT the sender, skip it
+                    // parts[1] is the SACCO's own name — NOT the sender, skip it
                     phone    = normalizePhone(parts[2].trim());
                 } else if (parts.length == 2) {
                     mpesaRef = parts[0].trim();
                     phone    = normalizePhone(parts[1].trim());
                 }
 
-                // Lookup member name — delegate to service layer
+                // Resolve phone → member name via service (handles hashing + DB lookup)
                 String senderName = coopConnectService.resolvePhoneToMemberName(phone);
 
-                // Display: member name → phone (fallback) → raw narration (bank charges)
+                // Display: member name → phone fallback → raw narration (bank charges)
                 String display = senderName != null ? senderName
                         : (phone != null ? phone : narration);
 
@@ -300,14 +275,6 @@ public class CoopConnectController {
         }
     }
 
-    private String normalizePhone(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.startsWith("07") || digits.startsWith("01")) return "254" + digits.substring(1);
-        if (digits.startsWith("7")  || digits.startsWith("1"))  return "254" + digits;
-        return digits.isEmpty() ? null : digits;
-    }
-
     // ── Transaction status enquiry ────────────────────────────────────────────
 
     @Operation(summary = "Check Co-op STK push transaction status",
@@ -327,5 +294,57 @@ public class CoopConnectController {
             log.error("Failed to get transaction status for ref={}: {}", messageReference, e.getMessage());
             return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // ── Normalised Co-op feed from DB ─────────────────────────────────────────
+
+    @Operation(summary = "Normalised Co-op transaction feed (DB-sourced)")
+    @GetMapping("/coop/feed")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
+    public ResponseEntity<?> getCoopFeed(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+            var txns = coopTransactionRepository.findAllByOrderByValueDateDesc(pageable);
+
+            var items = txns.getContent().stream().map(t -> {
+                Map<String, Object> tx = new LinkedHashMap<>();
+                tx.put("id",               t.getId());
+                tx.put("mpesaRef",         t.getMpesaRef());
+                tx.put("source",           t.getSource().name());
+                tx.put("transactionType",  t.getTransactionType());
+                tx.put("amount",           t.getAmount());
+                tx.put("runningBalance",   t.getRunningBalance());
+                tx.put("currency",         t.getCurrency());
+                tx.put("valueDate",        t.getValueDate());
+                tx.put("senderPhone",      t.getSenderPhone());
+                tx.put("senderName",       t.getSenderName());
+                tx.put("isMember",         t.getSenderName() != null);
+                tx.put("displayNarration", t.getDisplayNarration());
+                tx.put("accountReference", t.getAccountReference());
+                tx.put("savingsCredited",  t.isSavingsCredited());
+                return tx;
+            }).toList();
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("transactions",  items);
+            response.put("totalElements", txns.getTotalElements());
+            response.put("totalPages",    txns.getTotalPages());
+            response.put("currentPage",   page);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("getCoopFeed failed: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
+        }
+    }
+    private String normalizePhone(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return null;
+        if (digits.startsWith("07") || digits.startsWith("01")) return "254" + digits.substring(1);
+        if (digits.startsWith("7")  || digits.startsWith("1"))  return "254" + digits;
+        if (digits.startsWith("254") && digits.length() == 12)  return digits;
+        return digits;
     }
 }
