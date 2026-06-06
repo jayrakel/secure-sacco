@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRes
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
+import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
@@ -41,14 +42,15 @@ public class CoopConnectController {
     private final ObjectMapper        objectMapper;
     private final UserRepository      userRepository;
     private final CoopConnectService  coopConnectService;
-    private final PaymentRepository   paymentRepository;
+    private final PaymentRepository        paymentRepository;
+    private final PiiSearchHashConverter   piiSearchHashConverter;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
     @Operation(summary = "Initiate M-Pesa STK push via Co-op Connect",
             description = "Sends an M-Pesa STK prompt to the member's phone through Co-op Bank.")
     @PostMapping("/stk-push")
-    @PreAuthorize("hasAuthority('MEMBER_SAVINGS_VIEW')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<InitiateStkResponse> initiateStkPush(
             @Valid @RequestBody InitiateStkRequest request,
             Authentication authentication) {
@@ -140,7 +142,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op Account Balance",
             description = "Fetches the real-time balance of the Sacco's Co-op Connect account.")
     @GetMapping("/coop/balance")
-    @PreAuthorize("hasAuthority('BANKING_READ')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','LOAN_OFFICER')")
     public ResponseEntity<?> getAccountBalance() {
         try {
             var balance = coopConnectService.getAccountBalance();
@@ -160,7 +162,7 @@ public class CoopConnectController {
     @Operation(summary = "Get Co-op bank mini statement",
             description = "Returns the last 10 transactions on the SACCO Co-op account (camelCase normalised for frontend).")
     @GetMapping("/coop/mini-statement")
-    @PreAuthorize("hasAuthority('BANKING_READ')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON','SECRETARY')")
     public ResponseEntity<?> getMiniStatement() {
         try {
             var statement = coopConnectService.getMiniStatement();
@@ -188,30 +190,52 @@ public class CoopConnectController {
                         ? (t.getCreditAmount() != null ? t.getCreditAmount() : 0.0)
                         : (t.getDebitAmount()  != null ? t.getDebitAmount()  : 0.0);
 
-                // Parse sender phone from Narration: "REF~ACCOUNT~PHONE~..."
+                // Parse narration format:
+                // STK/C2B:  "REF~SACCO_NAME~SENDER_PHONE~AccountRef..."
+                // Paybill:  "REF~ACCOUNT_NUMBER~SENDER_PHONE~CHANNEL~..."
+                // Bank chg: "Plain text narration" (no tildes)
                 String narration = t.getNarration() != null ? t.getNarration() : "";
                 String[] parts   = narration.split("~");
-                String display   = narration; // default: show full narration
+                String mpesaRef  = null;
                 String phone     = null;
+
                 if (parts.length >= 3) {
-                    // M-Pesa format: REF~AccountName~Phone
-                    phone   = parts[2].trim();
-                    display = parts[1].trim(); // account/sender name
+                    mpesaRef = parts[0].trim();
+                    // parts[1] = SACCO destination name — NOT the sender, skip it
+                    phone    = normalizePhone(parts[2].trim());
                 } else if (parts.length == 2) {
-                    display = parts[1].trim();
+                    mpesaRef = parts[0].trim();
+                    phone    = normalizePhone(parts[1].trim());
                 }
 
-                tx.put("transactionId",      t.getTransactionId());
-                tx.put("transactionDate",    t.getTransactionDate());
-                tx.put("valueDate",          t.getValueDate());
-                tx.put("narration",          display);
-                tx.put("rawNarration",       narration);
-                tx.put("transactionType",    isCredit ? "CR" : "DR");
-                tx.put("amount",             String.format("%.2f", amount));
-                tx.put("runningBalance",     t.getRunningClearedBalance() != null
-                                             ? String.format("%.2f", t.getRunningClearedBalance()) : null);
-                tx.put("reference",          t.getTransactionReference());
-                tx.put("senderPhone",        phone);
+                // Lookup member by phone hash
+                String senderName = null;
+                if (phone != null) {
+                    try {
+                        String hash = piiSearchHashConverter.convertToDatabaseColumn(phone);
+                        senderName = userRepository.findByPhoneNumberHash(hash)
+                                .map(u -> u.getFirstName() + " " + u.getLastName())
+                                .orElse(null);
+                    } catch (Exception ignored) { }
+                }
+
+                // Display: member name → phone (fallback) → raw narration (bank charges)
+                String display = senderName != null ? senderName
+                        : (phone != null ? phone : narration);
+
+                tx.put("transactionId",   t.getTransactionId());
+                tx.put("transactionDate", t.getTransactionDate());
+                tx.put("valueDate",        t.getValueDate());
+                tx.put("narration",        display);
+                tx.put("rawNarration",     narration);
+                tx.put("transactionType",  isCredit ? "CR" : "DR");
+                tx.put("amount",           String.format("%.2f", amount));
+                tx.put("runningBalance",   t.getRunningClearedBalance() != null
+                                           ? String.format("%.2f", t.getRunningClearedBalance()) : null);
+                tx.put("reference",        mpesaRef != null ? mpesaRef : t.getTransactionReference());
+                tx.put("senderPhone",      phone);
+                tx.put("senderName",       senderName);
+                tx.put("isMember",         senderName != null);
                 return tx;
             }).toList();
 
@@ -236,7 +260,7 @@ public class CoopConnectController {
             description = "Returns completed payments received via Co-op B2B IPN stored in our database. " +
                     "Co-op replays historical transactions through the IPN endpoint.")
     @GetMapping("/coop/transactions")
-    @PreAuthorize("hasAuthority('BANKING_READ')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CHAIRPERSON')")
     public ResponseEntity<?> getAccountTransactions(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
@@ -286,12 +310,20 @@ public class CoopConnectController {
         }
     }
 
+    private String normalizePhone(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.startsWith("07") || digits.startsWith("01")) return "254" + digits.substring(1);
+        if (digits.startsWith("7")  || digits.startsWith("1"))  return "254" + digits;
+        return digits.isEmpty() ? null : digits;
+    }
+
     // ── Transaction status enquiry ────────────────────────────────────────────
 
     @Operation(summary = "Check Co-op STK push transaction status",
             description = "Check whether a specific M-Pesa STK push was completed, by its MessageReference.")
     @GetMapping("/coop/transaction-status/{messageReference}")
-    @PreAuthorize("hasAuthority('BANKING_READ')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER','CASHIER','DEPUTY_CASHIER')")
     public ResponseEntity<?> getTransactionStatus(
             @PathVariable String messageReference) {
         try {

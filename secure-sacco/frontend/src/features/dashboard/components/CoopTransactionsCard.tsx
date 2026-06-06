@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
     RefreshCw, AlertCircle, ArrowDownLeft, ArrowUpRight,
-    ChevronDown, ChevronUp, Building2, Phone
+    ChevronDown, ChevronUp, Building2, Phone, UserCheck, UserX
 } from 'lucide-react';
 import apiClient from '../../../shared/api/api-client';
 
@@ -9,14 +9,15 @@ interface TransactionEntry {
     transactionId:   string;
     transactionDate: string;
     valueDate:       string;
-    narration:       string;    // parsed display name (e.g. "BETTER LINK VENTURES SACCO")
-    rawNarration:    string;    // full original narration from Co-op
+    narration:       string;      // member name → phone → raw narration
+    rawNarration:    string;      // original tilde-separated string
     transactionType: 'CR' | 'DR';
     amount:          string;
     runningBalance:  string | null;
-    reference:       string | null;
+    reference:       string | null; // M-Pesa reference (UF5BY709I7)
     senderPhone:     string | null;
-    senderName:      string | null; // null = not a member
+    senderName:      string | null; // member full name, null if not a member
+    isMember:        boolean;
 }
 
 interface MiniStatementData {
@@ -29,10 +30,10 @@ interface MiniStatementData {
 }
 
 export const CoopTransactionsCard: React.FC = () => {
-    const [data, setData]           = useState<MiniStatementData | null>(null);
-    const [loading, setLoading]     = useState(false);
-    const [error, setError]         = useState<string | null>(null);
-    const [expanded, setExpanded]   = useState(true);
+    const [data, setData]               = useState<MiniStatementData | null>(null);
+    const [loading, setLoading]         = useState(false);
+    const [error, setError]             = useState<string | null>(null);
+    const [expanded, setExpanded]       = useState(true);
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
     const fmt = (val: string | null | undefined) => {
@@ -41,6 +42,15 @@ export const CoopTransactionsCard: React.FC = () => {
         return isNaN(n) ? val : new Intl.NumberFormat('en-KE', {
             minimumFractionDigits: 2, maximumFractionDigits: 2,
         }).format(n);
+    };
+
+    const fmtDate = (dt: string) => {
+        try {
+            return new Date(dt).toLocaleDateString('en-KE', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+            });
+        } catch { return dt; }
     };
 
     const fetchStatement = useCallback(async () => {
@@ -67,35 +77,24 @@ export const CoopTransactionsCard: React.FC = () => {
     const totalIn  = credits.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
     const totalOut = debits.reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
 
-    const fmtDate = (dt: string) => {
-        try {
-            return new Date(dt).toLocaleDateString('en-KE', {
-                day: '2-digit', month: 'short', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
-        } catch { return dt; }
-    };
-
     return (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-blue-50 rounded-lg">
-                        <Building2 size={14} className="text-blue-600" />
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
+                        <Building2 size={15} className="text-blue-600" />
                     </div>
                     <div>
-                        <span className="text-sm font-semibold text-slate-800">
-                            Co-op Mini Statement
-                        </span>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
+                        <p className="text-sm font-semibold text-slate-800">Co-op Mini Statement</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
                             Last 10 transactions · Live from Co-op Bank
                             {data?.accountNumber && ` · Acct ${data.accountNumber}`}
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     <button onClick={fetchStatement} disabled={loading} title="Refresh"
                             className="p-1.5 hover:bg-slate-50 rounded-lg transition text-slate-400 disabled:opacity-40">
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -109,12 +108,10 @@ export const CoopTransactionsCard: React.FC = () => {
 
             {/* Error */}
             {error && (
-                <div className="flex items-center gap-2 px-5 py-3 bg-red-50">
-                    <AlertCircle size={14} className="text-red-500 shrink-0" />
-                    <p className="text-xs text-red-600 flex-1">{error}</p>
-                    <button onClick={fetchStatement} className="text-xs text-red-600 underline shrink-0">
-                        Retry
-                    </button>
+                <div className="flex items-center gap-2 px-5 py-3 bg-rose-50 border-b border-rose-100">
+                    <AlertCircle size={14} className="text-rose-500 flex-shrink-0" />
+                    <p className="text-xs text-rose-600 flex-1">{error}</p>
+                    <button onClick={fetchStatement} className="text-xs text-rose-600 underline flex-shrink-0">Retry</button>
                 </div>
             )}
 
@@ -123,7 +120,7 @@ export const CoopTransactionsCard: React.FC = () => {
                 <div className="px-5 py-4 space-y-3">
                     {[1, 2, 3].map(i => (
                         <div key={i} className="flex items-center gap-3 animate-pulse">
-                            <div className="w-8 h-8 bg-slate-100 rounded-lg shrink-0" />
+                            <div className="w-8 h-8 bg-slate-100 rounded-xl flex-shrink-0" />
                             <div className="flex-1 space-y-1.5">
                                 <div className="h-3 bg-slate-100 rounded w-2/3" />
                                 <div className="h-2 bg-slate-100 rounded w-1/3" />
@@ -137,7 +134,7 @@ export const CoopTransactionsCard: React.FC = () => {
                 </div>
             )}
 
-            {/* Summary */}
+            {/* Summary strip */}
             {data && expanded && !loading && (
                 <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
                     <div className="px-4 py-3 text-center">
@@ -149,8 +146,8 @@ export const CoopTransactionsCard: React.FC = () => {
                         <p className="text-sm font-bold text-emerald-600">KES {fmt(totalIn.toFixed(2))}</p>
                     </div>
                     <div className="px-4 py-3 text-center">
-                        <p className="text-[10px] text-red-400 uppercase tracking-wide mb-0.5">Total Out</p>
-                        <p className="text-sm font-bold text-red-500">KES {fmt(totalOut.toFixed(2))}</p>
+                        <p className="text-[10px] text-rose-400 uppercase tracking-wide mb-0.5">Total Out</p>
+                        <p className="text-sm font-bold text-rose-500">KES {fmt(totalOut.toFixed(2))}</p>
                     </div>
                 </div>
             )}
@@ -168,49 +165,57 @@ export const CoopTransactionsCard: React.FC = () => {
                             const isCr = t.transactionType === 'CR';
                             return (
                                 <div key={t.transactionId ?? i}
-                                     className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 transition">
+                                     className="flex items-start gap-3 px-5 py-3.5 hover:bg-slate-50 transition">
 
-                                    {/* Icon */}
-                                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${
-                                        isCr ? 'bg-emerald-50' : 'bg-red-50'
-                                    }`}>
+                                    {/* Direction icon */}
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5
+                                        ${isCr ? 'bg-emerald-50' : 'bg-rose-50'}`}>
                                         {isCr
-                                            ? <ArrowDownLeft size={13} className="text-emerald-500" />
-                                            : <ArrowUpRight size={13} className="text-red-400" />
+                                            ? <ArrowDownLeft size={14} className="text-emerald-500" />
+                                            : <ArrowUpRight  size={14} className="text-rose-400"    />
                                         }
                                     </div>
 
-                                    {/* Narration + meta */}
+                                    {/* Name + phone + date */}
                                     <div className="flex-1 min-w-0">
-                                        {/* Name — member match, phone fallback, narration last */}
-                                        <p className="text-xs font-medium text-slate-800 truncate">
-                                            {t.senderName || t.narration || '—'}
-                                        </p>
-                                        {/* Phone — always show if available */}
+                                        {/* Row 1: Name */}
+                                        <div className="flex items-center gap-1.5">
+                                            <p className="text-sm font-semibold text-slate-800 truncate">
+                                                {t.senderName || t.narration || '—'}
+                                            </p>
+                                            {/* Member badge */}
+                                            {isCr && t.senderPhone && (
+                                                t.isMember
+                                                    ? <UserCheck size={11} className="text-emerald-500 flex-shrink-0" />
+                                                    : <UserX     size={11} className="text-slate-300   flex-shrink-0" />
+                                            )}
+                                        </div>
+
+                                        {/* Row 2: Phone + member status */}
                                         {t.senderPhone && (
-                                            <p className="text-[10px] text-slate-400 flex items-center gap-0.5 mt-0.5">
+                                            <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                                                 <Phone size={9} />
                                                 {t.senderPhone}
-                                                {!t.senderName && (
-                                                    <span className="ml-1 text-slate-300 italic">· not a member</span>
+                                                {!t.isMember && (
+                                                    <span className="text-slate-300 italic">· not a member</span>
                                                 )}
                                             </p>
                                         )}
-                                        <p className="text-[10px] text-slate-300 mt-0.5">
+
+                                        {/* Row 3: Date + M-Pesa reference */}
+                                        <p className="text-[11px] text-slate-300 mt-0.5 font-mono">
                                             {fmtDate(t.valueDate || t.transactionDate)}
-                                            {t.reference ? ` · ${t.reference}` : ''}
+                                            {t.reference && ` · ${t.reference}`}
                                         </p>
                                     </div>
 
-                                    {/* Amount + running balance */}
-                                    <div className="text-right shrink-0">
-                                        <p className={`text-xs font-bold ${
-                                            isCr ? 'text-emerald-600' : 'text-red-500'
-                                        }`}>
+                                    {/* Amount + balance */}
+                                    <div className="text-right flex-shrink-0">
+                                        <p className={`text-sm font-bold ${isCr ? 'text-emerald-600' : 'text-rose-500'}`}>
                                             {isCr ? '+' : '-'}KES {fmt(t.amount)}
                                         </p>
                                         {t.runningBalance && (
-                                            <p className="text-[10px] text-slate-400 mt-0.5">
+                                            <p className="text-[11px] text-slate-400 mt-0.5">
                                                 Bal: {fmt(t.runningBalance)}
                                             </p>
                                         )}
@@ -227,7 +232,7 @@ export const CoopTransactionsCard: React.FC = () => {
                 <div className="px-5 py-2 bg-slate-50 border-t border-slate-100">
                     <p className="text-[10px] text-slate-400 text-center">
                         Updated {lastFetched.toLocaleTimeString('en-KE', {
-                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
                     })}
                     </p>
                 </div>
