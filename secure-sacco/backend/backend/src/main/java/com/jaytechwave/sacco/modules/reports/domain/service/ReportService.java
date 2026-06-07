@@ -380,13 +380,12 @@ public class ReportService {
                 SELECT * FROM (
                     SELECT
                         p.id,
-                        COALESCE(p.transaction_ref, ct.coop_transaction_id) AS transaction_ref,
+                        COALESCE(NULLIF(TRIM(p.transaction_ref), ''), NULLIF(TRIM(ct.coop_transaction_id), '')) AS transaction_ref,
                         COALESCE(
-                            p.mpesa_ref,
+                            NULLIF(TRIM(p.mpesa_ref), ''),
                             -- Intelligently pull the true M-Pesa receipt based on the event source
-                            CASE WHEN ct.source = 'STK_CALLBACK' THEN ct.coop_transaction_id
-                                 WHEN ct.source IN ('IPN', 'MINI_STATEMENT') THEN ct.mpesa_ref
-                                 ELSE ct.mpesa_ref END
+                            CASE WHEN ct.source = 'STK_CALLBACK' THEN NULLIF(TRIM(ct.coop_transaction_id), '')
+                                 ELSE NULLIF(TRIM(ct.mpesa_ref), '') END
                         ) AS mpesa_ref,
                         p.internal_ref,
                         p.amount,
@@ -394,9 +393,9 @@ public class ReportService {
                         p.payment_type,
                         p.account_reference,
                         COALESCE(
-                            ct.sender_name,
+                            NULLIF(TRIM(ct.sender_name), ''),
                             CASE WHEN mem.id IS NOT NULL THEN mem.first_name || ' ' || mem.last_name ELSE NULL END,
-                            CASE WHEN p.sender_name IS NOT NULL AND p.sender_name NOT LIKE 'AccountRef%' AND LENGTH(p.sender_name) > 3 THEN p.sender_name ELSE NULL END
+                            CASE WHEN NULLIF(TRIM(p.sender_name), '') IS NOT NULL AND p.sender_name NOT LIKE 'AccountRef%' AND LENGTH(p.sender_name) > 3 THEN p.sender_name ELSE NULL END
                         ) AS sender_name,
                         COALESCE(
                             CASE WHEN LENGTH(REGEXP_REPLACE(ct.sender_phone, '[^0-9]', '', 'g')) >= 9 THEN ct.sender_phone ELSE NULL END,
@@ -408,10 +407,10 @@ public class ReportService {
                     LEFT JOIN LATERAL (
                         SELECT *
                         FROM coop_transactions
-                        WHERE (coop_transaction_id = p.transaction_ref AND p.transaction_ref IS NOT NULL)
-                           OR (mpesa_ref = p.internal_ref AND p.internal_ref IS NOT NULL)
-                           OR (mpesa_ref = p.transaction_ref AND p.transaction_ref IS NOT NULL)
-                           OR (coop_transaction_id = p.internal_ref AND p.internal_ref IS NOT NULL)
+                        WHERE (coop_transaction_id = p.transaction_ref AND NULLIF(TRIM(p.transaction_ref), '') IS NOT NULL)
+                           OR (mpesa_ref = p.internal_ref AND NULLIF(TRIM(p.internal_ref), '') IS NOT NULL)
+                           OR (mpesa_ref = p.transaction_ref AND NULLIF(TRIM(p.transaction_ref), '') IS NOT NULL)
+                           OR (coop_transaction_id = p.internal_ref AND NULLIF(TRIM(p.internal_ref), '') IS NOT NULL)
                            -- The Ultimate Fallback: Match by EXACT Amount & Time Window
                            OR (
                                amount = p.amount 
