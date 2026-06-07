@@ -47,8 +47,8 @@ const fmtDateLong = (iso: string) =>
  *      (shows the savings/loan internal ref e.g. "DEP-A24950F5")
  */
 const getBestRef = (row: PaymentLineDTO): { value: string; dim: boolean } | null => {
-    if (row.mpesaRef)        return { value: row.mpesaRef,        dim: false };
-    if (row.transactionRef)  return { value: row.transactionRef,  dim: true  };
+    if (row.mpesaRef) return { value: row.mpesaRef, dim: false };
+    if (row.transactionRef) return { value: row.transactionRef, dim: true };
     if (row.accountReference) return { value: row.accountReference, dim: true };
     return null;
 };
@@ -60,7 +60,7 @@ const getBestRef = (row: PaymentLineDTO): { value: string; dim: boolean } | null
  */
 const cleanSenderName = (name: string | null | undefined): string | null => {
     if (!name || name.trim().length < 3) return null;
-    if (name.startsWith('AccountRef'))   return null;
+    if (name.startsWith('AccountRef')) return null;
     return name.trim();
 };
 
@@ -77,16 +77,16 @@ const looksLikePhone = (val: string | null | undefined): boolean => {
 
 // ─── Channel / type visual config ────────────────────────────────────────────
 const METHOD_STYLE: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
-    MPESA:         { bg: 'bg-green-50',  text: 'text-green-700',  icon: Smartphone  },
-    BANK_TRANSFER: { bg: 'bg-blue-50',   text: 'text-blue-700',   icon: CreditCard  },
-    MANUAL_ENTRY:  { bg: 'bg-purple-50', text: 'text-purple-700', icon: Wallet      }, // 🟢 Historical migrations
+    MPESA: { bg: 'bg-green-50', text: 'text-green-700', icon: Smartphone },
+    BANK_TRANSFER: { bg: 'bg-blue-50', text: 'text-blue-700', icon: CreditCard },
+    MANUAL_ENTRY: { bg: 'bg-purple-50', text: 'text-purple-700', icon: Wallet }, // 🟢 Historical migrations
 };
 const DEFAULT_METHOD = { bg: 'bg-slate-50', text: 'text-slate-600', icon: Wallet };
 
 const TYPE_BADGE: Record<string, string> = {
-    STK_PUSH:       'bg-green-100 text-green-800',
-    C2B:            'bg-teal-100  text-teal-800',
-    B2C:            'bg-indigo-100 text-indigo-800',
+    STK_PUSH: 'bg-green-100 text-green-800',
+    C2B: 'bg-teal-100  text-teal-800',
+    B2C: 'bg-indigo-100 text-indigo-800',
     LOAN_REPAYMENT: 'bg-purple-100 text-purple-800', // 🟢 Historical migrations
 };
 const DEFAULT_TYPE_BADGE = 'bg-slate-100 text-slate-600';
@@ -96,15 +96,15 @@ export const DailyCollectionsPage: React.FC = () => {
     const today = toLocalDateStr(new Date());
 
     const [selectedDate, setSelectedDate] = useState<string>(today);
-    const [summary, setSummary]           = useState<DailyCollectionDTO | null>(null);
-    const [lines, setLines]               = useState<PaymentLineDTO[]>([]);
-    const [loading, setLoading]           = useState(false);
-    const [error, setError]               = useState('');
+    const [summary, setSummary] = useState<DailyCollectionDTO | null>(null);
+    const [lines, setLines] = useState<PaymentLineDTO[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     // Drilldown filters
     const [channelFilter, setChannelFilter] = useState<string | null>(null);
-    const [typeFilter, setTypeFilter]       = useState<string | null>(null);
-    const [search, setSearch]               = useState('');
+    const [typeFilter, setTypeFilter] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
 
     // ── Fetch both summary + lines in parallel ────────────────────────────────
     const fetchData = useCallback(async (date: string) => {
@@ -142,14 +142,14 @@ export const DailyCollectionsPage: React.FC = () => {
     const filteredLines = useMemo(() => {
         let rows = lines;
         if (channelFilter) rows = rows.filter(r => r.paymentMethod === channelFilter);
-        if (typeFilter)    rows = rows.filter(r => r.paymentType    === typeFilter);
+        if (typeFilter) rows = rows.filter(r => r.paymentType === typeFilter);
         if (search.trim()) {
             const q = search.trim().toLowerCase();
             rows = rows.filter(r =>
-                r.mpesaRef?.toLowerCase().includes(q)         ||
-                r.transactionRef?.toLowerCase().includes(q)   ||
+                r.mpesaRef?.toLowerCase().includes(q) ||
+                r.transactionRef?.toLowerCase().includes(q) ||
                 r.accountReference?.toLowerCase().includes(q) ||
-                r.senderName?.toLowerCase().includes(q)       ||
+                r.senderName?.toLowerCase().includes(q) ||
                 r.senderPhoneNumber?.toLowerCase().includes(q)
             );
         }
@@ -168,9 +168,9 @@ export const DailyCollectionsPage: React.FC = () => {
             `${fmtTime(r.createdAt)},${r.transactionRef ?? ''},${r.accountReference ?? ''},"${r.senderName ?? ''}",${r.senderPhoneNumber ?? ''},${r.paymentMethod},${r.paymentType},${r.amount}`
         ).join('\n');
         const blob = new Blob([header + body], { type: 'text/csv' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
         a.download = `Collections_${selectedDate}.csv`;
         a.click();
         URL.revokeObjectURL(url);
@@ -312,7 +312,7 @@ export const DailyCollectionsPage: React.FC = () => {
                                 <div className="space-y-2">
                                     {Object.entries(summary.byChannel).map(([ch, amt]) => {
                                         const style = METHOD_STYLE[ch] ?? DEFAULT_METHOD;
-                                        const Icon  = style.icon;
+                                        const Icon = style.icon;
                                         const isActive = channelFilter === ch;
                                         return (
                                             <button
@@ -321,8 +321,8 @@ export const DailyCollectionsPage: React.FC = () => {
                                                 className={`
                                                     w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all
                                                     ${isActive
-                                                    ? `${style.bg} ${style.text} ring-2 ring-current`
-                                                    : 'hover:bg-slate-50 text-slate-700'}
+                                                        ? `${style.bg} ${style.text} ring-2 ring-current`
+                                                        : 'hover:bg-slate-50 text-slate-700'}
                                                 `}
                                             >
                                                 <div className="flex items-center gap-2">
@@ -431,117 +431,117 @@ export const DailyCollectionsPage: React.FC = () => {
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-slate-100">
                                 <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Time</th>
-                                    <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Transaction Ref</th>
-                                    <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Account Ref</th>
-                                    <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Sender</th>
-                                    <th className="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Channel</th>
-                                    <th className="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
-                                    <th className="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Amount (KES)</th>
-                                </tr>
+                                    <tr>
+                                        <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Time</th>
+                                        <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">M-Pesa Ref</th>
+                                        <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Account Ref</th>
+                                        <th className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Sender</th>
+                                        <th className="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Channel</th>
+                                        <th className="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                                        <th className="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Amount (KES)</th>
+                                    </tr>
                                 </thead>
 
                                 <tbody className="bg-white divide-y divide-slate-50">
-                                {filteredLines.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="px-6 py-16 text-center">
-                                            <div className="flex flex-col items-center gap-3">
-                                                <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center">
-                                                    <Wallet className="text-slate-300" size={26} />
-                                                </div>
-                                                <p className="text-slate-500 font-semibold text-sm">No transactions found</p>
-                                                <p className="text-slate-400 text-xs">
-                                                    {lines.length === 0
-                                                        ? 'No completed payments were recorded for this date.'
-                                                        : 'Try adjusting your filters.'}
-                                                </p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredLines.map((row) => {
-                                        const methodStyle = METHOD_STYLE[row.paymentMethod] ?? DEFAULT_METHOD;
-                                        const MethodIcon  = methodStyle.icon;
-                                        const typeBadge   = TYPE_BADGE[row.paymentType] ?? DEFAULT_TYPE_BADGE;
-
-                                        return (
-                                            <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-
-                                                {/* Time */}
-                                                <td className="px-5 py-3.5 whitespace-nowrap text-xs font-mono text-slate-500">
-                                                    {fmtTime(row.createdAt)}
-                                                </td>
-
-                                                {/* Transaction ref — mpesaRef → transactionRef → accountReference fallback */}
-                                                <td className="px-5 py-3.5 whitespace-nowrap">
-                                                    {(() => {
-                                                        const ref = getBestRef(row);
-                                                        return ref ? (
-                                                            <span className={`text-xs font-mono font-semibold ${ref.dim ? 'text-slate-400' : 'text-slate-700'}`}>
-                                                                {ref.value}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-slate-300 text-xs">—</span>
-                                                        );
-                                                    })()}
-                                                </td>
-
-                                                {/* Account ref */}
-                                                <td className="px-5 py-3.5 whitespace-nowrap text-xs font-mono text-slate-600">
-                                                    {row.accountReference ?? '—'}
-                                                </td>
-
-                                                {/* Sender — filtered name + validated phone */}
-                                                <td className="px-5 py-3.5">
-                                                    <div className="text-xs font-medium text-slate-700">
-                                                        {cleanSenderName(row.senderName) ?? '—'}
+                                    {filteredLines.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-16 text-center">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center">
+                                                        <Wallet className="text-slate-300" size={26} />
                                                     </div>
-                                                    {looksLikePhone(row.senderPhoneNumber) && (
-                                                        <div className="text-xs text-slate-400 font-mono">
-                                                            {row.senderPhoneNumber}
-                                                        </div>
-                                                    )}
-                                                </td>
+                                                    <p className="text-slate-500 font-semibold text-sm">No transactions found</p>
+                                                    <p className="text-slate-400 text-xs">
+                                                        {lines.length === 0
+                                                            ? 'No completed payments were recorded for this date.'
+                                                            : 'Try adjusting your filters.'}
+                                                    </p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredLines.map((row) => {
+                                            const methodStyle = METHOD_STYLE[row.paymentMethod] ?? DEFAULT_METHOD;
+                                            const MethodIcon = methodStyle.icon;
+                                            const typeBadge = TYPE_BADGE[row.paymentType] ?? DEFAULT_TYPE_BADGE;
 
-                                                {/* Channel */}
-                                                <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                            return (
+                                                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+
+                                                    {/* Time */}
+                                                    <td className="px-5 py-3.5 whitespace-nowrap text-xs font-mono text-slate-500">
+                                                        {fmtTime(row.createdAt)}
+                                                    </td>
+
+                                                    {/* Transaction ref — mpesaRef → transactionRef → accountReference fallback */}
+                                                    <td className="px-5 py-3.5 whitespace-nowrap">
+                                                        {(() => {
+                                                            const ref = getBestRef(row);
+                                                            return ref ? (
+                                                                <span className={`text-xs font-mono font-semibold ${ref.dim ? 'text-slate-400' : 'text-slate-700'}`}>
+                                                                    {ref.value}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-slate-300 text-xs">—</span>
+                                                            );
+                                                        })()}
+                                                    </td>
+
+                                                    {/* Account ref */}
+                                                    <td className="px-5 py-3.5 whitespace-nowrap text-xs font-mono text-slate-600">
+                                                        {row.accountReference ?? '—'}
+                                                    </td>
+
+                                                    {/* Sender — filtered name + validated phone */}
+                                                    <td className="px-5 py-3.5">
+                                                        <div className="text-xs font-medium text-slate-700">
+                                                            {cleanSenderName(row.senderName) ?? '—'}
+                                                        </div>
+                                                        {looksLikePhone(row.senderPhoneNumber) && (
+                                                            <div className="text-xs text-slate-400 font-mono">
+                                                                {row.senderPhoneNumber}
+                                                            </div>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Channel */}
+                                                    <td className="px-5 py-3.5 whitespace-nowrap text-center">
                                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${methodStyle.bg} ${methodStyle.text}`}>
                                                             <MethodIcon size={11} />
                                                             {row.paymentMethod}
                                                         </span>
-                                                </td>
+                                                    </td>
 
-                                                {/* Type */}
-                                                <td className="px-5 py-3.5 whitespace-nowrap text-center">
+                                                    {/* Type */}
+                                                    <td className="px-5 py-3.5 whitespace-nowrap text-center">
                                                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${typeBadge}`}>
                                                             {row.paymentType}
                                                         </span>
-                                                </td>
+                                                    </td>
 
-                                                {/* Amount */}
-                                                <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                                                    {/* Amount */}
+                                                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
                                                         <span className="text-sm font-bold text-emerald-700">
                                                             {fmt(row.amount)}
                                                         </span>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
                                 </tbody>
 
                                 {/* Footer total */}
                                 {filteredLines.length > 0 && (
                                     <tfoot className="bg-slate-50 border-t-2 border-slate-200">
-                                    <tr>
-                                        <td colSpan={6} className="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                            Subtotal ({filteredLines.length} transaction{filteredLines.length !== 1 ? 's' : ''})
-                                        </td>
-                                        <td className="px-5 py-3 text-right text-sm font-bold text-emerald-700">
-                                            {fmt(filteredTotal)}
-                                        </td>
-                                    </tr>
+                                        <tr>
+                                            <td colSpan={6} className="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                Subtotal ({filteredLines.length} transaction{filteredLines.length !== 1 ? 's' : ''})
+                                            </td>
+                                            <td className="px-5 py-3 text-right text-sm font-bold text-emerald-700">
+                                                {fmt(filteredTotal)}
+                                            </td>
+                                        </tr>
                                     </tfoot>
                                 )}
                             </table>
