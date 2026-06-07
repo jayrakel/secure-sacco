@@ -41,4 +41,11 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
 
     /** All transactions for a phone number */
     Page<CoopTransaction> findBySenderPhoneOrderByValueDateDesc(String phone, Pageable pageable);
+
+    /**
+     * All transactions where we have a phone number but no matched member yet.
+     * Used by the re-enrichment job to retroactively link payments to members
+     * who registered after the transaction was stored.
+     */
+    List<CoopTransaction> findByMemberIdIsNullAndSenderPhoneIsNotNull();
 }
