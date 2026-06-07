@@ -4,8 +4,8 @@ import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
+import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
-import com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent;
@@ -30,7 +30,7 @@ public class PaymentService {
     private final PaymentRepository       paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final SecurityAuditService    securityAuditService;
-    private final CoopEventNormalizer  coopEventNormalizer;
+    private final CoopEventNormalizer     coopEventNormalizer;
 
     // ── STK Push initiation ───────────────────────────────────────────────────
 
@@ -78,12 +78,10 @@ public class PaymentService {
 
     // ── STK Callback (kept for forward compatibility — Co-op may use it) ─────
 
-    // ─────────────────────────────────────────────────────────────────────────
-
     @Transactional
     public void processStkCallback(String rawJson, StkCallbackPayload callback) {
-        // Store clean normalised record for display in dashboard
-        coopEventNormalizer.normalizeStkCallback(callback, rawJson);
+        // Run normalizer first to enrich the phone to member link
+        Optional<CoopTransaction> coopTxOpt = coopEventNormalizer.normalizeStkCallback(callback, rawJson);
         String messageRef = callback.getMessageReference();
 
         Optional<Payment> paymentOpt = paymentRepository.findByInternalRef(messageRef);
@@ -104,6 +102,18 @@ public class PaymentService {
         boolean success = "0".equals(callback.getMessageCode());
 
         if (success) {
+            // Set M-Pesa receipt as the main reference
+            payment.setMpesaRef(callback.getTransactionId());
+            
+            // Enrich with correct member details if the normalizer successfully matched the phone
+            if (coopTxOpt.isPresent()) {
+                if (coopTxOpt.get().getSenderName() != null) {
+                    payment.setSenderName(coopTxOpt.get().getSenderName());
+                }
+                if (coopTxOpt.get().getSenderPhone() != null) {
+                    payment.setSenderPhoneNumber(coopTxOpt.get().getSenderPhone());
+                }
+            }
             markCompleted(payment, callback.getTransactionId(), rawJson);
         } else {
             markFailed(payment, callback.getMessageDescription());
@@ -111,13 +121,6 @@ public class PaymentService {
     }
 
     // ── B2B IPN — handles ALL Co-op payment notifications ────────────────────
-    //
-    // Co-op Bank routes ALL payment results through the IPN endpoint:
-    //   - Manual M-Pesa paybill payments (member pays 400200 directly)
-    //   - STK Push completions (after member enters PIN)
-    //
-    // In both cases Co-op credits the SACCO's bank account and fires an IPN.
-    // The CallBackUrl in the STK push request is not used for the payment result.
 
     @Transactional
     public void processCoopIpn(String rawJson, CoopIpnPayload ipn) {
@@ -145,12 +148,32 @@ public class PaymentService {
             return;
         }
 
-        String phone      = extractPhone(ipn.getCustMemoLine1());
-        String senderName = extractSenderName(ipn.getCustMemoLine3());
-        String txType     = isCredit ? "CR" : "DR";
+        // ── ENRICHMENT BLOCK ─────────────────────────────────────────────
+        // We run the normalizer first to extract the clean M-Pesa receipt, 
+        // the validated phone number, and the true member's name.
+        Optional<CoopTransaction> coopTxOpt = coopEventNormalizer.normalizeIpn(ipn, rawJson);
 
-        log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={}",
-                txType, amount, senderName, phone, ipn.getPaymentRef(), txId);
+        String phone      = extractPhone(ipn.getCustMemoLine1()); // Bank fallback
+        String senderName = extractSenderName(ipn.getCustMemoLine3()); // Bank fallback
+        String mpesaRef   = null;
+
+        if (coopTxOpt.isPresent()) {
+            CoopTransaction ctx = coopTxOpt.get();
+            mpesaRef = ctx.getMpesaRef();
+            if (ctx.getSenderPhone() != null) phone = ctx.getSenderPhone();
+            if (ctx.getSenderName() != null) senderName = ctx.getSenderName();
+        } else {
+            // Fallback just in case normalizer hit a duplication block
+            String narration = ipn.getNarration() != null ? ipn.getNarration() : "";
+            String[] parts   = narration.split("~");
+            mpesaRef  = parts.length > 0 ? parts[0].trim() : txId;
+        }
+        // ─────────────────────────────────────────────────────────────────
+
+        String txType = isCredit ? "CR" : "DR";
+
+        log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={} MpesaRef={}",
+                txType, amount, senderName, phone, ipn.getPaymentRef(), txId, mpesaRef);
 
         if (isCredit) {
             // ── Try to match to a pending STK push payment ─────────────────
@@ -167,8 +190,9 @@ public class PaymentService {
 
             if (payment != null) {
                 payment.setTransactionRef(txId);
+                payment.setMpesaRef(mpesaRef); // Save Mpesa ref here!
                 payment.setProviderMetadata(rawJson);
-                payment.setSenderName(senderName);
+                payment.setSenderName(senderName); // Replace with mapped member name!
                 payment.setTransactionType("CR");
                 markCompleted(payment, txId, rawJson);
             } else {
@@ -176,12 +200,13 @@ public class PaymentService {
                 payment = Payment.builder()
                         .transactionRef(txId)
                         .internalRef("IPN-" + txId)
+                        .mpesaRef(mpesaRef) // Save Mpesa ref here!
                         .amount(amount)
                         .paymentMethod("MPESA_COOP_IPN")
                         .paymentType("PAYBILL_DEPOSIT")
                         .transactionType("CR")
                         .senderPhoneNumber(phone)
-                        .senderName(senderName)
+                        .senderName(senderName) // Mapped member name!
                         .accountReference(ipn.getPaymentRef())
                         .status(PaymentStatus.COMPLETED)
                         .providerMetadata(rawJson)
@@ -189,9 +214,6 @@ public class PaymentService {
 
                 paymentRepository.save(payment);
                 log.info("Co-op IPN: new CREDIT KES {} from {} saved.", amount, senderName);
-
-                // Store clean normalised record for display in dashboard
-                coopEventNormalizer.normalizeIpn(ipn, rawJson);
 
                 securityAuditService.logEvent(
                         "IPN_PAYMENT_RECEIVED", "COOP_IPN",
@@ -205,10 +227,10 @@ public class PaymentService {
             }
         } else {
             // ── DEBIT — money going out of SACCO account ───────────────────
-            // Store for transaction history display only; no member account impact
             Payment payment = Payment.builder()
                     .transactionRef(txId)
                     .internalRef("IPN-DR-" + txId)
+                    .mpesaRef(mpesaRef)
                     .amount(amount)
                     .paymentMethod("COOP_DEBIT")
                     .paymentType("ACCOUNT_DEBIT")
@@ -222,9 +244,6 @@ public class PaymentService {
 
             paymentRepository.save(payment);
             log.info("Co-op IPN: new DEBIT KES {} — {} saved.", amount, ipn.getNarration());
-
-            // Store clean normalised record for display in dashboard
-            coopEventNormalizer.normalizeIpn(ipn, rawJson);
 
             securityAuditService.logEvent(
                     "IPN_DEBIT_RECEIVED", "COOP_IPN",
@@ -282,20 +301,12 @@ public class PaymentService {
         return phone;
     }
 
-    /**
-     * Extracts phone number from CustMemoLine1.
-     * Format: "TIP6V5IRAE~254707919065~0" → "254707919065"
-     */
     private String extractPhone(String memoLine1) {
         if (memoLine1 == null) return null;
         String[] parts = memoLine1.split("~");
         return parts.length >= 2 ? parts[1].trim() : null;
     }
 
-    /**
-     * Extracts sender name from CustMemoLine3.
-     * Format: "0200~MELVIN WANJIKU" → "MELVIN WANJIKU"
-     */
     private String extractSenderName(String memoLine3) {
         if (memoLine3 == null) return null;
         String[] parts = memoLine3.split("~");
