@@ -412,41 +412,78 @@ public class ReportService {
                 ? java.time.LocalDate.now().toString()
                 : dateStr;
 
-        // 🟢 Include BOTH M-Pesa payments AND loan repayments (including historical migrations)
+        // ── Join strategy ──────────────────────────────────────────────────────
+        // Each payment is matched to its CoopTransaction record via LATERAL join:
+        //   • IPN payments:    ct.coop_transaction_id = p.transaction_ref  (both = Co-op CBS ID)
+        //   • STK confirmed:   ct.coop_transaction_id = p.transaction_ref  (both = M-Pesa receipt)
+        //   • STK null ref:    ct.mpesa_ref           = p.internal_ref     (both = MessageReference UUID)
+        //
+        // This gives us:
+        //   1. Enriched sender_name resolved via phone-hash lookup (CoopEventNormalizer)
+        //   2. Fallback transaction_ref (M-Pesa receipt) when payments.transaction_ref is null
+        //   3. mpesa_ref from coop_transactions when payments.mpesa_ref (V82 column) is null
+        //
+        // Sender name priority: coop_transactions > members table > raw IPN value
+        // Raw IPN sender_name is accepted only if it doesn't look like an account reference
+        // (Co-op sometimes puts "AccountRef..." in CustMemoLine3 which gets mis-parsed as a name).
+        //
+        // Phone number is only shown when it has ≥9 digits — filters out short Co-op account
+        // numbers (e.g. "1051322") that are incorrectly extracted as phone numbers from IPN payloads.
         String sql = """
                 SELECT * FROM (
-                    -- M-Pesa and other payment gateway transactions
+                    -- ── M-Pesa and Co-op gateway transactions ──────────────────
                     SELECT
-                        id,
-                        transaction_ref,
-                        mpesa_ref,
-                        internal_ref,
-                        amount,
-                        payment_method,
-                        payment_type,
-                        account_reference,
-                        sender_name,
-                        sender_phone_number,
-                        status,
-                        created_at
-                    FROM payments
-                    WHERE CAST(created_at AS DATE) = CAST(? AS DATE)
-                      AND status = 'COMPLETED'
-                    
+                        p.id,
+                        COALESCE(p.transaction_ref,  ct.coop_transaction_id) AS transaction_ref,
+                        COALESCE(p.mpesa_ref,         ct.mpesa_ref)          AS mpesa_ref,
+                        p.internal_ref,
+                        p.amount,
+                        p.payment_method,
+                        p.payment_type,
+                        p.account_reference,
+                        COALESCE(
+                            ct.sender_name,
+                            CASE WHEN mem.id IS NOT NULL
+                                 THEN mem.first_name || ' ' || mem.last_name
+                                 ELSE NULL END,
+                            CASE WHEN p.sender_name IS NOT NULL
+                                      AND p.sender_name NOT LIKE 'AccountRef%'
+                                      AND LENGTH(p.sender_name) > 3
+                                 THEN p.sender_name ELSE NULL END
+                        ) AS sender_name,
+                        CASE WHEN LENGTH(REGEXP_REPLACE(
+                                     COALESCE(p.sender_phone_number, ''),
+                                     '[^0-9]', '', 'g')) >= 9
+                             THEN p.sender_phone_number ELSE NULL END AS sender_phone_number,
+                        p.status,
+                        p.created_at
+                    FROM payments p
+                    LEFT JOIN LATERAL (
+                        SELECT *
+                        FROM coop_transactions
+                        WHERE coop_transaction_id = p.transaction_ref
+                           OR mpesa_ref            = p.internal_ref
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    ) ct ON true
+                    LEFT JOIN members mem ON p.member_id = mem.id AND mem.is_deleted = false
+                    WHERE CAST(p.created_at AS DATE) = CAST(? AS DATE)
+                      AND p.status = 'COMPLETED'
+
                     UNION ALL
-                    
-                    -- Manual loan repayments (includes historical data migrations)
+
+                    -- ── Manual loan repayments (historical migrations) ──────────
                     SELECT
                         lr.id,
-                        NULL AS transaction_ref,
-                        NULL AS mpesa_ref,
-                        lr.receipt_number AS internal_ref,
+                        NULL                                                        AS transaction_ref,
+                        NULL                                                        AS mpesa_ref,
+                        lr.receipt_number                                           AS internal_ref,
                         lr.amount,
-                        'MANUAL_ENTRY' AS payment_method,
-                        'LOAN_REPAYMENT' AS payment_type,
-                        COALESCE(m.member_number, CAST(la.member_id AS varchar)) AS account_reference,
+                        'MANUAL_ENTRY'                                              AS payment_method,
+                        'LOAN_REPAYMENT'                                            AS payment_type,
+                        COALESCE(m.member_number, CAST(la.member_id AS varchar))   AS account_reference,
                         COALESCE(u.first_name || ' ' || u.last_name, 'Manual Entry') AS sender_name,
-                        NULL AS sender_phone_number,
+                        NULL                                                        AS sender_phone_number,
                         lr.status,
                         lr.created_at
                     FROM loan_repayments lr

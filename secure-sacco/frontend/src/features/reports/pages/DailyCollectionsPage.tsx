@@ -39,6 +39,42 @@ const fmtDateLong = (iso: string) =>
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
 
+/**
+ * Returns the best available transaction reference to display, in priority order:
+ *   1. mpesaRef   — M-Pesa receipt code (most human-recognisable, e.g. "UF5BY709I7")
+ *   2. transactionRef — Co-op CBS transaction ID (e.g. "CB1306815_05062026_2")
+ *   3. accountReference — fallback for STK_PUSH where Co-op never returned a receipt
+ *      (shows the savings/loan internal ref e.g. "DEP-A24950F5")
+ */
+const getBestRef = (row: PaymentLineDTO): { value: string; dim: boolean } | null => {
+    if (row.mpesaRef)        return { value: row.mpesaRef,        dim: false };
+    if (row.transactionRef)  return { value: row.transactionRef,  dim: true  };
+    if (row.accountReference) return { value: row.accountReference, dim: true };
+    return null;
+};
+
+/**
+ * Filters out values that Co-op sometimes places in the sender_name field
+ * from CustMemoLine3 narration parsing, e.g. "AccountRef0d7fee8abc5f4ecc819".
+ * Returns null so the UI shows "—" instead of garbled data.
+ */
+const cleanSenderName = (name: string | null | undefined): string | null => {
+    if (!name || name.trim().length < 3) return null;
+    if (name.startsWith('AccountRef'))   return null;
+    return name.trim();
+};
+
+/**
+ * Returns true only for values that look like a real phone number (9–12 digits).
+ * Filters out short Co-op account numbers like "1051322" (7 digits) that get
+ * incorrectly extracted as phone numbers from some IPN payloads.
+ */
+const looksLikePhone = (val: string | null | undefined): boolean => {
+    if (!val) return false;
+    const digits = val.replace(/\D/g, '');
+    return digits.length >= 9 && digits.length <= 12;
+};
+
 // ─── Channel / type visual config ────────────────────────────────────────────
 const METHOD_STYLE: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
     MPESA:         { bg: 'bg-green-50',  text: 'text-green-700',  icon: Smartphone  },
@@ -437,19 +473,18 @@ export const DailyCollectionsPage: React.FC = () => {
                                                     {fmtTime(row.createdAt)}
                                                 </td>
 
-                                                {/* Transaction ref — shows M-Pesa receipt (mpesaRef) first */}
+                                                {/* Transaction ref — mpesaRef → transactionRef → accountReference fallback */}
                                                 <td className="px-5 py-3.5 whitespace-nowrap">
-                                                    {row.mpesaRef ? (
-                                                        <span className="text-xs font-mono font-semibold text-slate-700">
-                                                            {row.mpesaRef}
-                                                        </span>
-                                                    ) : row.transactionRef ? (
-                                                        <span className="text-xs font-mono font-semibold text-slate-500">
-                                                            {row.transactionRef}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-slate-300 italic text-xs">pending</span>
-                                                    )}
+                                                    {(() => {
+                                                        const ref = getBestRef(row);
+                                                        return ref ? (
+                                                            <span className={`text-xs font-mono font-semibold ${ref.dim ? 'text-slate-400' : 'text-slate-700'}`}>
+                                                                {ref.value}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-300 text-xs">—</span>
+                                                        );
+                                                    })()}
                                                 </td>
 
                                                 {/* Account ref */}
@@ -457,11 +492,15 @@ export const DailyCollectionsPage: React.FC = () => {
                                                     {row.accountReference ?? '—'}
                                                 </td>
 
-                                                {/* Sender */}
+                                                {/* Sender — filtered name + validated phone */}
                                                 <td className="px-5 py-3.5">
-                                                    <div className="text-xs font-medium text-slate-700">{row.senderName ?? '—'}</div>
-                                                    {row.senderPhoneNumber && (
-                                                        <div className="text-xs text-slate-400 font-mono">{row.senderPhoneNumber}</div>
+                                                    <div className="text-xs font-medium text-slate-700">
+                                                        {cleanSenderName(row.senderName) ?? '—'}
+                                                    </div>
+                                                    {looksLikePhone(row.senderPhoneNumber) && (
+                                                        <div className="text-xs text-slate-400 font-mono">
+                                                            {row.senderPhoneNumber}
+                                                        </div>
                                                     )}
                                                 </td>
 
