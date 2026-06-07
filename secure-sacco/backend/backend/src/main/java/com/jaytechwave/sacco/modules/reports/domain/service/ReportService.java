@@ -46,19 +46,16 @@ public class ReportService {
         }).collect(Collectors.toList());
     }
 
-    // --- NEW: MINI SUMMARY WIDGET ENGINE ---
     @Transactional(readOnly = true)
     public MemberMiniSummaryDTO getMySummary(UUID memberId) {
         MemberMiniSummaryDTO summary = new MemberMiniSummaryDTO();
 
-        // 1. Fetch live balances perfectly from our Read Model View
         overviewRepository.findById(memberId).ifPresent(overview -> {
             summary.setSavingsBalance(overview.getTotalSavings() != null ? overview.getTotalSavings() : BigDecimal.ZERO);
             summary.setLoanArrears(overview.getLoanArrears() != null ? overview.getLoanArrears() : BigDecimal.ZERO);
             summary.setPenaltyOutstanding(overview.getPenaltyOutstanding() != null ? overview.getPenaltyOutstanding() : BigDecimal.ZERO);
         });
 
-        // 2. Fetch specific Next Due Date and Active Loan Status via ultra-fast subquery
         String sql = """
             SELECT 
                 la.status AS loan_status,
@@ -78,7 +75,6 @@ public class ReportService {
                 return null;
             }, memberId);
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-            // No active loan, which perfectly defaults activeLoanStatus to "NONE"
             summary.setActiveLoanStatus("NONE");
         }
 
@@ -173,7 +169,6 @@ public class ReportService {
             return dto;
         }, memberId, memberId, memberId, memberId, memberId);
 
-        // Date Window Filtering
         if (fromDate != null && !fromDate.isEmpty()) {
             LocalDateTime from = LocalDateTime.parse(fromDate, DateTimeFormatter.ISO_DATE_TIME);
             results = results.stream().filter(r -> LocalDateTime.parse(r.getDate()).isAfter(from)).collect(Collectors.toList());
@@ -186,16 +181,11 @@ public class ReportService {
         return results;
     }
 
-    // ── NEW: STATEMENT WITH CORRECTED OUTSTANDING BALANCE ─────
     @Transactional(readOnly = true)
     public StatementResponseDTO getMemberStatementWithSummary(UUID memberId, String fromDate, String toDate) {
-        // 1. Get the statement items (This now includes the FULL history)
         List<StatementItemDTO> items = getMemberStatement(memberId, fromDate, toDate);
-
-        // 2. Initialize Summary
         StatementSummaryDTO summary = new StatementSummaryDTO();
 
-        // 3. Get accurate Outstanding Balance from our Source-of-Truth View
         try {
             String loanSql = """
                 SELECT 
@@ -217,8 +207,6 @@ public class ReportService {
             summary.setLoanOutstanding(BigDecimal.ZERO);
         }
 
-        // 4. Query the ACTIVE Disbursed and Repaid amounts directly!
-        // We only look at live loans for the summary widget.
         String activeLoanStatsSql = """
             SELECT 
                 COALESCE((SELECT SUM(principal_amount) FROM loan_applications WHERE member_id = ? AND status IN ('ACTIVE', 'IN_GRACE', 'DEFAULTED')), 0) as total_disbursed,
@@ -231,7 +219,6 @@ public class ReportService {
             return null;
         }, memberId, memberId);
 
-        // 5. Calculate Savings and Penalties from the statement items
         for (StatementItemDTO item : items) {
             if ("SAVINGS".equals(item.getModule())) {
                 if ("DEPOSIT".equals(item.getType())) {
@@ -248,10 +235,7 @@ public class ReportService {
             }
         }
 
-        // 6. 🟢 THE FIX: The Absolute Truth Reconciler
-        // We must enforce the mathematical rule for the UI: Charged = Paid + Outstanding
         overviewRepository.findById(memberId).ifPresent(overview -> {
-            // 1. Get the absolute truth for Outstanding (This includes ALL compounding interest)
             BigDecimal actualOutstanding = overview.getPenaltyOutstanding() != null
                     ? overview.getPenaltyOutstanding()
                     : BigDecimal.ZERO;
@@ -259,9 +243,6 @@ public class ReportService {
             BigDecimal statementCharged = summary.getPenaltiesCharged();
             BigDecimal statementPaid = summary.getPenaltiesPaid();
 
-            // 2. Deduce Waterfall Payments:
-            // If the base charged from the statement is greater than what they currently owe,
-            // they MUST have paid the difference via the Loan Repayment waterfall!
             if (statementCharged.compareTo(actualOutstanding) > 0) {
                 BigDecimal hiddenPayments = statementCharged.subtract(actualOutstanding);
                 if (hiddenPayments.compareTo(statementPaid) > 0) {
@@ -270,17 +251,11 @@ public class ReportService {
                 }
             }
 
-            // 3. Deduce Compounding Interest & Force Mathematical Perfection:
-            // We force the 'Charged' amount to exactly equal the true Outstanding plus whatever they Paid.
-            // This guarantees the UI math (Charged - Paid = Outstanding) is always 100% flawless.
             BigDecimal trueCharged = actualOutstanding.add(statementPaid);
             summary.setPenaltiesCharged(trueCharged);
-
-            // (Optional, just to ensure DTO is complete if you use this field)
             summary.setPenaltiesOutstanding(actualOutstanding);
         });
 
-        // 7. Create and return the response
         StatementResponseDTO response = new StatementResponseDTO();
         response.setItems(items);
         response.setSummary(summary);
@@ -321,7 +296,6 @@ public class ReportService {
             int days = rs.getInt("days_overdue");
             dto.setDaysOverdue(days);
 
-            // Standard Banking Aging Buckets
             if (days <= 7) dto.setBucket("1-7 Days");
             else if (days <= 30) dto.setBucket("8-30 Days");
             else if (days <= 60) dto.setBucket("31-60 Days");
@@ -331,7 +305,6 @@ public class ReportService {
             return dto;
         });
 
-        // Optionally filter by bucket if the endpoint requested it
         if (bucketFilter != null && !bucketFilter.isBlank()) {
             return results.stream()
                     .filter(r -> r.getBucket().equalsIgnoreCase(bucketFilter))
@@ -350,20 +323,15 @@ public class ReportService {
         DailyCollectionDTO dto = new DailyCollectionDTO();
         dto.setDate(targetDate);
 
-        // 🟢 THE FIX: Include BOTH M-Pesa payments AND loan repayments (including historical migrations)
-
-        // 1. Group by Payment Method (MPESA, BANK_TRANSFER, MANUAL_ENTRY, etc.)
         String channelSql = """
                 SELECT payment_method, SUM(amount) AS total
                 FROM (
-                    -- M-Pesa and other payment gateway transactions
                     SELECT payment_method, amount
                     FROM payments
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
                     
                     UNION ALL
                     
-                    -- Manual loan repayments (includes historical data migrations)
                     SELECT 'MANUAL_ENTRY' AS payment_method, amount
                     FROM loan_repayments
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
@@ -374,18 +342,15 @@ public class ReportService {
             dto.getByChannel().put(rs.getString("payment_method"), rs.getBigDecimal("total"));
         }, targetDate, targetDate);
 
-        // 2. Group by Payment Type (C2B, STK_PUSH, B2C, LOAN_REPAYMENT, etc.)
         String typeSql = """
                 SELECT payment_type, SUM(amount) AS total
                 FROM (
-                    -- M-Pesa and other payment gateway transactions
                     SELECT payment_type, amount
                     FROM payments
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
                     
                     UNION ALL
                     
-                    -- Manual loan repayments (includes historical data migrations)
                     SELECT 'LOAN_REPAYMENT' AS payment_type, amount
                     FROM loan_repayments
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
@@ -396,14 +361,12 @@ public class ReportService {
             dto.getByType().put(rs.getString("payment_type"), rs.getBigDecimal("total"));
         }, targetDate, targetDate);
 
-        // 3. Calculate Grand Total
         BigDecimal grandTotal = dto.getByChannel().values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         dto.setTotalCollected(grandTotal);
 
         return dto;
     }
-
 
     // --- DRILLDOWN: Individual payment rows for the Daily Collections report ---
     @Transactional(readOnly = true)
@@ -412,30 +375,19 @@ public class ReportService {
                 ? java.time.LocalDate.now().toString()
                 : dateStr;
 
-        // ── Join strategy ──────────────────────────────────────────────────────
-        // Each payment is matched to its CoopTransaction record via LATERAL join:
-        //   • IPN payments:    ct.coop_transaction_id = p.transaction_ref  (both = Co-op CBS ID)
-        //   • STK confirmed:   ct.coop_transaction_id = p.transaction_ref  (both = M-Pesa receipt)
-        //   • STK null ref:    ct.mpesa_ref           = p.internal_ref     (both = MessageReference UUID)
-        //
-        // This gives us:
-        //   1. Enriched sender_name resolved via phone-hash lookup (CoopEventNormalizer)
-        //   2. Fallback transaction_ref (M-Pesa receipt) when payments.transaction_ref is null
-        //   3. mpesa_ref from coop_transactions when payments.mpesa_ref (V82 column) is null
-        //
-        // Sender name priority: coop_transactions > members table > raw IPN value
-        // Raw IPN sender_name is accepted only if it doesn't look like an account reference
-        // (Co-op sometimes puts "AccountRef..." in CustMemoLine3 which gets mis-parsed as a name).
-        //
-        // Phone number is only shown when it has ≥9 digits — filters out short Co-op account
-        // numbers (e.g. "1051322") that are incorrectly extracted as phone numbers from IPN payloads.
+        // 🟢 THE FIX: Bulletproof extraction matching exactly on reference codes AND time!
         String sql = """
                 SELECT * FROM (
-                    -- ── M-Pesa and Co-op gateway transactions ──────────────────
                     SELECT
                         p.id,
-                        COALESCE(p.transaction_ref,  ct.coop_transaction_id) AS transaction_ref,
-                        COALESCE(p.mpesa_ref,         ct.mpesa_ref)          AS mpesa_ref,
+                        COALESCE(p.transaction_ref, ct.coop_transaction_id) AS transaction_ref,
+                        COALESCE(
+                            p.mpesa_ref,
+                            -- Intelligently pull the true M-Pesa receipt based on the event source
+                            CASE WHEN ct.source = 'STK_CALLBACK' THEN ct.coop_transaction_id
+                                 WHEN ct.source IN ('IPN', 'MINI_STATEMENT') THEN ct.mpesa_ref
+                                 ELSE ct.mpesa_ref END
+                        ) AS mpesa_ref,
                         p.internal_ref,
                         p.amount,
                         p.payment_method,
@@ -443,27 +395,37 @@ public class ReportService {
                         p.account_reference,
                         COALESCE(
                             ct.sender_name,
-                            CASE WHEN mem.id IS NOT NULL
-                                 THEN mem.first_name || ' ' || mem.last_name
-                                 ELSE NULL END,
-                            CASE WHEN p.sender_name IS NOT NULL
-                                      AND p.sender_name NOT LIKE 'AccountRef%'
-                                      AND LENGTH(p.sender_name) > 3
-                                 THEN p.sender_name ELSE NULL END
+                            CASE WHEN mem.id IS NOT NULL THEN mem.first_name || ' ' || mem.last_name ELSE NULL END,
+                            CASE WHEN p.sender_name IS NOT NULL AND p.sender_name NOT LIKE 'AccountRef%' AND LENGTH(p.sender_name) > 3 THEN p.sender_name ELSE NULL END
                         ) AS sender_name,
-                        CASE WHEN LENGTH(REGEXP_REPLACE(
-                                     COALESCE(p.sender_phone_number, ''),
-                                     '[^0-9]', '', 'g')) >= 9
-                             THEN p.sender_phone_number ELSE NULL END AS sender_phone_number,
+                        COALESCE(
+                            CASE WHEN LENGTH(REGEXP_REPLACE(ct.sender_phone, '[^0-9]', '', 'g')) >= 9 THEN ct.sender_phone ELSE NULL END,
+                            CASE WHEN LENGTH(REGEXP_REPLACE(p.sender_phone_number, '[^0-9]', '', 'g')) >= 9 THEN p.sender_phone_number ELSE NULL END
+                        ) AS sender_phone_number,
                         p.status,
                         p.created_at
                     FROM payments p
                     LEFT JOIN LATERAL (
                         SELECT *
                         FROM coop_transactions
-                        WHERE coop_transaction_id = p.transaction_ref
-                           OR mpesa_ref            = p.internal_ref
-                        ORDER BY created_at DESC
+                        WHERE (coop_transaction_id = p.transaction_ref AND p.transaction_ref IS NOT NULL)
+                           OR (mpesa_ref = p.internal_ref AND p.internal_ref IS NOT NULL)
+                           OR (mpesa_ref = p.transaction_ref AND p.transaction_ref IS NOT NULL)
+                           OR (coop_transaction_id = p.internal_ref AND p.internal_ref IS NOT NULL)
+                           -- The Ultimate Fallback: Match by EXACT Amount & Time Window
+                           OR (
+                               amount = p.amount 
+                               AND p.payment_method LIKE 'MPESA%'
+                               AND p.transaction_type = 'CR'
+                               AND ABS(EXTRACT(EPOCH FROM (created_at - p.created_at))) < 600 -- Within 10 mins
+                           )
+                        ORDER BY 
+                            CASE WHEN coop_transaction_id = p.transaction_ref THEN 1
+                                 WHEN mpesa_ref = p.internal_ref THEN 2
+                                 WHEN mpesa_ref = p.transaction_ref THEN 3
+                                 WHEN coop_transaction_id = p.internal_ref THEN 4
+                                 ELSE 5 END ASC,
+                            created_at DESC
                         LIMIT 1
                     ) ct ON true
                     LEFT JOIN members mem ON p.member_id = mem.id AND mem.is_deleted = false
@@ -472,7 +434,6 @@ public class ReportService {
 
                     UNION ALL
 
-                    -- ── Manual loan repayments (historical migrations) ──────────
                     SELECT
                         lr.id,
                         NULL                                                        AS transaction_ref,
@@ -481,7 +442,7 @@ public class ReportService {
                         lr.amount,
                         'MANUAL_ENTRY'                                              AS payment_method,
                         'LOAN_REPAYMENT'                                            AS payment_type,
-                        COALESCE(m.member_number, CAST(la.member_id AS varchar))   AS account_reference,
+                        COALESCE(m.member_number, CAST(la.member_id AS varchar))    AS account_reference,
                         COALESCE(u.first_name || ' ' || u.last_name, 'Manual Entry') AS sender_name,
                         NULL                                                        AS sender_phone_number,
                         lr.status,
