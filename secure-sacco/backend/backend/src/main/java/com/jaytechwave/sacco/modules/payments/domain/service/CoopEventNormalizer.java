@@ -1,6 +1,8 @@
 package com.jaytechwave.sacco.modules.payments.domain.service;
 
 import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
 import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransactionSource;
@@ -45,6 +47,7 @@ public class CoopEventNormalizer {
 
     private final CoopTransactionRepository coopTransactionRepository;
     private final UserRepository            userRepository;
+    private final MemberRepository          memberRepository;
     private final PiiSearchHashConverter    piiHashConverter;
 
     private static final DateTimeFormatter DT_FMT =
@@ -236,6 +239,15 @@ public class CoopEventNormalizer {
     /**
      * Enriches a transaction with member info by trying every possible phone format.
      * Sets senderName, memberId, and displayNarration on the transaction.
+     *
+     * <p>Two-tier lookup:
+     * <ol>
+     *   <li>Primary: {@code User.phoneNumberHash} WHERE {@code member_id IS NOT NULL}
+     *       (the fast path — covers all members created via the normal registration flow).</li>
+     *   <li>Fallback: {@code Member.phoneNumberHash} directly — catches cases where the
+     *       User record exists but its {@code phone_number_hash} column was not populated
+     *       (e.g. pre-V40 migrations, manual DB inserts, or historical data imports).</li>
+     * </ol>
      */
     private void enrichWithMember(CoopTransaction tx, String rawPhone) {
         if (rawPhone == null || rawPhone.isBlank()) {
@@ -248,7 +260,9 @@ public class CoopEventNormalizer {
             List<String> candidates = buildPhoneCandidates(rawPhone);
             for (String candidate : candidates) {
                 String hash = piiHashConverter.convertToDatabaseColumn(candidate);
-                // Use member-safe lookup — skips orphan accounts with no member_id
+
+                // ── Tier 1: User table ────────────────────────────────────────
+                // Skips orphan/duplicate user accounts that were never linked to a member.
                 Optional<User> found = userRepository.findFirstByPhoneNumberHashAndMemberIdIsNotNull(hash);
                 if (found.isPresent()) {
                     User user = found.get();
@@ -256,7 +270,22 @@ public class CoopEventNormalizer {
                     tx.setSenderName(name);
                     tx.setMemberId(user.getMember().getId());
                     tx.setDisplayNarration(name);
-                    log.info("CoopEventNormalizer: ✅ phone {} → member {} (matched format: {})",
+                    log.info("CoopEventNormalizer: ✅ phone {} → member {} via User (format: {})",
+                            rawPhone, name, candidate);
+                    return;
+                }
+
+                // ── Tier 2: Member table fallback ─────────────────────────────
+                // Handles cases where User.phone_number_hash was not populated but
+                // Member.phone_number_hash is correct (historical data, manual imports).
+                Optional<Member> foundMember = memberRepository.findByPhoneNumberHash(hash);
+                if (foundMember.isPresent()) {
+                    Member member = foundMember.get();
+                    String name = member.getFirstName() + " " + member.getLastName();
+                    tx.setSenderName(name);
+                    tx.setMemberId(member.getId());
+                    tx.setDisplayNarration(name);
+                    log.info("CoopEventNormalizer: ✅ phone {} → member {} via Member fallback (format: {})",
                             rawPhone, name, candidate);
                     return;
                 }
@@ -267,8 +296,43 @@ public class CoopEventNormalizer {
             log.warn("CoopEventNormalizer: member lookup failed for {}: {}", rawPhone, e.getMessage());
         }
 
-        // Not a member — show phone
+        // Not a member — show phone as display narration
         tx.setDisplayNarration(rawPhone);
+    }
+
+    /**
+     * Re-enriches all {@link CoopTransaction} records that have a phone number but
+     * no matched member ({@code memberId IS NULL}).
+     *
+     * <p>This handles two real-world scenarios:
+     * <ol>
+     *   <li>A member's payment arrived before they were registered in the system.</li>
+     *   <li>Phone format mismatch at original storage time prevented a match that would
+     *       now succeed (e.g. member registered with "0717..." after payment arrived as "254717...").</li>
+     * </ol>
+     *
+     * <p>Safe to call repeatedly — already-matched records are skipped by the repo query,
+     * and the idempotency check in {@link #normalizeMiniStatementEntry} prevents double-storing.
+     *
+     * @return number of transactions that were newly matched to a member
+     */
+    @Transactional
+    public int reEnrichAllUnmatched() {
+        List<CoopTransaction> unmatched =
+                coopTransactionRepository.findByMemberIdIsNullAndSenderPhoneIsNotNull();
+
+        int matched = 0;
+        for (CoopTransaction tx : unmatched) {
+            enrichWithMember(tx, tx.getSenderPhone());
+            if (tx.getMemberId() != null) {
+                coopTransactionRepository.save(tx);
+                matched++;
+            }
+        }
+
+        log.info("CoopEventNormalizer: ♻️ Re-enrichment complete — {}/{} transactions matched.",
+                matched, unmatched.size());
+        return matched;
     }
 
     /**

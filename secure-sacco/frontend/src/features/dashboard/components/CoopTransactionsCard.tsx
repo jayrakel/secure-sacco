@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
     RefreshCw, AlertCircle, ArrowDownLeft, ArrowUpRight,
-    ChevronDown, ChevronUp, Building2, Phone, UserCheck, UserX,
+    ChevronDown, ChevronUp, Building2, Phone, UserCheck, UserX, Link,
 } from 'lucide-react';
 import apiClient from '../../../shared/api/api-client';
 
@@ -35,6 +35,8 @@ export const CoopTransactionsCard: React.FC = () => {
     const [error, setError]             = useState<string | null>(null);
     const [expanded, setExpanded]       = useState(true);
     const [lastFetched, setLastFetched] = useState<Date | null>(null);
+    const [reEnriching, setReEnriching] = useState(false);
+    const [reEnrichMsg, setReEnrichMsg] = useState<string | null>(null);
 
     const fmt = (val: number | null | undefined) => {
         if (val == null) return '0.00';
@@ -76,6 +78,27 @@ export const CoopTransactionsCard: React.FC = () => {
         }
     }, []);
 
+    const handleReEnrich = useCallback(async () => {
+        setReEnriching(true);
+        setReEnrichMsg(null);
+        try {
+            const res = await apiClient.post<{ message: string; matched: number }>(
+                '/payments/coop/re-enrich'
+            );
+            setReEnrichMsg(res.data.message);
+            // Refresh the feed so newly matched names appear immediately
+            await fetchFeed();
+        } catch (e: unknown) {
+            const msg = (e as { response?: { data?: { error?: string } } })
+                ?.response?.data?.error ?? 'Re-match failed';
+            setReEnrichMsg(`Error: ${msg}`);
+        } finally {
+            setReEnriching(false);
+            // Clear the status message after 4 seconds
+            setTimeout(() => setReEnrichMsg(null), 4000);
+        }
+    }, [fetchFeed]);
+
     useEffect(() => { fetchFeed(); }, [fetchFeed]);
 
     const transactions = data?.transactions ?? [];
@@ -101,6 +124,15 @@ export const CoopTransactionsCard: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-1.5">
+                    {/* Re-match unmatched transactions */}
+                    <button
+                        onClick={handleReEnrich}
+                        disabled={reEnriching || loading}
+                        title="Re-match unmatched phone numbers to members"
+                        className="p-1.5 hover:bg-blue-50 rounded-lg transition text-slate-400 hover:text-blue-500 disabled:opacity-40"
+                    >
+                        <Link size={14} className={reEnriching ? 'animate-pulse' : ''} />
+                    </button>
                     <button onClick={fetchFeed} disabled={loading} title="Refresh"
                             className="p-1.5 hover:bg-slate-50 rounded-lg transition text-slate-400 disabled:opacity-40">
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -111,6 +143,17 @@ export const CoopTransactionsCard: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Re-enrich status message */}
+            {reEnrichMsg && (
+                <div className={`flex items-center gap-2 px-5 py-2.5 border-b text-xs
+                    ${reEnrichMsg.startsWith('Error')
+                        ? 'bg-rose-50 border-rose-100 text-rose-600'
+                        : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+                    <Link size={11} className="flex-shrink-0" />
+                    {reEnrichMsg}
+                </div>
+            )}
 
             {/* Error */}
             {error && (

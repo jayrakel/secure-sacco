@@ -44,6 +44,7 @@ public class CoopConnectController {
     private final CoopConnectService  coopConnectService;
     private final PaymentRepository   paymentRepository;
     private final CoopTransactionRepository coopTransactionRepository;
+    private final com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer coopEventNormalizer;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
@@ -338,6 +339,39 @@ public class CoopConnectController {
             return ResponseEntity.status(503).body(Map.of("error", e.getMessage()));
         }
     }
+    // ── Re-enrich unmatched transactions ─────────────────────────────────────
+
+    /**
+     * Scans all stored Co-op transactions that have a phone number but no matched member,
+     * and attempts to link them to a member using the current phone-hash lookup.
+     *
+     * <p>Call this when:
+     * <ul>
+     *   <li>New members are registered whose past payments are already stored.</li>
+     *   <li>Phone format issues previously prevented a match.</li>
+     *   <li>After a batch data import that added new member phone numbers.</li>
+     * </ul>
+     */
+    @Operation(summary = "Re-enrich unmatched Co-op transactions",
+            description = "Retroactively matches stored transactions to members based on phone number. " +
+                    "Safe to call multiple times — already-matched records are skipped.")
+    @PostMapping("/coop/re-enrich")
+    @PreAuthorize("hasAuthority('BANKING_READ')")
+    public ResponseEntity<?> reEnrichUnmatched() {
+        try {
+            int matched = coopEventNormalizer.reEnrichAllUnmatched();
+            return ResponseEntity.ok(Map.of(
+                    "message", matched > 0
+                            ? matched + " transaction(s) successfully matched to members."
+                            : "No new matches found. All transactions are up to date.",
+                    "matched", matched
+            ));
+        } catch (Exception e) {
+            log.error("Re-enrichment failed: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", "Re-enrichment failed: " + e.getMessage()));
+        }
+    }
+
     private String normalizePhone(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String digits = raw.replaceAll("[^0-9]", "");
