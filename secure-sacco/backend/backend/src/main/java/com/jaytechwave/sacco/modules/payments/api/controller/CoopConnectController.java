@@ -372,8 +372,11 @@ public class CoopConnectController {
             int credited = 0;
             for (com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction tx : toCreditSavings) {
                 try {
+                    java.time.LocalDateTime valueDate =
+                            tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
+
                     savingsService.processMpesaPaybillDeposit(
-                            tx.getMemberId(), tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone());
+                            tx.getMemberId(), tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
 
                     tx.setSavingsCredited(true);
                     tx.setSavingsCreditedAt(java.time.LocalDateTime.now());

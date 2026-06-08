@@ -63,8 +63,14 @@ public class SavingsPaymentListener {
             log.info("Savings Module: Paybill deposit for member={} mpesaRef={}", event.memberId(), mpesaRef);
 
             try {
+                // Use the original payment date from CoopTransaction so the GL entry and
+                // savings record reflect when the member actually paid, not when we processed it.
+                LocalDateTime valueDate = coopTransactionRepository.findByMpesaRef(mpesaRef)
+                        .map(ct -> ct.getValueDate() != null ? ct.getValueDate() : ct.getCreatedAt())
+                        .orElse(LocalDateTime.now());
+
                 savingsService.processMpesaPaybillDeposit(
-                        event.memberId(), event.amount(), mpesaRef, null);
+                        event.memberId(), event.amount(), mpesaRef, null, valueDate);
 
                 // Mark the corresponding CoopTransaction as credited
                 coopTransactionRepository.findByMpesaRef(mpesaRef).ifPresent(ct -> {

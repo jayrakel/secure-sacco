@@ -152,6 +152,16 @@ public class JournalEntryService {
 
     @Transactional
     public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference) {
+        return postSavingsTransaction(memberId, amount, type, channel, reference, java.time.LocalDate.now());
+    }
+
+    /**
+     * Date-aware overload — use this for paybill / mini-statement deposits where the
+     * transaction happened in the past. Passing the original {@code valueDate} ensures
+     * the GL entry is dated to the actual payment day, not the day reconciliation ran.
+     * This prevents false late-payment flags and incorrect penalty triggers.
+     */
+    public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference, java.time.LocalDate transactionDate) {
         String journalRef = "SAV-" + reference;
         Optional<JournalEntry> existingEntry = journalEntryRepository.findByReferenceNumber(journalRef);
         if (existingEntry.isPresent()) {
@@ -180,7 +190,7 @@ public class JournalEntryService {
                 .orElseThrow(() -> new IllegalStateException("System Account " + creditAccountCode + " not found"));
 
         JournalEntry entry = JournalEntry.builder()
-                .transactionDate(java.time.LocalDate.now())
+                .transactionDate(transactionDate)
                 .referenceNumber(journalRef)
                 .description("Savings " + type + " via " + channel + " for Member: " + memberId)
                 .status(JournalEntryStatus.POSTED)
@@ -194,7 +204,7 @@ public class JournalEntryService {
         ));
 
         JournalEntry savedEntry = journalEntryRepository.save(entry);
-        log.info("Posted Savings Journal Entry: {} with amount {}", journalRef, amount);
+        log.info("Posted Savings Journal Entry: {} dated {} with amount {}", journalRef, transactionDate, amount);
         return mapToResponse(savedEntry);
     }
 
