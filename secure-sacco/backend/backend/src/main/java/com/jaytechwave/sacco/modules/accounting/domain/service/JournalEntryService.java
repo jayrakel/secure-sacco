@@ -164,10 +164,12 @@ public class JournalEntryService {
 
         if ("DEPOSIT".equalsIgnoreCase(type)) {
             creditAccountCode = "2100";
-            debitAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000";
+            // Any MPESA variant (MPESA, MPESA_PAYBILL, MPESA_COOP_IPN) → M-Pesa Clearing (1001)
+            // Cash/other → Cash on Hand (1000)
+            debitAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1000";
         } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
-            debitAccountCode = "2100";
-            creditAccountCode = "MPESA".equalsIgnoreCase(channel) ? "1001" : "1000";
+            debitAccountCode  = "2100";
+            creditAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1000";
         } else {
             throw new IllegalArgumentException("Unsupported savings transaction type: " + type);
         }

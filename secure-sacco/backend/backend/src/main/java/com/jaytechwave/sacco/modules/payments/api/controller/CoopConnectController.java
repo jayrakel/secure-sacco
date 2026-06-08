@@ -45,6 +45,7 @@ public class CoopConnectController {
     private final PaymentRepository   paymentRepository;
     private final CoopTransactionRepository coopTransactionRepository;
     private final com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer coopEventNormalizer;
+    private final com.jaytechwave.sacco.modules.savings.domain.service.SavingsService savingsService;
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 
@@ -352,20 +353,46 @@ public class CoopConnectController {
      *   <li>After a batch data import that added new member phone numbers.</li>
      * </ul>
      */
-    @Operation(summary = "Re-enrich unmatched Co-op transactions",
-            description = "Retroactively matches stored transactions to members based on phone number. " +
-                    "Safe to call multiple times — already-matched records are skipped.")
+    @Operation(summary = "Re-enrich unmatched Co-op transactions + credit savings",
+            description = "Retroactively matches stored transactions to members, then credits savings " +
+                    "and posts GL entries for any matched CREDIT transactions not yet processed. " +
+                    "Safe to call multiple times — idempotent on mpesaRef.")
     @PostMapping("/coop/re-enrich")
     @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> reEnrichUnmatched() {
         try {
+            // Phase 1 — link unmatched transactions to members via phone hash lookup
             int matched = coopEventNormalizer.reEnrichAllUnmatched();
-            return ResponseEntity.ok(Map.of(
-                    "message", matched > 0
-                            ? matched + " transaction(s) successfully matched to members."
-                            : "No new matches found. All transactions are up to date.",
-                    "matched", matched
-            ));
+
+            // Phase 2 — credit savings + post GL for every CR transaction that has a member
+            // but was never credited (covers both newly matched and previously stuck records)
+            java.util.List<com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction> toCreditSavings =
+                    coopTransactionRepository.findBySavingsCreditedFalseAndTransactionTypeAndMemberIdIsNotNull("CR");
+
+            int credited = 0;
+            for (com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction tx : toCreditSavings) {
+                try {
+                    savingsService.processMpesaPaybillDeposit(
+                            tx.getMemberId(), tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone());
+
+                    tx.setSavingsCredited(true);
+                    tx.setSavingsCreditedAt(java.time.LocalDateTime.now());
+                    coopTransactionRepository.save(tx);
+                    credited++;
+                    log.info("Re-enrich: ✅ Savings credited — {} KES {} ref={}",
+                            tx.getSenderName(), tx.getAmount(), tx.getMpesaRef());
+
+                } catch (Exception e) {
+                    log.error("Re-enrich: savings credit FAILED ref={} — {}", tx.getMpesaRef(), e.getMessage(), e);
+                }
+            }
+
+            String msg = String.format(
+                    "%d transaction(s) matched to members. %d savings account(s) credited with GL entries.",
+                    matched, credited);
+
+            return ResponseEntity.ok(Map.of("message", msg, "matched", matched, "credited", credited));
+
         } catch (Exception e) {
             log.error("Re-enrichment failed: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of("error", "Re-enrichment failed: " + e.getMessage()));

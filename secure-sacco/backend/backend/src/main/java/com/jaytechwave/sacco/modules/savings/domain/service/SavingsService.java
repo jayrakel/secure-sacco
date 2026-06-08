@@ -151,7 +151,7 @@ public class SavingsService {
         savingsTransactionRepository.save(transaction);
 
         journalEntryService.postSavingsTransaction(
-                memberId, amount, "DEPOSIT", "MPESA_PAYBILL", ref
+                memberId, amount, "DEPOSIT", "MPESA", ref
         );
 
         securityAuditService.logEvent(
