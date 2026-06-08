@@ -21,6 +21,14 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     /** Secondary idempotency — same M-Pesa receipt = same payment regardless of Co-op's txId */
     boolean existsByMpesaRef(String mpesaRef);
 
+    /**
+     * Used by the re-enrich endpoint to detect CoopTransactions that belong to STK pushes.
+     * STK savings are handled by SavingsPaymentListener via the DEP- path, not the paybill path.
+     * Without this check, the re-enrich would double-credit savings for STK payments.
+     */
+    boolean existsByMpesaRefAndPaymentTypeAndStatus(String mpesaRef, String paymentType,
+                                                    com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus status);
+
     // Used by IPN matching — find pending STK payments by phone
     List<Payment> findBySenderPhoneNumberAndStatus(String senderPhoneNumber, PaymentStatus status);
 
