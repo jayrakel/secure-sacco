@@ -26,11 +26,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private final CoopConnectService      coopConnectService;
-    private final PaymentRepository       paymentRepository;
+    private final CoopConnectService       coopConnectService;
+    private final PaymentRepository        paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final SecurityAuditService    securityAuditService;
-    private final CoopEventNormalizer     coopEventNormalizer;
+    private final SecurityAuditService     securityAuditService;
+    private final CoopEventNormalizer      coopEventNormalizer;
 
     // ── STK Push initiation ───────────────────────────────────────────────────
 
@@ -80,7 +80,6 @@ public class PaymentService {
 
     @Transactional
     public void processStkCallback(String rawJson, StkCallbackPayload callback) {
-        // Run normalizer first to enrich the phone to member link
         Optional<CoopTransaction> coopTxOpt = coopEventNormalizer.normalizeStkCallback(callback, rawJson);
         String messageRef = callback.getMessageReference();
 
@@ -102,17 +101,10 @@ public class PaymentService {
         boolean success = "0".equals(callback.getMessageCode());
 
         if (success) {
-            // Set M-Pesa receipt as the main reference
             payment.setMpesaRef(callback.getTransactionId());
-            
-            // Enrich with correct member details if the normalizer successfully matched the phone
             if (coopTxOpt.isPresent()) {
-                if (coopTxOpt.get().getSenderName() != null) {
-                    payment.setSenderName(coopTxOpt.get().getSenderName());
-                }
-                if (coopTxOpt.get().getSenderPhone() != null) {
-                    payment.setSenderPhoneNumber(coopTxOpt.get().getSenderPhone());
-                }
+                if (coopTxOpt.get().getSenderName()  != null) payment.setSenderName(coopTxOpt.get().getSenderName());
+                if (coopTxOpt.get().getSenderPhone() != null) payment.setSenderPhoneNumber(coopTxOpt.get().getSenderPhone());
             }
             markCompleted(payment, callback.getTransactionId(), rawJson);
         } else {
@@ -148,32 +140,33 @@ public class PaymentService {
             return;
         }
 
-        // ── ENRICHMENT BLOCK ─────────────────────────────────────────────
-        // We run the normalizer first to extract the clean M-Pesa receipt, 
-        // the validated phone number, and the true member's name.
+        // ── ENRICHMENT BLOCK ──────────────────────────────────────────────────
+        // Normalizer runs first to resolve: clean M-Pesa receipt, validated phone,
+        // true sender name, and — critically — the matched member UUID.
         Optional<CoopTransaction> coopTxOpt = coopEventNormalizer.normalizeIpn(ipn, rawJson);
 
-        String phone      = extractPhone(ipn.getCustMemoLine1()); // Bank fallback
-        String senderName = extractSenderName(ipn.getCustMemoLine3()); // Bank fallback
+        String phone      = extractPhone(ipn.getCustMemoLine1());       // bank fallback
+        String senderName = extractSenderName(ipn.getCustMemoLine3()); // bank fallback
         String mpesaRef   = null;
 
         if (coopTxOpt.isPresent()) {
             CoopTransaction ctx = coopTxOpt.get();
             mpesaRef = ctx.getMpesaRef();
-            if (ctx.getSenderPhone() != null) phone = ctx.getSenderPhone();
-            if (ctx.getSenderName() != null) senderName = ctx.getSenderName();
+            if (ctx.getSenderPhone() != null) phone      = ctx.getSenderPhone();
+            if (ctx.getSenderName()  != null) senderName = ctx.getSenderName();
         } else {
-            // Fallback just in case normalizer hit a duplication block
             String narration = ipn.getNarration() != null ? ipn.getNarration() : "";
             String[] parts   = narration.split("~");
-            mpesaRef  = parts.length > 0 ? parts[0].trim() : txId;
+            mpesaRef = parts.length > 0 ? parts[0].trim() : txId;
         }
-        // ─────────────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────────────────
+
+        // Member resolved by the normalizer (null if phone not in system)
+        UUID resolvedMemberId = coopTxOpt.map(CoopTransaction::getMemberId).orElse(null);
 
         String txType = isCredit ? "CR" : "DR";
-
-        log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={} MpesaRef={}",
-                txType, amount, senderName, phone, ipn.getPaymentRef(), txId, mpesaRef);
+        log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={} MpesaRef={} MemberId={}",
+                txType, amount, senderName, phone, ipn.getPaymentRef(), txId, mpesaRef, resolvedMemberId);
 
         if (isCredit) {
             // ── Try to match to a pending STK push payment ─────────────────
@@ -189,31 +182,35 @@ public class PaymentService {
             }
 
             if (payment != null) {
+                // Confirmed STK push — member was already set when push was initiated.
+                // accountReference = "DEP-..." → SavingsPaymentListener handles GL.
                 payment.setTransactionRef(txId);
-                payment.setMpesaRef(mpesaRef); // Save Mpesa ref here!
+                payment.setMpesaRef(mpesaRef);
                 payment.setProviderMetadata(rawJson);
-                payment.setSenderName(senderName); // Replace with mapped member name!
+                payment.setSenderName(senderName);
                 payment.setTransactionType("CR");
                 markCompleted(payment, txId, rawJson);
             } else {
-                // New record — manual paybill payment
+                // New paybill deposit — no pre-existing pending STK.
                 payment = Payment.builder()
                         .transactionRef(txId)
                         .internalRef("IPN-" + txId)
-                        .mpesaRef(mpesaRef) // Save Mpesa ref here!
+                        .mpesaRef(mpesaRef)
+                        .memberId(resolvedMemberId)          // attach member if resolved
                         .amount(amount)
                         .paymentMethod("MPESA_COOP_IPN")
                         .paymentType("PAYBILL_DEPOSIT")
                         .transactionType("CR")
                         .senderPhoneNumber(phone)
-                        .senderName(senderName) // Mapped member name!
+                        .senderName(senderName)
                         .accountReference(ipn.getPaymentRef())
                         .status(PaymentStatus.COMPLETED)
                         .providerMetadata(rawJson)
                         .build();
 
                 paymentRepository.save(payment);
-                log.info("Co-op IPN: new CREDIT KES {} from {} saved.", amount, senderName);
+                log.info("Co-op IPN: new CREDIT KES {} from {} saved. MemberId={}",
+                        amount, senderName, resolvedMemberId);
 
                 securityAuditService.logEvent(
                         "IPN_PAYMENT_RECEIVED", "COOP_IPN",
@@ -221,8 +218,15 @@ public class PaymentService {
                                 + " (" + phone + "). TxId: " + txId
                 );
 
+                // Route to SavingsPaymentListener:
+                //   • Member resolved → "PAYBILL-{mpesaRef}" triggers savings credit + GL
+                //   • Member unknown  → raw paymentRef; no savings action (re-enrich later)
+                String eventAccountRef = resolvedMemberId != null
+                        ? "PAYBILL-" + mpesaRef
+                        : ipn.getPaymentRef();
+
                 eventPublisher.publishEvent(new PaymentCompletedEvent(
-                        payment.getId(), null, amount, ipn.getPaymentRef(), txId
+                        payment.getId(), resolvedMemberId, amount, eventAccountRef, txId
                 ));
             }
         } else {
