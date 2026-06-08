@@ -32,7 +32,27 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
             @Param("to")   LocalDateTime to,
             Pageable pageable);
 
-    /** Credits not yet applied to savings — for reconciliation job */
+    /**
+     * Credits not yet applied to savings — for reconciliation job.
+     * Excludes CoopTransactions where a matching STK_PUSH payment already exists,
+     * because those savings are handled by the DEP- listener path, not paybill path.
+     */
+    @Query(value = """
+            SELECT ct.* FROM coop_transactions ct
+            WHERE ct.savings_credited  = false
+              AND ct.transaction_type  = 'CR'
+              AND ct.member_id IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM payments p
+                  WHERE (p.mpesa_ref = ct.mpesa_ref OR p.transaction_ref = ct.mpesa_ref)
+                    AND p.payment_type = 'STK_PUSH'
+                    AND p.status = 'COMPLETED'
+              )
+            """, nativeQuery = true)
+    List<CoopTransaction> findUncreditedNonStkCredits();
+
+    /** @deprecated Use {@link #findUncreditedNonStkCredits()} — this version does not exclude STK payments */
+    @Deprecated
     List<CoopTransaction> findBySavingsCreditedFalseAndTransactionTypeAndMemberIdIsNotNull(
             String transactionType);
 

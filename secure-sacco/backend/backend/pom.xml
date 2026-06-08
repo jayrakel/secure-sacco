@@ -182,7 +182,23 @@
             <version>2.6.0</version>
         </dependency>
 
+        <!-- Africa's Talking SMS — phone OTP delivery (SAC-198) -->
+        <!-- Hosted on JitPack, not Maven Central -->
+        <dependency>
+            <groupId>com.github.AfricasTalkingLtd.africastalking-java</groupId>
+            <artifactId>core</artifactId>
+            <version>v3.5.3</version>
+        </dependency>
+
     </dependencies>
+
+    <!-- JitPack required for Africa's Talking Java SDK -->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>

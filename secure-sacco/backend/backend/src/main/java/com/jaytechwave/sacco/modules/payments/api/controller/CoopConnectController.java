@@ -361,13 +361,35 @@ public class CoopConnectController {
     @PreAuthorize("hasAuthority('BANKING_READ')")
     public ResponseEntity<?> reEnrichUnmatched() {
         try {
-            // Phase 1 — link unmatched transactions to members via phone hash lookup
+            // Phase 1 — link unmatched CoopTransactions to members via phone hash lookup
             int matched = coopEventNormalizer.reEnrichAllUnmatched();
 
-            // Phase 2 — credit savings + post GL for every CR transaction that has a member
-            // but was never credited (covers both newly matched and previously stuck records)
-            java.util.List<com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction> toCreditSavings =
+            // Phase 2a — STK payments: mark savings_credited = true WITHOUT calling
+            // processMpesaPaybillDeposit. Their savings were already posted by
+            // SavingsPaymentListener via the DEP- route when the STK was confirmed.
+            // Skipping this caused the June 2026 production double-credit incident where
+            // calling processMpesaPaybillDeposit on STK CoopTransactions doubled savings.
+            java.util.List<com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction> allUncredited =
                     coopTransactionRepository.findBySavingsCreditedFalseAndTransactionTypeAndMemberIdIsNotNull("CR");
+
+            int stkAcknowledged = 0;
+            for (com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction tx : allUncredited) {
+                boolean isStkPayment = paymentRepository.existsByMpesaRefAndPaymentTypeAndStatus(
+                        tx.getMpesaRef(), "STK_PUSH",
+                        com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus.COMPLETED);
+                if (isStkPayment) {
+                    tx.setSavingsCredited(true);
+                    tx.setSavingsCreditedAt(java.time.LocalDateTime.now());
+                    coopTransactionRepository.save(tx);
+                    stkAcknowledged++;
+                    log.info("Re-enrich: 🔒 STK acknowledged (already credited via DEP- path) ref={}", tx.getMpesaRef());
+                }
+            }
+
+            // Phase 2b — genuine paybill deposits only: CoopTransactions with no matching
+            // STK_PUSH payment. These are actual paybill payments that were never credited.
+            java.util.List<com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction> toCreditSavings =
+                    coopTransactionRepository.findUncreditedNonStkCredits();
 
             int credited = 0;
             for (com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction tx : toCreditSavings) {
@@ -382,7 +404,7 @@ public class CoopConnectController {
                     tx.setSavingsCreditedAt(java.time.LocalDateTime.now());
                     coopTransactionRepository.save(tx);
                     credited++;
-                    log.info("Re-enrich: ✅ Savings credited — {} KES {} ref={}",
+                    log.info("Re-enrich: ✅ Paybill savings credited — {} KES {} ref={}",
                             tx.getSenderName(), tx.getAmount(), tx.getMpesaRef());
 
                 } catch (Exception e) {
@@ -391,10 +413,14 @@ public class CoopConnectController {
             }
 
             String msg = String.format(
-                    "%d transaction(s) matched to members. %d savings account(s) credited with GL entries.",
-                    matched, credited);
+                    "%d transaction(s) matched to members. %d paybill savings credited. %d STK savings acknowledged.",
+                    matched, credited, stkAcknowledged);
 
-            return ResponseEntity.ok(Map.of("message", msg, "matched", matched, "credited", credited));
+            return ResponseEntity.ok(Map.of(
+                    "message", msg,
+                    "matched", matched,
+                    "credited", credited,
+                    "stkAcknowledged", stkAcknowledged));
 
         } catch (Exception e) {
             log.error("Re-enrichment failed: {}", e.getMessage(), e);
