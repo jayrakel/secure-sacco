@@ -2,7 +2,7 @@ package com.jaytechwave.sacco.modules.core.notifications;
 
 import com.africastalking.AfricasTalking;
 import com.africastalking.SmsService;
-import com.africastalking.models.sms.Recipient;
+import com.africastalking.sms.Recipient;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,8 +92,8 @@ public class SmsNotificationService {
         try {
             List<Recipient> recipients = smsService.send(
                     message,
-                    new String[]{normalized},
                     senderId,   // null = default short code; set AT_SENDER_ID for custom sender
+                    new String[]{normalized},
                     false       // not premium / subscription
             );
 
