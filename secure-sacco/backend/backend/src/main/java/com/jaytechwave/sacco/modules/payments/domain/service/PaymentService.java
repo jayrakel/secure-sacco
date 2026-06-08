@@ -159,21 +159,21 @@ public class PaymentService {
             String[] parts   = narration.split("~");
             mpesaRef = parts.length > 0 ? parts[0].trim() : txId;
         }
+        // ─────────────────────────────────────────────────────────────────────
 
-        // Secondary idempotency: Co-op fires an IPN for EVERY credit, including ones
+        // Member resolved by the normalizer (null if phone not in system)
+        UUID resolvedMemberId = coopTxOpt.map(CoopTransaction::getMemberId).orElse(null);
+
+        // Secondary idempotency: Co-op fires an IPN for every credit, including ones
         // already confirmed as STK pushes. The primary check (findByTransactionRef) only
-        // catches when the IPN's txId matches the payment's transactionRef — but for a
-        // confirmed STK the transactionRef is the M-Pesa receipt while the IPN uses a
-        // Co-op CBS transaction ID. The mpesaRef check catches the overlap.
+        // catches when the IPN's txId matches the stored transactionRef — but a confirmed
+        // STK stores the M-Pesa receipt as transactionRef while the IPN uses a Co-op CBS ID.
+        // This guard catches the overlap so the same payment never creates two records.
         if (mpesaRef != null && paymentRepository.existsByMpesaRef(mpesaRef)) {
             log.info("Co-op IPN: payment with mpesaRef={} already exists — skipping duplicate IPN (txId={})",
                     mpesaRef, txId);
             return;
         }
-        // ─────────────────────────────────────────────────────────────────────
-
-        // Member resolved by the normalizer (null if phone not in system)
-        UUID resolvedMemberId = coopTxOpt.map(CoopTransaction::getMemberId).orElse(null);
 
         String txType = isCredit ? "CR" : "DR";
         log.info("Co-op IPN: {} KES {} — {} ({}). PaymentRef={} TxId={} MpesaRef={} MemberId={}",
@@ -193,10 +193,10 @@ public class PaymentService {
             }
 
             if (payment != null) {
-                // Confirmed STK push — member was already set when push was initiated.
+                // Confirmed STK push — member already set at initiation time.
                 // accountReference = "DEP-..." → SavingsPaymentListener handles GL.
-                // Mark the CoopTransaction (created by normalizeIpn above) as savings-credited
-                // so the re-enrich endpoint doesn't try to credit it again via the paybill path.
+                // Mark the CoopTransaction created by normalizeIpn as savings-credited so
+                // the re-enrich endpoint doesn't double-credit via the PAYBILL- path.
                 coopTxOpt.ifPresent(ct -> coopEventNormalizer.markSavingsCredited(ct.getId()));
 
                 payment.setTransactionRef(txId);

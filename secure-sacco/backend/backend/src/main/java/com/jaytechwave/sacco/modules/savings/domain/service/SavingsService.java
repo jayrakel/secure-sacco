@@ -107,17 +107,13 @@ public class SavingsService {
     @Transactional
     public void processMpesaPaybillDeposit(UUID memberId, java.math.BigDecimal amount,
                                            String mpesaRef, String senderPhone) {
-        // Fallback to now when no original value date is available (e.g. re-enrich for very old records)
         processMpesaPaybillDeposit(memberId, amount, mpesaRef, senderPhone, java.time.LocalDateTime.now());
     }
 
     /**
      * Value-date–aware overload. Always prefer this when the original payment date is known.
-     *
-     * <p>Passing {@code valueDate} from {@code CoopTransaction.valueDate} ensures the savings
-     * transaction and its GL journal entry are dated to the <em>actual payment day</em>, not the
-     * day reconciliation or polling ran. This prevents false late-payment flags and incorrect
-     * penalty triggers when paybill deposits are processed hours or days after the fact.
+     * Uses {@code valueDate} from {@code CoopTransaction} so the savings record and GL entry
+     * are dated to the actual payment day — not the day reconciliation ran.
      */
     public void processMpesaPaybillDeposit(UUID memberId, java.math.BigDecimal amount,
                                            String mpesaRef, String senderPhone,
@@ -165,8 +161,6 @@ public class SavingsService {
 
         savingsTransactionRepository.save(transaction);
 
-        // Use the original payment date for the GL entry so reporting and penalty
-        // calculations reflect when the member actually paid, not when we processed it.
         journalEntryService.postSavingsTransaction(memberId, amount, "DEPOSIT", "MPESA", ref, txDate);
 
         securityAuditService.logEvent(
@@ -176,7 +170,8 @@ public class SavingsService {
                         amount, senderPhone, ref, txDate)
         );
 
-        log.info("Auto-credited KES {} to member {} via paybill. Ref: {} dated {}", amount, member.getMemberNumber(), ref, txDate);
+        log.info("Auto-credited KES {} to member {} via paybill. Ref: {} dated {}",
+                amount, member.getMemberNumber(), ref, txDate);
     }
 
     @Transactional

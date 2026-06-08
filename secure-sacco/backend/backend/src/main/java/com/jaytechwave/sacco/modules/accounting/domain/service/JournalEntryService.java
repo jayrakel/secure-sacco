@@ -156,10 +156,9 @@ public class JournalEntryService {
     }
 
     /**
-     * Date-aware overload — use this for paybill / mini-statement deposits where the
-     * transaction happened in the past. Passing the original {@code valueDate} ensures
-     * the GL entry is dated to the actual payment day, not the day reconciliation ran.
-     * This prevents false late-payment flags and incorrect penalty triggers.
+     * Date-aware overload — always use this for paybill / mini-statement deposits.
+     * Passing {@code transactionDate} from {@code CoopTransaction.valueDate} ensures the
+     * GL entry is dated to the actual payment day, preventing false late-payment penalties.
      */
     public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference, java.time.LocalDate transactionDate) {
         String journalRef = "SAV-" + reference;
@@ -174,8 +173,6 @@ public class JournalEntryService {
 
         if ("DEPOSIT".equalsIgnoreCase(type)) {
             creditAccountCode = "2100";
-            // Any MPESA variant (MPESA, MPESA_PAYBILL, MPESA_COOP_IPN) → M-Pesa Clearing (1001)
-            // Cash/other → Cash on Hand (1000)
             debitAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1000";
         } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
             debitAccountCode  = "2100";
