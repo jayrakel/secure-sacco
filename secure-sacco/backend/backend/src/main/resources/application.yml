@@ -109,6 +109,13 @@ app:
     migration:
       enabled: true
 
+# Africa's Talking SMS gateway — phone OTP delivery (SAC-198)
+africastalking:
+  username:  ${AT_USERNAME:sandbox}
+  api-key:   ${AT_API_KEY:}
+  sender-id: ${AT_SENDER_ID:}
+  sandbox:   ${AT_SANDBOX:true}
+
 # --- SECURITY & CORS BASELINE (PROD DEFAULTS) ---
 sacco:
   security:

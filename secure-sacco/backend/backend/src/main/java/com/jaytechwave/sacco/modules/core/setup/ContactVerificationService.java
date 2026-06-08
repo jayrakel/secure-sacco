@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.core.setup;
 
 import com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService;
+import com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService;
 import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.VerificationToken;
@@ -34,6 +35,7 @@ public class ContactVerificationService {
     private final UserRepository              userRepository;
     private final VerificationTokenRepository tokenRepository;
     private final EmailNotificationService    emailNotificationService;
+    private final SmsNotificationService      smsNotificationService;
     private final SaccoSettingsService        settingsService;
 
     @Value("${app.frontend-url}")
@@ -44,10 +46,12 @@ public class ContactVerificationService {
             UserRepository userRepository,
             VerificationTokenRepository tokenRepository,
             EmailNotificationService emailNotificationService,
+            SmsNotificationService smsNotificationService,
             @Lazy SaccoSettingsService settingsService) {
         this.userRepository           = userRepository;
         this.tokenRepository          = tokenRepository;
         this.emailNotificationService = emailNotificationService;
+        this.smsNotificationService   = smsNotificationService;
         this.settingsService          = settingsService;
     }
 
@@ -102,9 +106,29 @@ public class ContactVerificationService {
 
     // ── Phone / OTP verification ──────────────────────────────────────────────
 
+    @Transactional
     public void sendPhoneOtp(String email) {
-        // Phone verification disabled — Africa's Talking SMS not yet configured.
-        log.info("[SMS-DISABLED] Phone verification skipped for {} — configure Africa's Talking to enable.", email);
+        User user = requireUser(email);
+        if (user.isPhoneVerified()) return;
+
+        if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) {
+            throw new IllegalStateException("No phone number on file. Please update your profile first.");
+        }
+
+        enforceRateLimit(user, VerificationTokenType.PHONE_VERIFICATION);
+
+        // Generate 6-digit OTP and store as a VerificationToken
+        String otp = String.format("%06d", (int)(Math.random() * 1_000_000));
+        tokenRepository.save(VerificationToken.builder()
+                .user(user)
+                .token(otp)
+                .tokenType(VerificationTokenType.PHONE_VERIFICATION)
+                .expiryDate(ZonedDateTime.now().plusMinutes(DEFAULT_OTP_EXPIRY_MINUTES))
+                .build());
+
+        // Send via Africa's Talking (async — does not block the HTTP request)
+        smsNotificationService.sendOtp(user.getPhoneNumber(), otp);
+        log.info("Phone OTP dispatched to {} for {}", user.getPhoneNumber(), email);
     }
 
     @Transactional
