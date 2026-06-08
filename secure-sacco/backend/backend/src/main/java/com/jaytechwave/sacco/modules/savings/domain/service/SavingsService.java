@@ -107,6 +107,17 @@ public class SavingsService {
     @Transactional
     public void processMpesaPaybillDeposit(UUID memberId, java.math.BigDecimal amount,
                                            String mpesaRef, String senderPhone) {
+        processMpesaPaybillDeposit(memberId, amount, mpesaRef, senderPhone, java.time.LocalDateTime.now());
+    }
+
+    /**
+     * Value-date–aware overload. Always prefer this when the original payment date is known.
+     * Uses {@code valueDate} from {@code CoopTransaction} so the savings record and GL entry
+     * are dated to the actual payment day — not the day reconciliation ran.
+     */
+    public void processMpesaPaybillDeposit(UUID memberId, java.math.BigDecimal amount,
+                                           String mpesaRef, String senderPhone,
+                                           java.time.LocalDateTime valueDate) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found: " + memberId));
 
@@ -129,14 +140,14 @@ public class SavingsService {
             return;
         }
 
-        // Use M-Pesa reference directly as the transaction reference
         String ref = mpesaRef != null ? mpesaRef : "PAYBILL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
-        // Prevent double-posting — idempotent check
         if (savingsTransactionRepository.existsByReference(ref)) {
             log.info("processMpesaPaybillDeposit: transaction {} already posted — skipping duplicate", ref);
             return;
         }
+
+        java.time.LocalDate txDate = (valueDate != null ? valueDate : java.time.LocalDateTime.now()).toLocalDate();
 
         SavingsTransaction transaction = SavingsTransaction.builder()
                 .savingsAccountId(account.getId())
@@ -145,23 +156,22 @@ public class SavingsService {
                 .amount(amount)
                 .reference(ref)
                 .status(TransactionStatus.POSTED)
-                .postedAt(java.time.LocalDateTime.now())
+                .postedAt(valueDate != null ? valueDate : java.time.LocalDateTime.now())
                 .build();
 
         savingsTransactionRepository.save(transaction);
 
-        journalEntryService.postSavingsTransaction(
-                memberId, amount, "DEPOSIT", "MPESA", ref
-        );
+        journalEntryService.postSavingsTransaction(memberId, amount, "DEPOSIT", "MPESA", ref, txDate);
 
         securityAuditService.logEvent(
                 "SAVINGS_MPESA_PAYBILL_DEPOSIT",
                 member.getMemberNumber(),
-                String.format("M-Pesa paybill deposit of KES %s from %s auto-credited. Ref: %s",
-                        amount, senderPhone, ref)
+                String.format("M-Pesa paybill deposit of KES %s from %s auto-credited. Ref: %s dated %s",
+                        amount, senderPhone, ref, txDate)
         );
 
-        log.info("Auto-credited KES {} to member {} via paybill. Ref: {}", amount, member.getMemberNumber(), ref);
+        log.info("Auto-credited KES {} to member {} via paybill. Ref: {} dated {}",
+                amount, member.getMemberNumber(), ref, txDate);
     }
 
     @Transactional

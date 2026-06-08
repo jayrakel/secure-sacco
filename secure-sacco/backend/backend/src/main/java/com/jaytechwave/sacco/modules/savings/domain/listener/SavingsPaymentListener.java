@@ -63,8 +63,12 @@ public class SavingsPaymentListener {
             log.info("Savings Module: Paybill deposit for member={} mpesaRef={}", event.memberId(), mpesaRef);
 
             try {
+                LocalDateTime valueDate = coopTransactionRepository.findByMpesaRef(mpesaRef)
+                        .map(ct -> ct.getValueDate() != null ? ct.getValueDate() : ct.getCreatedAt())
+                        .orElse(LocalDateTime.now());
+
                 savingsService.processMpesaPaybillDeposit(
-                        event.memberId(), event.amount(), mpesaRef, null);
+                        event.memberId(), event.amount(), mpesaRef, null, valueDate);
 
                 // Mark the corresponding CoopTransaction as credited
                 coopTransactionRepository.findByMpesaRef(mpesaRef).ifPresent(ct -> {

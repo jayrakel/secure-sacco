@@ -18,6 +18,9 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByInternalRef(String internalRef);
     Optional<Payment> findByTransactionRef(String transactionRef);
 
+    /** Secondary idempotency — same M-Pesa receipt = same payment regardless of Co-op's txId */
+    boolean existsByMpesaRef(String mpesaRef);
+
     // Used by IPN matching — find pending STK payments by phone
     List<Payment> findBySenderPhoneNumberAndStatus(String senderPhoneNumber, PaymentStatus status);
 

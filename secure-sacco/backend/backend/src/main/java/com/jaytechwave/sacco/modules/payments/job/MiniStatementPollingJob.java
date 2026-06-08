@@ -71,11 +71,15 @@ public class MiniStatementPollingJob {
                         && tx.getMemberId() != null
                         && !tx.isSavingsCredited()) {
                     try {
+                        LocalDateTime valueDate =
+                                tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
+
                         savingsService.processMpesaPaybillDeposit(
                                 tx.getMemberId(),
                                 tx.getAmount(),
                                 tx.getMpesaRef(),
-                                tx.getSenderPhone());
+                                tx.getSenderPhone(),
+                                valueDate);
 
                         tx.setSavingsCredited(true);
                         tx.setSavingsCreditedAt(LocalDateTime.now());

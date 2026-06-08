@@ -152,6 +152,15 @@ public class JournalEntryService {
 
     @Transactional
     public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference) {
+        return postSavingsTransaction(memberId, amount, type, channel, reference, java.time.LocalDate.now());
+    }
+
+    /**
+     * Date-aware overload — always use this for paybill / mini-statement deposits.
+     * Passing {@code transactionDate} from {@code CoopTransaction.valueDate} ensures the
+     * GL entry is dated to the actual payment day, preventing false late-payment penalties.
+     */
+    public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference, java.time.LocalDate transactionDate) {
         String journalRef = "SAV-" + reference;
         Optional<JournalEntry> existingEntry = journalEntryRepository.findByReferenceNumber(journalRef);
         if (existingEntry.isPresent()) {
@@ -164,8 +173,6 @@ public class JournalEntryService {
 
         if ("DEPOSIT".equalsIgnoreCase(type)) {
             creditAccountCode = "2100";
-            // Any MPESA variant (MPESA, MPESA_PAYBILL, MPESA_COOP_IPN) → M-Pesa Clearing (1001)
-            // Cash/other → Cash on Hand (1000)
             debitAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1000";
         } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
             debitAccountCode  = "2100";
@@ -180,7 +187,7 @@ public class JournalEntryService {
                 .orElseThrow(() -> new IllegalStateException("System Account " + creditAccountCode + " not found"));
 
         JournalEntry entry = JournalEntry.builder()
-                .transactionDate(java.time.LocalDate.now())
+                .transactionDate(transactionDate)
                 .referenceNumber(journalRef)
                 .description("Savings " + type + " via " + channel + " for Member: " + memberId)
                 .status(JournalEntryStatus.POSTED)
@@ -194,7 +201,7 @@ public class JournalEntryService {
         ));
 
         JournalEntry savedEntry = journalEntryRepository.save(entry);
-        log.info("Posted Savings Journal Entry: {} with amount {}", journalRef, amount);
+        log.info("Posted Savings Journal Entry: {} dated {} with amount {}", journalRef, transactionDate, amount);
         return mapToResponse(savedEntry);
     }
 

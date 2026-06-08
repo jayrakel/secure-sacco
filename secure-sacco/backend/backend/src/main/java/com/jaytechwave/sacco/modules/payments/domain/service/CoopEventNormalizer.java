@@ -317,6 +317,15 @@ public class CoopEventNormalizer {
      * @return number of transactions that were newly matched to a member
      */
     @Transactional
+    public void markSavingsCredited(java.util.UUID coopTransactionId) {
+        coopTransactionRepository.findById(coopTransactionId).ifPresent(ct -> {
+            ct.setSavingsCredited(true);
+            ct.setSavingsCreditedAt(java.time.LocalDateTime.now());
+            coopTransactionRepository.save(ct);
+        });
+    }
+
+    @Transactional
     public int reEnrichAllUnmatched() {
         List<CoopTransaction> unmatched =
                 coopTransactionRepository.findByMemberIdIsNullAndSenderPhoneIsNotNull();
