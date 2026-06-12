@@ -39,8 +39,8 @@ public interface SavingsTransactionRepository extends JpaRepository<SavingsTrans
         WHERE t.savingsAccountId = :accountId
           AND t.type = 'DEPOSIT'
           AND t.status = 'POSTED'
-          AND t.postedAt >= :from
-          AND t.postedAt < :to
+          AND t.valueDate >= :from
+          AND t.valueDate < :to
         """)
     BigDecimal sumDepositsBetween(
             @Param("accountId") UUID accountId,
