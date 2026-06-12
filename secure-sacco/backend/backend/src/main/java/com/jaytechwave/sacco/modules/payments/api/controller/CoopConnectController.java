@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkReq
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
+import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
 import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
@@ -308,9 +309,17 @@ public class CoopConnectController {
             @RequestParam(defaultValue = "20") int size) {
         try {
             var pageable = org.springframework.data.domain.PageRequest.of(page, size);
-            var txns = coopTransactionRepository.findAllByOrderByValueDateDesc(pageable);
+            var txns = coopTransactionRepository.findFeedDeduped(pageable);
 
-            var items = txns.getContent().stream().map(t -> {
+            var items = txns.getContent().stream()
+                    // Final sort: latest first, falling back to createdAt for null valueDates
+                    .sorted(java.util.Comparator.comparing(
+                            (CoopTransaction t) -> t.getValueDate() != null
+                                    ? t.getValueDate()
+                                    : t.getCreatedAt(),
+                            java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())
+                    ))
+                    .map(t -> {
                 Map<String, Object> tx = new LinkedHashMap<>();
                 tx.put("id",               t.getId());
                 tx.put("mpesaRef",         t.getMpesaRef());

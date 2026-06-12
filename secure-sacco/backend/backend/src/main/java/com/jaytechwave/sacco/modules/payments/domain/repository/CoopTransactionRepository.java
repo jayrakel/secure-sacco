@@ -20,8 +20,46 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
 
     Optional<CoopTransaction> findByMpesaRef(String mpesaRef);
 
+    /**
+     * Checks for a Co-op transaction whose ID starts with the given prefix.
+     *
+     * Needed because IPN and mini-statement use different Co-op transaction ID
+     * formats for the same underlying transaction:
+     *   IPN:            S28698461_09062026_2  (with date suffix)
+     *   Mini-statement: S28698461             (without suffix)
+     *
+     * Using startsWith catches both formats so duplicate mini-statement entries
+     * are not created when the IPN already stored the transaction.
+     */
+    @Query("SELECT COUNT(ct) > 0 FROM CoopTransaction ct WHERE ct.coopTransactionId LIKE :prefix%")
+    boolean existsByCoopTransactionIdStartingWith(@Param("prefix") String prefix);
+
     /** All transactions newest first — for the dashboard card */
     Page<CoopTransaction> findAllByOrderByValueDateDesc(Pageable pageable);
+
+    /**
+     * Feed query for the dashboard Co-op transactions card.
+     *
+     * Ordering: COALESCE(value_date, created_at) DESC so transactions with no
+     * value_date (e.g. POS agent payments) still sort correctly by when they arrived.
+     *
+     * Deduplication: selects DISTINCT ON (mpesa_ref) keeping the IPN record when
+     * both an IPN and a mini-statement record exist for the same mpesa_ref (IPN has
+     * sender_phone; mini-statement does not). Falls back to created_at for records
+     * with no mpesa_ref (rare edge case).
+     */
+    @Query(value = """
+            SELECT DISTINCT ON (COALESCE(ct.mpesa_ref, ct.id::text))
+                ct.*
+            FROM coop_transactions ct
+            ORDER BY
+                COALESCE(ct.mpesa_ref, ct.id::text),
+                ct.source = 'IPN' DESC,
+                COALESCE(ct.value_date, ct.created_at) DESC
+            """,
+            countQuery = "SELECT COUNT(DISTINCT COALESCE(mpesa_ref, id::text)) FROM coop_transactions",
+            nativeQuery = true)
+    Page<CoopTransaction> findFeedDeduped(Pageable pageable);
 
     /** Filter by date range */
     @Query("SELECT t FROM CoopTransaction t " +
