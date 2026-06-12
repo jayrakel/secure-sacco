@@ -97,9 +97,12 @@ public class PendingPaymentPollingJob {
         // MessageCode "0" = transaction completed successfully
         if ("0".equals(status.getMessageCode())) {
 
-            // Set the real M-Pesa receipt number as transactionRef (e.g. UETA45S0OJ)
+            // Set the real M-Pesa receipt number on BOTH transactionRef and mpesaRef.
+            // mpesaRef is what processCoopIpn checks via existsByMpesaRef() to avoid
+            // double-crediting when the Co-op IPN arrives for this same transaction.
             String mpesaRef = status.getTransactionId();
             payment.setTransactionRef(mpesaRef);
+            payment.setMpesaRef(mpesaRef);   // ← was missing; caused IPN guard to always miss
 
             // Set sender name = the SACCO member's full name (account holder)
             // NOT the M-Pesa phone owner — one can pay using someone else's phone
