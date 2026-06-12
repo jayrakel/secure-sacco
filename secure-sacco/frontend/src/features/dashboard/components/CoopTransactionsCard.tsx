@@ -101,24 +101,7 @@ export const CoopTransactionsCard: React.FC = () => {
 
     useEffect(() => { fetchFeed(); }, [fetchFeed]);
 
-    const rawTransactions = data?.transactions ?? [];
-
-    // Deduplicate by mpesaRef on the frontend as a safety net
-    // (backend already deduplicates, but this catches any edge cases)
-    const seen = new Set<string>();
-    const transactions = rawTransactions
-        .filter(t => {
-            const key = t.mpesaRef ?? t.id;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-        })
-        // Sort latest first — valueDate preferred, createdAt as fallback
-        .sort((a, b) => {
-            const dateA = a.valueDate ? new Date(a.valueDate).getTime() : 0;
-            const dateB = b.valueDate ? new Date(b.valueDate).getTime() : 0;
-            return dateB - dateA;
-        });
+    const transactions = data?.transactions ?? [];
     const credits  = transactions.filter(t => t.transactionType === 'CR');
     const debits   = transactions.filter(t => t.transactionType === 'DR');
     const totalIn  = credits.reduce((s, t) => s + (t.amount || 0), 0);

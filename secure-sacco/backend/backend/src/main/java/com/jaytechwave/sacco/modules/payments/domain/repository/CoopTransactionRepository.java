@@ -40,34 +40,18 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
     /**
      * Feed query for the dashboard Co-op transactions card.
      *
-     * Deduplication: excludes mini-statement records that have an IPN duplicate
-     * for the same mpesa_ref. Keeps the IPN record (has sender_phone) and discards
-     * the mini-statement copy. For records with no duplicate, returns them as-is.
-     *
-     * Ordering: COALESCE(value_date, created_at) DESC — latest transaction first.
-     * POS agent payments with no value_date fall back to created_at so they sort
-     * correctly instead of appearing at the bottom.
+     * Shows mini-statement transactions only — the authoritative bank-side record.
+     * No duplicates possible since each bank transaction appears once in the
+     * mini-statement. Ordered by created_at DESC so the latest processed
+     * transaction always appears first.
      */
     @Query(value = """
             SELECT ct.*
             FROM coop_transactions ct
-            WHERE NOT EXISTS (
-                SELECT 1 FROM coop_transactions ct2
-                WHERE COALESCE(ct2.mpesa_ref, ct2.id::text) = COALESCE(ct.mpesa_ref, ct.id::text)
-                  AND ct2.source = 'IPN'
-                  AND ct2.id != ct.id
-            )
-            ORDER BY COALESCE(ct.value_date, ct.created_at) DESC
+            WHERE ct.source = 'MINI_STATEMENT'
+            ORDER BY ct.created_at DESC
             """,
-            countQuery = """
-            SELECT COUNT(*) FROM coop_transactions ct
-            WHERE NOT EXISTS (
-                SELECT 1 FROM coop_transactions ct2
-                WHERE COALESCE(ct2.mpesa_ref, ct2.id::text) = COALESCE(ct.mpesa_ref, ct.id::text)
-                  AND ct2.source = 'IPN'
-                  AND ct2.id != ct.id
-            )
-            """,
+            countQuery = "SELECT COUNT(*) FROM coop_transactions WHERE source = 'MINI_STATEMENT'",
             nativeQuery = true)
     Page<CoopTransaction> findFeedDeduped(Pageable pageable);
 
