@@ -61,6 +61,12 @@ public class SavingsPaymentListener {
                     }
 
                     // Normal path: IPN hasn't credited yet — post the PENDING savings tx
+                    // SAC-242: update reference from internal DEP-{uuid} to the actual
+                    // M-Pesa ref so the POSTED savings transaction is traceable to the
+                    // bank statement and the member's phone confirmation.
+                    if (mpesaRef != null) {
+                        tx.setReference(mpesaRef);
+                    }
                     tx.setStatus(TransactionStatus.POSTED);
                     tx.setPostedAt(LocalDateTime.now());
                     savingsTransactionRepository.save(tx);
