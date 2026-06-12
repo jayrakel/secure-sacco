@@ -161,7 +161,11 @@ public class JournalEntryService {
      * GL entry is dated to the actual payment day, preventing false late-payment penalties.
      */
     public JournalEntryResponse postSavingsTransaction(UUID memberId, BigDecimal amount, String type, String channel, String reference, java.time.LocalDate transactionDate) {
-        String journalRef = "SAV-" + reference;
+        // SAC-242: use raw reference as the GL key — no SAV- prefix.
+        // The reference IS the M-Pesa ref (e.g. UF43M7BRHG) or a meaningful
+        // system ref (e.g. PTR-BEN-2025-11-20). Adding SAV- created a third
+        // identifier that doesn't appear on the bank statement or member's phone.
+        String journalRef = reference;
         Optional<JournalEntry> existingEntry = journalEntryRepository.findByReferenceNumber(journalRef);
         if (existingEntry.isPresent()) {
             log.info("Idempotency triggered: Journal entry for savings transaction {} already exists. Skipping.", journalRef);

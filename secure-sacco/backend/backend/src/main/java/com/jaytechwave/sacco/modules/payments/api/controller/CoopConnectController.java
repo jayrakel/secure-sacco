@@ -312,13 +312,6 @@ public class CoopConnectController {
             var txns = coopTransactionRepository.findFeedDeduped(pageable);
 
             var items = txns.getContent().stream()
-                    // Final sort: latest first, falling back to createdAt for null valueDates
-                    .sorted(java.util.Comparator.comparing(
-                            (CoopTransaction t) -> t.getValueDate() != null
-                                    ? t.getValueDate()
-                                    : t.getCreatedAt(),
-                            java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder())
-                    ))
                     .map(t -> {
                 Map<String, Object> tx = new LinkedHashMap<>();
                 tx.put("id",               t.getId());

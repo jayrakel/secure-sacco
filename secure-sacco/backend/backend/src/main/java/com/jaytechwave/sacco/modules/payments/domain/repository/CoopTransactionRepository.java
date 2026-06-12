@@ -40,24 +40,34 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
     /**
      * Feed query for the dashboard Co-op transactions card.
      *
-     * Ordering: COALESCE(value_date, created_at) DESC so transactions with no
-     * value_date (e.g. POS agent payments) still sort correctly by when they arrived.
+     * Deduplication: excludes mini-statement records that have an IPN duplicate
+     * for the same mpesa_ref. Keeps the IPN record (has sender_phone) and discards
+     * the mini-statement copy. For records with no duplicate, returns them as-is.
      *
-     * Deduplication: selects DISTINCT ON (mpesa_ref) keeping the IPN record when
-     * both an IPN and a mini-statement record exist for the same mpesa_ref (IPN has
-     * sender_phone; mini-statement does not). Falls back to created_at for records
-     * with no mpesa_ref (rare edge case).
+     * Ordering: COALESCE(value_date, created_at) DESC — latest transaction first.
+     * POS agent payments with no value_date fall back to created_at so they sort
+     * correctly instead of appearing at the bottom.
      */
     @Query(value = """
-            SELECT DISTINCT ON (COALESCE(ct.mpesa_ref, ct.id::text))
-                ct.*
+            SELECT ct.*
             FROM coop_transactions ct
-            ORDER BY
-                COALESCE(ct.mpesa_ref, ct.id::text),
-                ct.source = 'IPN' DESC,
-                COALESCE(ct.value_date, ct.created_at) DESC
+            WHERE NOT EXISTS (
+                SELECT 1 FROM coop_transactions ct2
+                WHERE COALESCE(ct2.mpesa_ref, ct2.id::text) = COALESCE(ct.mpesa_ref, ct.id::text)
+                  AND ct2.source = 'IPN'
+                  AND ct2.id != ct.id
+            )
+            ORDER BY COALESCE(ct.value_date, ct.created_at) DESC
             """,
-            countQuery = "SELECT COUNT(DISTINCT COALESCE(mpesa_ref, id::text)) FROM coop_transactions",
+            countQuery = """
+            SELECT COUNT(*) FROM coop_transactions ct
+            WHERE NOT EXISTS (
+                SELECT 1 FROM coop_transactions ct2
+                WHERE COALESCE(ct2.mpesa_ref, ct2.id::text) = COALESCE(ct.mpesa_ref, ct.id::text)
+                  AND ct2.source = 'IPN'
+                  AND ct2.id != ct.id
+            )
+            """,
             nativeQuery = true)
     Page<CoopTransaction> findFeedDeduped(Pageable pageable);
 
