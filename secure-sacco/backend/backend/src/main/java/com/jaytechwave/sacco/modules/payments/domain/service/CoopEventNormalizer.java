@@ -188,6 +188,16 @@ public class CoopEventNormalizer {
             return Optional.empty();
         }
 
+        // Secondary idempotency check: IPN and mini-statement use different Co-op
+        // transaction ID formats for the same transaction (S28698461_09062026_2 vs S28698461).
+        // If an IPN already stored a transaction whose ID starts with the mini-statement's
+        // transaction ID, skip — it's the same transaction stored with a different suffix.
+        String coopTxId = t.getTransactionId();
+        if (coopTxId != null && coopTransactionRepository.existsByCoopTransactionIdStartingWith(coopTxId)) {
+            log.debug("CoopEventNormalizer: duplicate mini-statement coopTxId={} — skipping (IPN already stored)", coopTxId);
+            return Optional.empty();
+        }
+
         boolean isCredit = "C".equalsIgnoreCase(t.getTransactionType());
         double credit  = t.getCreditAmount() != null ? t.getCreditAmount() : 0.0;
         double debit   = t.getDebitAmount()  != null ? t.getDebitAmount()  : 0.0;
