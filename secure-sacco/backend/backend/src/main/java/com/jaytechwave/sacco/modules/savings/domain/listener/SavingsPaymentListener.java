@@ -29,14 +29,38 @@ public class SavingsPaymentListener {
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
 
         // ── Route 1: STK savings deposit (member pressed "Deposit" in app) ────────
-        // A PENDING SavingsTransaction was pre-created with ref "DEP-..." when the
-        // STK push was initiated. Mark it POSTED and record the GL entry.
+        // A PENDING SavingsTransaction was pre-created with ref "DEP-...".
+        // Mark it POSTED — unless the IPN already beat us to it via the PAYBILL path,
+        // in which case we void the PENDING duplicate to prevent double-crediting.
         if (event.accountReference() != null && event.accountReference().startsWith("DEP-")) {
             log.info("Savings Module: STK deposit confirmed for member={} ref={}",
                     event.memberId(), event.accountReference());
 
             savingsTransactionRepository.findByReference(event.accountReference()).ifPresent(tx -> {
                 if (tx.getStatus() == TransactionStatus.PENDING) {
+
+                    // Race-condition guard: if the Co-op IPN arrived before polling set
+                    // mpesaRef on the Payment, the PAYBILL path may have already credited
+                    // savings under the raw mpesaRef.  Detect this and void the duplicate.
+                    String mpesaRef = event.receiptNumber();
+                    if (mpesaRef != null && savingsTransactionRepository.existsByReference(mpesaRef)) {
+                        log.warn("Savings Module: PAYBILL path already credited mpesaRef={} — " +
+                                "voiding PENDING STK duplicate ref={}", mpesaRef, event.accountReference());
+                        tx.setStatus(TransactionStatus.FAILED);
+                        savingsTransactionRepository.save(tx);
+
+                        // Ensure CoopTransaction is flagged as credited
+                        coopTransactionRepository.findByMpesaRef(mpesaRef).ifPresent(ct -> {
+                            if (!ct.isSavingsCredited()) {
+                                ct.setSavingsCredited(true);
+                                ct.setSavingsCreditedAt(LocalDateTime.now());
+                                coopTransactionRepository.save(ct);
+                            }
+                        });
+                        return;
+                    }
+
+                    // Normal path: IPN hasn't credited yet — post the PENDING savings tx
                     tx.setStatus(TransactionStatus.POSTED);
                     tx.setPostedAt(LocalDateTime.now());
                     savingsTransactionRepository.save(tx);
