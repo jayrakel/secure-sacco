@@ -50,11 +50,12 @@ public class SavingsTransaction {
     private LocalDateTime postedAt;
 
     /**
-     * When the payment was actually made — sourced from the bank's ValueDate
-     * on the IPN or mini-statement. Used for compliance evaluation instead of
-     * postedAt so members are not penalised for late system processing.
-     * Null for older records — compliance falls back to postedAt via
-     * COALESCE(valueDate, postedAt) in the repository query.
+     * When the payment was actually made — sourced from the bank's ValueDate field
+     * on the IPN or mini-statement. This is the date that counts for compliance
+     * evaluation, not postedAt (when the system processed the transaction).
+     *
+     * Null for older records predating this field — compliance falls back to postedAt
+     * for those via COALESCE(valueDate, postedAt) in the repository query.
      */
     @Column(name = "value_date")
     private LocalDateTime valueDate;
