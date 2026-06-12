@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkReq
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkResponse;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
+import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
 import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
