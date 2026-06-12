@@ -207,7 +207,7 @@ public class ObligationPeriodService {
 
     private BigDecimal computePaidInPeriod(UUID memberId, LocalDate start, LocalDate end) {
         return savingsAccountRepository.findByMemberId(memberId)
-                .map(acct -> transactionRepository.sumDepositsBetween(
+                .map(acct -> transactionRepository.sumDepositsByValueDateBetween(
                         acct.getId(), start.atStartOfDay(), end.plusDays(1).atStartOfDay()))
                 .orElse(BigDecimal.ZERO);
     }

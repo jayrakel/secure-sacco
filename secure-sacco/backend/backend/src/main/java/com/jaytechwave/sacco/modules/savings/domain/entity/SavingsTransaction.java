@@ -49,6 +49,17 @@ public class SavingsTransaction {
     @Column(name = "posted_at")
     private LocalDateTime postedAt;
 
+    /**
+     * When the payment was actually made — sourced from the bank's ValueDate field
+     * on the IPN or mini-statement. This is the date that counts for compliance
+     * evaluation, not postedAt (when the system processed the transaction).
+     *
+     * Null for older records predating this field — compliance falls back to postedAt
+     * for those via COALESCE(valueDate, postedAt) in the repository query.
+     */
+    @Column(name = "value_date")
+    private LocalDateTime valueDate;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

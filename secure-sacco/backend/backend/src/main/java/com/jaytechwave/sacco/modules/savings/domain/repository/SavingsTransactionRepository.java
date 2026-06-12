@@ -46,4 +46,28 @@ public interface SavingsTransactionRepository extends JpaRepository<SavingsTrans
             @Param("accountId") UUID accountId,
             @Param("from") java.time.LocalDateTime from,
             @Param("to") java.time.LocalDateTime to);
+
+    /**
+     * Same as sumDepositsBetween but uses valueDate (when the payment was actually made)
+     * instead of postedAt (when the system processed it).
+     *
+     * This is the correct method for compliance evaluation — a member who pays at
+     * 11:58 PM on the deadline should not be penalised because the system processed
+     * the transaction at 2 AM the following morning.
+     *
+     * Falls back to postedAt if valueDate is null (for older records without valueDate).
+     */
+    @Query("""
+        SELECT COALESCE(SUM(t.amount), 0)
+        FROM SavingsTransaction t
+        WHERE t.savingsAccountId = :accountId
+          AND t.type   = 'DEPOSIT'
+          AND t.status = 'POSTED'
+          AND COALESCE(t.valueDate, t.postedAt) >= :from
+          AND COALESCE(t.valueDate, t.postedAt) < :to
+        """)
+    BigDecimal sumDepositsByValueDateBetween(
+            @Param("accountId") UUID accountId,
+            @Param("from") java.time.LocalDateTime from,
+            @Param("to") java.time.LocalDateTime to);
 }
