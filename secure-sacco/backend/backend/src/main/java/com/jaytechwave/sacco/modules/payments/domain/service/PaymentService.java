@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 
 @Slf4j
 @Service
@@ -31,6 +32,7 @@ public class PaymentService {
     private final ApplicationEventPublisher eventPublisher;
     private final SecurityAuditService     securityAuditService;
     private final CoopEventNormalizer      coopEventNormalizer;
+    private final JournalEntryService      journalEntryService;
 
     // ── STK Push initiation ───────────────────────────────────────────────────
 
@@ -235,14 +237,24 @@ public class PaymentService {
 
                 // Route to SavingsPaymentListener:
                 //   • Member resolved → "PAYBILL-{mpesaRef}" triggers savings credit + GL
-                //   • Member unknown  → raw paymentRef; no savings action (re-enrich later)
-                String eventAccountRef = resolvedMemberId != null
-                        ? "PAYBILL-" + mpesaRef
-                        : ipn.getPaymentRef();
-
-                eventPublisher.publishEvent(new PaymentCompletedEvent(
-                        payment.getId(), resolvedMemberId, amount, eventAccountRef, txId
-                ));
+                //   • Member unknown  → post GL to suspense; no savings action (re-enrich later)
+                if (resolvedMemberId != null) {
+                    String eventAccountRef = "PAYBILL-" + mpesaRef;
+                    eventPublisher.publishEvent(new PaymentCompletedEvent(
+                            payment.getId(), resolvedMemberId, amount, eventAccountRef, txId
+                    ));
+                } else {
+                    // No member resolved — post GL to suspense so the balance sheet stays intact.
+                    // When re-enrich matches this to a member, it will reverse the suspense entry
+                    // and post the proper savings credit.
+                    java.time.LocalDate valueDate = coopTxOpt
+                            .map(ct -> ct.getValueDate() != null
+                                    ? ct.getValueDate().toLocalDate()
+                                    : ct.getCreatedAt().toLocalDate())
+                            .orElse(java.time.LocalDate.now());
+                    journalEntryService.postNonMemberBankCredit(amount, mpesaRef,
+                            ipn.getNarration(), valueDate);
+                }
             }
         } else {
             // ── DEBIT — money going out of SACCO account ───────────────────
@@ -263,6 +275,12 @@ public class PaymentService {
 
             paymentRepository.save(payment);
             log.info("Co-op IPN: new DEBIT KES {} — {} saved.", amount, ipn.getNarration());
+
+            // Post GL entry — every debit must be on the books regardless of type
+            java.time.LocalDate valueDate = ipn.getValueDate() != null
+                    ? java.time.LocalDate.parse(ipn.getValueDate().substring(0, 10))
+                    : java.time.LocalDate.now();
+            journalEntryService.postAccountDebit(amount, txId, ipn.getNarration(), valueDate);
 
             securityAuditService.logEvent(
                     "IPN_DEBIT_RECEIVED", "COOP_IPN",

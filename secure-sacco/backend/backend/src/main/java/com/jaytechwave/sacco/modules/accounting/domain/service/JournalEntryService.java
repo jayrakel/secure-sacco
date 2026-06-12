@@ -621,4 +621,99 @@ public class JournalEntryService {
 
         journalEntryRepository.save(entry);
     }
+
+    // ── SAC-241: GL entries for non-member credits and bank debits ─────────────
+
+    /**
+     * Posts a GL entry for a bank credit that could not be matched to any member.
+     *
+     * <p>Money arrived in the SACCO account (M-Pesa paybill or EFT) but the sender's
+     * phone number or reference could not be resolved to a member. The funds are parked
+     * in the Unallocated Funds (Suspense) account until manually reconciled or re-matched
+     * via the re-enrich endpoint.
+     *
+     * <pre>
+     *   DR 1001 M-Pesa System Clearing    (asset increases — cash received)
+     *   CR 2110 Unallocated Funds Suspense (liability increases — we owe but don't know to whom)
+     * </pre>
+     */
+    @Transactional
+    public void postNonMemberBankCredit(BigDecimal amount, String reference, String narration,
+                                        java.time.LocalDate transactionDate) {
+        String journalRef = "BANK-CR-" + reference;
+        if (journalEntryRepository.findByReferenceNumber(journalRef).isPresent()) {
+            log.info("Idempotency: GL entry {} already exists — skipping", journalRef);
+            return;
+        }
+
+        Account mpesaClearing = accountRepository.findByAccountCode("1001")
+                .orElseThrow(() -> new IllegalStateException("System account 1001 not found"));
+        Account suspense = accountRepository.findByAccountCode("2110")
+                .orElseThrow(() -> new IllegalStateException("System account 2110 (Unallocated Funds) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .transactionDate(transactionDate != null ? transactionDate : java.time.LocalDate.now())
+                .referenceNumber(journalRef)
+                .description("Unmatched bank credit — " + (narration != null ? narration : reference))
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.setLines(java.util.List.of(
+                JournalEntryLine.builder().journalEntry(entry).account(mpesaClearing)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
+                        .description("Bank credit received — pending member match").build(),
+                JournalEntryLine.builder().journalEntry(entry).account(suspense)
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
+                        .description("Parked in suspense — ref: " + reference).build()
+        ));
+
+        journalEntryRepository.save(entry);
+        log.info("Posted unmatched bank credit GL: {} KES {} ref={}", journalRef, amount, reference);
+    }
+
+    /**
+     * Posts a GL entry for a bank debit — money going out of the SACCO Co-op account.
+     *
+     * <p>Covers bank charges, transfers out, reversals, and any other debit transaction.
+     * The narration is recorded in the description so the accountant can reclassify to
+     * a more specific expense account if needed.
+     *
+     * <pre>
+     *   DR 5210 Bank & Payment Gateway Charges  (expense increases)
+     *   CR 1001 M-Pesa System Clearing           (asset decreases — cash left)
+     * </pre>
+     */
+    @Transactional
+    public void postAccountDebit(BigDecimal amount, String reference, String narration,
+                                 java.time.LocalDate transactionDate) {
+        String journalRef = "BANK-DR-" + reference;
+        if (journalEntryRepository.findByReferenceNumber(journalRef).isPresent()) {
+            log.info("Idempotency: GL entry {} already exists — skipping", journalRef);
+            return;
+        }
+
+        Account bankCharges = accountRepository.findByAccountCode("5210")
+                .orElseThrow(() -> new IllegalStateException("System account 5210 (Bank Charges) not found"));
+        Account mpesaClearing = accountRepository.findByAccountCode("1001")
+                .orElseThrow(() -> new IllegalStateException("System account 1001 not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .transactionDate(transactionDate != null ? transactionDate : java.time.LocalDate.now())
+                .referenceNumber(journalRef)
+                .description("Bank account debit — " + (narration != null ? narration : reference))
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.setLines(java.util.List.of(
+                JournalEntryLine.builder().journalEntry(entry).account(bankCharges)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
+                        .description("Bank debit: " + (narration != null ? narration : reference)).build(),
+                JournalEntryLine.builder().journalEntry(entry).account(mpesaClearing)
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
+                        .description("Cash out — ref: " + reference).build()
+        ));
+
+        journalEntryRepository.save(entry);
+        log.info("Posted bank debit GL: {} KES {} ref={}", journalRef, amount, reference);
+    }
 }
