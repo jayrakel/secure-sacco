@@ -104,6 +104,14 @@ public class CoopEventNormalizer {
                 .build();
 
         enrichWithMember(tx, phone);
+
+        // SAC-246: save sender name from narration when member match didn't set one.
+        // Captures both personal names (TARCISIO NGUGI) and org names (Ollin).
+        if (tx.getSenderName() == null || tx.getSenderName().isBlank()) {
+            String extracted = extractSenderNameFromNarration(narration);
+            if (extracted != null) tx.setSenderName(extracted);
+        }
+
         coopTransactionRepository.save(tx);
         log.info("CoopEventNormalizer: ✅ IPN stored — {} KES {} from {} ({})",
                 tx.getTransactionType(), amount, tx.getSenderName() != null ? tx.getSenderName() : phone, mpesaRef);
@@ -236,6 +244,14 @@ public class CoopEventNormalizer {
                 .build();
 
         enrichWithMember(tx, phone);
+
+        // SAC-246: save sender name from narration — captures org names like "Ollin"
+        // for POS transactions and personal names for unmatched M-Pesa credits.
+        if (tx.getSenderName() == null || tx.getSenderName().isBlank()) {
+            String extracted = extractSenderNameFromNarration(narration);
+            if (extracted != null) tx.setSenderName(extracted);
+        }
+
         coopTransactionRepository.save(tx);
         log.info("CoopEventNormalizer: ✅ Mini-stmt stored — {} KES {} from {} ({})",
                 tx.getTransactionType(), amount,
@@ -462,5 +478,55 @@ public class CoopEventNormalizer {
             String s = raw.length() > 19 ? raw.substring(0, 19) : raw;
             return LocalDateTime.parse(s, DT_FMT);
         } catch (DateTimeParseException e) { return null; }
+    }
+
+    /**
+     * Extracts a human-readable sender name from a Co-op narration string.
+     *
+     * Handles all known narration formats:
+     *
+     * M-Pesa paybill:
+     *   UFC2X7JABB~1051322~254720101339~MPESAC2B_400200~TARCISIO NGUGI
+     *   → parts[4] = "TARCISIO NGUGI" → "Tarcisio Ngugi"
+     *
+     * POS agent / other SACCO:
+     *   POSAG082102~616109003030~from Ollin~POS87402_0
+     *   POSAG004696~616018032560~From: Ollin~POS05197_
+     *   → parts[2] strip "from " or "From: " → "Ollin"
+     *
+     * @return title-cased name, or null if narration doesn't contain one
+     */
+    private String extractSenderNameFromNarration(String narration) {
+        if (narration == null || narration.isBlank()) return null;
+        String[] parts = narration.split("~");
+
+        // M-Pesa paybill: 5th segment is the sender name
+        if (parts.length >= 5 && !parts[4].isBlank()) {
+            return toTitleCase(parts[4].trim());
+        }
+
+        // POS agent / org: 3rd segment starts with "from" or "From:"
+        if (parts.length >= 3) {
+            String segment = parts[2].trim();
+            if (segment.toLowerCase().startsWith("from")) {
+                String name = segment.replaceFirst("(?i)from:?\\s+", "").trim();
+                if (!name.isBlank()) return toTitleCase(name);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a string to title case.
+     * "CHARLES GICHERU" → "Charles Gicheru"
+     * "ollin" → "Ollin"
+     */
+    private String toTitleCase(String input) {
+        if (input == null || input.isBlank()) return input;
+        return java.util.Arrays.stream(input.trim().split("\\s+"))
+                .map(w -> w.isEmpty() ? w
+                        : Character.toUpperCase(w.charAt(0)) + w.substring(1).toLowerCase())
+                .collect(java.util.stream.Collectors.joining(" "));
     }
 }

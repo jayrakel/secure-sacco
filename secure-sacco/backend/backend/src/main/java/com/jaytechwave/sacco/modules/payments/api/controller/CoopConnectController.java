@@ -314,20 +314,48 @@ public class CoopConnectController {
             var items = txns.getContent().stream()
                     .map(t -> {
                 Map<String, Object> tx = new LinkedHashMap<>();
-                tx.put("id",               t.getId());
-                tx.put("mpesaRef",         t.getMpesaRef());
-                tx.put("source",           t.getSource().name());
-                tx.put("transactionType",  t.getTransactionType());
-                tx.put("amount",           t.getAmount());
-                tx.put("runningBalance",   t.getRunningBalance());
-                tx.put("currency",         t.getCurrency());
-                tx.put("valueDate",        t.getValueDate());
-                tx.put("senderPhone",      t.getSenderPhone());
-                tx.put("senderName",       t.getSenderName());
-                tx.put("isMember",         t.getSenderName() != null);
-                tx.put("displayNarration", t.getDisplayNarration());
-                tx.put("accountReference", t.getAccountReference());
-                tx.put("savingsCredited",  t.isSavingsCredited());
+                tx.put("id",              t.getId());
+                tx.put("source",          t.getSource().name());
+                tx.put("transactionType", t.getTransactionType());
+                tx.put("amount",          t.getAmount());
+                tx.put("runningBalance",  t.getRunningBalance());
+                tx.put("mpesaRef",        t.getMpesaRef());
+                tx.put("senderPhone",     t.getSenderPhone());
+                tx.put("memberId",        t.getMemberId());
+                tx.put("isMember",        t.getMemberId() != null);
+                tx.put("savingsCredited", t.isSavingsCredited());
+
+                // Resolve display name:
+                // 1. Use sender_name if already set (IPN member match)
+                // 2. Parse from narration parts[4] (name is 5th segment in M-Pesa narration)
+                // 3. Fall back to display_narration
+                String displayName = t.getSenderName();
+                if ((displayName == null || displayName.isBlank()) && t.getRawNarration() != null) {
+                    String[] parts = t.getRawNarration().split("~");
+                    if (parts.length >= 5 && !parts[4].isBlank()) {
+                        displayName = parts[4].trim();
+                        // Title-case: "CHARLES GICHERU" → "Charles Gicheru"
+                        displayName = java.util.Arrays.stream(displayName.split(" "))
+                                .map(w -> w.isEmpty() ? w
+                                        : Character.toUpperCase(w.charAt(0))
+                                        + w.substring(1).toLowerCase())
+                                .collect(java.util.stream.Collectors.joining(" "));
+                    }
+                }
+                if (displayName == null || displayName.isBlank()) {
+                    displayName = t.getDisplayNarration();
+                }
+                tx.put("displayName", displayName);
+
+                // Use the most precise timestamp available for display
+                // IPN:           transaction_date has exact time
+                // MINI_STATEMENT: value_date has exact time
+                java.time.LocalDateTime displayTime =
+                        t.getValueDate() != null  ? t.getValueDate()
+                        : t.getTransactionDate() != null ? t.getTransactionDate()
+                        : t.getCreatedAt();
+                tx.put("transactionDate", displayTime);
+
                 return tx;
             }).toList();
 
