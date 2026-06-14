@@ -61,14 +61,32 @@ public class SavingsService {
             throw new IllegalStateException("Savings account is frozen. Cannot accept deposits.");
         }
 
-        String reference = request.referenceNotes() != null && !request.referenceNotes().isBlank()
-                ? request.referenceNotes()
-                : "CASH-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // Resolve channel — default to CASH for backward compatibility
+        TransactionChannel channel;
+        try {
+            channel = (request.channel() != null && !request.channel().isBlank())
+                    ? TransactionChannel.valueOf(request.channel().toUpperCase())
+                    : TransactionChannel.CASH;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid channel: " + request.channel()
+                    + ". Valid values: CASH, EFT, PESALINK, RTGS, CHEQUE");
+        }
+
+        // Build reference: prefer externalReference (bank ref/cheque number),
+        // then referenceNotes, then generate a channel-specific one
+        String reference;
+        if (request.externalReference() != null && !request.externalReference().isBlank()) {
+            reference = request.externalReference().trim().toUpperCase();
+        } else if (request.referenceNotes() != null && !request.referenceNotes().isBlank()) {
+            reference = request.referenceNotes();
+        } else {
+            reference = channel.name() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
 
         SavingsTransaction transaction = SavingsTransaction.builder()
                 .savingsAccountId(account.getId())
                 .type(TransactionType.DEPOSIT)
-                .channel(TransactionChannel.CASH)
+                .channel(channel)
                 .amount(request.amount())
                 .reference(reference)
                 .status(TransactionStatus.POSTED)
@@ -78,16 +96,17 @@ public class SavingsService {
         transaction = savingsTransactionRepository.save(transaction);
 
         journalEntryService.postSavingsTransaction(
-                member.getId(), request.amount(), "DEPOSIT", "CASH", reference
+                member.getId(), request.amount(), "DEPOSIT", channel.name(), reference
         );
 
-        securityAuditService.logEvent(
-                "SAVINGS_DEPOSIT_POSTED",
-                member.getMemberNumber(),
-                "Manual cash deposit of KES " + request.amount() + ". Ref: " + reference
-        );
+        String auditNote = String.format("Manual %s deposit of KES %s. Ref: %s%s",
+                channel.name(),
+                request.amount(),
+                reference,
+                request.bankName() != null ? " (Bank: " + request.bankName() + ")" : "");
 
-        log.info("Processed manual CASH deposit of {} for member {}", request.amount(), member.getMemberNumber());
+        securityAuditService.logEvent("SAVINGS_DEPOSIT_POSTED", member.getMemberNumber(), auditNote);
+        log.info("Processed manual {} deposit of {} for member {}", channel, request.amount(), member.getMemberNumber());
 
         return new SavingsTransactionResponse(
                 transaction.getId(), transaction.getSavingsAccountId(),

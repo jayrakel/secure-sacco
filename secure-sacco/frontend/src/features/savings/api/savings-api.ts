@@ -17,7 +17,14 @@ export interface SavingsBalanceResponse {
 }
 
 export const savingsApi = {
-    manualDeposit: async (data: { memberId: string; amount: number; referenceNotes?: string }) => {
+    manualDeposit: async (data: {
+        memberId: string;
+        amount: number;
+        channel?: string;
+        bankName?: string;
+        externalReference?: string;
+        referenceNotes?: string;
+    }) => {
         const response = await apiClient.post('/savings/deposits/manual', data);
         return response.data;
     },
