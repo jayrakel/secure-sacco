@@ -41,17 +41,18 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
      *
      * Sources:
      * - ALL IPN records (member M-Pesa deposits — have sender_name, phone, member_id)
-     * - MINI_STATEMENT records with no IPN counterpart (DR transactions, POS agent
-     *   payments not yet confirmed via IPN)
+     * - MINI_STATEMENT records with no IPN counterpart (DR transactions, unmatched POS)
      *
      * Ordering: COALESCE(value_date, transaction_date, created_at) DESC
-     * - IPN records:           value_date is null → uses transaction_date (exact time)
-     * - MINI_STATEMENT records: value_date has exact time → uses value_date
-     * - Fallback:              created_at (when the system stored the record)
+     * - MINI_STATEMENT: value_date has exact time from the bank → used first
+     * - IPN:            value_date is null (bank only sends a date, not a time)
+     *                   → falls back to transaction_date which has the exact time
+     * - Fallback:       created_at if both are null
+     *
+     * This is transparent — we never derive or overwrite value_date.
      */
     @Query(value = """
-            SELECT ct.*,
-                   COALESCE(ct.value_date, ct.transaction_date, ct.created_at) AS sort_date
+            SELECT ct.*
             FROM coop_transactions ct
             WHERE ct.source = 'IPN'
                OR (ct.source = 'MINI_STATEMENT'
