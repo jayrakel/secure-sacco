@@ -53,11 +53,12 @@ export const CoopTransactionsCard: React.FC = () => {
         } catch { return dt; }
     };
 
-    const sourceLabel = (src: string) => {
-        if (src === 'IPN')           return 'Paybill';
-        if (src === 'STK_CALLBACK')  return 'STK';
-        if (src === 'MINI_STATEMENT') return 'Bank';
-        return src;
+    const transactionLabel = (t: CoopTransaction) => {
+        if (t.transactionType === 'DR')                    return 'Bank';
+        if (t.mpesaRef?.startsWith('POSAG'))              return 'POS Agent';
+        if (t.source === 'STK_CALLBACK')                  return 'STK';
+        if (t.source === 'IPN' || t.source === 'MINI_STATEMENT') return 'M-Pesa';
+        return t.source;
     };
 
     const fetchFeed = useCallback(async () => {
@@ -117,7 +118,7 @@ export const CoopTransactionsCard: React.FC = () => {
                     <div>
                         <p className="text-sm font-semibold text-slate-800">Co-op Transactions</p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                            IPN · STK · Mini-statement · {data?.totalElements ?? 0} total
+                            M-Pesa · POS Agent · Bank · {data?.totalElements ?? 0} total
                         </p>
                     </div>
                 </div>
@@ -249,7 +250,7 @@ export const CoopTransactionsCard: React.FC = () => {
                                             {fmtDate(t.transactionDate)}
                                             {t.mpesaRef ? ` · ${t.mpesaRef}` : ''}
                                             {' · '}
-                                            <span className="text-slate-400">{sourceLabel(t.source)}</span>
+                                            <span className="text-slate-400">{transactionLabel(t)}</span>
                                         </p>
                                     </div>
 
