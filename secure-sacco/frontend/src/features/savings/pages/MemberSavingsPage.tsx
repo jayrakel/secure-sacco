@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { savingsApi, type StatementTransactionResponse, type SavingsBalanceResponse } from '../api/savings-api';
 import { MpesaDepositModal } from '../components/MpesaDepositModal';
-import { PiggyBank, Smartphone, Clock, RefreshCw, AlertCircle, ArrowDownCircle, ArrowUpCircle, Gift } from 'lucide-react';
+import { DepositOptionsModal } from '../components/DepositOptionsModal';
+import { PiggyBank, PlusCircle, Clock, RefreshCw, AlertCircle, ArrowDownCircle, ArrowUpCircle, Gift } from 'lucide-react';
 
 /** Transaction types that increase the member's balance (credits). */
 const CREDIT_TYPES = new Set(['DEPOSIT', 'EXPENSE_REIMBURSEMENT']);
@@ -29,7 +30,8 @@ const MemberSavingsPage: React.FC = () => {
     const [balance, setBalance] = useState<SavingsBalanceResponse | null>(null);
     const [statement, setStatement] = useState<StatementTransactionResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [isDepositModalOpen, setIsDepositModalOpen]        = useState(false);
+    const [isDepositOptionsOpen, setIsDepositOptionsOpen]    = useState(false);
 
     const isPending = user?.memberStatus === 'PENDING';
 
@@ -103,10 +105,10 @@ const MemberSavingsPage: React.FC = () => {
                         </p>
                     </div>
                     <button
-                        onClick={() => setIsDepositModalOpen(true)}
+                        onClick={() => setIsDepositOptionsOpen(true)}
                         className="mt-8 w-full flex items-center justify-center gap-2 py-3 px-4 bg-white text-emerald-700 hover:bg-emerald-50 rounded-lg font-bold transition-colors shadow-sm"
                     >
-                        <Smartphone size={20} /> Top Up via M-Pesa
+                        <PlusCircle size={20} /> Deposit Money
                     </button>
                 </div>
 
@@ -170,6 +172,14 @@ const MemberSavingsPage: React.FC = () => {
             <div className="mt-2">
                 <MemberObligationsSection />
             </div>
+
+            <DepositOptionsModal
+                isOpen={isDepositOptionsOpen}
+                onClose={() => setIsDepositOptionsOpen(false)}
+                memberNumber={user?.memberNumber ?? ''}
+                memberName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
+                onStkPush={() => setIsDepositModalOpen(true)}
+            />
 
             <MpesaDepositModal
                 isOpen={isDepositModalOpen}
