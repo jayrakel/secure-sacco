@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { savingsApi } from '../api/savings-api';
-import { X, ArrowDownCircle, ArrowUpCircle, Banknote, Building2, CreditCard, FileText, Smartphone } from 'lucide-react';
+import { X, ArrowDownCircle, ArrowUpCircle, Banknote, Building2, CreditCard, FileText } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage.ts';
 
 interface Props {

@@ -153,7 +153,10 @@ public class MigrationService {
                 new SavingsDTOs.ManualDepositRequest(
                         member.getId(),
                         request.amount(),
-                        request.referenceNumber()
+                        null,                     // channel — defaults to CASH in processManualDeposit
+                        null,                     // bankName
+                        request.referenceNumber(), // externalReference — use existing ref
+                        null                      // referenceNotes
                 );
 
         SavingsDTOs.SavingsTransactionResponse response =
