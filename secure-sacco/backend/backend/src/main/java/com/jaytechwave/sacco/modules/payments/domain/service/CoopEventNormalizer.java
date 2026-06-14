@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.payments.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
@@ -163,8 +164,8 @@ public class CoopEventNormalizer {
                 .transactionType("CR")
                 .amount(amount)
                 .currency("KES")
-                .transactionDate(LocalDateTime.now())
-                .valueDate(LocalDateTime.now())
+                .transactionDate(LocalDateTime.now(SaccoDateUtils.NAIROBI))
+                .valueDate(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .senderPhone(phone)
                 .rawNarration("STK:" + (receiptId != null ? receiptId : mpesaRef))
                 .rawPayload(rawJson)
@@ -346,7 +347,7 @@ public class CoopEventNormalizer {
     public void markSavingsCredited(java.util.UUID coopTransactionId) {
         coopTransactionRepository.findById(coopTransactionId).ifPresent(ct -> {
             ct.setSavingsCredited(true);
-            ct.setSavingsCreditedAt(java.time.LocalDateTime.now());
+            ct.setSavingsCreditedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
             coopTransactionRepository.save(ct);
         });
     }

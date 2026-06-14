@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.savings.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
@@ -71,7 +72,7 @@ public class SavingsService {
                 .amount(request.amount())
                 .reference(reference)
                 .status(TransactionStatus.POSTED)
-                .postedAt(LocalDateTime.now())
+                .postedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .build();
 
         transaction = savingsTransactionRepository.save(transaction);
@@ -107,7 +108,7 @@ public class SavingsService {
     @Transactional
     public void processMpesaPaybillDeposit(UUID memberId, java.math.BigDecimal amount,
                                            String mpesaRef, String senderPhone) {
-        processMpesaPaybillDeposit(memberId, amount, mpesaRef, senderPhone, java.time.LocalDateTime.now());
+        processMpesaPaybillDeposit(memberId, amount, mpesaRef, senderPhone, java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
     }
 
     /**
@@ -147,7 +148,7 @@ public class SavingsService {
             return;
         }
 
-        java.time.LocalDate txDate = (valueDate != null ? valueDate : java.time.LocalDateTime.now()).toLocalDate();
+        java.time.LocalDate txDate = (valueDate != null ? valueDate : java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI)).toLocalDate();
 
         SavingsTransaction transaction = SavingsTransaction.builder()
                 .savingsAccountId(account.getId())
@@ -156,7 +157,7 @@ public class SavingsService {
                 .amount(amount)
                 .reference(ref)
                 .status(TransactionStatus.POSTED)
-                .postedAt(valueDate != null ? valueDate : java.time.LocalDateTime.now())
+                .postedAt(valueDate != null ? valueDate : java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .build();
 
         savingsTransactionRepository.save(transaction);
@@ -207,7 +208,7 @@ public class SavingsService {
                 .amount(request.amount())
                 .reference(reference)
                 .status(TransactionStatus.POSTED)
-                .postedAt(LocalDateTime.now())
+                .postedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .build();
 
         transaction = savingsTransactionRepository.save(transaction);
@@ -393,7 +394,7 @@ public class SavingsService {
                 .amount(amount)
                 .reference(reference)
                 .status(TransactionStatus.POSTED)
-                .postedAt(LocalDateTime.now())
+                .postedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .build();
 
         savingsTransactionRepository.save(tx);

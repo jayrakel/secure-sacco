@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.penalties.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -149,7 +150,7 @@ public class PenaltyService {
                         PenaltyAccrual accrual = PenaltyAccrual.builder()
                                 .accrualKind(AccrualKind.INTEREST)
                                 .amount(interestAmount)
-                                .accruedAt(java.time.LocalDateTime.now())
+                                .accruedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI))
                                 .idempotencyKey(idempotencyKey)
                                 .journalReference("PENI-" + accrualId.toString())
                                 .build();

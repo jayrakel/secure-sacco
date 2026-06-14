@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.meetings.job;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.*;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingAttendanceRepository;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepository;
@@ -27,7 +28,7 @@ public class MeetingAttendanceSeedJob {
     @Scheduled(fixedDelay = 300_000)
     @Transactional
     public void seedAttendance() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(SaccoDateUtils.NAIROBI);
 
         List<Meeting> meetings = meetingRepository
                 .findUnseededMeetingsThatHaveStarted(
@@ -66,7 +67,7 @@ public class MeetingAttendanceSeedJob {
                         .meeting(meeting)
                         .memberId(member.getId())
                         .status(AttendanceStatus.ABSENT)
-                        .recordedAt(LocalDateTime.now()) // FIX: Explicitly set to prevent L1 Cache NPEs in rapid concurrent job runs
+                        .recordedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI)) // FIX: Explicitly set to prevent L1 Cache NPEs in rapid concurrent job runs
                         .build();
                 attendanceRepository.save(record);
                 created++;

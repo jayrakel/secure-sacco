@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.payments.domain.entity;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -89,7 +90,7 @@ public class CoopStatementTransaction {
 
     @Column(name = "fetched_at", nullable = false)
     @Builder.Default
-    private LocalDateTime fetchedAt = LocalDateTime.now();
+    private LocalDateTime fetchedAt = LocalDateTime.now(SaccoDateUtils.NAIROBI);
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

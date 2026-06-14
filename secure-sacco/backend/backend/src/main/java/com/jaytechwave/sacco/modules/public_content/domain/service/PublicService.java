@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.public_content.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.Meeting;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.MeetingStatus;
@@ -66,7 +67,7 @@ public class PublicService {
                 .stream().map(this::toDocumentDTO).toList();
 
         // Upcoming: all SCHEDULED meetings from now forward, next 90 days
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(SaccoDateUtils.NAIROBI);
         List<UpcomingMeetingDTO> meetings = meetingRepository
                 .findByStartAtBetweenOrderByStartAtAsc(now, now.plusDays(90))
                 .stream()

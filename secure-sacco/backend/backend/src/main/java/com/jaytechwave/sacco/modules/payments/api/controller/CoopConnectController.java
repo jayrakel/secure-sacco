@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.payments.api.controller;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.api.dto.PaymentDTOs.InitiateStkRequest;
@@ -409,7 +410,7 @@ public class CoopConnectController {
                         com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus.COMPLETED);
                 if (isStkPayment) {
                     tx.setSavingsCredited(true);
-                    tx.setSavingsCreditedAt(java.time.LocalDateTime.now());
+                    tx.setSavingsCreditedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
                     coopTransactionRepository.save(tx);
                     stkAcknowledged++;
                     log.info("Re-enrich: 🔒 STK acknowledged (already credited via DEP- path) ref={}", tx.getMpesaRef());
@@ -431,7 +432,7 @@ public class CoopConnectController {
                             tx.getMemberId(), tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
 
                     tx.setSavingsCredited(true);
-                    tx.setSavingsCreditedAt(java.time.LocalDateTime.now());
+                    tx.setSavingsCreditedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
                     coopTransactionRepository.save(tx);
                     credited++;
                     log.info("Re-enrich: ✅ Paybill savings credited — {} KES {} ref={}",

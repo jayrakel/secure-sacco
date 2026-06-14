@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.meetings.job;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.Meeting;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.MeetingStatus;
 import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepository;
@@ -46,7 +47,7 @@ public class MeetingAutoCompleteJob {
     /** Runs every 30 seconds. */
     @Scheduled(fixedDelay = 30_000)
     public void autoComplete() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(SaccoDateUtils.NAIROBI);
 
         List<Meeting> toComplete = new ArrayList<>();
 
