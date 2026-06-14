@@ -75,7 +75,7 @@ class SavingsServiceTest {
         when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
         when(savingsTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ManualDepositRequest req = new ManualDepositRequest(memberId, new BigDecimal("5000.00"), "Cash deposit");
+        ManualDepositRequest req = new ManualDepositRequest(memberId, new BigDecimal("5000.00"), null, null, null, "Cash deposit");
         SavingsTransactionResponse result = service.processManualDeposit(req);
 
         ArgumentCaptor<SavingsTransaction> txCaptor = ArgumentCaptor.forClass(SavingsTransaction.class);
@@ -101,7 +101,7 @@ class SavingsServiceTest {
         when(savingsAccountRepository.save(any(SavingsAccount.class))).thenReturn(activeAccount);
         when(savingsTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("1000.00"), null));
+        service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("1000.00"), null, null, null, null));
 
         verify(savingsAccountRepository, atLeastOnce()).save(any(SavingsAccount.class));
     }
@@ -114,7 +114,7 @@ class SavingsServiceTest {
         when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
 
         assertThatThrownBy(() ->
-                service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("1000.00"), null))
+                service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("1000.00"), null, null, null, null))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("frozen");
 
@@ -129,7 +129,7 @@ class SavingsServiceTest {
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
 
         assertThatThrownBy(() ->
-                service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("1000.00"), null))
+                service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("1000.00"), null, null, null, null))
         ).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("ACTIVE");
     }
@@ -141,7 +141,7 @@ class SavingsServiceTest {
         when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
         when(savingsTransactionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("100.00"), "RECEIPT-XYZ"));
+        service.processManualDeposit(new ManualDepositRequest(memberId, new BigDecimal("100.00"), null, null, "RECEIPT-XYZ", null));
 
         ArgumentCaptor<SavingsTransaction> captor = ArgumentCaptor.forClass(SavingsTransaction.class);
         verify(savingsTransactionRepository).save(captor.capture());

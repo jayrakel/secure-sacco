@@ -54,6 +54,15 @@ public class CoopEventNormalizer {
     private static final DateTimeFormatter DT_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
+    /**
+     * Matches member numbers in EFT/bank transfer narrations.
+     * Members are instructed to use their member number (e.g. BVL-2022-000001)
+     * as the payment reference so the system can auto-match the transaction.
+     * Pattern is case-insensitive: BVL-2022-000001 or bvl-2022-000001.
+     */
+    private static final java.util.regex.Pattern MEMBER_NUMBER_PATTERN =
+            java.util.regex.Pattern.compile("[A-Za-z]{2,5}-\\d{4}-\\d{4,6}", java.util.regex.Pattern.CASE_INSENSITIVE);
+
     // ── Public API ─────────────────────────────────────────────────────────────
 
     /**
@@ -277,8 +286,32 @@ public class CoopEventNormalizer {
      * </ol>
      */
     private void enrichWithMember(CoopTransaction tx, String rawPhone) {
+        // ── Tier 0: Member number in narration (EFT / bank transfer) ──────────
+        // When no phone number is available (EFT, RTGS, PESALINK), the member is
+        // expected to use their member number (e.g. BVL-2022-000001) as the
+        // payment reference. Try to extract it from the narration first.
+        if ((rawPhone == null || rawPhone.isBlank()) && tx.getRawNarration() != null) {
+            String narration = tx.getRawNarration();
+            java.util.regex.Matcher m = MEMBER_NUMBER_PATTERN.matcher(narration);
+            if (m.find()) {
+                String memberNumber = m.group().toUpperCase();
+                memberRepository.findByMemberNumber(memberNumber).ifPresent(member -> {
+                    String name = member.getFirstName() + " " + member.getLastName();
+                    tx.setSenderName(name);
+                    tx.setMemberId(member.getId());
+                    tx.setDisplayNarration(name);
+                    log.info("CoopEventNormalizer: ✅ narration member number {} → member {}",
+                            memberNumber, name);
+                });
+                if (tx.getMemberId() != null) return;
+                log.info("CoopEventNormalizer: ❌ member number {} in narration but not found in DB", memberNumber);
+            }
+            // No phone, no member number — bank charge or unidentified transfer
+            tx.setDisplayNarration(narration);
+            return;
+        }
+
         if (rawPhone == null || rawPhone.isBlank()) {
-            // Bank charge or internal transfer — no phone
             tx.setDisplayNarration(tx.getRawNarration());
             return;
         }

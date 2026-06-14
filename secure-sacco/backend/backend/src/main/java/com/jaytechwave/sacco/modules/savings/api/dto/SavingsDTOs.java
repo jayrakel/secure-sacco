@@ -10,6 +10,17 @@ import java.util.UUID;
 
 public class SavingsDTOs {
 
+    /**
+     * Manual savings deposit — supports all payment channels.
+     *
+     * @param memberId          target member
+     * @param amount            deposit amount (min KES 1)
+     * @param channel           payment method — CASH, EFT, PESALINK, RTGS, CHEQUE
+     *                          (defaults to CASH if null, for backward compatibility)
+     * @param bankName          sender's bank name — required for EFT/PESALINK/RTGS/CHEQUE
+     * @param externalReference bank transaction reference or cheque number
+     * @param referenceNotes    internal notes (optional)
+     */
     public record ManualDepositRequest(
             @NotNull(message = "Member ID is required")
             UUID memberId,
@@ -18,6 +29,12 @@ public class SavingsDTOs {
             @DecimalMin(value = "1.0", message = "Amount must be at least 1.0")
             @Digits(integer = 10, fraction = 2, message = "Amount format is invalid")
             BigDecimal amount,
+
+            String channel,
+
+            String bankName,
+
+            String externalReference,
 
             String referenceNotes
     ) {}
