@@ -1,7 +1,6 @@
 package com.jaytechwave.sacco.modules.payments.domain.repository;
 
 import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
-import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransactionSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,18 +39,39 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
     /**
      * Feed query for the dashboard Co-op transactions card.
      *
-     * Shows mini-statement transactions only — the authoritative bank-side record.
-     * No duplicates possible since each bank transaction appears once in the
-     * mini-statement. Ordered by created_at DESC so the latest processed
-     * transaction always appears first.
+     * Sources:
+     * - ALL IPN records (member M-Pesa deposits — have sender_name, phone, member_id)
+     * - MINI_STATEMENT records with no IPN counterpart (DR transactions, POS agent
+     *   payments not yet confirmed via IPN)
+     *
+     * Ordering: COALESCE(value_date, transaction_date, created_at) DESC
+     * - IPN records:           value_date is null → uses transaction_date (exact time)
+     * - MINI_STATEMENT records: value_date has exact time → uses value_date
+     * - Fallback:              created_at (when the system stored the record)
      */
     @Query(value = """
-            SELECT ct.*
+            SELECT ct.*,
+                   COALESCE(ct.value_date, ct.transaction_date, ct.created_at) AS sort_date
             FROM coop_transactions ct
-            WHERE ct.source = 'MINI_STATEMENT'
-            ORDER BY ct.created_at DESC
+            WHERE ct.source = 'IPN'
+               OR (ct.source = 'MINI_STATEMENT'
+                   AND NOT EXISTS (
+                       SELECT 1 FROM coop_transactions ct2
+                       WHERE ct2.mpesa_ref = ct.mpesa_ref
+                         AND ct2.source = 'IPN'
+                   ))
+            ORDER BY COALESCE(ct.value_date, ct.transaction_date, ct.created_at) DESC
             """,
-            countQuery = "SELECT COUNT(*) FROM coop_transactions WHERE source = 'MINI_STATEMENT'",
+            countQuery = """
+            SELECT COUNT(*) FROM coop_transactions ct
+            WHERE ct.source = 'IPN'
+               OR (ct.source = 'MINI_STATEMENT'
+                   AND NOT EXISTS (
+                       SELECT 1 FROM coop_transactions ct2
+                       WHERE ct2.mpesa_ref = ct.mpesa_ref
+                         AND ct2.source = 'IPN'
+                   ))
+            """,
             nativeQuery = true)
     Page<CoopTransaction> findFeedDeduped(Pageable pageable);
 

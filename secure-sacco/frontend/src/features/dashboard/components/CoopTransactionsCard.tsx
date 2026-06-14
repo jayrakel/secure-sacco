@@ -6,20 +6,18 @@ import {
 import apiClient from '../../../shared/api/api-client';
 
 interface CoopTransaction {
-    id:               string;
-    mpesaRef:         string | null;
-    source:           'IPN' | 'STK_CALLBACK' | 'MINI_STATEMENT';
-    transactionType:  'CR' | 'DR';
-    amount:           number;
-    runningBalance:   number | null;
-    currency:         string;
-    valueDate:        string | null;
-    senderPhone:      string | null;
-    senderName:       string | null;    // member full name — null if not a member
-    isMember:         boolean;
-    displayNarration: string | null;
-    accountReference: string | null;
-    savingsCredited:  boolean;
+    id:              string;
+    mpesaRef:        string | null;
+    source:          'IPN' | 'STK_CALLBACK' | 'MINI_STATEMENT';
+    transactionType: 'CR' | 'DR';
+    amount:          number;
+    runningBalance:  number | null;
+    transactionDate: string | null;   // most precise timestamp for display
+    senderPhone:     string | null;
+    memberId:        string | null;
+    isMember:        boolean;
+    displayName:     string | null;   // resolved: member name → narration name → narration text
+    savingsCredited: boolean;
 }
 
 interface FeedResponse {
@@ -227,13 +225,14 @@ export const CoopTransactionsCard: React.FC = () => {
                                         {/* Name row */}
                                         <div className="flex items-center gap-1.5">
                                             <p className="text-sm font-semibold text-slate-800 truncate">
-                                                {t.senderName || t.displayNarration || '—'}
+                                                {t.displayName || t.mpesaRef || '—'}
                                             </p>
-                                            {t.senderPhone && (
-                                                t.isMember
-                                                    ? <UserCheck size={11} className="text-emerald-500 flex-shrink-0" />
-                                                    : <UserX     size={11} className="text-slate-300   flex-shrink-0" />
-                                            )}
+                                            {t.isMember
+                                                ? <UserCheck size={11} className="text-emerald-500 flex-shrink-0" />
+                                                : t.senderPhone
+                                                    ? <UserX size={11} className="text-slate-300 flex-shrink-0" />
+                                                    : null
+                                            }
                                         </div>
                                         {/* Phone row */}
                                         {t.senderPhone && (
@@ -247,7 +246,7 @@ export const CoopTransactionsCard: React.FC = () => {
                                         )}
                                         {/* Date + ref + source */}
                                         <p className="text-[10px] text-slate-300 mt-0.5 font-mono">
-                                            {fmtDate(t.valueDate)}
+                                            {fmtDate(t.transactionDate)}
                                             {t.mpesaRef ? ` · ${t.mpesaRef}` : ''}
                                             {' · '}
                                             <span className="text-slate-400">{sourceLabel(t.source)}</span>
