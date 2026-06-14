@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.savings.domain.listener;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
@@ -53,7 +54,7 @@ public class SavingsPaymentListener {
                         coopTransactionRepository.findByMpesaRef(mpesaRef).ifPresent(ct -> {
                             if (!ct.isSavingsCredited()) {
                                 ct.setSavingsCredited(true);
-                                ct.setSavingsCreditedAt(LocalDateTime.now());
+                                ct.setSavingsCreditedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI));
                                 coopTransactionRepository.save(ct);
                             }
                         });
@@ -68,7 +69,7 @@ public class SavingsPaymentListener {
                         tx.setReference(mpesaRef);
                     }
                     tx.setStatus(TransactionStatus.POSTED);
-                    tx.setPostedAt(LocalDateTime.now());
+                    tx.setPostedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI));
                     savingsTransactionRepository.save(tx);
 
                     journalEntryService.postSavingsTransaction(
@@ -95,7 +96,7 @@ public class SavingsPaymentListener {
             try {
                 LocalDateTime valueDate = coopTransactionRepository.findByMpesaRef(mpesaRef)
                         .map(ct -> ct.getValueDate() != null ? ct.getValueDate() : ct.getCreatedAt())
-                        .orElse(LocalDateTime.now());
+                        .orElse(LocalDateTime.now(SaccoDateUtils.NAIROBI));
 
                 savingsService.processMpesaPaybillDeposit(
                         event.memberId(), event.amount(), mpesaRef, null, valueDate);
@@ -103,7 +104,7 @@ public class SavingsPaymentListener {
                 // Mark the corresponding CoopTransaction as credited
                 coopTransactionRepository.findByMpesaRef(mpesaRef).ifPresent(ct -> {
                     ct.setSavingsCredited(true);
-                    ct.setSavingsCreditedAt(LocalDateTime.now());
+                    ct.setSavingsCreditedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI));
                     coopTransactionRepository.save(ct);
                 });
 

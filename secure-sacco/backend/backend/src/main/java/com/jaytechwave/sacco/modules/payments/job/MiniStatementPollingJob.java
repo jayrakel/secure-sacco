@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.payments.job;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.MiniStatementResponse;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.TransactionEntry;
@@ -50,7 +51,7 @@ public class MiniStatementPollingJob {
 
     /** Timestamp of the last successful poll. Used to detect and alert on outage gaps. */
     private static final AtomicReference<LocalDateTime> lastSuccessfulPoll =
-            new AtomicReference<>(LocalDateTime.now());
+            new AtomicReference<>(LocalDateTime.now(SaccoDateUtils.NAIROBI));
 
     private static final int MAX_RETRIES       = 3;
     private static final long RETRY_DELAY_MS   = 60_000L;         // 60 seconds between retries
@@ -63,7 +64,7 @@ public class MiniStatementPollingJob {
         // Alert if we haven't had a successful poll in 30 minutes
         LocalDateTime lastSuccess = lastSuccessfulPoll.get();
         if (lastSuccess != null &&
-                lastSuccess.plusMinutes(ALERT_THRESHOLD_MINUTES).isBefore(LocalDateTime.now())) {
+                lastSuccess.plusMinutes(ALERT_THRESHOLD_MINUTES).isBefore(LocalDateTime.now(SaccoDateUtils.NAIROBI))) {
             log.error("MiniStatementPollingJob: ⚠️ ALERT — no successful poll in {} minutes. " +
                     "Last success: {}. Transactions may be missed!", ALERT_THRESHOLD_MINUTES, lastSuccess);
         }
@@ -73,7 +74,7 @@ public class MiniStatementPollingJob {
             try {
                 boolean success = doPoll();
                 if (success) {
-                    lastSuccessfulPoll.set(LocalDateTime.now());
+                    lastSuccessfulPoll.set(LocalDateTime.now(SaccoDateUtils.NAIROBI));
                     return;
                 }
             } catch (Exception e) {
@@ -179,7 +180,7 @@ public class MiniStatementPollingJob {
                             savingsValueDate);
 
                     tx.setSavingsCredited(true);
-                    tx.setSavingsCreditedAt(LocalDateTime.now());
+                    tx.setSavingsCreditedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI));
                     coopTransactionRepository.save(tx);
                     credited++;
 

@@ -9,6 +9,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-sacco_db}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: Africa/Nairobi
     volumes:
       - sacco_pg_data:/var/lib/postgresql/data
     healthcheck:

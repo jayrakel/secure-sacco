@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.meetings.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.meetings.domain.entity.*;
@@ -141,7 +142,7 @@ public class MeetingPenaltyService {
                 // for journalReference and journalEntryService so the link is preserved.
                 .accrualKind(AccrualKind.PRINCIPAL)
                 .amount(amount)
-                .accruedAt(LocalDateTime.now())
+                .accruedAt(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .idempotencyKey(idempotencyKey)
                 .journalReference("PENC-" + accrualId)
                 .build();

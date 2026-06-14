@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.meetings.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.*;
 import com.jaytechwave.sacco.modules.meetings.api.dto.MeetingDTOs.QrMeetingInfoResponse;
@@ -193,7 +194,7 @@ public class MeetingService {
             throw new IllegalStateException("Only SCHEDULED meetings can be completed.");
         }
         meeting.setStatus(MeetingStatus.COMPLETED);
-        if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now());
+        if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now(SaccoDateUtils.NAIROBI));
         meetingRepository.save(meeting);
 
         meetingPenaltyService.generatePenalties(meeting);
@@ -212,7 +213,7 @@ public class MeetingService {
             throw new IllegalStateException("This meeting is no longer active.");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(SaccoDateUtils.NAIROBI);
         if (now.isBefore(meeting.getStartAt())) {
             throw new IllegalStateException("Meeting has not started yet.");
         }
@@ -275,7 +276,7 @@ public class MeetingService {
 
         // Step 1: Save COMPLETED status first — this MUST succeed regardless of penalties
         meeting.setStatus(MeetingStatus.COMPLETED);
-        if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now());
+        if (meeting.getEndAt() == null) meeting.setEndAt(LocalDateTime.now(SaccoDateUtils.NAIROBI));
         meetingRepository.save(meeting);
 
         securityAuditService.logEvent(

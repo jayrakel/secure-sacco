@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.loans.domain.service;
 
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.loans.api.dto.LoanDTOs;
@@ -197,7 +198,7 @@ public class LoanApplicationService {
 
         app.setStatus(LoanStatus.PENDING_APPROVAL);
         app.setVerifiedBy(officer.getId());
-        app.setVerifiedAt(java.time.LocalDateTime.now());
+        app.setVerifiedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
         app.setVerificationNotes(request.notes());
 
         LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
@@ -223,7 +224,7 @@ public class LoanApplicationService {
 
         app.setStatus(LoanStatus.APPROVED);
         app.setCommitteeApprovedBy(committeeMember.getId());
-        app.setCommitteeApprovedAt(java.time.LocalDateTime.now());
+        app.setCommitteeApprovedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
         app.setCommitteeNotes(request.notes());
 
         LoanApplicationResponse response = mapToResponse(loanApplicationRepository.save(app));
@@ -245,11 +246,11 @@ public class LoanApplicationService {
 
         if (app.getStatus() == LoanStatus.PENDING_VERIFICATION) {
             app.setVerifiedBy(officer.getId());
-            app.setVerifiedAt(java.time.LocalDateTime.now());
+            app.setVerifiedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
             app.setVerificationNotes(request.notes());
         } else if (app.getStatus() == LoanStatus.PENDING_APPROVAL) {
             app.setCommitteeApprovedBy(officer.getId());
-            app.setCommitteeApprovedAt(java.time.LocalDateTime.now());
+            app.setCommitteeApprovedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
             app.setCommitteeNotes(request.notes());
         } else {
             throw new IllegalStateException("Application cannot be rejected at this stage.");
@@ -322,7 +323,7 @@ public class LoanApplicationService {
                 .applicationFeePaid(true)
                 .referenceNotes(request.referenceNumber() != null ? "MIGRATION: " + request.referenceNumber() : null) // 🟢 COSMETIC FIX
                 .disbursedAt(request.historicalDateOverride() != null ?
-                        request.historicalDateOverride().atStartOfDay() : LocalDateTime.now())
+                        request.historicalDateOverride().atStartOfDay() : LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .build();
 
         newLoan = loanApplicationRepository.save(newLoan);
@@ -443,7 +444,7 @@ public class LoanApplicationService {
         }
 
         app.setDisbursedBy(treasurer.getId());
-        app.setDisbursedAt(java.time.LocalDateTime.now());
+        app.setDisbursedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
 
         loanScheduleService.generateWeeklySchedule(app);
 
@@ -493,7 +494,7 @@ public class LoanApplicationService {
         app.setStatus(LoanStatus.ACTIVE);
         app.setDisbursedBy(treasurer.getId());
 
-        // 🚨 THE MAGIC KEY: We use the provided historical date instead of LocalDateTime.now()
+        // 🚨 THE MAGIC KEY: We use the provided historical date instead of LocalDateTime.now(SaccoDateUtils.NAIROBI)
         app.setDisbursedAt(backdateOverride.atStartOfDay());
 
         // 4. The Schedule generator will now read the historical disbursedAt date!
