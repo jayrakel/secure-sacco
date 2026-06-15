@@ -171,7 +171,11 @@ public class ObligationPeriodService {
     }
 
     private LocalDate periodEndFor(ObligationFrequency freq, LocalDate start) {
-        return freq == ObligationFrequency.WEEKLY ? start.plusDays(6) : start.plusMonths(1).minusDays(1);
+        // WEEKLY: period runs Saturday → Thursday (savings day).
+        // Saturday (day 0) + 5 days = Thursday.
+        // Grace period falls on Friday (period_end + grace_days).
+        // Next period starts the following Saturday (start + 7).
+        return freq == ObligationFrequency.WEEKLY ? start.plusDays(5) : start.plusMonths(1).minusDays(1);
     }
 
     private LocalDate nextPeriodStart(ObligationFrequency freq, LocalDate current) {
