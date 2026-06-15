@@ -15,10 +15,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,7 @@ public class ObligationService {
     private final MemberRepository                  memberRepository;
     private final ObligationPeriodService           periodService;
     private final PenaltyRepository                 penaltyRepository;
+    private final SaccoSettingsService              settingsService;
 
     // ── Staff: create ────────────────────────────────────────────────────────
 
@@ -42,6 +46,23 @@ public class ObligationService {
     public ObligationResponse createObligation(CreateObligationRequest request) {
         memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found: " + request.getMemberId()));
+
+        // SAC-252: For WEEKLY obligations, start_date must be the SACCO's savings day
+        // (e.g. Thursday) — it is the FIRST savings deadline, not the period start.
+        // The period start (Saturday) is auto-derived from the savings day setting.
+        if (request.getFrequency() == ObligationFrequency.WEEKLY
+                && request.getStartDate() != null) {
+            DayOfWeek savingsDay = DayOfWeek.valueOf(settingsService.getSavingsDay());
+            if (request.getStartDate().getDayOfWeek() != savingsDay) {
+                LocalDate suggested = request.getStartDate()
+                        .with(TemporalAdjusters.nextOrSame(savingsDay));
+                throw new IllegalArgumentException(
+                        "Weekly obligation start date must be a " + savingsDay
+                        + " (the configured savings day). "
+                        + request.getStartDate() + " is a " + request.getStartDate().getDayOfWeek()
+                        + ". Did you mean " + suggested + "?");
+            }
+        }
 
         SavingsObligation obligation = SavingsObligation.builder()
                 .memberId(request.getMemberId())
@@ -66,7 +87,22 @@ public class ObligationService {
                 .orElseThrow(() -> new IllegalArgumentException("Obligation not found: " + id));
 
         if (request.amountDue() != null) obligation.setAmountDue(request.amountDue());
-        if (request.startDate() != null) obligation.setStartDate(request.startDate());
+        if (request.startDate() != null) {
+            // SAC-252: enforce savings day start for WEEKLY obligations
+            if (obligation.getFrequency() == ObligationFrequency.WEEKLY) {
+                DayOfWeek savingsDay = DayOfWeek.valueOf(settingsService.getSavingsDay());
+                if (request.startDate().getDayOfWeek() != savingsDay) {
+                    LocalDate suggested = request.startDate()
+                            .with(TemporalAdjusters.nextOrSame(savingsDay));
+                    throw new IllegalArgumentException(
+                            "Weekly obligation start date must be a " + savingsDay
+                            + " (the configured savings day). "
+                            + request.startDate() + " is a " + request.startDate().getDayOfWeek()
+                            + ". Did you mean " + suggested + "?");
+                }
+            }
+            obligation.setStartDate(request.startDate());
+        }
         if (request.graceDays() != null) obligation.setGraceDays(request.graceDays());
 
         SavingsObligation saved = obligationRepository.save(obligation);
