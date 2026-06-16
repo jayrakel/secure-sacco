@@ -128,7 +128,17 @@ public class ObligationPeriodService {
                                 .status(PeriodStatus.DUE)
                                 .build()));
 
-        BigDecimal paid = computePaidInPeriod(obligation.getMemberId(), periodStart, periodEnd);
+        // SAC-252: Once COVERED, never re-evaluate. A period that was paid cannot
+        // become OVERDUE on the next evaluation run due to window drift or manual fixes.
+        if (period.getStatus() == PeriodStatus.COVERED) return false;
+
+        // SAC-252: Include grace day payments in the paid amount window.
+        // Window: [periodStart 00:00, periodEnd + graceDays + 1 day 00:00)
+        // e.g. grace=1, period ends Thu June 11:
+        //      window = June 6 00:00 → June 13 00:00
+        //      Thu + Fri (grace day) payments both count → member is COVERED.
+        BigDecimal paid = computePaidInPeriod(
+                obligation.getMemberId(), periodStart, periodEnd, obligation.getGraceDays());
         period.setPaidAmount(paid);
 
         boolean newOverdue = false;
@@ -209,10 +219,17 @@ public class ObligationPeriodService {
 
     // ─── Savings computation ──────────────────────────────────────────────────
 
-    private BigDecimal computePaidInPeriod(UUID memberId, LocalDate start, LocalDate end) {
+    private BigDecimal computePaidInPeriod(UUID memberId, LocalDate start, LocalDate end, int graceDays) {
+        // Include grace day payments: window extends to end + graceDays + 1 day (exclusive).
+        // e.g. period ends Thu June 11, grace = 1:
+        //      to = June 11 + 1 + 1 = June 13 00:00
+        //      counts Sat June 6 through Fri June 12 inclusive.
+        LocalDateTime from = start.atStartOfDay();
+        LocalDateTime to   = end.plusDays(graceDays + 1L).atStartOfDay();
+
         return savingsAccountRepository.findByMemberId(memberId)
                 .map(acct -> transactionRepository.sumDepositsByValueDateBetween(
-                        acct.getId(), start.atStartOfDay(), end.plusDays(1).atStartOfDay()))
+                        acct.getId(), from, to))
                 .orElse(BigDecimal.ZERO);
     }
 
