@@ -335,12 +335,24 @@ public class ReportService {
                     SELECT 'MANUAL_ENTRY' AS payment_method, amount
                     FROM loan_repayments
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+
+                    UNION ALL
+
+                    -- SAC-254: Mini-statement credits that have no matching payments record
+                    SELECT 'MPESA_COOP_MINI' AS payment_method, amount
+                    FROM coop_transactions
+                    WHERE source = 'MINI_STATEMENT'
+                      AND transaction_type = 'CR'
+                      AND CAST(created_at AS DATE) = CAST(? AS DATE)
+                      AND NOT EXISTS (
+                          SELECT 1 FROM payments p WHERE p.mpesa_ref = coop_transactions.mpesa_ref
+                      )
                 ) AS combined
                 GROUP BY payment_method
                 """;
         jdbcTemplate.query(channelSql, rs -> {
             dto.getByChannel().put(rs.getString("payment_method"), rs.getBigDecimal("total"));
-        }, targetDate, targetDate);
+        }, targetDate, targetDate, targetDate);
 
         String typeSql = """
                 SELECT payment_type, SUM(amount) AS total
@@ -354,12 +366,24 @@ public class ReportService {
                     SELECT 'LOAN_REPAYMENT' AS payment_type, amount
                     FROM loan_repayments
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
+
+                    UNION ALL
+
+                    -- SAC-254: Mini-statement credits that have no matching payments record
+                    SELECT 'MINI_STATEMENT_CREDIT' AS payment_type, amount
+                    FROM coop_transactions
+                    WHERE source = 'MINI_STATEMENT'
+                      AND transaction_type = 'CR'
+                      AND CAST(created_at AS DATE) = CAST(? AS DATE)
+                      AND NOT EXISTS (
+                          SELECT 1 FROM payments p WHERE p.mpesa_ref = coop_transactions.mpesa_ref
+                      )
                 ) AS combined
                 GROUP BY payment_type
                 """;
         jdbcTemplate.query(typeSql, rs -> {
             dto.getByType().put(rs.getString("payment_type"), rs.getBigDecimal("total"));
-        }, targetDate, targetDate);
+        }, targetDate, targetDate, targetDate);
 
         BigDecimal grandTotal = dto.getByChannel().values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -452,6 +476,46 @@ public class ReportService {
                     LEFT JOIN users u ON m.id = u.member_id
                     WHERE CAST(lr.created_at AS DATE) = CAST(? AS DATE)
                       AND lr.status = 'COMPLETED'
+                    UNION ALL
+
+                    -- SAC-254: Mini-statement credits with no matching payments record.
+                    -- These are payments received via mini-statement polling where Co-op
+                    -- never sent an IPN — they appear in coop_transactions but not payments.
+                    -- For sender_name: prefer the IPN record's name (full name) over the
+                    -- mini-statement's truncated version (e.g. "Na" instead of "Nathan Gesora").
+                    SELECT
+                        ct.id::text,
+                        ct.mpesa_ref                                                AS transaction_ref,
+                        ct.mpesa_ref                                                AS mpesa_ref,
+                        ct.mpesa_ref                                                AS internal_ref,
+                        ct.amount,
+                        'MPESA_COOP_MINI'                                           AS payment_method,
+                        'MINI_STATEMENT_CREDIT'                                     AS payment_type,
+                        COALESCE(ct.account_reference, ct.mpesa_ref)                AS account_reference,
+                        COALESCE(
+                            -- Prefer IPN sender_name if it's longer (mini-statement truncates)
+                            CASE WHEN ipn.sender_name IS NOT NULL
+                                      AND LENGTH(ipn.sender_name) > COALESCE(LENGTH(ct.sender_name), 0)
+                                 THEN ipn.sender_name
+                                 ELSE NULLIF(TRIM(ct.sender_name), '') END,
+                            CASE WHEN mem.id IS NOT NULL
+                                 THEN mem.first_name || ' ' || mem.last_name END,
+                            'Unknown Sender'
+                        )                                                           AS sender_name,
+                        ct.sender_phone                                             AS sender_phone_number,
+                        'COMPLETED'                                                 AS status,
+                        ct.created_at
+                    FROM coop_transactions ct
+                    LEFT JOIN coop_transactions ipn
+                        ON ipn.mpesa_ref = ct.mpesa_ref AND ipn.source = 'IPN'
+                    LEFT JOIN members mem ON ct.member_id = mem.id AND mem.is_deleted = false
+                    WHERE ct.source = 'MINI_STATEMENT'
+                      AND ct.transaction_type = 'CR'
+                      AND CAST(ct.created_at AS DATE) = CAST(? AS DATE)
+                      AND NOT EXISTS (
+                          SELECT 1 FROM payments p WHERE p.mpesa_ref = ct.mpesa_ref
+                      )
+
                 ) AS combined
                 ORDER BY created_at DESC
                 """;
@@ -475,7 +539,7 @@ public class ReportService {
                         .format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             }
             return dto;
-        }, targetDate, targetDate);
+        }, targetDate, targetDate, targetDate);
     }
 
     @Transactional(readOnly = true)
