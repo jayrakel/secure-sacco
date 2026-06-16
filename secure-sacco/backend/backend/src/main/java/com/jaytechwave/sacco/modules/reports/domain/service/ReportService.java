@@ -403,7 +403,7 @@ public class ReportService {
         String sql = """
                 SELECT * FROM (
                     SELECT
-                        p.id,
+                        p.id::text,
                         COALESCE(NULLIF(TRIM(p.transaction_ref), ''), NULLIF(TRIM(ct.coop_transaction_id), '')) AS transaction_ref,
                         COALESCE(
                             NULLIF(TRIM(p.mpesa_ref), ''),
@@ -458,7 +458,7 @@ public class ReportService {
                     UNION ALL
 
                     SELECT
-                        lr.id,
+                        lr.id::text,
                         NULL                                                        AS transaction_ref,
                         NULL                                                        AS mpesa_ref,
                         lr.receipt_number                                           AS internal_ref,
