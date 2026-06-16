@@ -208,7 +208,25 @@ public class PaymentService {
                 payment.setTransactionType("CR");
                 markCompleted(payment, txId, rawJson);
             } else {
-                // New paybill deposit — no pre-existing pending STK.
+                // Guard: if a COMPLETED STK_PUSH already exists for this mpesaRef,
+                // this is a duplicate IPN for the same transaction — skip it.
+                // This prevents a PAYBILL_DEPOSIT record being created 30-60 seconds
+                // after the STK was already confirmed, which causes double-entries in
+                // Daily Collections and double-credits to savings.
+                if (mpesaRef != null && paymentRepository.existsByMpesaRefAndPaymentTypeAndStatus(
+                        mpesaRef, "STK_PUSH", PaymentStatus.COMPLETED)) {
+                    log.info("Co-op IPN: skipping duplicate — STK_PUSH already COMPLETED for mpesaRef={}. " +
+                            "Marking coop_transaction savings_credited.", mpesaRef);
+                    coopTxOpt.ifPresent(ct -> {
+                        if (!ct.isSavingsCredited()) {
+                            // markSavingsCredited handles the save internally
+                            coopEventNormalizer.markSavingsCredited(ct.getId());
+                        }
+                    });
+                    return;
+                }
+
+                // New paybill deposit — no pre-existing pending or completed STK.
                 payment = Payment.builder()
                         .transactionRef(txId)
                         .internalRef("IPN-" + txId)
