@@ -136,7 +136,7 @@ class PaymentServiceTest {
     @Test
     @DisplayName("phone starting with + is normalized to international format")
     void initiateStkPush_plusPrefixNormalized() {
-        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString()))
+        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString(), anyString()))
                 .thenReturn(buildStkPushResponse());
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -146,14 +146,14 @@ class PaymentServiceTest {
         );
 
         verify(coopConnectService).initiateStkPush(
-                eq("254700123456"), any(), anyString(), anyString()
+                eq("254700123456"), any(), anyString(), anyString(), anyString()
         );
     }
 
     @Test
     @DisplayName("phone starting with 0 is converted to 254 prefix")
     void initiateStkPush_zeroPrefixNormalized() {
-        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString()))
+        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString(), anyString()))
                 .thenReturn(buildStkPushResponse());
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -163,7 +163,7 @@ class PaymentServiceTest {
         );
 
         verify(coopConnectService).initiateStkPush(
-                eq("254712345678"), any(), anyString(), anyString()
+                eq("254712345678"), any(), anyString(), anyString(), anyString()
         );
     }
 
@@ -174,7 +174,7 @@ class PaymentServiceTest {
         errorResponse.setMessageCode("500");
         errorResponse.setMessageDescription("Insufficient permissions");
 
-        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString()))
+        when(coopConnectService.initiateStkPush(anyString(), any(), anyString(), anyString(), anyString()))
                 .thenReturn(errorResponse);
 
         assertThatThrownBy(() -> service.initiateMpesaStkPush(
