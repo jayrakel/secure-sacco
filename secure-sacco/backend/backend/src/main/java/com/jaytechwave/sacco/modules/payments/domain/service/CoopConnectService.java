@@ -168,7 +168,13 @@ public class CoopConnectService {
 
     /**
      * Clears the cached Co-op token from memory and Redis when a 401 is encountered.
+     * Also called before STK push to ensure the token reflects the latest operator profile
+     * permissions (e.g. after Co-op activates STK push on the BETTERLINK operator profile).
      */
+    public void invalidateTokenCache() {
+        clearTokenCache();
+    }
+
     private void clearTokenCache() {
         log.warn("Co-op Connect: Clearing expired/revoked token from cache.");
         cachedToken.set(null);
@@ -202,14 +208,20 @@ public class CoopConnectService {
     public StkPushResponse initiateStkPush(String phoneNumber,
                                            BigDecimal amount,
                                            String reference,
-                                           String narration) {
+                                           String narration,
+                                           String accountRef) {
         return executeWithTokenRetry(() -> {
             String callbackUrl = props.getCallbackBaseUrl() + "/api/v1/payments/coop/stk-callback";
             String messageDateTime = LocalDateTime.now(SaccoDateUtils.NAIROBI)
                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 
+            // SAC-257: Co-op requires a full UUID (36 chars with hyphens) as MessageReference.
+            // Truncating to 20 hex chars broke their uniqueness check.
+            // The reference param (DEP-xxx) is our internal ref; generate a fresh UUID for Co-op.
+            String coopMessageRef = UUID.randomUUID().toString();
+
             StkPushRequest request = StkPushRequest.builder()
-                    .messageReference(reference) // Reference is already a UUID from caller
+                    .messageReference(coopMessageRef)
                     .callBackUrl(callbackUrl)
                     .operatorCode(props.getOperatorCode())
                     .transactionCurrency("KES")
@@ -217,11 +229,13 @@ public class CoopConnectService {
                     .narration(narration)
                     .amount(amount)
                     .messageDateTime(messageDateTime)
-                    .otherDetails(List.of(OtherDetail.of("AccountRef", reference)))
+                    // SAC-257: AccountRef must be the member's account reference (member number),
+                    // not the transaction message reference.
+                    .otherDetails(List.of(OtherDetail.of("AccountRef", accountRef)))
                     .build();
 
-            log.info("Co-op STK Push → phone={} amount={} ref={} callbackUrl={}",
-                    phoneNumber, amount, reference, callbackUrl);
+            log.info("Co-op STK Push → phone={} amount={} internalRef={} coopRef={} accountRef={} callbackUrl={}",
+                    phoneNumber, amount, reference, coopMessageRef, accountRef, callbackUrl);
 
             try {
                 StkPushResponse response = restClient.post()
