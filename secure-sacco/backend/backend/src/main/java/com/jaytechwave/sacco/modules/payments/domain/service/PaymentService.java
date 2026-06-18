@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent;
+import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,13 @@ import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryServi
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private final CoopConnectService       coopConnectService;
-    private final PaymentRepository        paymentRepository;
+    private final CoopConnectService        coopConnectService;
+    private final PaymentRepository         paymentRepository;
+    private final CoopTransactionRepository coopTransactionRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final SecurityAuditService     securityAuditService;
-    private final CoopEventNormalizer      coopEventNormalizer;
-    private final JournalEntryService      journalEntryService;
+    private final SecurityAuditService      securityAuditService;
+    private final CoopEventNormalizer       coopEventNormalizer;
+    private final JournalEntryService       journalEntryService;
 
     // ── STK Push initiation ───────────────────────────────────────────────────
 
@@ -41,8 +43,16 @@ public class PaymentService {
         String phone = normalisePhone(request.phoneNumber());
         String messageRef = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
 
+        // SAC-257: Force a fresh OAuth token before each STK push.
+        // Co-op's token carries the operator profile's permitted operations.
+        // If STK push was activated after our token was issued, the cached token
+        // predates that activation and will fail. Always fetch fresh for STK.
+        coopConnectService.invalidateTokenCache();
+
         StkPushResponse coopResponse = coopConnectService.initiateStkPush(
-                phone, request.amount(), messageRef, "BETTER LINK VENTURES SACCO"
+                phone, request.amount(), request.accountReference(),
+                "BETTER LINK VENTURES SACCO",
+                request.accountReference()   // member's DEP-xxx ref as AccountRef
         );
 
         if (coopResponse == null) {
@@ -175,6 +185,22 @@ public class PaymentService {
             log.info("Co-op IPN: payment with mpesaRef={} already exists — skipping duplicate IPN (txId={})",
                     mpesaRef, txId);
             return;
+        }
+
+        // SAC-256: If normalizeIpn returned empty (a coop_transaction already exists for this
+        // mpesaRef — e.g. stored by the mini-statement poller), check whether savings have
+        // already been credited under that record.  If yes, skip the STK matching path:
+        // allowing it to proceed would credit savings a second time under a different reference
+        // (the CBS txId instead of mpesaRef), bypassing the existsByReference idempotency check.
+        if (coopTxOpt.isEmpty() && mpesaRef != null) {
+            // SAC-256: Use existsBy (not findBy) to avoid NonUniqueResultException if a race
+            // condition left both an IPN and a mini-statement record for the same mpesaRef.
+            // Returns true if ANY coop_transaction for this mpesaRef has savings_credited = true.
+            if (coopTransactionRepository.existsByMpesaRefAndSavingsCreditedIsTrue(mpesaRef)) {
+                log.info("Co-op IPN: savings already credited for mpesaRef={} — skipping STK match to prevent double-credit (txId={})",
+                        mpesaRef, txId);
+                return;
+            }
         }
 
         String txType = isCredit ? "CR" : "DR";
@@ -326,12 +352,23 @@ public class PaymentService {
                         + " confirmed. TxID: " + transactionId
         );
 
+        // SAC-256: use the actual M-Pesa ref (mpesaRef) as receiptNumber, not the
+        // Co-op CBS transaction ID.  Route1 in SavingsPaymentListener reads
+        // event.receiptNumber() as the mpesaRef to:
+        //   (a) detect if the PAYBILL path already credited savings under this ref
+        //   (b) update the pending savings tx reference from DEP-xxx to the real ref
+        // Using the CBS ID instead caused both checks to fail, allowing double-credit
+        // when mini-statement credited savings first under mpesaRef, then the STK
+        // confirmation credited again under a different (CBS-ID) reference.
+        String receiptNumber = payment.getMpesaRef() != null ? payment.getMpesaRef()
+                : (transactionId != null ? transactionId : payment.getInternalRef());
+
         eventPublisher.publishEvent(new PaymentCompletedEvent(
                 payment.getId(),
                 payment.getMemberId(),
                 payment.getAmount(),
                 payment.getAccountReference(),
-                transactionId != null ? transactionId : payment.getInternalRef()
+                receiptNumber
         ));
     }
 

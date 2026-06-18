@@ -17,6 +17,11 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
     /** De-duplication check */
     boolean existsByMpesaRef(String mpesaRef);
 
+    // SAC-256: Safe boolean check — avoids NonUniqueResultException if two records share
+    // the same mpesaRef (IPN + mini-statement race). Returns true if ANY record for this
+    // mpesaRef has savings_credited = true.
+    boolean existsByMpesaRefAndSavingsCreditedIsTrue(String mpesaRef);
+
     Optional<CoopTransaction> findByMpesaRef(String mpesaRef);
 
     /**
