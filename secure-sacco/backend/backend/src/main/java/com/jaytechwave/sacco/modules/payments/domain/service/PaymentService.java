@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent;
+import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,13 @@ import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryServi
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private final CoopConnectService       coopConnectService;
-    private final PaymentRepository        paymentRepository;
+    private final CoopConnectService        coopConnectService;
+    private final PaymentRepository         paymentRepository;
+    private final CoopTransactionRepository coopTransactionRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final SecurityAuditService     securityAuditService;
-    private final CoopEventNormalizer      coopEventNormalizer;
-    private final JournalEntryService      journalEntryService;
+    private final SecurityAuditService      securityAuditService;
+    private final CoopEventNormalizer       coopEventNormalizer;
+    private final JournalEntryService       journalEntryService;
 
     // ── STK Push initiation ───────────────────────────────────────────────────
 
