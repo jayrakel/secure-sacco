@@ -216,10 +216,12 @@ public class CoopConnectService {
             String messageDateTime = LocalDateTime.now(SaccoDateUtils.NAIROBI)
                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 
-            // SAC-257: Co-op requires a full UUID (36 chars with hyphens) as MessageReference.
-            // Truncating to 20 hex chars broke their uniqueness check.
-            // The reference param (DEP-xxx) is our internal ref; generate a fresh UUID for Co-op.
-            String coopMessageRef = UUID.randomUUID().toString();
+            // SAC-259: Co-op REJECTS a full 36-char UUID as MessageReference —
+            // confirmed via live error: MessageCode -11 "MESSAGE REFERENCE/REFERENCE NUMBER
+            // LONGER THAN ALLOWED LENGTH". Their limit is below 36 chars. Reverting to a
+            // 20-char hex string (no hyphens) — still effectively unique per request since
+            // it's freshly randomised every call, just shorter to satisfy their length cap.
+            String coopMessageRef = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
 
             StkPushRequest request = StkPushRequest.builder()
                     .messageReference(coopMessageRef)
