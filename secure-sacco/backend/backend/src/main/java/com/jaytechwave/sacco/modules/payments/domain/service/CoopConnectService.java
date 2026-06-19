@@ -13,6 +13,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import com.jaytechwave.sacco.modules.payments.infrastructure.CoopHttpLogger;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import org.springframework.web.client.RestClient;
@@ -254,13 +255,20 @@ public class CoopConnectService {
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode().value() != 401) {
                     log.error("Co-op STK Push failed: HTTP {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-                    throw new RuntimeException("Co-op STK Push failed: " + e.getStatusCode() + " - " +
-                            e.getResponseBodyAsString(), e);
+                    throw new RuntimeException("Co-op STK Push failed: " + e.getStatusCode().value()
+                            + " " + e.getStatusText(), e);
                 }
                 throw e; // Let the retry wrapper handle 401
+            } catch (HttpServerErrorException e) {
+                // SAC-258: Co-op gateway 5xx responses are raw HTML, not JSON. Never surface
+                // the body to the user — log it, throw a clean message.
+                log.error("Co-op STK Push server error: {} — raw body: {}",
+                        e.getStatusCode(), e.getResponseBodyAsString());
+                throw new RuntimeException("Co-op Connect is temporarily unavailable (HTTP "
+                        + e.getStatusCode().value() + "). Please try again shortly.", e);
             } catch (RestClientException e) {
-                log.error("Co-op STK Push connection error: {}", e.getMessage(), e);
-                throw new RuntimeException("Co-op STK Push connection error: " + e.getMessage(), e);
+                log.error("Co-op STK Push connection error: {}", e.getMessage());
+                throw new RuntimeException("Could not reach Co-op Connect. Please try again shortly.", e);
             }
         });
     }
@@ -316,14 +324,25 @@ public class CoopConnectService {
                 return response;
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode().value() != 401) {
-                    log.error("Co-op balance HTTP error: {} → {}", e.getStatusCode(), e.getResponseBodyAsString());
-                    throw new RuntimeException("Co-op balance failed: " + e.getStatusCode()
-                            + " → " + e.getResponseBodyAsString(), e);
+                    log.error("Co-op balance HTTP client error: {} → {}", e.getStatusCode(), e.getResponseBodyAsString());
+                    throw new RuntimeException("Co-op balance failed: " + e.getStatusCode().value()
+                            + " " + e.getStatusText(), e);
                 }
                 throw e; // Let wrapper handle 401
+            } catch (HttpServerErrorException e) {
+                // SAC-258: Co-op's gateway returns a raw HTML error page on 5xx (not JSON).
+                // HttpServerErrorException.getMessage() embeds that HTML body verbatim — never
+                // surface it to the user. Log the full body for diagnosis, throw a clean message.
+                log.error("Co-op balance HTTP server error: {} — raw body: {}",
+                        e.getStatusCode(), e.getResponseBodyAsString());
+                throw new RuntimeException("Co-op Connect is temporarily unavailable (HTTP "
+                        + e.getStatusCode().value() + "). Please try again shortly.", e);
+            } catch (RestClientException e) {
+                log.error("Co-op balance connection error: {}", e.getMessage());
+                throw new RuntimeException("Could not reach Co-op Connect: " + e.getMessage(), e);
             } catch (Exception e) {
-                log.error("Co-op balance error: {}", e.getMessage());
-                throw new RuntimeException("Failed to fetch balance: " + e.getMessage(), e);
+                log.error("Co-op balance unexpected error: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to fetch balance. Please contact the system administrator.", e);
             }
         });
     }
