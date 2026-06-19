@@ -256,7 +256,7 @@ public class CoopConnectService {
                 if (e.getStatusCode().value() != 401) {
                     log.error("Co-op STK Push failed: HTTP {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
                     throw new RuntimeException("Co-op STK Push failed: " + e.getStatusCode().value()
-                            + " " + e.getStatusCode().getReasonPhrase(), e);
+                            + " " + e.getStatusText(), e);
                 }
                 throw e; // Let the retry wrapper handle 401
             } catch (HttpServerErrorException e) {
@@ -326,7 +326,7 @@ public class CoopConnectService {
                 if (e.getStatusCode().value() != 401) {
                     log.error("Co-op balance HTTP client error: {} → {}", e.getStatusCode(), e.getResponseBodyAsString());
                     throw new RuntimeException("Co-op balance failed: " + e.getStatusCode().value()
-                            + " " + e.getStatusCode().getReasonPhrase(), e);
+                            + " " + e.getStatusText(), e);
                 }
                 throw e; // Let wrapper handle 401
             } catch (HttpServerErrorException e) {
