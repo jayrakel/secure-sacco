@@ -6,8 +6,8 @@ import com.jaytechwave.sacco.modules.loans.domain.entity.LoanStatus;
 import com.jaytechwave.sacco.modules.loans.domain.repository.LoanApplicationRepository;
 import com.jaytechwave.sacco.modules.loans.domain.repository.LoanScheduleItemRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.api.dto.PaymentProductDTOs.*;
-import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ModuleType;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.Penalty;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus;
@@ -28,9 +28,14 @@ import java.util.UUID;
  *
  * Two checks:
  *  1. Percentages across all allocation lines sum to exactly 100%.
- *  2. For capped module types (LOAN, PENALTY), the allocated amount does not
- *     exceed the member's live outstanding balance for that product — Option A
- *     from SAC-261: reject upfront rather than silently redirect or overpay.
+ *  2. For capped products, the allocated amount does not exceed the member's
+ *     live remaining balance — Option A from SAC-261: reject upfront rather
+ *     than silently redirect or overpay. A product is capped when:
+ *       - module type is PENALTY (outstanding open penalties), or
+ *       - module type is LOAN (outstanding loan installments), or
+ *       - module type is CUSTOM and the product has a requiredAmount target set
+ *         (e.g. "Meat Contribution: KES 2,000 each") — capped at target minus
+ *         what the member has already routed toward it.
  */
 @Service
 @RequiredArgsConstructor
@@ -43,6 +48,7 @@ public class DepositAllocationValidationService {
     private final PenaltyRepository           penaltyRepository;
     private final LoanApplicationRepository   loanApplicationRepository;
     private final LoanScheduleItemRepository  loanScheduleItemRepository;
+    private final DepositAllocationRepository allocationRepository;
 
     @Transactional(readOnly = true)
     public List<ProductAllocationContext> getAllocationContext(UUID memberId) {
@@ -50,14 +56,27 @@ public class DepositAllocationValidationService {
         List<ProductAllocationContext> result = new ArrayList<>();
 
         for (PaymentProduct p : products) {
-            BigDecimal outstanding = switch (p.getModuleType()) {
-                case PENALTY -> sumOpenPenalties(memberId);
-                case LOAN    -> sumOutstandingLoan(memberId).orElse(null);
-                default      -> null; // SAVINGS / CUSTOM — uncapped
-            };
-            boolean capped = p.getModuleType() == ModuleType.PENALTY || p.getModuleType() == ModuleType.LOAN;
+            BigDecimal paidSoFar = null;
+            BigDecimal outstanding;
+
+            switch (p.getModuleType()) {
+                case PENALTY -> outstanding = sumOpenPenalties(memberId);
+                case LOAN    -> outstanding = sumOutstandingLoan(memberId).orElse(null);
+                case CUSTOM  -> {
+                    if (p.getRequiredAmount() != null) {
+                        paidSoFar = allocationRepository.sumRoutedAmountByProductAndMember(p.getId(), memberId);
+                        outstanding = p.getRequiredAmount().subtract(paidSoFar).max(BigDecimal.ZERO);
+                    } else {
+                        outstanding = null;
+                    }
+                }
+                default -> outstanding = null; // SAVINGS — uncapped
+            }
+
+            boolean capped = outstanding != null;
             result.add(new ProductAllocationContext(
-                    p.getId(), p.getCode(), p.getName(), p.getModuleType(), capped, outstanding
+                    p.getId(), p.getCode(), p.getName(), p.getModuleType(), capped,
+                    outstanding, p.getRequiredAmount(), paidSoFar
             ));
         }
         return result;
@@ -95,11 +114,7 @@ public class DepositAllocationValidationService {
                     .multiply(line.percentage())
                     .divide(HUNDRED, 2, RoundingMode.HALF_UP);
 
-            BigDecimal cap = switch (product.getModuleType()) {
-                case PENALTY -> sumOpenPenalties(memberId);
-                case LOAN    -> sumOutstandingLoan(memberId).orElse(null);
-                default      -> null;
-            };
+            BigDecimal cap = resolveCap(product, memberId);
 
             if (cap != null && lineAmount.compareTo(cap) > 0) {
                 errors.add(String.format(
@@ -115,6 +130,19 @@ public class DepositAllocationValidationService {
             return new ValidateAllocationResponse(false, errors.get(0), errors);
         }
         return new ValidateAllocationResponse(true, null, List.of());
+    }
+
+    private BigDecimal resolveCap(PaymentProduct product, UUID memberId) {
+        return switch (product.getModuleType()) {
+            case PENALTY -> sumOpenPenalties(memberId);
+            case LOAN    -> sumOutstandingLoan(memberId).orElse(null);
+            case CUSTOM  -> {
+                if (product.getRequiredAmount() == null) yield null;
+                BigDecimal paid = allocationRepository.sumRoutedAmountByProductAndMember(product.getId(), memberId);
+                yield product.getRequiredAmount().subtract(paid).max(BigDecimal.ZERO);
+            }
+            default -> null;
+        };
     }
 
     // ── Outstanding balance calculators ───────────────────────────────────────

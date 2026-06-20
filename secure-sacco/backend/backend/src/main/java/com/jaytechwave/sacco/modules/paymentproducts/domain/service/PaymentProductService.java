@@ -52,6 +52,7 @@ public class PaymentProductService {
                 .glAccount(glAccount)
                 .isActive(true)
                 .isSystem(false)
+                .requiredAmount(request.requiredAmount())
                 .displayOrder(request.displayOrder() != null ? request.displayOrder() : nextDisplayOrder())
                 .build();
 
@@ -81,6 +82,14 @@ public class PaymentProductService {
         }
         if (request.displayOrder() != null) product.setDisplayOrder(request.displayOrder());
 
+        // requiredAmount: explicit clear flag distinguishes "set to uncapped" from "leave unchanged",
+        // since requiredAmount(null) in the request body is ambiguous with "field omitted" over JSON.
+        if (Boolean.TRUE.equals(request.clearRequiredAmount())) {
+            product.setRequiredAmount(null);
+        } else if (request.requiredAmount() != null) {
+            product.setRequiredAmount(request.requiredAmount());
+        }
+
         product = productRepository.save(product);
         return toResponse(product);
     }
@@ -105,7 +114,7 @@ public class PaymentProductService {
         return new ProductResponse(
                 p.getId(), p.getName(), p.getCode(), p.getDescription(), p.getModuleType(),
                 p.getGlAccount().getId(), p.getGlAccount().getAccountCode(), p.getGlAccount().getAccountName(),
-                p.isActive(), p.isSystem(), p.getDisplayOrder(), p.getCreatedAt()
+                p.isActive(), p.isSystem(), p.getDisplayOrder(), p.getRequiredAmount(), p.getCreatedAt()
         );
     }
 }

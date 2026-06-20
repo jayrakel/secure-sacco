@@ -18,7 +18,8 @@ public class PaymentProductDTOs {
             String description,
             @NotNull ModuleType moduleType,
             @NotNull UUID glAccountId,
-            Integer displayOrder
+            Integer displayOrder,
+            BigDecimal requiredAmount // optional per-member target, e.g. "KES 2,000 each"
     ) {}
 
     public record UpdateProductRequest(
@@ -26,7 +27,9 @@ public class PaymentProductDTOs {
             String description,
             UUID glAccountId,
             Boolean isActive,
-            Integer displayOrder
+            Integer displayOrder,
+            BigDecimal requiredAmount,
+            Boolean clearRequiredAmount // explicit flag — distinguishes "leave unchanged" from "set to uncapped"
     ) {}
 
     public record ProductResponse(
@@ -41,6 +44,7 @@ public class PaymentProductDTOs {
             boolean isActive,
             boolean isSystem,
             int displayOrder,
+            BigDecimal requiredAmount,
             ZonedDateTime createdAt
     ) {}
 
@@ -57,14 +61,15 @@ public class PaymentProductDTOs {
             @NotNull List<AllocationLine> allocations
     ) {}
 
-    /** Per-product outstanding context shown on the allocation screen. */
     public record ProductAllocationContext(
             UUID productId,
             String productCode,
             String productName,
             ModuleType moduleType,
             boolean isCapped,
-            BigDecimal outstandingAmount   // null when not capped (SAVINGS/CUSTOM)
+            BigDecimal outstandingAmount,  // remaining amount the member may still allocate, null when uncapped
+            BigDecimal requiredAmount,     // the product's fixed per-member target, null if none set
+            BigDecimal paidAmount          // how much this member has already routed to this product, null if requiredAmount is null
     ) {}
 
     public record ValidateAllocationResponse(
