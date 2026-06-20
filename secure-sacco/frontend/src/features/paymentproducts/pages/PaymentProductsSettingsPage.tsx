@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-    Package, Plus, X, Loader2, AlertCircle, Pencil, Trash2,
-    ShieldCheck, Lock
+    Package, Plus, X, Loader2, AlertCircle, Trash2, Lock
 } from 'lucide-react';
 import { paymentProductsApi } from '../api/payment-products-api';
 import type { PaymentProduct, ModuleType } from '../api/payment-products-api';
 import { accountingApi } from '../../accounting/api/accounting-api';
 import type { Account } from '../../accounting/api/accounting-api';
+import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 const MODULE_LABELS: Record<ModuleType, string> = {
     SAVINGS: 'Savings',
@@ -77,8 +77,8 @@ export const PaymentProductsSettingsPage: React.FC = () => {
             setShowForm(false);
             setForm(emptyForm);
             await load();
-        } catch (e: any) {
-            setError(e?.response?.data?.message ?? 'Failed to create product');
+        } catch (e) {
+            setError(getApiErrorMessage(e, 'Failed to create product'));
         } finally {
             setSaving(false);
         }
@@ -88,8 +88,8 @@ export const PaymentProductsSettingsPage: React.FC = () => {
         try {
             await paymentProductsApi.update(p.id, { isActive: !p.isActive });
             await load();
-        } catch (e: any) {
-            setError(e?.response?.data?.message ?? 'Failed to update product');
+        } catch (e) {
+            setError(getApiErrorMessage(e, 'Failed to update product'));
         }
     };
 
@@ -98,8 +98,8 @@ export const PaymentProductsSettingsPage: React.FC = () => {
         try {
             await paymentProductsApi.remove(p.id);
             await load();
-        } catch (e: any) {
-            setError(e?.response?.data?.message ?? 'Failed to delete product');
+        } catch (e) {
+            setError(getApiErrorMessage(e, 'Failed to delete product'));
         }
     };
 

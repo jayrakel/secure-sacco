@@ -4,11 +4,12 @@ import {
     ChevronRight, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Lock
 } from 'lucide-react';
 import {
-    splitDepositApi, paymentProductsApi
+    splitDepositApi
 } from '../api/payment-products-api';
 import type {
-    ProductAllocationContext, PaymentProduct
+    ProductAllocationContext
 } from '../api/payment-products-api';
+import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 type Step = 'method' | 'amount' | 'allocate' | 'phone' | 'success';
 
@@ -131,8 +132,8 @@ export const DepositFlowModal: React.FC<Props> = ({ isOpen, onClose, defaultPhon
             await splitDepositApi.initiate(totalAmount, phone, active);
             setStep('success');
             onCompleted?.();
-        } catch (e: any) {
-            setError(e?.response?.data?.message ?? 'STK push failed. Please try again.');
+        } catch (e) {
+            setError(getApiErrorMessage(e, 'STK push failed. Please try again.'));
         } finally {
             setLoading(false);
         }
