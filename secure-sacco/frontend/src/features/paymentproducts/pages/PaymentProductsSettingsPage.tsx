@@ -27,9 +27,10 @@ interface FormState {
     code: string;
     description: string;
     glAccountId: string;
+    requiredAmount: string; // kept as string for the input; parsed to number on submit
 }
 
-const emptyForm: FormState = { name: '', code: '', description: '', glAccountId: '' };
+const emptyForm: FormState = { name: '', code: '', description: '', glAccountId: '', requiredAmount: '' };
 
 export const PaymentProductsSettingsPage: React.FC = () => {
     const [products, setProducts] = useState<PaymentProduct[]>([]);
@@ -73,6 +74,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                 description: form.description || undefined,
                 moduleType: 'CUSTOM',
                 glAccountId: form.glAccountId,
+                requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
             });
             setShowForm(false);
             setForm(emptyForm);
@@ -190,6 +192,23 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                         </p>
                     </div>
 
+                    <div>
+                        <label className="text-xs font-medium text-slate-500">Required Amount per Member (optional)</label>
+                        <input
+                            type="number"
+                            min={0}
+                            value={form.requiredAmount}
+                            onChange={e => setForm({ ...form, requiredAmount: e.target.value })}
+                            placeholder="e.g. 2000"
+                            className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">
+                            If set, each member's deposit screen shows progress toward this target
+                            (paid so far / remaining) — the same way Savings Obligations works. Leave
+                            blank for an open-ended contribution with no fixed goal.
+                        </p>
+                    </div>
+
                     <button
                         onClick={handleCreate}
                         disabled={saving}
@@ -228,6 +247,11 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                                     <p className="text-xs text-slate-400 font-mono">
                                         {p.code} → {p.glAccountCode} {p.glAccountName}
                                     </p>
+                                    {p.requiredAmount != null && (
+                                        <p className="text-xs text-emerald-600 font-semibold mt-0.5">
+                                            Target: KES {new Intl.NumberFormat('en-KE').format(p.requiredAmount)} per member
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

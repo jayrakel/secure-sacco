@@ -14,6 +14,7 @@ export interface PaymentProduct {
     isActive: boolean;
     isSystem: boolean;
     displayOrder: number;
+    requiredAmount: number | null; // per-member target, e.g. "KES 2,000 each". Null = uncapped.
     createdAt: string;
 }
 
@@ -23,7 +24,9 @@ export interface ProductAllocationContext {
     productName: string;
     moduleType: ModuleType;
     isCapped: boolean;
-    outstandingAmount: number | null;
+    outstandingAmount: number | null; // remaining amount the member may still allocate
+    requiredAmount: number | null;    // the product's fixed per-member target, if any
+    paidAmount: number | null;        // how much this member has already paid toward it
 }
 
 export interface AllocationLine {
@@ -62,6 +65,7 @@ export const paymentProductsApi = {
         moduleType: ModuleType;
         glAccountId: string;
         displayOrder?: number;
+        requiredAmount?: number;
     }): Promise<PaymentProduct> => {
         const res = await apiClient.post('/payment-products', data);
         return res.data;
@@ -73,6 +77,8 @@ export const paymentProductsApi = {
         glAccountId?: string;
         isActive?: boolean;
         displayOrder?: number;
+        requiredAmount?: number;
+        clearRequiredAmount?: boolean;
     }): Promise<PaymentProduct> => {
         const res = await apiClient.put(`/payment-products/${id}`, data);
         return res.data;

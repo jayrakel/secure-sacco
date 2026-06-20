@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -42,6 +43,9 @@ public class PaymentProduct {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
+
+    @Column(name = "required_amount", precision = 14, scale = 2)
+    private BigDecimal requiredAmount;
 
     @Column(name = "is_system", nullable = false)
     @Builder.Default
