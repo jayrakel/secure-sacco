@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     X, Smartphone, Building2, Banknote, FileText,
-    ChevronRight, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Lock
+    ChevronRight, ArrowLeft, Loader2, CheckCircle2, AlertCircle, Lock, Clock, XCircle
 } from 'lucide-react';
 import {
     splitDepositApi
 } from '../api/payment-products-api';
 import type {
-    ProductAllocationContext
+    ProductAllocationContext, SplitDepositHistoryItem
 } from '../api/payment-products-api';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
@@ -85,17 +85,68 @@ export const DepositFlowModal: React.FC<Props> = ({ isOpen, onClose, defaultPhon
     const [loading, setLoading]         = useState(false);
     const [error, setError]             = useState<string | null>(null);
 
+    // SAC-262: live status tracking for the just-initiated split deposit — without this,
+    // members saw nothing after sending an STK push regardless of the outcome.
+    const [trackingRef, setTrackingRef] = useState<string | null>(null);
+    const [liveStatus, setLiveStatus]   = useState<SplitDepositHistoryItem | null>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     useEffect(() => {
         if (isOpen) {
             setStep('method');
             setAmount('');
             setError(null);
+            setTrackingRef(null);
+            setLiveStatus(null);
         }
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
     }, [isOpen]);
 
     const totalAmount = parseFloat(amount) || 0;
     const totalAllocated = useMemo(() => lines.reduce((s, l) => s + (l.amount || 0), 0), [lines]);
     const remaining = Math.round((totalAmount - totalAllocated) * 100) / 100;
+
+    // SAC-262: poll the real Co-op-confirmed status every 5s once an STK push has been
+    // sent, so the member actually sees PENDING → COMPLETED/FAILED (and why, on failure)
+    // instead of silence. Stops once a terminal status arrives, or after ~11 minutes
+    // (slightly past the backend's own 10-minute expiry window).
+    useEffect(() => {
+        if (!trackingRef) return;
+
+        let elapsedMs = 0;
+        const intervalMs = 5000;
+        const maxMs = 11 * 60 * 1000;
+
+        const poll = async () => {
+            try {
+                const recent = await splitDepositApi.getMyRecent();
+                const match = recent.find(r => r.accountReference === trackingRef);
+                if (match) {
+                    setLiveStatus(match);
+                    if (match.status !== 'PENDING' && pollRef.current) {
+                        clearInterval(pollRef.current);
+                        pollRef.current = null;
+                    }
+                }
+            } catch {
+                // transient — keep polling, next tick will retry
+            }
+            elapsedMs += intervalMs;
+            if (elapsedMs >= maxMs && pollRef.current) {
+                clearInterval(pollRef.current);
+                pollRef.current = null;
+            }
+        };
+
+        poll(); // immediate first check
+        pollRef.current = setInterval(poll, intervalMs);
+
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, [trackingRef]);
 
     if (!isOpen) return null;
 
@@ -174,7 +225,10 @@ export const DepositFlowModal: React.FC<Props> = ({ isOpen, onClose, defaultPhon
         setLoading(true);
         try {
             const active = toAllocationLines();
-            await splitDepositApi.initiate(totalAmount, phone, active);
+            const res = await splitDepositApi.initiate(totalAmount, phone, active);
+            // checkoutRequestID carries the SPLIT-xxx accountReference for this payment —
+            // used to find this exact payment when polling /my-recent for its real status.
+            setTrackingRef(res.checkoutRequestID);
             setStep('success');
             onCompleted?.();
         } catch (e) {
@@ -377,14 +431,52 @@ export const DepositFlowModal: React.FC<Props> = ({ isOpen, onClose, defaultPhon
                         </div>
                     )}
 
-                    {/* ── Step 5: Success ── */}
+                    {/* ── Step 5: Success — now shows the real, live status ── */}
                     {step === 'success' && (
-                        <div className="text-center py-6 space-y-3">
-                            <CheckCircle2 size={48} className="text-emerald-600 mx-auto" />
-                            <h3 className="text-lg font-bold text-slate-800">STK Push Sent</h3>
-                            <p className="text-sm text-slate-500">
-                                Enter your M-Pesa PIN on your phone to complete the payment. Your contribution will be split automatically once confirmed.
-                            </p>
+                        <div className="py-2 space-y-4">
+                            {(!liveStatus || liveStatus.status === 'PENDING') && (
+                                <div className="text-center py-4 space-y-3">
+                                    <Clock size={48} className="text-amber-500 mx-auto" />
+                                    <h3 className="text-lg font-bold text-slate-800">Waiting for Confirmation</h3>
+                                    <p className="text-sm text-slate-500">
+                                        Enter your M-Pesa PIN on your phone. We'll update this automatically once Co-op confirms the payment.
+                                    </p>
+                                    <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                                        <Loader2 size={14} className="animate-spin" />
+                                        Checking status…
+                                    </div>
+                                </div>
+                            )}
+
+                            {liveStatus?.status === 'COMPLETED' && (
+                                <div className="text-center py-4 space-y-3">
+                                    <CheckCircle2 size={48} className="text-emerald-600 mx-auto" />
+                                    <h3 className="text-lg font-bold text-slate-800">Payment Confirmed</h3>
+                                    <p className="text-sm text-slate-500">KES {fmt(liveStatus.totalAmount)} received and routed:</p>
+                                    <div className="text-left p-3 rounded-xl bg-slate-50 space-y-1.5 mt-2">
+                                        {liveStatus.allocations.map((a, i) => (
+                                            <div key={i} className="flex justify-between text-sm">
+                                                <span className="text-slate-500">{a.productName}</span>
+                                                <span className={`font-medium ${a.status === 'ROUTED' ? 'text-emerald-700' : a.status === 'FAILED' ? 'text-red-600' : 'text-amber-600'}`}>
+                                                    KES {fmt(a.amount)} · {a.status === 'ROUTED' ? 'Done' : a.status === 'FAILED' ? 'Failed' : 'Processing'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {liveStatus?.status === 'FAILED' && (
+                                <div className="text-center py-4 space-y-3">
+                                    <XCircle size={48} className="text-red-500 mx-auto" />
+                                    <h3 className="text-lg font-bold text-slate-800">Payment Failed</h3>
+                                    <p className="text-sm text-red-600 font-medium">
+                                        {liveStatus.failureReason ?? 'The payment could not be completed.'}
+                                    </p>
+                                    <p className="text-sm text-slate-500">No money has been deducted. You can try again.</p>
+                                </div>
+                            )}
+
                             <button
                                 onClick={onClose}
                                 className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl"

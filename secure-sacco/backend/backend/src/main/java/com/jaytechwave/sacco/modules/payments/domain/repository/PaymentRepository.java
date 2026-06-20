@@ -35,6 +35,21 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     // Used by PendingPaymentPollingJob to find all pending STK pushes
     List<Payment> findByStatusAndPaymentType(PaymentStatus status, String paymentType);
 
+    /**
+     * Member-facing split deposit history (SAC-262) — lets a member see the real status
+     * of a split deposit they initiated: PENDING / COMPLETED / FAILED, with failureReason
+     * if it failed (e.g. wrong PIN, insufficient funds, timeout). Scoped to accountReference
+     * starting with "SPLIT-" so only split-deposit payments are returned, not every payment
+     * the member has ever made.
+     */
+    @Query("""
+            SELECT p FROM Payment p
+            WHERE p.memberId = :memberId
+              AND p.accountReference LIKE 'SPLIT-%'
+            ORDER BY p.createdAt DESC
+           """)
+    List<Payment> findRecentSplitDepositsByMember(@Param("memberId") UUID memberId, Pageable pageable);
+
     // ── Co-op account transaction history (IPN-stored) ───────────────────────
 
     /** All COMPLETED payments between two dates, newest first — CR and DR */

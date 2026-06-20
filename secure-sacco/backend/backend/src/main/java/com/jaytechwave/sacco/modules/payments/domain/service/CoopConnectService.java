@@ -216,12 +216,20 @@ public class CoopConnectService {
             String messageDateTime = LocalDateTime.now(SaccoDateUtils.NAIROBI)
                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 
-            // SAC-259: Co-op REJECTS a full 36-char UUID as MessageReference —
-            // confirmed via live error: MessageCode -11 "MESSAGE REFERENCE/REFERENCE NUMBER
-            // LONGER THAN ALLOWED LENGTH". Their limit is below 36 chars. Reverting to a
-            // 20-char hex string (no hyphens) — still effectively unique per request since
-            // it's freshly randomised every call, just shorter to satisfy their length cap.
-            String coopMessageRef = UUID.randomUUID().toString().replace("-", "").substring(0, 20);
+            // SAC-262 (critical fix): previously this method ignored the caller-supplied
+            // `reference` and generated its own fresh UUID internally, sending THAT to
+            // Co-op instead. Callers (PaymentService, SplitDepositService) store their
+            // own generated ref as Payment.internalRef — but since Co-op never actually
+            // received that ref, PendingPaymentPollingJob's status checks and the STK
+            // callback handler (both of which look up by internalRef/MessageReference)
+            // could never find a match. Every STK push silently sat PENDING for the full
+            // 10-minute expiry window regardless of its real outcome (success, wrong PIN,
+            // insufficient funds, etc.) — the specific failure reason was never recoverable.
+            //
+            // Fix: use the caller's reference directly. Callers already shorten it to
+            // ≤20 hex chars (SAC-259's length-cap fix), so it satisfies Co-op's limit and
+            // — critically — now actually matches what's stored as Payment.internalRef.
+            String coopMessageRef = reference;
 
             StkPushRequest request = StkPushRequest.builder()
                     .messageReference(coopMessageRef)
@@ -237,8 +245,8 @@ public class CoopConnectService {
                     .otherDetails(List.of(OtherDetail.of("AccountRef", accountRef)))
                     .build();
 
-            log.info("Co-op STK Push → phone={} amount={} internalRef={} coopRef={} accountRef={} callbackUrl={}",
-                    phoneNumber, amount, reference, coopMessageRef, accountRef, callbackUrl);
+            log.info("Co-op STK Push → phone={} amount={} messageRef={} accountRef={} callbackUrl={}",
+                    phoneNumber, amount, coopMessageRef, accountRef, callbackUrl);
 
             try {
                 StkPushResponse response = restClient.post()

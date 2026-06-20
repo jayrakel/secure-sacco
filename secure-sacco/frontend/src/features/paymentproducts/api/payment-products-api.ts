@@ -46,6 +46,22 @@ export interface InitiateStkResponse {
     customerMessage: string;
 }
 
+export interface AllocationStatusItem {
+    productName: string;
+    amount: number;
+    status: 'PENDING' | 'ROUTED' | 'FAILED';
+}
+
+export interface SplitDepositHistoryItem {
+    paymentId: string;
+    accountReference: string;
+    totalAmount: number;
+    status: 'PENDING' | 'COMPLETED' | 'FAILED';
+    failureReason: string | null;
+    createdAt: string;
+    allocations: AllocationStatusItem[];
+}
+
 export const paymentProductsApi = {
     // ── Admin CRUD ──────────────────────────────────────────────────────────
     getAll: async (): Promise<PaymentProduct[]> => {
@@ -106,6 +122,11 @@ export const splitDepositApi = {
         allocations: AllocationLine[]
     ): Promise<InitiateStkResponse> => {
         const res = await apiClient.post('/deposits/split/initiate', { totalAmount, phoneNumber, allocations });
+        return res.data;
+    },
+
+    getMyRecent: async (): Promise<SplitDepositHistoryItem[]> => {
+        const res = await apiClient.get('/deposits/split/my-recent');
         return res.data;
     },
 };

@@ -61,6 +61,12 @@ public class PaymentProductDTOs {
             @NotNull List<AllocationLine> allocations
     ) {}
 
+    /**
+     * Per-product progress shown on the allocation screen.
+     * For LOAN/PENALTY: outstandingAmount = live outstanding balance, requiredAmount/paidAmount are null.
+     * For CUSTOM with a target set: requiredAmount + paidAmount are populated, outstandingAmount = remaining.
+     * For SAVINGS, or CUSTOM with no target: isCapped = false, all three amounts are null.
+     */
     public record ProductAllocationContext(
             UUID productId,
             String productCode,
@@ -83,5 +89,28 @@ public class PaymentProductDTOs {
             @NotNull BigDecimal totalAmount,
             @NotBlank String phoneNumber,
             @NotNull List<AllocationLine> allocations
+    ) {}
+
+    // ── Member: split deposit status history (SAC-262) ───────────────────────
+
+    /** One product's portion of a split deposit, with its own routing status. */
+    public record AllocationStatusItem(
+            String productName,
+            BigDecimal amount,
+            String status   // PENDING | ROUTED | FAILED
+    ) {}
+
+    /**
+     * A single split deposit attempt and its real-time status — lets the member see
+     * what actually happened (pending / completed / failed and why) instead of silence.
+     */
+    public record SplitDepositHistoryItem(
+            UUID paymentId,
+            String accountReference, // the SPLIT-xxx ref returned as checkoutRequestID from /initiate
+            BigDecimal totalAmount,
+            String status,          // PENDING | COMPLETED | FAILED
+            String failureReason,   // populated only when status = FAILED
+            ZonedDateTime createdAt,
+            List<AllocationStatusItem> allocations
     ) {}
 }

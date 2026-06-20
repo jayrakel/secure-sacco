@@ -14,6 +14,7 @@ import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAl
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,5 +112,37 @@ public class SplitDepositService {
         if (phone.startsWith("+")) return phone.substring(1);
         if (phone.startsWith("0")) return "254" + phone.substring(1);
         return phone;
+    }
+
+    /**
+     * SAC-262: the original split deposit flow created Payment + DepositAllocation rows
+     * but never surfaced them anywhere in the member-facing UI — unlike the regular
+     * single-purpose deposit flow, which pre-creates a visible PENDING SavingsTransaction
+     * so the member sees something on their statement right away. This method lets the
+     * member check the real status (PENDING / COMPLETED / FAILED, with the actual failure
+     * reason from Co-op) of their recent split deposits.
+     */
+    @Transactional(readOnly = true)
+    public List<SplitDepositHistoryItem> getMyRecentSplitDeposits(UUID memberId, int limit) {
+        List<Payment> payments = paymentRepository.findRecentSplitDepositsByMember(
+                memberId, PageRequest.of(0, limit));
+
+        return payments.stream().map(payment -> {
+            List<DepositAllocation> allocations = allocationRepository.findByPaymentId(payment.getId());
+            List<AllocationStatusItem> items = allocations.stream()
+                    .map(a -> new AllocationStatusItem(
+                            a.getProduct().getName(), a.getAmount(), a.getStatus().name()))
+                    .toList();
+
+            return new SplitDepositHistoryItem(
+                    payment.getId(),
+                    payment.getAccountReference(),
+                    payment.getAmount(),
+                    payment.getStatus().name(),
+                    payment.getFailureReason(),
+                    payment.getCreatedAt(),
+                    items
+            );
+        }).toList();
     }
 }
