@@ -50,9 +50,9 @@ public class PaymentService {
         coopConnectService.invalidateTokenCache();
 
         StkPushResponse coopResponse = coopConnectService.initiateStkPush(
-                phone, request.amount(), request.accountReference(),
+                phone, request.amount(), messageRef,
                 "BETTER LINK VENTURES SACCO",
-                request.accountReference()   // member's DEP-xxx ref as AccountRef
+                request.accountReference()   // member's DEP-xxx ref as AccountRef (separate from MessageReference)
         );
 
         if (coopResponse == null) {

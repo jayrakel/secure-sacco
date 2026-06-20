@@ -54,6 +54,14 @@ public class SplitDepositController {
         return ResponseEntity.ok(splitDepositService.initiateSplitDeposit(request, memberId));
     }
 
+    @Operation(summary = "SAC-262: real status of the member's recent split deposits — PENDING/COMPLETED/FAILED with reason")
+    @GetMapping("/my-recent")
+    @PreAuthorize("hasAuthority('MEMBER_SAVINGS_VIEW')")
+    public ResponseEntity<List<SplitDepositHistoryItem>> getMyRecent(Authentication authentication) {
+        UUID memberId = resolveMemberId(authentication);
+        return ResponseEntity.ok(splitDepositService.getMyRecentSplitDeposits(memberId, 10));
+    }
+
     private UUID resolveMemberId(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return memberRepository.findByUserId(userDetails.getId())
