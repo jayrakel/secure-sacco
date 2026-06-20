@@ -9,13 +9,14 @@ import {
     Building2, Shield, Bell, CalendarClock, Zap, ToggleLeft, ToggleRight,
     Loader2, CheckCircle2, AlertCircle, Image, ChevronRight,
     Users, BookOpen, PiggyBank, BarChart3, AlertTriangle,
-    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2,
+    Gavel, Plus, Pencil, X, Check, TriangleAlert, Trash2, Package,
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
+import { PaymentProductsSettingsPage } from '../../paymentproducts/pages/PaymentProductsSettingsPage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'modules' | 'penalties';
+type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'modules' | 'penalties' | 'products';
 
 interface SecurityPolicy {
     maxLoginAttempts: number;
@@ -39,6 +40,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] 
     { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
     { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
     { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
+    { id: 'products',      label: 'Payment Products', icon: <Package size={15} />, desc: 'Deposit allocation categories' },
 ];
 
 const MODULE_CONFIG: Record<string, { label: string; desc: string; icon: React.ReactNode; cls: { bg: string; ring: string; text: string; icon: string } }> = {
@@ -1020,6 +1022,10 @@ const SaccoSettingsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {tab === 'products' && (
+                        <PaymentProductsSettingsPage />
                     )}
                 </div>
             </div>

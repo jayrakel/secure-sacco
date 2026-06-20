@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { savingsApi, type StatementTransactionResponse, type SavingsBalanceResponse } from '../api/savings-api';
-import { MpesaDepositModal } from '../components/MpesaDepositModal';
-import { DepositOptionsModal } from '../components/DepositOptionsModal';
+import { DepositFlowModal } from '../../paymentproducts/components/DepositFlowModal';
 import { PiggyBank, PlusCircle, Clock, RefreshCw, AlertCircle, ArrowDownCircle, ArrowUpCircle, Gift } from 'lucide-react';
 
 /** Transaction types that increase the member's balance (credits). */
@@ -30,7 +29,6 @@ const MemberSavingsPage: React.FC = () => {
     const [balance, setBalance] = useState<SavingsBalanceResponse | null>(null);
     const [statement, setStatement] = useState<StatementTransactionResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isDepositModalOpen, setIsDepositModalOpen]        = useState(false);
     const [isDepositOptionsOpen, setIsDepositOptionsOpen]    = useState(false);
 
     const isPending = user?.memberStatus === 'PENDING';
@@ -173,18 +171,11 @@ const MemberSavingsPage: React.FC = () => {
                 <MemberObligationsSection />
             </div>
 
-            <DepositOptionsModal
+            <DepositFlowModal
                 isOpen={isDepositOptionsOpen}
                 onClose={() => setIsDepositOptionsOpen(false)}
-                memberNumber={user?.memberNumber ?? ''}
-                memberName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
-                onStkPush={() => setIsDepositModalOpen(true)}
-            />
-
-            <MpesaDepositModal
-                isOpen={isDepositModalOpen}
-                onClose={() => setIsDepositModalOpen(false)}
-                onSuccess={loadData}
+                defaultPhone={user?.phoneNumber}
+                onCompleted={loadData}
             />
         </div>
     );
