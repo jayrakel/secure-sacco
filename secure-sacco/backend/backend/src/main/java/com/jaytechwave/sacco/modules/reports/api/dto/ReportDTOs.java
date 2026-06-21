@@ -109,4 +109,28 @@ public class ReportDTOs {
         private BigDecimal totalIncome = BigDecimal.ZERO;
         private java.util.List<IncomeCategoryDTO> categories = new java.util.ArrayList<>();
     }
+
+    // ── General Statement (SAC-263) — true system-wide financial position ────
+
+    @Data
+    public static class GeneralStatementLineDTO {
+        private String transactionDate;
+        private String reference;       // live mpesa ref where available, else internal/system ref
+        private String description;
+        private String accountCode;
+        private String accountName;
+        private String accountType;     // ASSET, LIABILITY, REVENUE, EXPENSE, EQUITY
+        private BigDecimal debitAmount = BigDecimal.ZERO;
+        private BigDecimal creditAmount = BigDecimal.ZERO;
+        private BigDecimal runningBalance; // signed running balance for the account, in display order
+    }
+
+    @Data
+    public static class GeneralStatementDTO {
+        private String fromDate;
+        private String toDate;
+        private BigDecimal totalDebits = BigDecimal.ZERO;
+        private BigDecimal totalCredits = BigDecimal.ZERO;
+        private java.util.List<GeneralStatementLineDTO> lines = new java.util.ArrayList<>();
+    }
 }

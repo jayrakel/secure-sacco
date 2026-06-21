@@ -7,6 +7,8 @@ import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.DailyCollectionDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementResponseDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.StatementSummaryDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.GeneralStatementDTO;
+import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.GeneralStatementLineDTO;
 import com.jaytechwave.sacco.modules.reports.domain.repository.MemberFinancialOverviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -590,5 +592,78 @@ public class ReportService {
         report.setTotalIncome(grandTotal);
 
         return report;
+    }
+
+    // ── General Statement (SAC-263) — every posted GL movement, chronologically ──
+    // This is the true financial position: journal_entries/journal_entry_lines is
+    // the single authoritative ledger every module (savings, loans, penalties,
+    // custom products, manual postings, bank credits/debits) already posts to.
+    // Rather than re-deriving figures from scattered tables, this report reads
+    // straight from the GL — so it can never drift from what Trial Balance shows.
+    @Transactional(readOnly = true)
+    public GeneralStatementDTO getGeneralStatement(java.time.LocalDate from, java.time.LocalDate to,
+                                                    String accountCode) {
+        GeneralStatementDTO statement = new GeneralStatementDTO();
+        statement.setFromDate(from != null ? from.toString() : null);
+        statement.setToDate(to != null ? to.toString() : null);
+
+        StringBuilder sql = new StringBuilder("""
+                SELECT
+                    je.transaction_date,
+                    je.reference_number,
+                    je.description,
+                    a.account_code,
+                    a.account_name,
+                    a.account_type,
+                    jel.debit_amount,
+                    jel.credit_amount,
+                    SUM(jel.debit_amount - jel.credit_amount)
+                        OVER (PARTITION BY a.id ORDER BY je.transaction_date, je.created_at, jel.id) AS running_balance
+                FROM journal_entries je
+                JOIN journal_entry_lines jel ON jel.journal_entry_id = je.id
+                JOIN accounts a ON a.id = jel.account_id
+                WHERE je.status = 'POSTED'
+                """);
+
+        List<Object> params = new java.util.ArrayList<>();
+        if (from != null) {
+            sql.append(" AND je.transaction_date >= ?");
+            params.add(java.sql.Date.valueOf(from));
+        }
+        if (to != null) {
+            sql.append(" AND je.transaction_date <= ?");
+            params.add(java.sql.Date.valueOf(to));
+        }
+        if (accountCode != null && !accountCode.isBlank()) {
+            sql.append(" AND a.account_code = ?");
+            params.add(accountCode);
+        }
+        sql.append(" ORDER BY je.transaction_date ASC, je.created_at ASC, jel.id ASC");
+
+        List<GeneralStatementLineDTO> lines = jdbcTemplate.query(sql.toString(), (rs, rowNum) -> {
+            GeneralStatementLineDTO line = new GeneralStatementLineDTO();
+            line.setTransactionDate(rs.getDate("transaction_date").toString());
+            line.setReference(rs.getString("reference_number"));
+            line.setDescription(rs.getString("description"));
+            line.setAccountCode(rs.getString("account_code"));
+            line.setAccountName(rs.getString("account_name"));
+            line.setAccountType(rs.getString("account_type"));
+            line.setDebitAmount(rs.getBigDecimal("debit_amount"));
+            line.setCreditAmount(rs.getBigDecimal("credit_amount"));
+            line.setRunningBalance(rs.getBigDecimal("running_balance"));
+            return line;
+        }, params.toArray());
+
+        BigDecimal totalDebits = BigDecimal.ZERO;
+        BigDecimal totalCredits = BigDecimal.ZERO;
+        for (GeneralStatementLineDTO line : lines) {
+            if (line.getDebitAmount() != null) totalDebits = totalDebits.add(line.getDebitAmount());
+            if (line.getCreditAmount() != null) totalCredits = totalCredits.add(line.getCreditAmount());
+        }
+
+        statement.setLines(lines);
+        statement.setTotalDebits(totalDebits);
+        statement.setTotalCredits(totalCredits);
+        return statement;
     }
 }

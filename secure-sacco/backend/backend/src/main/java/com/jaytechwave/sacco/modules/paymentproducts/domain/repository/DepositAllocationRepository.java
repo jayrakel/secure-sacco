@@ -2,6 +2,8 @@ package com.jaytechwave.sacco.modules.paymentproducts.domain.repository;
 
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.AllocationStatus;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAllocation;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,4 +34,14 @@ public interface DepositAllocationRepository extends JpaRepository<DepositAlloca
               AND da.status = 'ROUTED'
            """)
     BigDecimal sumRoutedAmountByProductAndMember(@Param("productId") UUID productId, @Param("memberId") UUID memberId);
+
+    /**
+     * SAC-263: powers the "smart tab" — every product (especially CUSTOM ones like
+     * "Meat Contribution") automatically gets a transaction history view with no new
+     * code required per product, since this query is generic over productId.
+     */
+    Page<DepositAllocation> findByProductIdOrderByCreatedAtDesc(UUID productId, Pageable pageable);
+
+    /** Unpaginated variant for statement export (CSV/PDF) — full history, not just one page. */
+    List<DepositAllocation> findByProductIdOrderByCreatedAtAsc(UUID productId);
 }

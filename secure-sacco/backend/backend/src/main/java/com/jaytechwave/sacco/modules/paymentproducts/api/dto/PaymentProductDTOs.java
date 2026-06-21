@@ -84,6 +84,68 @@ public class PaymentProductDTOs {
             List<String> fieldErrors
     ) {}
 
+    // ── Admin: per-product transaction history & statement (SAC-263) ─────────
+
+    /**
+     * One row in a product's transaction history — the "smart tab" that
+     * automatically exists for every product, including custom ones, with
+     * zero extra code per product. Reference is always the LIVE value from
+     * the underlying payment (mpesaRef once known, internalRef before that) —
+     * never a frozen copy, so it's correct from the moment IPN/mini-statement
+     * confirms the M-Pesa transaction, with no separate reconciliation step.
+     */
+    public record ProductTransactionItem(
+            UUID allocationId,
+            String memberNumber,
+            String memberName,
+            BigDecimal amount,
+            String status,       // PENDING | ROUTED | FAILED
+            String reference,    // live payment.mpesaRef, falling back to internalRef
+            ZonedDateTime createdAt,
+            ZonedDateTime routedAt
+    ) {}
+
+    public record ProductTransactionPage(
+            List<ProductTransactionItem> items,
+            long totalElements,
+            int totalPages,
+            int page,
+            int size,
+            BigDecimal totalAmount   // sum of ROUTED amounts only — the product's true received total
+    ) {}
+
+    // ── Admin: reference lookup — every route one M-Pesa payment touched ─────
+
+    /** One module/product this payment was (or will be) routed to. */
+    public record RouteItem(
+            String productName,
+            ModuleType moduleType,
+            BigDecimal amount,
+            String status,      // PENDING | ROUTED | FAILED
+            String failureReason,
+            ZonedDateTime routedAt
+    ) {}
+
+    /**
+     * SAC-264: search by M-Pesa reference (or internal ref, for payments still
+     * awaiting confirmation) and see every route it was split across — savings,
+     * penalty, loan, custom products — side by side, with one shared reference.
+     */
+    public record PaymentRouteLookupResponse(
+            UUID paymentId,
+            String mpesaRef,
+            String internalRef,
+            String memberNumber,
+            String memberName,
+            String senderPhoneNumber,
+            BigDecimal totalAmount,
+            String paymentStatus,    // PENDING | COMPLETED | FAILED
+            String failureReason,
+            ZonedDateTime createdAt,
+            boolean isSplitDeposit,
+            List<RouteItem> routes   // empty for a non-split, single-purpose deposit
+    ) {}
+
     /** Sent when initiating the STK push for a split deposit. */
     public record InitiateSplitDepositRequest(
             @NotNull BigDecimal totalAmount,
