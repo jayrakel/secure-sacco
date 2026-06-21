@@ -6,11 +6,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,5 +63,59 @@ public class PaymentProductController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "SAC-263: paginated transaction history for a product — the 'smart tab', works for any product automatically")
+    @GetMapping("/{id}/transactions")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
+    public ResponseEntity<ProductTransactionPage> getTransactions(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(productService.getProductTransactions(id, pageable));
+    }
+
+    @Operation(summary = "SAC-263: downloadable standalone statement (CSV) for a single product's full history")
+    @GetMapping("/{id}/statement")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
+    public ResponseEntity<byte[]> downloadStatement(@PathVariable UUID id) {
+        List<ProductTransactionItem> items = productService.getProductTransactionsForExport(id);
+        String productName = productService.getAllProducts().stream()
+                .filter(p -> p.id().equals(id))
+                .findFirst()
+                .map(ProductResponse::name)
+                .orElse("product");
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Date,Member Number,Member Name,Amount (KES),Status,Reference\n");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        for (ProductTransactionItem item : items) {
+            csv.append(escapeCsv(item.createdAt() != null ? item.createdAt().format(fmt) : ""))
+               .append(',').append(escapeCsv(item.memberNumber()))
+               .append(',').append(escapeCsv(item.memberName()))
+               .append(',').append(item.amount())
+               .append(',').append(escapeCsv(item.status()))
+               .append(',').append(escapeCsv(item.reference()))
+               .append('\n');
+        }
+
+        byte[] body = csv.toString().getBytes(StandardCharsets.UTF_8);
+        String filename = productName.replaceAll("[^a-zA-Z0-9]+", "_") + "_statement.csv";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename).build().toString())
+                .body(body);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 }

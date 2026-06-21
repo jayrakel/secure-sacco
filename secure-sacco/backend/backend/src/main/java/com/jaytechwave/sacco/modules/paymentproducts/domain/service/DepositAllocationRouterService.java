@@ -58,20 +58,38 @@ public class DepositAllocationRouterService {
         if (allocations.isEmpty()) return; // not a split deposit — nothing to route
 
         UUID memberId = payment.getMemberId();
+        // SAC-263: pure M-Pesa ref (or internalRef fallback) — no per-product suffix.
+        // savings_transactions.reference / penalty_repayments.receipt_number / loan's
+        // equivalent field all end up holding this EXACT value, matching the bank
+        // statement/member's phone confirmation for easy auditing. No collision risk
+        // across modules since each module's own GL reference_number already carries
+        // a distinct prefix internally (bare for savings, PENREP- for penalty, LNREP-
+        // for loan) — only same-module repeats would collide, and only CUSTOM can have
+        // more than one allocation of the same module type per payment, handled below
+        // by batching into a single journal entry instead of one per product.
         String baseRef = payment.getMpesaRef() != null ? payment.getMpesaRef() : payment.getInternalRef();
+
+        List<DepositAllocation> customAllocations = new java.util.ArrayList<>();
 
         for (DepositAllocation allocation : allocations) {
             if (allocation.getStatus() != AllocationStatus.PENDING) continue; // already routed/failed
 
             PaymentProduct product = allocation.getProduct();
-            String allocationRef = baseRef + "-" + product.getCode();
+
+            if (product.getModuleType() == ModuleType.CUSTOM) {
+                // Defer — all CUSTOM allocations for this payment post as ONE journal
+                // entry below, so two custom products in the same split never try to
+                // reuse the same reference_number on two separate entries.
+                customAllocations.add(allocation);
+                continue;
+            }
 
             try {
                 switch (product.getModuleType()) {
-                    case SAVINGS -> routeToSavings(memberId, allocation, allocationRef, payment);
-                    case PENALTY -> routeToPenalty(memberId, allocation, allocationRef);
-                    case LOAN    -> routeToLoan(memberId, allocation, allocationRef);
-                    case CUSTOM  -> routeToCustom(memberId, allocation, allocationRef, product);
+                    case SAVINGS -> routeToSavings(memberId, allocation, baseRef, payment);
+                    case PENALTY -> routeToPenalty(memberId, allocation, baseRef);
+                    case LOAN    -> routeToLoan(memberId, allocation, baseRef);
+                    default -> { /* unreachable — CUSTOM handled above */ }
                 }
                 allocation.setStatus(AllocationStatus.ROUTED);
                 allocation.setRoutedAt(ZonedDateTime.now(SaccoDateUtils.NAIROBI));
@@ -87,6 +105,10 @@ public class DepositAllocationRouterService {
                         allocation.getId(), product.getCode(), memberId, e.getMessage(), e);
                 // Continue routing remaining allocations — one failure shouldn't block the rest.
             }
+        }
+
+        if (!customAllocations.isEmpty()) {
+            routeCustomBatch(memberId, customAllocations, baseRef);
         }
     }
 
@@ -122,19 +144,53 @@ public class DepositAllocationRouterService {
         loanRepaymentService.processCompletedRepayment(repayment.getId(), ref);
     }
 
-    /** CUSTOM products have no domain logic — just a clean GL credit to their configured account. */
-    private void routeToCustom(UUID memberId, DepositAllocation allocation, String ref, PaymentProduct product) {
-        journalEntryService.postEntry(new CreateJournalEntryRequest(
-                java.time.LocalDate.now(SaccoDateUtils.NAIROBI),
-                "PRODUCT-" + ref,
-                product.getName() + " contribution via M-Pesa",
-                List.of(
-                        new JournalEntryLineRequest("1001", memberId, allocation.getAmount(),
-                                java.math.BigDecimal.ZERO, "Bank receipt — " + product.getName()),
-                        new JournalEntryLineRequest(product.getGlAccount().getAccountCode(), memberId,
-                                java.math.BigDecimal.ZERO, allocation.getAmount(),
-                                product.getName() + " contribution")
-                )
-        ));
+    /**
+     * SAC-263: all CUSTOM-type allocations for one payment post as a SINGLE journal
+     * entry — one debit line for the combined custom amount, one credit line per
+     * product. This is both correct double-entry practice (the underlying M-Pesa
+     * receipt is one atomic event) and avoids two custom products in the same split
+     * ever needing two entries under the same reference_number.
+     */
+    private void routeCustomBatch(UUID memberId, List<DepositAllocation> customAllocations, String baseRef) {
+        java.math.BigDecimal totalCustomAmount = customAllocations.stream()
+                .map(DepositAllocation::getAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        List<JournalEntryLineRequest> lines = new java.util.ArrayList<>();
+        lines.add(new JournalEntryLineRequest("1001", memberId, totalCustomAmount,
+                java.math.BigDecimal.ZERO, "Bank receipt — contributions"));
+
+        for (DepositAllocation allocation : customAllocations) {
+            PaymentProduct product = allocation.getProduct();
+            lines.add(new JournalEntryLineRequest(product.getGlAccount().getAccountCode(), memberId,
+                    java.math.BigDecimal.ZERO, allocation.getAmount(),
+                    product.getName() + " contribution"));
+        }
+
+        try {
+            journalEntryService.postEntry(new CreateJournalEntryRequest(
+                    java.time.LocalDate.now(SaccoDateUtils.NAIROBI),
+                    "PRODUCT-" + baseRef,
+                    "Custom product contribution(s) via M-Pesa",
+                    lines
+            ));
+
+            for (DepositAllocation allocation : customAllocations) {
+                allocation.setStatus(AllocationStatus.ROUTED);
+                allocation.setRoutedAt(ZonedDateTime.now(SaccoDateUtils.NAIROBI));
+            }
+            allocationRepository.saveAll(customAllocations);
+
+            log.info("Routed {} custom allocation(s) as one batched entry — KES {} for member {} ref={}",
+                    customAllocations.size(), totalCustomAmount, memberId, baseRef);
+        } catch (Exception e) {
+            for (DepositAllocation allocation : customAllocations) {
+                allocation.setStatus(AllocationStatus.FAILED);
+                allocation.setFailureReason(e.getMessage());
+            }
+            allocationRepository.saveAll(customAllocations);
+            log.error("Failed to route batched custom allocations for member {} ref={}: {}",
+                    memberId, baseRef, e.getMessage(), e);
+        }
     }
 }

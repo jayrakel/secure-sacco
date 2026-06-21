@@ -6,6 +6,8 @@ import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.MemberMiniSummar
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.LoanArrearsDTO;
 import com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.PaymentLineDTO;
 import com.jaytechwave.sacco.modules.reports.domain.service.ReportService;
+import com.jaytechwave.sacco.modules.paymentproducts.api.dto.PaymentProductDTOs.PaymentRouteLookupResponse;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.service.PaymentLookupService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +31,7 @@ public class ReportController {
 
     private final ReportService reportService;
     private final UserRepository userRepository;
+    private final PaymentLookupService paymentLookupService;
 
     @Operation(summary = "Financial overview", description = "Returns financial summary for all members. Requires REPORTS_READ.")
     @GetMapping("/financial-overview")
@@ -109,5 +112,75 @@ public class ReportController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
         return ResponseEntity.ok(reportService.getIncomeReport(from, to));
+    }
+
+    // ── General Statement (SAC-263) — true system-wide financial position ────
+
+    @Operation(summary = "General statement", description = "Every posted GL movement, chronologically, across all modules — the true financial position. Requires REPORTS_READ.")
+    @GetMapping("/general-statement")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<com.jaytechwave.sacco.modules.reports.api.dto.ReportDTOs.GeneralStatementDTO> getGeneralStatement(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String accountCode) {
+        java.time.LocalDate fromDate = from != null ? java.time.LocalDate.parse(from) : null;
+        java.time.LocalDate toDate   = to != null ? java.time.LocalDate.parse(to) : null;
+        return ResponseEntity.ok(reportService.getGeneralStatement(fromDate, toDate, accountCode));
+    }
+
+    @Operation(summary = "Download general statement as CSV", description = "Requires REPORTS_READ.")
+    @GetMapping("/general-statement/download")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<byte[]> downloadGeneralStatement(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String accountCode) {
+
+        java.time.LocalDate fromDate = from != null ? java.time.LocalDate.parse(from) : null;
+        java.time.LocalDate toDate   = to != null ? java.time.LocalDate.parse(to) : null;
+        var statement = reportService.getGeneralStatement(fromDate, toDate, accountCode);
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Date,Reference,Description,Account Code,Account Name,Account Type,Debit (KES),Credit (KES),Running Balance (KES)\n");
+        for (var line : statement.getLines()) {
+            csv.append(escapeCsv(line.getTransactionDate())).append(',')
+               .append(escapeCsv(line.getReference())).append(',')
+               .append(escapeCsv(line.getDescription())).append(',')
+               .append(escapeCsv(line.getAccountCode())).append(',')
+               .append(escapeCsv(line.getAccountName())).append(',')
+               .append(escapeCsv(line.getAccountType())).append(',')
+               .append(line.getDebitAmount()).append(',')
+               .append(line.getCreditAmount()).append(',')
+               .append(line.getRunningBalance()).append('\n');
+        }
+
+        byte[] body = csv.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String filename = "general_statement"
+                + (from != null ? "_" + from : "") + (to != null ? "_" + to : "") + ".csv";
+
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType("text/csv"))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.attachment().filename(filename).build().toString())
+                .body(body);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    // ── Payment Lookup (SAC-264) — every route one M-Pesa payment touched ────
+
+    @Operation(summary = "Search by M-Pesa or internal reference — see every route a split payment was sent to. Requires REPORTS_READ.")
+    @GetMapping("/payment-lookup")
+    @PreAuthorize("hasAuthority('REPORTS_READ')")
+    public ResponseEntity<PaymentRouteLookupResponse> lookupPayment(@RequestParam String reference) {
+        return paymentLookupService.lookupByReference(reference)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

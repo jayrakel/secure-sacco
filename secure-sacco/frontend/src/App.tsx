@@ -34,6 +34,8 @@ import { LoanArrearsPage } from './features/reports/pages/LoanArrearsPage';
 import { DailyCollectionsPage } from './features/reports/pages/DailyCollectionsPage';
 import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
 import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
+import { GeneralStatementPage } from './features/reports/pages/GeneralStatementPage';
+import { PaymentLookupPage } from './features/reports/pages/PaymentLookupPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
 import MeetingCheckInPage from './features/meetings/pages/MeetingCheckInPage';
@@ -292,6 +294,20 @@ function App() {
                                 <Route path="/reports/income" element={
                                     <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
                                         <IncomeReportPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* --- GENERAL STATEMENT ROUTE (SAC-263) --- */}
+                                <Route path="/reports/general-statement" element={
+                                    <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
+                                        <GeneralStatementPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* --- PAYMENT LOOKUP ROUTE (SAC-264) --- */}
+                                <Route path="/reports/payment-lookup" element={
+                                    <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
+                                        <PaymentLookupPage />
                                     </ProtectedRoute>
                                 } />
 

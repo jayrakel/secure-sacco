@@ -62,6 +62,26 @@ export interface SplitDepositHistoryItem {
     allocations: AllocationStatusItem[];
 }
 
+export interface ProductTransactionItem {
+    allocationId: string;
+    memberNumber: string | null;
+    memberName: string;
+    amount: number;
+    status: 'PENDING' | 'ROUTED' | 'FAILED';
+    reference: string; // live mpesa ref where available, else internal/system ref
+    createdAt: string;
+    routedAt: string | null;
+}
+
+export interface ProductTransactionPage {
+    items: ProductTransactionItem[];
+    totalElements: number;
+    totalPages: number;
+    page: number;
+    size: number;
+    totalAmount: number; // sum of ROUTED amounts only
+}
+
 export const paymentProductsApi = {
     // ── Admin CRUD ──────────────────────────────────────────────────────────
     getAll: async (): Promise<PaymentProduct[]> => {
@@ -102,6 +122,28 @@ export const paymentProductsApi = {
 
     remove: async (id: string): Promise<void> => {
         await apiClient.delete(`/payment-products/${id}`);
+    },
+
+    // SAC-263: the "smart tab" data source — works for any product automatically.
+    getTransactions: async (productId: string, page = 0, size = 20): Promise<ProductTransactionPage> => {
+        const res = await apiClient.get(`/payment-products/${productId}/transactions`, {
+            params: { page, size },
+        });
+        return res.data;
+    },
+
+    downloadStatement: async (productId: string, productName: string): Promise<void> => {
+        const res = await apiClient.get(`/payment-products/${productId}/statement`, {
+            responseType: 'blob',
+        });
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${productName.replace(/[^a-zA-Z0-9]+/g, '_')}_statement.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
     },
 };
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {
     FileText, AlertTriangle, Wallet, TrendingUp,
-    Lock, BarChart3, ArrowRight,
+    Lock, BarChart3, ArrowRight, BookOpen, GitBranch,
 } from 'lucide-react';
 import HasPermission from '../../../shared/components/HasPermission';
 import { useAuth } from '../../auth/context/AuthProvider';
@@ -64,6 +64,28 @@ const TILES: TileConfig[] = [
         title: 'Income Report',
         description: 'P&L proxy across General Ledger income accounts — fees, interest earned and penalties.',
         tag: 'Fees · Interest · Penalties',
+    },
+    {
+        to: '/reports/general-statement',
+        permission: 'REPORTS_READ',
+        icon: BookOpen,
+        gradient: 'from-indigo-500 to-indigo-600',
+        iconColor: 'text-indigo-600',
+        hoverBorder: 'hover:border-indigo-300',
+        title: 'General Statement',
+        description: 'Every posted GL movement, chronologically, across every module — the SACCO\'s true financial position.',
+        tag: 'All Modules · Audit Trail',
+    },
+    {
+        to: '/reports/payment-lookup',
+        permission: 'REPORTS_READ',
+        icon: GitBranch,
+        gradient: 'from-teal-500 to-teal-600',
+        iconColor: 'text-teal-600',
+        hoverBorder: 'hover:border-teal-300',
+        title: 'Payment Lookup',
+        description: 'Search by M-Pesa reference and see every route a split deposit was sent to, side by side.',
+        tag: 'Audit · Split Deposits',
     },
 ];
 
