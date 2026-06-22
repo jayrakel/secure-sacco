@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe,
+    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe, Wallet,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -31,7 +31,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => {
     const { user } = useAuth();
-    const { settings } = useSettings();
+    const { settings, isLoading: settingsLoading } = useSettings();
     const location = useLocation();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [menuOverrides, setMenuOverrides] = useState<Record<string, boolean>>({});
@@ -50,6 +50,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'Overview',
             items: [
                 { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+                { label: 'Financials', path: '/financials', icon: Wallet, requiredPermission: 'REPORTS_READ' },
             ],
         },
         {
@@ -186,7 +187,18 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
 
                 {/* Logo */}
                 <div className={`flex items-center gap-3 border-b border-slate-800 shrink-0 ${isCollapsed ? 'p-4 justify-center' : 'p-5'}`}>
-                    {settings?.logoUrl ? (
+                    {settingsLoading ? (
+                        // SAC-265: while branding is still loading (first-ever visit, no
+                        // cache yet), show a neutral skeleton instead of a hardcoded
+                        // "Secure SACCO" name + generic "S" icon that would otherwise
+                        // flash briefly before the real branding arrives.
+                        <>
+                            <div className="bg-slate-700 w-8 h-8 rounded-lg shrink-0 animate-pulse" />
+                            {!isCollapsed && (
+                                <div className="h-4 w-28 bg-slate-700 rounded animate-pulse" />
+                            )}
+                        </>
+                    ) : settings?.logoUrl ? (
                         <img
                             key={settings.logoUrl}
                             src={settings.logoUrl}
@@ -200,7 +212,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                         </div>
                     )}
 
-                    {!isCollapsed && (
+                    {!settingsLoading && !isCollapsed && (
                         <span className="font-bold text-sm text-white truncate">{settings?.saccoName || 'Secure SACCO'}</span>
                     )}
                 </div>

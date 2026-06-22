@@ -6,10 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Secure SACCO System</title>
   <script>
-    // Restore SACCO name from localStorage if available
-    const savedSaccoName = localStorage.getItem('saccoName');
-    if (savedSaccoName) {
-      document.title = savedSaccoName + ' - Secure SACCO';
+    // Instant-paint the correct tab title before React mounts, using the same
+    // cache SettingsProvider writes to after every successful settings fetch.
+    try {
+      const cached = localStorage.getItem('saccoSettingsCache');
+      if (cached) {
+        const settings = JSON.parse(cached);
+        if (settings && settings.saccoName) {
+          document.title = settings.saccoName + ' - Secure SACCO';
+        }
+      }
+    } catch (e) {
+      // Corrupt cache or localStorage unavailable — keep the static default title.
     }
   </script>
 </head>

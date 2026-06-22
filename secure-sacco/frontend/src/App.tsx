@@ -35,6 +35,7 @@ import { DailyCollectionsPage } from './features/reports/pages/DailyCollectionsP
 import { MemberStatementPage } from './features/reports/pages/MemberStatementPage';
 import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import { GeneralStatementPage } from './features/reports/pages/GeneralStatementPage';
+import { FinancialsDashboardPage } from './features/dashboard/pages/FinancialsDashboardPage';
 import { PaymentLookupPage } from './features/reports/pages/PaymentLookupPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
@@ -156,6 +157,13 @@ function App() {
                                 <Route path="/dashboard" element={
                                     <ProtectedRoute>
                                         <DashboardRouter />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* --- FINANCIALS MASTER DASHBOARD (SAC-265) --- */}
+                                <Route path="/financials" element={
+                                    <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
+                                        <FinancialsDashboardPage />
                                     </ProtectedRoute>
                                 } />
 

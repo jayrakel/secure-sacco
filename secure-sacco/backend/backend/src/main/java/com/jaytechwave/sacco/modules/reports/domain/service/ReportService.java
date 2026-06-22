@@ -153,6 +153,26 @@ public class ReportService {
                     2 AS txn_order
                 FROM penalty_repayments prp
                 WHERE prp.member_id = ? AND prp.status = 'COMPLETED'
+
+                UNION ALL
+
+                -- SAC-265: custom payment products (e.g. "Meat Contribution") now
+                -- appear in the member statement alongside the built-in modules —
+                -- works for any custom product automatically, no code change needed
+                -- per product. Reference is the live M-Pesa ref from the parent
+                -- payment, same convention as everywhere else in the system.
+                SELECT
+                    da.created_at AS transaction_date,
+                    'CUSTOM' AS module,
+                    'CONTRIBUTION' AS transaction_type,
+                    da.amount AS amount,
+                    COALESCE(p.mpesa_ref, p.internal_ref) AS reference,
+                    pp.name AS description,
+                    2 AS txn_order
+                FROM deposit_allocations da
+                JOIN payments p ON p.id = da.payment_id
+                JOIN payment_products pp ON pp.id = da.product_id
+                WHERE p.member_id = ? AND pp.module_type = 'CUSTOM' AND da.status = 'ROUTED'
             ) AS combined
             ORDER BY transaction_date ASC, txn_order ASC
             """;
@@ -169,7 +189,7 @@ public class ReportService {
             dto.setReference(rs.getString("reference"));
             dto.setDescription(rs.getString("description"));
             return dto;
-        }, memberId, memberId, memberId, memberId, memberId);
+        }, memberId, memberId, memberId, memberId, memberId, memberId);
 
         if (fromDate != null && !fromDate.isEmpty()) {
             LocalDateTime from = LocalDateTime.parse(fromDate, DateTimeFormatter.ISO_DATE_TIME);
