@@ -1,8 +1,11 @@
 package com.jaytechwave.sacco.modules.dashboard.api.dto;
 
 import lombok.Data;
+import lombok.Builder;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.ArrayList;
 
 public class DashboardDTOs {
 
@@ -35,6 +38,23 @@ public class DashboardDTOs {
         // Meetings
         private Integer upcomingMeetings      = 0;
         private Integer meetingsThisMonth     = 0;
+
+        // SAC-265: custom payment products (e.g. "Meat Contribution") — so the
+        // Financials dashboard shows every fund the SACCO tracks, not just the
+        // three built-in modules. Empty list if no custom products are active.
+        private List<CustomProductSummaryDTO> customProductSummaries = new ArrayList<>();
+    }
+
+    @Data
+    @Builder
+    public static class CustomProductSummaryDTO implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private String productId;
+        private String name;
+        private String glAccountCode;
+        private BigDecimal totalReceived;
+        private Integer transactionCount;
+        private BigDecimal requiredAmount; // null if the product has no fixed per-member target
     }
 
     @Data

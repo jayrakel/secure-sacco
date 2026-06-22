@@ -20,6 +20,19 @@ export interface StaffDashboardDTO {
 
     upcomingMeetings: number;
     meetingsThisMonth: number;
+
+    // SAC-265: every active custom payment product, automatically — no code
+    // change needed when an admin creates a new one in Settings.
+    customProductSummaries: CustomProductSummaryDTO[];
+}
+
+export interface CustomProductSummaryDTO {
+    productId: string;
+    name: string;
+    glAccountCode: string;
+    totalReceived: number;
+    transactionCount: number;
+    requiredAmount: number | null;
 }
 
 export interface MemberDashboardDTO {

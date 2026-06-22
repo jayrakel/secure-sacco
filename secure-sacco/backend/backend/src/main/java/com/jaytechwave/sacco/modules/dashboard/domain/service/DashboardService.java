@@ -51,24 +51,60 @@ public class DashboardService {
                       AND EXTRACT(YEAR  FROM start_at) = EXTRACT(YEAR  FROM CURRENT_DATE)) AS meetings_this_month
         """;
 
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-            StaffDashboardDTO dto = new StaffDashboardDTO();
-            dto.setTotalMembers(rs.getInt("total_members"));
-            dto.setActiveMembers(rs.getInt("active_members"));
-            dto.setPendingActivations(rs.getInt("pending_activations"));
-            dto.setTotalSavings(rs.getBigDecimal("total_savings"));
-            dto.setActiveLoans(rs.getInt("active_loans"));
-            dto.setLoanPortfolio(rs.getBigDecimal("loan_portfolio"));
-            dto.setLoansInArrears(rs.getInt("loans_in_arrears"));
-            dto.setTotalArrearsAmount(rs.getBigDecimal("total_arrears_amount"));
-            dto.setPendingLoanApplications(rs.getInt("pending_loan_applications"));
-            dto.setOpenPenalties(rs.getInt("open_penalties"));
-            dto.setOutstandingPenalties(rs.getBigDecimal("outstanding_penalties"));
-            dto.setTodaysCollections(rs.getBigDecimal("todays_collections"));
-            dto.setUpcomingMeetings(rs.getInt("upcoming_meetings"));
-            dto.setMeetingsThisMonth(rs.getInt("meetings_this_month"));
-            return dto;
+        StaffDashboardDTO dto = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+            StaffDashboardDTO row = new StaffDashboardDTO();
+            row.setTotalMembers(rs.getInt("total_members"));
+            row.setActiveMembers(rs.getInt("active_members"));
+            row.setPendingActivations(rs.getInt("pending_activations"));
+            row.setTotalSavings(rs.getBigDecimal("total_savings"));
+            row.setActiveLoans(rs.getInt("active_loans"));
+            row.setLoanPortfolio(rs.getBigDecimal("loan_portfolio"));
+            row.setLoansInArrears(rs.getInt("loans_in_arrears"));
+            row.setTotalArrearsAmount(rs.getBigDecimal("total_arrears_amount"));
+            row.setPendingLoanApplications(rs.getInt("pending_loan_applications"));
+            row.setOpenPenalties(rs.getInt("open_penalties"));
+            row.setOutstandingPenalties(rs.getBigDecimal("outstanding_penalties"));
+            row.setTodaysCollections(rs.getBigDecimal("todays_collections"));
+            row.setUpcomingMeetings(rs.getInt("upcoming_meetings"));
+            row.setMeetingsThisMonth(rs.getInt("meetings_this_month"));
+            return row;
         });
+
+        // SAC-265: attach every active custom payment product's totals so the
+        // Financials dashboard shows them alongside Savings/Loans/Penalties,
+        // automatically — works for any product an admin creates, no code change.
+        dto.setCustomProductSummaries(getCustomProductSummaries());
+        return dto;
+    }
+
+    private java.util.List<com.jaytechwave.sacco.modules.dashboard.api.dto.DashboardDTOs.CustomProductSummaryDTO>
+            getCustomProductSummaries() {
+        String sql = """
+            SELECT
+                pp.id::text                                   AS product_id,
+                pp.name                                        AS name,
+                a.account_code                                 AS gl_account_code,
+                pp.required_amount                             AS required_amount,
+                COALESCE(SUM(da.amount) FILTER (WHERE da.status = 'ROUTED'), 0) AS total_received,
+                COUNT(da.id) FILTER (WHERE da.status = 'ROUTED')                AS transaction_count
+            FROM payment_products pp
+            JOIN accounts a ON a.id = pp.gl_account_id
+            LEFT JOIN deposit_allocations da ON da.product_id = pp.id
+            WHERE pp.module_type = 'CUSTOM' AND pp.is_active = true
+            GROUP BY pp.id, pp.name, a.account_code, pp.required_amount
+            ORDER BY pp.display_order ASC
+            """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) ->
+                com.jaytechwave.sacco.modules.dashboard.api.dto.DashboardDTOs.CustomProductSummaryDTO.builder()
+                        .productId(rs.getString("product_id"))
+                        .name(rs.getString("name"))
+                        .glAccountCode(rs.getString("gl_account_code"))
+                        .totalReceived(rs.getBigDecimal("total_received"))
+                        .transactionCount(rs.getInt("transaction_count"))
+                        .requiredAmount(rs.getBigDecimal("required_amount"))
+                        .build()
+        );
     }
 
     // ── MEMBER DASHBOARD ─────────────────────────────────────────────────────
@@ -191,4 +227,3 @@ public class DashboardService {
         }, identifier, identifier);
     }
 }
-

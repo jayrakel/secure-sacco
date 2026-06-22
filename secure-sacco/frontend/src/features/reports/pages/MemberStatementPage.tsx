@@ -14,7 +14,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Module = 'SAVINGS' | 'LOANS' | 'PENALTIES';
+type Module = 'SAVINGS' | 'LOANS' | 'PENALTIES' | 'CUSTOM';
 
 interface SelectedMember {
     id: string;
@@ -45,6 +45,7 @@ const MODULE_BADGE: Record<Module, { bg: string; text: string; dot: string }> = 
     SAVINGS:   { bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: 'bg-emerald-500'  },
     LOANS:     { bg: 'bg-sky-50',      text: 'text-sky-700',     dot: 'bg-sky-500'      },
     PENALTIES: { bg: 'bg-red-50',      text: 'text-red-700',     dot: 'bg-red-500'      },
+    CUSTOM:    { bg: 'bg-purple-50',   text: 'text-purple-700',  dot: 'bg-purple-500'   },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -450,7 +451,7 @@ export const MemberStatementPage: React.FC = () => {
                             Statement Type
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {(['ALL', 'SAVINGS', 'LOANS', 'PENALTIES'] as const).map(mod => (
+                            {(['ALL', 'SAVINGS', 'LOANS', 'PENALTIES', 'CUSTOM'] as const).map(mod => (
                                 <button
                                     key={mod}
                                     onClick={() => setFilterModule(mod)}
