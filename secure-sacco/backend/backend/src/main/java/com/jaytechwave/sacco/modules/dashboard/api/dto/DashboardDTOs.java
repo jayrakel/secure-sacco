@@ -2,6 +2,8 @@ package com.jaytechwave.sacco.modules.dashboard.api.dto;
 
 import lombok.Data;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -47,6 +49,8 @@ public class DashboardDTOs {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CustomProductSummaryDTO implements Serializable {
         private static final long serialVersionUID = 1L;
         private String productId;
