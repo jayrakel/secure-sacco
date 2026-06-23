@@ -74,13 +74,11 @@ const RunButton: React.FC<{ loading: boolean; label?: string }> = ({ loading, la
 );
 
 // ─── Member Select — preloads all members, filters client-side ────────────────
-// With only 10 members in the SACCO, loading all upfront is the correct
-// approach: instant filtering, no debounce, no empty-dropdown bugs.
 
 interface MemberSelectProps {
-    value: string;                          // the selected memberNumber
+    value: string;                          
     onChange: (memberNumber: string) => void;
-    allMembers: Member[];                   // pre-loaded from parent
+    allMembers: Member[];                   
     label?: string;
 }
 
@@ -310,7 +308,11 @@ const MemberForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: string
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setLoading(true);
         try {
-            const res = await migrationApi.migrateMember(form);
+            const payload = {
+                ...form,
+                registrationDate: form.registrationDate ? new Date(form.registrationDate).toISOString().split('T')[0] : ''
+            };
+            const res = await migrationApi.migrateMember(payload);
             onLog('success', 'MEMBER MIGRATED', `${res.memberNumber} — ${form.firstName} ${form.lastName}`);
             setForm(f => ({ ...f, firstName: '', lastName: '', email: '', phoneNumber: '', registrationDate: '' }));
         } catch (err) { onLog('error', 'MEMBER FAILED', getApiErrorMessage(err, 'Unknown error')); }
@@ -343,7 +345,8 @@ const SavingsForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: strin
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setLoading(true);
         try {
-            const payload = { memberNumber, amount: parseFloat(amount), referenceNumber: ref, transactionDate: date };
+            const formattedDate = date ? new Date(date).toISOString().split('T')[0] : '';
+            const payload = { memberNumber, amount: parseFloat(amount), referenceNumber: ref, transactionDate: formattedDate };
             const res = type === 'savings'
                 ? await migrationApi.migrateSavings(payload)
                 : await migrationApi.migrateWithdrawal(payload);
@@ -375,13 +378,14 @@ const LoanDisburseForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setLoading(true);
         try {
+             const formattedDate = form.firstPaymentDate ? new Date(form.firstPaymentDate).toISOString().split('T')[0] : '';
             const res = await migrationApi.migrateLoanDisbursement({
                 memberNumber,
                 loanProductCode: form.loanProductCode,
                 principal: parseFloat(form.principal),
                 interest: parseFloat(form.interest),
                 weeklyScheduled: parseFloat(form.weeklyScheduled),
-                firstPaymentDate: form.firstPaymentDate,
+                firstPaymentDate: formattedDate,
                 termWeeks: parseInt(form.termWeeks),
                 referenceNumber: form.referenceNumber,
             });
@@ -433,8 +437,9 @@ const LoanRepayForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: str
     const handleSingle = async (e: React.FormEvent) => {
         e.preventDefault(); setLoading(true);
         try {
-            await migrationApi.migrateLoanRepayment({ memberNumber, amount: parseFloat(amount), transactionDate: date, referenceNumber: ref });
-            onLog('success', 'REPAYMENT POSTED', `${memberNumber} · KES ${amount} · ${date} · Ref: ${ref}`);
+             const formattedDate = date ? new Date(date).toISOString().split('T')[0] : '';
+            await migrationApi.migrateLoanRepayment({ memberNumber, amount: parseFloat(amount), transactionDate: formattedDate, referenceNumber: ref });
+            onLog('success', 'REPAYMENT POSTED', `${memberNumber} · KES ${amount} · ${formattedDate} · Ref: ${ref}`);
             setAmount(''); setDate(''); setRef('');
         } catch (err) { onLog('error', 'REPAYMENT FAILED', getApiErrorMessage(err, 'Unknown error')); }
         finally { setLoading(false); }
@@ -452,8 +457,9 @@ const LoanRepayForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: str
             const row = batchRows[i];
             setBatchCurrent(i + 1);
             try {
-                await migrationApi.migrateLoanRepayment({ memberNumber, amount: parseFloat(row.amount), transactionDate: row.date, referenceNumber: row.ref });
-                onLog('success', `REPAYMENT ${i + 1}/${batchRows.length}`, `KES ${row.amount} · ${row.date} · ${row.ref}`);
+                 const formattedDate = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
+                await migrationApi.migrateLoanRepayment({ memberNumber, amount: parseFloat(row.amount), transactionDate: formattedDate, referenceNumber: row.ref });
+                onLog('success', `REPAYMENT ${i + 1}/${batchRows.length}`, `KES ${row.amount} · ${formattedDate} · ${row.ref}`);
             } catch (err) {
                 onLog('error', `REPAYMENT ${i + 1}/${batchRows.length} FAILED`, getApiErrorMessage(err, 'Unknown error'));
             }
@@ -543,8 +549,9 @@ const PenaltyForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: strin
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setLoading(true);
         try {
-            await migrationApi.migrateHistoricalPenalty({ memberNumber, amount: parseFloat(amount), penaltyDate: date, referenceNumber: ref });
-            onLog('success', 'PENALTY APPLIED', `${memberNumber} · KES ${amount} · ${date}`);
+             const formattedDate = date ? new Date(date).toISOString().split('T')[0] : '';
+            await migrationApi.migrateHistoricalPenalty({ memberNumber, amount: parseFloat(amount), penaltyDate: formattedDate, referenceNumber: ref });
+            onLog('success', 'PENALTY APPLIED', `${memberNumber} · KES ${amount} · ${formattedDate}`);
             setAmount(''); setDate(''); setRef('');
         } catch (err) { onLog('error', 'PENALTY FAILED', getApiErrorMessage(err, 'Unknown error')); }
         finally { setLoading(false); }
@@ -571,9 +578,10 @@ const CronForm: React.FC<{ onLog: (l: LogLevel, action: string, detail: string) 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); setLoading(true); setResult(null);
         try {
-            const res = await migrationApi.runCronEvaluation({ evaluationDate: date });
+             const formattedDate = date ? new Date(date).toISOString().split('T')[0] : '';
+            const res = await migrationApi.runCronEvaluation({ evaluationDate: formattedDate });
             setResult(res);
-            onLog('success', 'CRON EVALUATED', `Up to ${date} — ${JSON.stringify(res)}`);
+            onLog('success', 'CRON EVALUATED', `Up to ${formattedDate} — ${JSON.stringify(res)}`);
         } catch (err) { onLog('error', 'CRON FAILED', getApiErrorMessage(err, 'Unknown error')); }
         finally { setLoading(false); }
     };
@@ -642,6 +650,7 @@ const LoanRefinanceForm: React.FC<{
         if (!loanId) return;
         setLoading(true);
         try {
+            const formattedDate = form.historicalDateOverride ? new Date(form.historicalDateOverride).toISOString().split('T')[0] : '';
             const payload: LoanRefinanceRequest = {
                 oldLoanId: loanId,
                 loanProductCode: form.loanProductCode,
@@ -650,7 +659,7 @@ const LoanRefinanceForm: React.FC<{
                 referenceNumber: form.referenceNumber,
             };
             if (form.interestOverride) payload.interestOverride = parseFloat(form.interestOverride);
-            if (form.historicalDateOverride) payload.historicalDateOverride = form.historicalDateOverride;
+            if (formattedDate) payload.historicalDateOverride = formattedDate;
 
             const res = await migrationApi.refinanceLoan(payload);
             onLog('success', 'LOAN REFINANCED', `Member ${memberNumber} · Old: ${loanId.slice(0,8)}… · New ID: ${res.id}`);
@@ -814,7 +823,8 @@ const ExcelImportForm: React.FC<{
                 try {
                     const memberNumber = String(row['Member Number'] || row['memberNumber'] || row['member_number'] || '');
                     const amount = parseFloat(String(row['Amount'] || row['amount'] || '0'));
-                    const date = String(row['Date'] || row['date'] || row['Transaction Date'] || '');
+                    const rawDate = String(row['Date'] || row['date'] || row['Transaction Date'] || '');
+                    const date = rawDate ? new Date(rawDate).toISOString().split('T')[0] : '';
                     const ref = String(row['Reference'] || row['reference'] || row['Ref'] || `EXCEL-${done}`);
 
                     if (!memberNumber || !amount || !date) {
@@ -951,8 +961,7 @@ const MigrationPage: React.FC = () => {
         // Load loan products
         loanApi.getProducts().then(setProducts).catch(() => {});
 
-        // Load ALL members once — with 10 members this is the right approach:
-        // instant client-side filtering, no debounce, no empty-dropdown issues
+        // Load ALL members once
         memberApi.getMembers(undefined, undefined, 0, 100)
             .then(page => {
                 setAllMembers(page.content ?? []);
