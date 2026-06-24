@@ -30,7 +30,7 @@ import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsTransactionRepository;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
-import com.jaytechwave.sacco.shared.util.SaccoDateUtils;
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
