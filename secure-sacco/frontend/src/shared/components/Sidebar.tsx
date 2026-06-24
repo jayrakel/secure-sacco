@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe, Wallet,
+    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe, Wallet, HandCoins,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -51,6 +51,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             items: [
                 { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
                 { label: 'Financials', path: '/financials', icon: Wallet, requiredPermission: 'REPORTS_READ' },
+                { label: 'Manual Payments', path: '/staff/manual-payments', icon: HandCoins, requiredPermission: 'MANUAL_PAYMENT_POST' },
             ],
         },
         {

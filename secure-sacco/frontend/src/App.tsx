@@ -36,6 +36,7 @@ import { MemberStatementPage } from './features/reports/pages/MemberStatementPag
 import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import { GeneralStatementPage } from './features/reports/pages/GeneralStatementPage';
 import { FinancialsDashboardPage } from './features/dashboard/pages/FinancialsDashboardPage';
+import { ManualPaymentWizard } from './features/manualpayments/components/ManualPaymentWizard';
 import { PaymentLookupPage } from './features/reports/pages/PaymentLookupPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
@@ -164,6 +165,13 @@ function App() {
                                 <Route path="/financials" element={
                                     <ProtectedRoute requiredPermissions={['REPORTS_READ']}>
                                         <FinancialsDashboardPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* --- MANUAL PAYMENT RECORDING (SAC-267) --- */}
+                                <Route path="/staff/manual-payments" element={
+                                    <ProtectedRoute requiredPermissions={['MANUAL_PAYMENT_POST']}>
+                                        <ManualPaymentWizard />
                                     </ProtectedRoute>
                                 } />
 
