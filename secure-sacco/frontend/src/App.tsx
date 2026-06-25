@@ -37,6 +37,7 @@ import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import { GeneralStatementPage } from './features/reports/pages/GeneralStatementPage';
 import { FinancialsDashboardPage } from './features/dashboard/pages/FinancialsDashboardPage';
 import { ManualPaymentWizard } from './features/manualpayments/components/ManualPaymentWizard';
+import { HistoricalEditPage } from './features/historicaledit/pages/HistoricalEditPage';
 import { PaymentLookupPage } from './features/reports/pages/PaymentLookupPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
@@ -172,6 +173,13 @@ function App() {
                                 <Route path="/staff/manual-payments" element={
                                     <ProtectedRoute requiredPermissions={['MANUAL_PAYMENT_POST']}>
                                         <ManualPaymentWizard />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* --- TEMPORARY: HISTORICAL DATA EDIT (SAC-269) — remove before go-live --- */}
+                                <Route path="/admin/historical-edit" element={
+                                    <ProtectedRoute requiredPermissions={['HISTORICAL_DATA_EDIT']}>
+                                        <HistoricalEditPage />
                                     </ProtectedRoute>
                                 } />
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Search, User, PiggyBank, AlertCircle, Coins, Package,
-    Loader2, CheckCircle2, ArrowLeft, ArrowRight, X, RefreshCw, Banknote, ArrowDownToLine,
+    Loader2, CheckCircle2, ArrowLeft, ArrowRight, X, RefreshCw, Banknote, ArrowDownToLine, PencilLine,
 } from 'lucide-react';
 import { memberApi } from '../../members/api/member-api';
 import type { Member } from '../../members/api/member-api';
@@ -43,6 +43,7 @@ export const ManualPaymentWizard: React.FC = () => {
     // Step 4: form
     const [amount, setAmount] = useState('');
     const [fundingSource, setFundingSource] = useState<FundingSource>('CASH');
+    const [sourceTransactionId, setSourceTransactionId] = useState<string>('');
     const [externalReference, setExternalReference] = useState('');
     const [notes, setNotes] = useState('');
 
@@ -88,6 +89,7 @@ export const ManualPaymentWizard: React.FC = () => {
         setCustomProductId('');
         setAmount('');
         setFundingSource('CASH');
+        setSourceTransactionId('');
         setExternalReference('');
         setNotes('');
         setError('');
@@ -120,6 +122,14 @@ export const ManualPaymentWizard: React.FC = () => {
             setError(`This member only has KES ${fmt(context.savingsBalance)} in savings — can't transfer more than that.`);
             return;
         }
+        if (fundingSource === 'HISTORICAL_TRANSACTION_REDUCTION') {
+            if (!sourceTransactionId) { setError('Select which deposit to reduce.'); return; }
+            const tx = context?.recentDeposits.find(d => d.transactionId === sourceTransactionId);
+            if (tx && amt > tx.amount) {
+                setError(`Can't reduce by more than the original KES ${fmt(tx.amount)} deposit.`);
+                return;
+            }
+        }
 
         setError('');
         setLoading(true);
@@ -128,6 +138,7 @@ export const ManualPaymentWizard: React.FC = () => {
                 memberId: member.id,
                 paymentType,
                 fundingSource: paymentType === 'SAVINGS' ? 'CASH' : fundingSource,
+                sourceTransactionId: fundingSource === 'HISTORICAL_TRANSACTION_REDUCTION' ? sourceTransactionId : null,
                 targetPenaltyId: paymentType === 'PENALTY' && !payAll ? targetPenaltyId : null,
                 payAllPenalties: paymentType === 'PENALTY' ? payAll : undefined,
                 customProductId: paymentType === 'CUSTOM' ? customProductId : null,
@@ -379,7 +390,7 @@ export const ManualPaymentWizard: React.FC = () => {
                     {paymentType !== 'SAVINGS' && (
                         <div>
                             <label className="text-sm font-medium text-slate-600">Where is this money coming from?</label>
-                            <div className="mt-1.5 grid grid-cols-2 gap-2">
+                            <div className="mt-1.5 grid grid-cols-1 gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setFundingSource('CASH')}
@@ -398,13 +409,48 @@ export const ManualPaymentWizard: React.FC = () => {
                                     }`}
                                 >
                                     <ArrowDownToLine size={16} className={fundingSource === 'SAVINGS_TRANSFER' ? 'text-emerald-600' : 'text-slate-400'} />
-                                    <span className="text-sm font-medium text-slate-700">From Savings</span>
+                                    <span className="text-sm font-medium text-slate-700">From Savings (new withdrawal)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFundingSource('HISTORICAL_TRANSACTION_REDUCTION')}
+                                    className={`flex items-center gap-2 p-3 rounded-xl border text-left ${
+                                        fundingSource === 'HISTORICAL_TRANSACTION_REDUCTION' ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <PencilLine size={16} className={fundingSource === 'HISTORICAL_TRANSACTION_REDUCTION' ? 'text-emerald-600' : 'text-slate-400'} />
+                                    <span className="text-sm font-medium text-slate-700">Correct a Past Deposit</span>
                                 </button>
                             </div>
+
                             {fundingSource === 'SAVINGS_TRANSFER' && context && (
                                 <p className="text-xs text-slate-400 mt-1.5">
                                     Member's savings balance: KES {fmt(context.savingsBalance)} — this amount will be withdrawn from savings and applied here instead of being collected as new cash.
                                 </p>
+                            )}
+
+                            {fundingSource === 'HISTORICAL_TRANSACTION_REDUCTION' && (
+                                <div className="mt-2 space-y-2">
+                                    <p className="text-xs text-slate-400">
+                                        Use this when a past deposit was recorded too high and that money was always meant for this — it shrinks the original deposit instead of creating a new withdrawal.
+                                    </p>
+                                    {context && context.recentDeposits.length > 0 ? (
+                                        <select
+                                            value={sourceTransactionId}
+                                            onChange={e => setSourceTransactionId(e.target.value)}
+                                            className="w-full p-2.5 rounded-lg border border-slate-200 text-sm"
+                                        >
+                                            <option value="">Select the deposit to reduce…</option>
+                                            {context.recentDeposits.map(d => (
+                                                <option key={d.transactionId} value={d.transactionId}>
+                                                    KES {fmt(d.amount)} — {d.reference} ({new Date(d.postedAt).toLocaleDateString('en-KE')})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <p className="text-xs text-red-500">This member has no recent deposits to choose from.</p>
+                                    )}
+                                </div>
                             )}
                         </div>
                     )}
