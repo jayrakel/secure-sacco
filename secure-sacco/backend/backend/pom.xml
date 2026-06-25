@@ -19,11 +19,27 @@
 
     <url/>
     <licenses>
-        <license/>
+        <license>
+            <name>Proprietary</name>
+            <url>https://jaytechwavesolutions.co.ke/license</url> <!-- Or link to your site -->
+            <distribution>manual</distribution>
+            <comments>Proprietary software owned by JayTechWave. All rights reserved.</comments>
+        </license>
     </licenses>
 
     <developers>
-        <developer/>
+        <developer>
+            <id>jdeveloper</id>
+            <name>Nathan Michira Gesora</name>
+            <email>gesorajonathan@gmail.com</email>
+            <url>https://github.com/jayrakel</url>
+            <organization>Jay TechWave Solutions</organization>
+            <organizationUrl>https://jaytechwavesolutions.co.ke</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>Africa/Nairobi</timezone>
+        </developer>
     </developers>
 
     <scm>

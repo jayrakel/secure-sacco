@@ -1,7 +1,7 @@
 import apiClient from '../../../shared/api/api-client';
 
 export type ManualPaymentType = 'SAVINGS' | 'PENALTY' | 'LOAN' | 'CUSTOM';
-export type FundingSource = 'CASH' | 'SAVINGS_TRANSFER';
+export type FundingSource = 'CASH' | 'SAVINGS_TRANSFER' | 'HISTORICAL_TRANSACTION_REDUCTION';
 
 export interface OpenPenaltyOption {
     penaltyId: string;
@@ -15,8 +15,16 @@ export interface CustomProductOption {
     code: string;
 }
 
+export interface RecentDepositOption {
+    transactionId: string;
+    amount: number;
+    reference: string;
+    postedAt: string;
+}
+
 export interface ManualPaymentContext {
     savingsBalance: number;
+    recentDeposits: RecentDepositOption[];
     openPenalties: OpenPenaltyOption[];
     hasActiveLoan: boolean;
     loanOutstandingBalance: number | null;
@@ -27,6 +35,7 @@ export interface ManualPaymentRequest {
     memberId: string;
     paymentType: ManualPaymentType;
     fundingSource?: FundingSource; // defaults to CASH server-side; irrelevant for SAVINGS type
+    sourceTransactionId?: string | null; // required when fundingSource = HISTORICAL_TRANSACTION_REDUCTION
     targetPenaltyId?: string | null;
     payAllPenalties?: boolean;
     customProductId?: string | null;

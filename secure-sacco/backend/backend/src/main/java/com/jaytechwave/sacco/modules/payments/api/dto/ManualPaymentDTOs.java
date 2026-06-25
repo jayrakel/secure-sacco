@@ -15,10 +15,14 @@ public class ManualPaymentDTOs {
 
     public enum ManualPaymentType { SAVINGS, PENALTY, LOAN, CUSTOM }
 
-    /** SAC-268: where the money is actually coming from for this payment. */
+    /** SAC-268/269: where the money is actually coming from for this payment. */
     public enum FundingSource {
-        CASH,            // new money received right now (or cheque/EFT etc.)
-        SAVINGS_TRANSFER // member already had this in savings — move it to cover the obligation instead
+        CASH,                          // new money received right now (or cheque/EFT etc.)
+        SAVINGS_TRANSFER,              // member already had this in savings — withdraw and apply it instead
+        HISTORICAL_TRANSACTION_REDUCTION // a SPECIFIC past savings deposit was recorded too high — shrink it
+                                          // by this amount and redirect the difference, rather than creating
+                                          // a brand new withdrawal. Use when the member never actually had
+                                          // that money available separately — it was always meant for this.
     }
 
     /**
@@ -28,10 +32,18 @@ public class ManualPaymentDTOs {
      */
     public record ManualPaymentContext(
             BigDecimal savingsBalance, // so the wizard can show "Available: KES X" before a savings transfer
+            List<RecentDepositOption> recentDeposits, // for HISTORICAL_TRANSACTION_REDUCTION's picker
             List<OpenPenaltyOption> openPenalties,
             boolean hasActiveLoan,
             BigDecimal loanOutstandingBalance,
             List<CustomProductOption> customProducts
+    ) {}
+
+    public record RecentDepositOption(
+            UUID transactionId,
+            BigDecimal amount,
+            String reference,
+            java.time.LocalDateTime postedAt
     ) {}
 
     public record OpenPenaltyOption(
@@ -50,6 +62,7 @@ public class ManualPaymentDTOs {
             @NotNull UUID memberId,
             @NotNull ManualPaymentType paymentType,
             FundingSource fundingSource, // defaults to CASH if omitted — ignored when paymentType = SAVINGS
+            UUID sourceTransactionId,    // required when fundingSource = HISTORICAL_TRANSACTION_REDUCTION
 
             // PENALTY: specific penalty id, or null + payAllPenalties=true to pay all open ones oldest-first
             UUID targetPenaltyId,

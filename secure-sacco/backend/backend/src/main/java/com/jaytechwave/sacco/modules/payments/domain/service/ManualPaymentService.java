@@ -27,6 +27,9 @@ import com.jaytechwave.sacco.modules.penalties.domain.service.PenaltyRepaymentSe
 import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs.ManualDepositRequest;
 import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs.ManualWithdrawalRequest;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
+import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsTransaction;
+import com.jaytechwave.sacco.modules.savings.domain.entity.TransactionStatus;
+import com.jaytechwave.sacco.modules.savings.domain.entity.TransactionType;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsTransactionRepository;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
@@ -72,10 +75,21 @@ public class ManualPaymentService {
     /** Step 2/3 of the wizard — what can this specific member pay toward right now? */
     @Transactional(readOnly = true)
     public ManualPaymentContext getContext(UUID memberId) {
-        BigDecimal savingsBalance = savingsAccountRepository.findByMemberId(memberId)
+        var savingsAccountOpt = savingsAccountRepository.findByMemberId(memberId);
+
+        BigDecimal savingsBalance = savingsAccountOpt
                 .map(SavingsAccount::getId)
                 .map(savingsTransactionRepository::calculateBalance)
                 .orElse(BigDecimal.ZERO);
+
+        List<RecentDepositOption> recentDeposits = savingsAccountOpt
+                .map(acc -> savingsTransactionRepository.findBySavingsAccountIdOrderByCreatedAtDesc(acc.getId()))
+                .orElse(List.of())
+                .stream()
+                .filter(t -> t.getType() == TransactionType.DEPOSIT && t.getStatus() == TransactionStatus.POSTED)
+                .limit(20)
+                .map(t -> new RecentDepositOption(t.getId(), t.getAmount(), t.getReference(), t.getPostedAt()))
+                .toList();
 
         List<OpenPenaltyOption> openPenalties = penaltyRepository
                 .findByMemberIdAndStatusOrderByCreatedAtAsc(memberId, PenaltyStatus.OPEN)
@@ -95,6 +109,7 @@ public class ManualPaymentService {
 
         return new ManualPaymentContext(
                 savingsBalance,
+                recentDeposits,
                 openPenalties,
                 activeLoan.isPresent(),
                 activeLoan.map(loan -> sumOutstandingLoan(loan.getId())).orElse(null),
@@ -139,6 +154,11 @@ public class ManualPaymentService {
                     member.getId(), request.amount(),
                     "XFER-" + ref + " — moved to cover " + request.paymentType()
             ));
+        } else if (source == FundingSource.HISTORICAL_TRANSACTION_REDUCTION) {
+            if (request.paymentType() == ManualPaymentType.SAVINGS) {
+                throw new IllegalArgumentException("Cannot reduce a savings deposit to fund another savings deposit.");
+            }
+            reduceHistoricalTransaction(member, request.sourceTransactionId(), request.amount(), ref);
         }
 
         return switch (request.paymentType()) {
@@ -147,6 +167,51 @@ public class ManualPaymentService {
             case LOAN    -> recordLoan(member, request, ref);
             case CUSTOM  -> recordCustom(member, request, ref);
         };
+    }
+
+    /**
+     * SAC-269: a specific past savings deposit was recorded too high — the
+     * member never actually had this money separately, it was always meant
+     * for the obligation we're now crediting. Rather than create a brand new
+     * withdrawal (which would look like the member pulled cash back out),
+     * we shrink the ORIGINAL deposit in place by the requested amount and
+     * post a matching adjusting GL entry for just the delta — Debit Savings
+     * / Credit Bank, exactly mirroring a real withdrawal's GL shape, so it
+     * nets out correctly against the destination's Debit Bank / Credit
+     * <destination> entry below.
+     */
+    private void reduceHistoricalTransaction(Member member, UUID sourceTransactionId, BigDecimal reduceBy, String ref) {
+        if (sourceTransactionId == null) {
+            throw new IllegalArgumentException("Select the specific deposit to reduce.");
+        }
+        SavingsTransaction original = savingsTransactionRepository.findById(sourceTransactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+
+        SavingsAccount account = savingsAccountRepository.findByMemberId(member.getId())
+                .orElseThrow(() -> new IllegalStateException("This member has no savings account."));
+        if (!original.getSavingsAccountId().equals(account.getId())) {
+            throw new IllegalArgumentException("That transaction does not belong to this member.");
+        }
+        if (original.getType() != TransactionType.DEPOSIT) {
+            throw new IllegalArgumentException("Only a DEPOSIT transaction can be reduced this way.");
+        }
+        if (original.getAmount().compareTo(reduceBy) < 0) {
+            throw new IllegalArgumentException(String.format(
+                    "Cannot reduce by KES %s — the original transaction is only KES %s.", reduceBy, original.getAmount()));
+        }
+
+        original.setAmount(original.getAmount().subtract(reduceBy));
+        savingsTransactionRepository.save(original);
+
+        // Adjusting GL entry for just the delta — same shape as a real withdrawal,
+        // tagged so it's clearly traceable back to the transaction it corrects.
+        journalEntryService.postSavingsTransaction(
+                member.getId(), reduceBy, "WITHDRAWAL", "CASH",
+                "ADJ-" + ref + "-of-" + original.getReference()
+        );
+
+        log.info("Reduced savings transaction {} by {} for member {} (ref {})",
+                sourceTransactionId, reduceBy, member.getId(), ref);
     }
 
     private ManualPaymentResponse recordSavings(Member member, ManualPaymentRequest request, String ref) {
