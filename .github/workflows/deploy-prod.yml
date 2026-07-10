@@ -67,7 +67,7 @@ jobs:
           host: ${{ secrets.PROD_HOST }}
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          script: mkdir -p /opt/sacco-prod
+          script: mkdir -p /srv/apps/secure-sacco
 
       # ── Copy docker-compose to production server ────────────────────────────
       - name: Copy docker-compose to production server
@@ -77,7 +77,7 @@ jobs:
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           source: secure-sacco/infra/docker-compose.prod.yml
-          target: /opt/sacco-prod/
+          target: /srv/apps/secure-sacco/
           strip_components: 2
 
       # ── Deploy ──────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ jobs:
           envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,CLOUDINARY_URL,COOP_BASIC_AUTH,APP_OFFICIAL_EMAIL_DOMAIN,APP_DEFAULT_ADMIN_EMAIL,APP_DEFAULT_ADMIN_PASSWORD,APP_DEFAULT_ADMIN_PHONE,COOP_CONSUMER_KEY,COOP_CONSUMER_SECRET,COOP_OPERATOR_CODE,COOP_BASE_URL,COOP_CALLBACK_BASE_URL,COOP_SACCO_ACCOUNT_NUMBER,COOP_ALLOWED_CALLBACK_IPS,RESEND_API_KEY,MAIL_FROM,FRONTEND_URL,PROD_GHCR_TOKEN,GITHUB_ACTOR,BACKEND_IMAGE,FRONTEND_IMAGE
           script: |
             set -e
-            cd /opt/sacco-prod
+            cd /srv/apps/secure-sacco
 
             # Login to GHCR on the server so docker compose pull works
             echo "$PROD_GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
@@ -198,7 +198,7 @@ jobs:
           command_timeout: 5m
           script: |
             echo "ROLLING BACK production deployment..."
-            cd /opt/sacco-prod
+            cd /srv/apps/secure-sacco
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
             docker compose -f docker-compose.prod.yml up -d || true
             echo "Rollback complete."
