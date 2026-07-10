@@ -13,6 +13,7 @@ on:
         type: string
 
 jobs:
+  # ── Step 1: Validate inputs (GitHub runner) ──────────────────────────────────
   validate:
     name: Validate inputs
     runs-on: ubuntu-latest
@@ -25,20 +26,15 @@ jobs:
           fi
           echo "Confirmation accepted. Proceeding to production."
 
-  deploy-production:
-    name: Deploy — Production
+  # ── Step 2: Re-tag images in GHCR (GitHub runner — needs packages:write) ─────
+  retag:
+    name: Re-tag images for production
     runs-on: ubuntu-latest
     needs: validate
-    environment: production
-
     permissions:
       contents: read
       packages: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -46,7 +42,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Re-tag images for production
+      - name: Re-tag staging images as prod-latest
         run: |
           TAG=${{ github.event.inputs.image_tag }}
           REPO=ghcr.io/${{ github.repository }}
@@ -54,154 +50,118 @@ jobs:
           docker pull ${REPO}/backend:${TAG}
           docker pull ${REPO}/frontend:${TAG}
 
-          docker tag ${REPO}/backend:${TAG} ${REPO}/backend:prod-latest
+          docker tag ${REPO}/backend:${TAG}  ${REPO}/backend:prod-latest
           docker tag ${REPO}/frontend:${TAG} ${REPO}/frontend:prod-latest
 
           docker push ${REPO}/backend:prod-latest
           docker push ${REPO}/frontend:prod-latest
 
-      # ── Ensure deploy directory exists ─────────────────────────────────────
-      - name: Bootstrap deploy directory
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: mkdir -p /opt/sacco-prod
+  # ── Step 3: Deploy — runs directly on tw-core-01 via self-hosted runner ───────
+  # No SSH needed — the runner polls GitHub and executes jobs locally.
+  deploy-production:
+    name: Deploy — Production
+    runs-on: self-hosted
+    needs: retag
+    environment: production
 
-      # ── Copy docker-compose to production server ────────────────────────────
-      - name: Copy docker-compose to production server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          source: secure-sacco/infra/docker-compose.prod.yml
-          target: /opt/sacco-prod/
-          strip_components: 2
+    steps:
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-      # ── Deploy ──────────────────────────────────────────────────────────────
-      - name: Deploy to production server
-        uses: appleboy/ssh-action@v1
-        env:
-          APP_FIELD_ENCRYPTION_KEY:   ${{ secrets.APP_FIELD_ENCRYPTION_KEY }}
-          APP_PII_HMAC_KEY:           ${{ secrets.APP_PII_HMAC_KEY }}
-          REDIS_PASSWORD:             ${{ secrets.REDIS_PASSWORD }}
-          DB_USERNAME:                ${{ secrets.PROD_DB_USERNAME }}
-          DB_PASSWORD:                ${{ secrets.PROD_DB_PASSWORD }}
-          CLOUDINARY_URL:             ${{ secrets.CLOUDINARY_URL }}
-          COOP_BASIC_AUTH:            ${{ secrets.COOP_BASIC_AUTH }}
-          APP_OFFICIAL_EMAIL_DOMAIN:  ${{ vars.APP_OFFICIAL_EMAIL_DOMAIN }}
-          APP_DEFAULT_ADMIN_EMAIL:    ${{ vars.APP_DEFAULT_ADMIN_EMAIL }}
-          APP_DEFAULT_ADMIN_PASSWORD: ${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}
-          APP_DEFAULT_ADMIN_PHONE:    ${{ vars.APP_DEFAULT_ADMIN_PHONE }}
-          COOP_CONSUMER_KEY:          ${{ secrets.COOP_CONSUMER_KEY }}
-          COOP_CONSUMER_SECRET:       ${{ secrets.COOP_CONSUMER_SECRET }}
-          COOP_OPERATOR_CODE:         ${{ vars.COOP_OPERATOR_CODE }}
-          COOP_BASE_URL:              ${{ vars.COOP_BASE_URL }}
-          COOP_CALLBACK_BASE_URL:     ${{ vars.COOP_CALLBACK_BASE_URL }}
-          COOP_SACCO_ACCOUNT_NUMBER:  ${{ secrets.COOP_SACCO_ACCOUNT_NUMBER }}
-          COOP_ALLOWED_CALLBACK_IPS:  ${{ vars.COOP_ALLOWED_CALLBACK_IPS }}
-          RESEND_API_KEY:             ${{ secrets.RESEND_API_KEY }}
-          MAIL_FROM:                  ${{ vars.MAIL_FROM }}
-          FRONTEND_URL:               ${{ vars.FRONTEND_URL }}
-          PROD_GHCR_TOKEN:            ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR:               ${{ github.actor }}
-          BACKEND_IMAGE:              ghcr.io/${{ github.repository }}/backend:prod-latest
-          FRONTEND_IMAGE:             ghcr.io/${{ github.repository }}/frontend:prod-latest
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          command_timeout: 15m
-          envs: APP_FIELD_ENCRYPTION_KEY,APP_PII_HMAC_KEY,REDIS_PASSWORD,DB_USERNAME,DB_PASSWORD,CLOUDINARY_URL,COOP_BASIC_AUTH,APP_OFFICIAL_EMAIL_DOMAIN,APP_DEFAULT_ADMIN_EMAIL,APP_DEFAULT_ADMIN_PASSWORD,APP_DEFAULT_ADMIN_PHONE,COOP_CONSUMER_KEY,COOP_CONSUMER_SECRET,COOP_OPERATOR_CODE,COOP_BASE_URL,COOP_CALLBACK_BASE_URL,COOP_SACCO_ACCOUNT_NUMBER,COOP_ALLOWED_CALLBACK_IPS,RESEND_API_KEY,MAIL_FROM,FRONTEND_URL,PROD_GHCR_TOKEN,GITHUB_ACTOR,BACKEND_IMAGE,FRONTEND_IMAGE
-          script: |
-            set -e
-            cd /opt/sacco-prod
+      - name: Ensure deploy directories exist
+        run: |
+          mkdir -p /srv/apps/secure-sacco/{compose,env,uploads,logs,backups}
 
-            # Login to GHCR on the server so docker compose pull works
-            echo "$PROD_GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Write production .env file
+        run: |
+          {
+            printf 'APP_NAME=Secure Sacco\n'
+            printf 'APP_FIELD_ENCRYPTION_KEY=%s\n'   "${{ secrets.APP_FIELD_ENCRYPTION_KEY }}"
+            printf 'APP_PII_HMAC_KEY=%s\n'           "${{ secrets.APP_PII_HMAC_KEY }}"
+            printf 'REDIS_HOST=redis\n'
+            printf 'REDIS_PORT=6379\n'
+            printf 'REDIS_PASSWORD=%s\n'             "${{ secrets.REDIS_PASSWORD }}"
+            printf 'DB_USERNAME=%s\n'                "${{ secrets.PROD_DB_USERNAME }}"
+            printf 'DB_PASSWORD=%s\n'                "${{ secrets.PROD_DB_PASSWORD }}"
+            printf 'DB_NAME=sacco_prod\n'
+            printf 'CLOUDINARY_URL=%s\n'             "${{ secrets.CLOUDINARY_URL }}"
+            printf 'COOP_BASIC_AUTH=%s\n'            "${{ secrets.COOP_BASIC_AUTH }}"
+            printf 'APP_OFFICIAL_EMAIL_DOMAIN=%s\n'  "${{ vars.APP_OFFICIAL_EMAIL_DOMAIN }}"
+            printf 'APP_DEFAULT_ADMIN_EMAIL=%s\n'    "${{ vars.APP_DEFAULT_ADMIN_EMAIL }}"
+            printf 'APP_DEFAULT_ADMIN_PASSWORD=%s\n' "${{ secrets.APP_DEFAULT_ADMIN_PASSWORD }}"
+            printf 'APP_DEFAULT_ADMIN_PHONE=%s\n'    "${{ vars.APP_DEFAULT_ADMIN_PHONE }}"
+            printf 'COOP_CONSUMER_KEY=%s\n'          "${{ secrets.COOP_CONSUMER_KEY }}"
+            printf 'COOP_CONSUMER_SECRET=%s\n'       "${{ secrets.COOP_CONSUMER_SECRET }}"
+            printf 'COOP_OPERATOR_CODE=%s\n'         "${{ vars.COOP_OPERATOR_CODE }}"
+            printf 'COOP_BASE_URL=%s\n'              "${{ vars.COOP_BASE_URL }}"
+            printf 'COOP_CALLBACK_BASE_URL=%s\n'     "${{ vars.COOP_CALLBACK_BASE_URL }}"
+            printf 'COOP_SACCO_ACCOUNT_NUMBER=%s\n'  "${{ secrets.COOP_SACCO_ACCOUNT_NUMBER }}"
+            printf 'COOP_ALLOWED_CALLBACK_IPS=%s\n'  "${{ vars.COOP_ALLOWED_CALLBACK_IPS }}"
+            printf 'RESEND_API_KEY=%s\n'             "${{ secrets.RESEND_API_KEY }}"
+            printf 'MAIL_FROM=%s\n'                  "${{ vars.MAIL_FROM }}"
+            printf 'FRONTEND_URL=%s\n'               "${{ vars.FRONTEND_URL }}"
+            printf 'BACKEND_IMAGE=%s\n'              "ghcr.io/${{ github.repository }}/backend:prod-latest"
+            printf 'FRONTEND_IMAGE=%s\n'             "ghcr.io/${{ github.repository }}/frontend:prod-latest"
+          } > /srv/apps/secure-sacco/env/.env.production
 
-            # Write .env file with all production credentials
-            {
-              printf 'APP_FIELD_ENCRYPTION_KEY=%s\n' "$APP_FIELD_ENCRYPTION_KEY"
-              printf 'APP_PII_HMAC_KEY=%s\n'         "$APP_PII_HMAC_KEY"
-              printf 'REDIS_HOST=redis\n'
-              printf 'REDIS_PORT=6379\n'
-              printf 'REDIS_PASSWORD=%s\n'            "$REDIS_PASSWORD"
-              printf 'DB_USERNAME=%s\n'               "$DB_USERNAME"
-              printf 'DB_PASSWORD=%s\n'               "$DB_PASSWORD"
-              printf 'DB_NAME=sacco_prod\n'
-              printf 'CLOUDINARY_URL=%s\n'            "$CLOUDINARY_URL"
-              printf 'COOP_BASIC_AUTH=%s\n'           "$COOP_BASIC_AUTH"
-              printf 'APP_OFFICIAL_EMAIL_DOMAIN=%s\n' "$APP_OFFICIAL_EMAIL_DOMAIN"
-              printf 'APP_DEFAULT_ADMIN_EMAIL=%s\n'   "$APP_DEFAULT_ADMIN_EMAIL"
-              printf 'APP_DEFAULT_ADMIN_PASSWORD=%s\n' "$APP_DEFAULT_ADMIN_PASSWORD"
-              printf 'APP_DEFAULT_ADMIN_PHONE=%s\n'   "$APP_DEFAULT_ADMIN_PHONE"
-              printf 'COOP_CONSUMER_KEY=%s\n'         "$COOP_CONSUMER_KEY"
-              printf 'COOP_CONSUMER_SECRET=%s\n'      "$COOP_CONSUMER_SECRET"
-              printf 'COOP_OPERATOR_CODE=%s\n'        "$COOP_OPERATOR_CODE"
-              printf 'COOP_BASE_URL=%s\n'             "$COOP_BASE_URL"
-              printf 'COOP_CALLBACK_BASE_URL=%s\n'    "$COOP_CALLBACK_BASE_URL"
-              printf 'COOP_SACCO_ACCOUNT_NUMBER=%s\n' "$COOP_SACCO_ACCOUNT_NUMBER"
-              printf 'COOP_ALLOWED_CALLBACK_IPS=%s\n' "$COOP_ALLOWED_CALLBACK_IPS"
-              printf 'RESEND_API_KEY=%s\n'            "$RESEND_API_KEY"
-              printf 'MAIL_FROM=%s\n'                 "$MAIL_FROM"
-              printf 'FRONTEND_URL=%s\n'              "$FRONTEND_URL"
-              printf 'BACKEND_IMAGE=%s\n'             "$BACKEND_IMAGE"
-              printf 'FRONTEND_IMAGE=%s\n'            "$FRONTEND_IMAGE"
-            } > .env
+      - name: Pull latest images
+        run: |
+          docker compose \
+            -f /srv/apps/secure-sacco/compose/docker-compose.prod.yml \
+            --env-file /srv/apps/secure-sacco/env/.env.production \
+            pull
 
-            # Snapshot current state for rollback
-            docker compose -f docker-compose.prod.yml images > /tmp/pre-deploy-images.txt 2>/dev/null || true
+      - name: Deploy containers
+        id: deploy
+        run: |
+          docker compose \
+            -f /srv/apps/secure-sacco/compose/docker-compose.prod.yml \
+            --env-file /srv/apps/secure-sacco/env/.env.production \
+            up -d --remove-orphans
+          docker image prune -f
 
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            docker image prune -f
-
-      # ── Health check ────────────────────────────────────────────────────────
-      - name: Health check — production backend
+      # Health checks run locally on the server — no public URL required yet
+      - name: Health check — backend
         id: health-check
         run: |
-          echo "Waiting for production backend health check..."
+          echo "Waiting for backend to become healthy..."
           for i in $(seq 1 48); do
-            STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" "${{ vars.PROD_API_URL }}/actuator/health" || echo "000")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health || echo "000")
             if [ "$STATUS" = "200" ]; then
-              echo "Production backend is healthy!"
+              echo "Backend is healthy!"
               exit 0
             fi
-            echo "Attempt $i/48 — status $STATUS. Waiting 5s..."
+            echo "Attempt $i/48 — HTTP $STATUS. Waiting 5s..."
             sleep 5
           done
-          echo "Production health check FAILED after 4 minutes."
+          echo "Health check FAILED after 4 minutes."
           exit 1
 
-      # ── Health check — frontend ─────────────────────────────────────────────
       - name: Health check — frontend
         run: |
-          STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" "${{ vars.FRONTEND_URL }}" || echo "000")
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "000")
           if [ "$STATUS" = "200" ]; then
             echo "Frontend is serving."
           else
-            echo "Frontend returned HTTP $STATUS"
+            echo "Frontend returned HTTP $STATUS — check container logs."
             exit 1
           fi
 
-      # ── Rollback on failure ─────────────────────────────────────────────────
+      # ── Rollback ──────────────────────────────────────────────────────────────
       - name: Automatic rollback on health failure
         if: failure() && steps.health-check.outcome == 'failure'
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          command_timeout: 5m
-          script: |
-            echo "ROLLING BACK production deployment..."
-            cd /opt/sacco-prod
-            docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker compose -f docker-compose.prod.yml up -d || true
-            echo "Rollback complete."
+        run: |
+          echo "ROLLING BACK production deployment..."
+          docker compose \
+            -f /srv/apps/secure-sacco/compose/docker-compose.prod.yml \
+            --env-file /srv/apps/secure-sacco/env/.env.production \
+            down --remove-orphans || true
+          docker compose \
+            -f /srv/apps/secure-sacco/compose/docker-compose.prod.yml \
+            --env-file /srv/apps/secure-sacco/env/.env.production \
+            up -d || true
+          echo "Rollback complete."
 
       - name: Notify on success
         if: success()

@@ -19,7 +19,7 @@ services:
       retries: 10
       start_period: 15s
     networks:
-      - sacco-internal
+      - techwave-network
     expose:
       - "5432"
 
@@ -38,7 +38,7 @@ services:
       retries: 5
       start_period: 5s
     networks:
-      - sacco-internal
+      - techwave-network
     expose:
       - "6379"
 
@@ -57,6 +57,7 @@ services:
       SERVER_PORT: 8080
       TZ: Africa/Nairobi
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+      APP_NAME: ${APP_NAME:-Secure Sacco}
 
       #Mail
       RESEND_API_KEY: ${RESEND_API_KEY}
@@ -102,6 +103,9 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       CLOUDINARY_URL: ${CLOUDINARY_URL}
       COOP_BASIC_AUTH: ${COOP_BASIC_AUTH:-}
+    volumes:
+      - /srv/apps/secure-sacco/uploads:/app/uploads
+      - /srv/apps/secure-sacco/logs:/app/logs
     ports:
       - "127.0.0.1:8080:8080"
     healthcheck:
@@ -111,7 +115,7 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - sacco-internal
+      - techwave-network
     expose:
       - "8080"
 
@@ -135,7 +139,7 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - sacco-internal
+      - techwave-network
 
 volumes:
   sacco_pg_data:
@@ -144,6 +148,6 @@ volumes:
     driver: local
 
 networks:
-  sacco-internal:
-    driver: bridge
-    internal: false
+  techwave-network:
+    external: true
+    name: techwave-network
