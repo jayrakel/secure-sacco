@@ -1,3 +1,8 @@
+# Project name is set explicitly so Docker never confuses this stack with
+# other compose files on the server (e.g. techwave-core) that share the
+# same parent directory name 'compose/'.
+name: secure-sacco
+
 services:
 
   # ─── PostgreSQL ──────────────────────────────────────────────────────────────

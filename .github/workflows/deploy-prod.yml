@@ -118,7 +118,7 @@ jobs:
           docker compose \
             -f /srv/apps/secure-sacco/compose/docker-compose.prod.yml \
             --env-file /srv/apps/secure-sacco/env/.env.production \
-            up -d --remove-orphans
+            up -d
           docker image prune -f
 
       # Health checks run locally on the server — no public URL required yet
