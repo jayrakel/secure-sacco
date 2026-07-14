@@ -35,6 +35,7 @@ import com.jaytechwave.sacco.modules.savings.api.dto.SavingsDTOs;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccountStatus;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository;
+import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsTransactionRepository;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
@@ -80,6 +81,7 @@ public class MigrationService {
     private final PasswordEncoder   passwordEncoder;
     private final JdbcTemplate      jdbcTemplate;
     private final LoanScheduleItemRepository scheduleItemRepository;
+    private final SavingsTransactionRepository savingsTransactionRepository;
 
     @Transactional
     public String seedHistoricalMember(HistoricalMemberRequest request) {
@@ -135,6 +137,12 @@ public class MigrationService {
     public String seedHistoricalSavings(HistoricalSavingsRequest request) {
         log.info("💰 Migrating historical savings for {} - Amount: {} (Date: {})",
                 request.memberNumber(), request.amount(), request.transactionDate());
+
+        String normalizedRef = request.referenceNumber().trim().toUpperCase();
+        if (savingsTransactionRepository.existsByReference(normalizedRef)) {
+            log.info("⏭️  Skipping duplicate savings transaction — reference already exists: {}", normalizedRef);
+            return normalizedRef;
+        }
 
         Member member = memberRepository.findByMemberNumber(request.memberNumber())
                 .orElseThrow(() -> new IllegalStateException("Member not found: " + request.memberNumber()));
@@ -207,6 +215,12 @@ public class MigrationService {
         log.info("💸 Migrating historical withdrawal for {} - Amount: {} (Date: {})",
                 request.memberNumber(), request.amount(), request.transactionDate());
 
+        String normalizedRef = request.referenceNumber().trim().toUpperCase();
+        if (savingsTransactionRepository.existsByReference(normalizedRef)) {
+            log.info("⏭️  Skipping duplicate withdrawal transaction — reference already exists: {}", normalizedRef);
+            return normalizedRef;
+        }
+
         Member member = memberRepository.findByMemberNumber(request.memberNumber())
                 .orElseThrow(() -> new IllegalStateException("Member not found: " + request.memberNumber()));
 
@@ -266,6 +280,15 @@ public class MigrationService {
     @Transactional
     public String seedHistoricalLoanDisbursement(HistoricalLoanDTOs.HistoricalLoanDisbursementRequest request) {
         log.info("🏦 Migrating historical Loan for {} via Front Door", request.memberNumber());
+
+        // Idempotency guard: skip if a loan application with the same migration reference already exists
+        String migrationRef = request.referenceNumber() != null ? request.referenceNumber().trim() : null;
+        if (migrationRef != null && !migrationRef.isBlank() && loanRepository.findByReferenceNotes(migrationRef).isPresent()) {
+            var existing = loanRepository.findByReferenceNotes(migrationRef).get();
+            log.info("⏭️  Skipping duplicate loan disbursement migration — existing application id: {} ref: {}",
+                    existing.getId(), migrationRef);
+            return existing.getId().toString();
+        }
 
         Member member = memberRepository.findByMemberNumber(request.memberNumber())
                 .orElseThrow(() -> new IllegalStateException("Member not found: " + request.memberNumber()));
@@ -397,6 +420,15 @@ public class MigrationService {
                 LoanStatus.ACTIVE
         ).orElseThrow(() -> new IllegalStateException("No active loan found for member: " + request.memberNumber()));
 
+        // Idempotency guard: skip if a repayment with the same receipt/reference already exists
+        String receiptRef = request.referenceNumber() != null ? request.referenceNumber().trim() : null;
+        if (receiptRef != null && !receiptRef.isBlank() && loanRepaymentRepository.existsByReceiptNumber(receiptRef)) {
+            var existing = loanRepaymentRepository.findByReceiptNumber(receiptRef).orElse(null);
+            log.info("⏭️  Skipping duplicate loan repayment migration — existing repayment: {} ref: {}",
+                    existing != null ? existing.getId() : "<unknown>", receiptRef);
+            return existing != null ? existing.getId().toString() : receiptRef;
+        }
+
         String adminEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
 
         var response = loanRepaymentService.processHistoricalRepayment(
@@ -444,6 +476,17 @@ public class MigrationService {
                         .orElseThrow(() -> new IllegalStateException("No Penalty Rules found in the system!")));
 
         // 2. Create the Penalty Record matching your EXACT entity fields
+        // Idempotency: avoid creating the same migrated penalty twice. Look for an existing
+        // penalty with the same member, amount, referenceType and createdAt timestamp.
+        java.time.LocalDateTime createdAt = penaltyDate.atStartOfDay();
+        var existingPenalty = penaltyRepository.findByMemberIdAndReferenceTypeAndOriginalAmountAndCreatedAt(
+                member.getId(), "MIGRATION", amount, createdAt);
+        if (existingPenalty.isPresent()) {
+            log.info("⏭️  Skipping duplicate migrated penalty for member {} amount {} date {} ref {}",
+                    memberNumber, amount, penaltyDate, reference);
+            return;
+        }
+
         Penalty penalty = Penalty.builder()
                 .memberId(member.getId())
                 .penaltyRule(rule)
@@ -454,7 +497,7 @@ public class MigrationService {
                 .interestPaid(BigDecimal.ZERO)
                 .amountWaived(BigDecimal.ZERO)
                 .status(PenaltyStatus.UNPAID)
-                .createdAt(penaltyDate.atStartOfDay())
+                .createdAt(createdAt)
                 .build();
 
         penaltyRepository.save(penalty);

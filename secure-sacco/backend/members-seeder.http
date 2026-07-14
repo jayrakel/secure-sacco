@@ -9,8 +9,8 @@ POST https://betterlinkventureslimited.co.ke/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "admin@jaytechwavesolutions.co.ke",
-  "password": "M1chira._2000"
+  "identifier": "admin@betterlinkventureslimited.co.ke",
+  "password": "Michira._2000"
 }
 
 > {%

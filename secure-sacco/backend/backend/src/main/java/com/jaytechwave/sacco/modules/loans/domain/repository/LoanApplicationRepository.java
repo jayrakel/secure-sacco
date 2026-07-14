@@ -19,4 +19,15 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
     List<LoanApplication> findByStatus(LoanStatus status);
     Page<LoanApplication> findByStatus(LoanStatus status, Pageable pageable);
     List<LoanApplication> findByPrepaymentBalanceGreaterThan(java.math.BigDecimal amount);
+
+    /**
+     * Migration helper: lookup an application by the referenceNotes field used by the
+     * migration scripts (they store the migration reference in referenceNotes).
+     */
+    Optional<LoanApplication> findByReferenceNotes(String referenceNotes);
+
+    /**
+     * Convenience boolean exists check by referenceNotes to allow idempotent migration flows.
+     */
+    boolean existsByReferenceNotes(String referenceNotes);
 }

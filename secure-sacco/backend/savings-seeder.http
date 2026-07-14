@@ -2,23 +2,28 @@
 ### LOGIN FIRST — sets csrf_token, sacco_cookie, api_url
 ### ============================================================
 
-POST https://staging.jaytechwavesolutions.co.ke/api/v1/auth/login
+# @no-cookie-jar
+POST https://betterlinkventureslimited.co.ke/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "admin@jaytechwavesolutions.co.ke",
-  "password": "M1chira._2000"
+  "identifier": "admin@betterlinkventureslimited.co.ke",
+  "password": "Michira._2000"
 }
 
 > {%
-    const raw = response.headers.valueOf("Set-Cookie");
-    if (raw) {
-        const match = raw.match(/XSRF-TOKEN=([^;]+)/);
-        if (match) client.global.set("csrf_token", match[1]);
-        const s = raw.match(/SACCO_SESSION=([^;]+)/);
-        if (s) client.global.set("sacco_cookie", "SACCO_SESSION=" + s[1]);
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    let xsrf = "";
+    let session = "";
+    for (const c of cookies) {
+        const xsrfMatch = c.match(/XSRF-TOKEN=([^;]+)/);
+        if (xsrfMatch) xsrf = xsrfMatch[1];
+        const sessionMatch = c.match(/SACCO_SESSION=([^;]+)/);
+        if (sessionMatch) session = sessionMatch[1];
     }
-    client.global.set("api_url", "https://staging.jaytechwavesolutions.co.ke");
+    if (xsrf) client.global.set("csrf_token", xsrf);
+    if (session) client.global.set("sacco_cookie", "XSRF-TOKEN=" + xsrf + "; SACCO_SESSION=" + session);
+    client.global.set("api_url", "https://betterlinkventureslimited.co.ke");
 %}
 
 ### ============================================================
@@ -28,6 +33,7 @@ Content-Type: application/json
 
 ### Opening balance (pre-existing savings before weekly tracking)
 ###
+# @no-cookie-jar
 POST {{api_url}}/api/v1/migration/savings
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
@@ -36,6 +42,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 { "memberNumber": "BVL-2022-000001", "amount": 573852.00, "referenceNumber": "MIG-SAV-BEN-BASE", "transactionDate": "2022-08-31" }
 
 ###
+# @no-cookie-jar
 POST {{api_url}}/api/v1/migration/savings
 Content-Type: application/json
 Cookie: {{sacco_cookie}}
@@ -44,6 +51,7 @@ X-XSRF-TOKEN: {{csrf_token}}
 { "memberNumber": "BVL-2022-000001", "amount": 1000.00, "referenceNumber": "PTR-BEN-2022-09-01", "transactionDate": "2022-09-01" }
 
 ###
+# @no-cookie-jar
 POST {{api_url}}/api/v1/migration/savings
 Content-Type: application/json
 Cookie: {{sacco_cookie}}

@@ -7,6 +7,9 @@ services:
 
   # ─── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
+    env_file:
+      - ../env/.env.production
+
     image: postgres:16
     container_name: sacco_postgres
     restart: unless-stopped
@@ -30,6 +33,9 @@ services:
 
   # ─── Redis ───────────────────────────────────────────────────────────────────
   redis:
+    env_file:
+      - ../env/.env.production
+
     image: redis:7.4-alpine
     container_name: sacco_redis
     restart: unless-stopped
@@ -49,6 +55,9 @@ services:
 
   # ─── Backend (Spring Boot) ───────────────────────────────────────────────────
   backend:
+    env_file:
+      - ../env/.env.production
+
     image: ${BACKEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/backend:prod-latest}
     container_name: sacco_backend
     restart: unless-stopped
@@ -126,6 +135,9 @@ services:
 
   # ─── Frontend (Nginx) ────────────────────────────────────────────────────────
   frontend:
+    env_file:
+      - ../env/.env.production
+
     image: ${FRONTEND_IMAGE:-ghcr.io/jayrakel/secure-sacco/frontend:prod-latest}
     container_name: sacco_frontend
     restart: unless-stopped
@@ -139,18 +151,19 @@ services:
     ports:
       - "127.0.0.1:3000:80"
     healthcheck:
-      test: ["CMD", "wget -qO- http://127.0.0.1:80 > /dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ > /dev/null 2>&1"]
       interval: 30s
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 60s
     networks:
       - techwave-network
 
 volumes:
   sacco_pg_data:
-    driver: local
+    name: secure-sacco_pg_data
   sacco_redis_data:
-    driver: local
+    name: secure-sacco_redis_data
 
 networks:
   techwave-network:
