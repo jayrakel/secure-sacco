@@ -1,0 +1,67 @@
+@baseUrl = https://betterlinkventureslimited.co.ke/api/v1
+
+### STEP 1 — LOGIN (auto-captures session + CSRF token)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "admin@betterlinkventureslimited.co.ke",
+  "password": "Michira._2000"
+}
+
+> {%
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    for (const cookie of cookies) {
+        const csrf = cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (csrf) client.global.set("csrf_token", csrf[1]);
+        const session = cookie.match(/SACCO_SESSION=([^;]+)/);
+        if (session) client.global.set("sacco_cookie", "SACCO_SESSION=" + session[1]);
+    }
+%}
+
+###
+
+### STEP 2 — FIND THE MEMBER UUID (search by member number or name)
+# Look for "id" in the response — copy it for use in STEP 3 & 4
+GET {{baseUrl}}/members/search?query=BVL-2022-000001
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+###
+
+### STEP 3 — LIST SAVINGS TRANSACTIONS FOR THE MEMBER
+# Replace <MEMBER-UUID> with the "id" from STEP 2
+# Optionally narrow with from= and to= (format: YYYY-MM-DD)
+GET {{baseUrl}}/admin/historical-edit/savings?memberId=<MEMBER-UUID>&from=2022-01-01&to=2025-12-31
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+> {%
+    // Auto-save the first transaction ID for convenience
+    if (response.body && response.body.length > 0) {
+        client.global.set("first_tx_id", response.body[0].transactionId);
+    }
+%}
+
+###
+
+### STEP 4 — EDIT A SPECIFIC TRANSACTION
+# transactionId  — copy from STEP 3 response ("transactionId" field)
+# newAmount      — set to null to leave unchanged
+# newPostedAt    — format: "YYYY-MM-DDTHH:MM:SS" — set to null to leave unchanged
+# newReference   — set to null to leave unchanged
+# reason         — REQUIRED, written to the audit log
+POST {{baseUrl}}/admin/historical-edit/savings/edit
+Content-Type: application/json
+Cookie: {{sacco_cookie}}
+X-XSRF-TOKEN: {{csrf_token}}
+
+{
+  "transactionId": "<PASTE-TRANSACTION-UUID-FROM-STEP-3>",
+  "newAmount": 5000.00,
+  "newPostedAt": null,
+  "newReference": null,
+  "reason": "Correcting migration error — original CSV amount was wrong"
+}
+
+###
