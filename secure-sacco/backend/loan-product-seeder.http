@@ -1,12 +1,12 @@
-@baseUrl = https://staging.jaytechwavesolutions.co.ke/api/v1
+@baseUrl = https://betterlinkventureslimited.co.ke/api/v1
 
 ### 1. LOGIN
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "admin@jaytechwavesolutions.co.ke",
-  "password": "M1chira._2000"
+  "identifier": "admin@betterlinkventureslimited.co.ke",
+  "password": "Michira._2000"
 }
 
 > {%
