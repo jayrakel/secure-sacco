@@ -1,15 +1,8 @@
--- Remove old seeded loan
-DELETE FROM loan_products
-WHERE id = '8c4d2994-4b53-4814-9964-6f0a3ecbc33b';
-
--- Remove any Historical Smart Loan regardless of UUID
-DELETE FROM loan_products
-WHERE name = 'Historical Smart Loan';
-
--- Remove the old Standard Biashara Loan
+-- remove ONLY the old wrongly-seeded product
 DELETE FROM loan_products
 WHERE name = 'Standard Biashara Loan';
 
+-- create Historical Smart Loan only if it doesn't exist
 INSERT INTO loan_products (
     id,
     name,
@@ -35,4 +28,5 @@ VALUES (
            28,
            TRUE,
            CURRENT_TIMESTAMP
-       );
+       )
+ON CONFLICT (name) DO NOTHING;
