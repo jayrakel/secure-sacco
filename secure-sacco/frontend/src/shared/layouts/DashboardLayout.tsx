@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../../features/auth/context/AuthProvider';
+import { useSettings } from '../../features/settings/context/useSettings';
 import { LogOut, ChevronRight, Menu } from 'lucide-react';
 import { useState } from 'react';
 
@@ -33,8 +34,24 @@ const PAGE_LABELS: Record<string, string> = {
 
 export const DashboardLayout = () => {
     const { user, logout } = useAuth();
+    const { isLoading: settingsLoading } = useSettings();
     const location = useLocation();
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+    // Gate: hold the entire dashboard until settings (branding) have resolved.
+    // This prevents the sidebar from flashing the default logo/name even for a frame.
+    if (settingsLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+                <div className="relative flex items-center justify-center mb-4">
+                    <div className="w-14 h-14 rounded-full border-4 border-slate-200" />
+                    <div className="absolute w-14 h-14 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
+                    <div className="absolute w-3.5 h-3.5 rounded-full bg-emerald-500 opacity-80" />
+                </div>
+                <p className="text-slate-400 text-sm tracking-wide animate-pulse">Loading&hellip;</p>
+            </div>
+        );
+    }
 
     const pathLabel = PAGE_LABELS[location.pathname] ?? 'Dashboard';
 

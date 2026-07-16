@@ -37,6 +37,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // A genuinely first-ever visit still shows a brief loading state (no cache exists yet),
     // handled by isLoading rather than a hardcoded fallback name/logo.
     const [settings, setSettings] = useState<SaccoSettings | null>(() => readCachedSettings());
+    // Always start loading — the spinner shows on every page load/refresh.
+    // The cache seeds `settings` so branding is ready the moment isLoading flips to false.
     const [isLoading, setIsLoading] = useState(true);
     const { isAuthenticated } = useAuth();
     const { isComplete: setupComplete, isLoading: setupLoading } = useSetup();

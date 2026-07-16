@@ -24,23 +24,49 @@ export default function LoginPage() {
     const [showResend, setShowResend] = useState(false);
     const [resendStatus, setResendStatus] = useState('');
 
-    // SACCO branding — fetched from the public settings endpoint
-    const [saccoName, setSaccoName] = useState('SACCO Portal');
-    const [saccoTagline, setSaccoTagline] = useState('Secure, Transparent, and Automated Management.');
-    const [logoUrl, setLogoUrl] = useState('');
+    // SACCO branding — seeded from localStorage cache (same key SettingsProvider writes)
+    // so returning users see the real branding instantly, with no hardcoded placeholder flash.
+    const [saccoName, setSaccoName] = useState<string>(() => {
+        try {
+            const cached = localStorage.getItem('saccoSettingsCache');
+            if (cached) return JSON.parse(cached)?.saccoName || '';
+        } catch { /* ignore */ }
+        return '';
+    });
+    const [saccoTagline, setSaccoTagline] = useState<string>(() => {
+        try {
+            const cached = localStorage.getItem('saccoSettingsCache');
+            if (cached) return JSON.parse(cached)?.tagline || '';
+        } catch { /* ignore */ }
+        return '';
+    });
+    const [logoUrl, setLogoUrl] = useState<string>(() => {
+        try {
+            const cached = localStorage.getItem('saccoSettingsCache');
+            if (cached) return JSON.parse(cached)?.logoUrl || '';
+        } catch { /* ignore */ }
+        return '';
+    });
+    // True once the live API call has resolved (or failed). Stays false on first-ever
+    // visits where the cache is empty, so we show a skeleton instead of a wrong name.
+    const [brandingLoaded, setBrandingLoaded] = useState<boolean>(() => {
+        try {
+            const cached = localStorage.getItem('saccoSettingsCache');
+            return !!cached && !!JSON.parse(cached)?.saccoName;
+        } catch { /* ignore */ }
+        return false;
+    });
 
     useEffect(() => {
         axios.get('/api/v1/settings/sacco')
             .then(res => {
-                console.log('✓ Settings fetched on login page:', res.data);
                 if (res.data?.saccoName) {
                     setSaccoName(res.data.saccoName);
                     document.title = res.data.saccoName + ' - Secure SACCO';
                 }
                 if (res.data?.tagline)   setSaccoTagline(res.data.tagline);
-                if (res.data?.logoUrl) setLogoUrl(res.data.logoUrl);
+                if (res.data?.logoUrl)   setLogoUrl(res.data.logoUrl);
                 if (res.data?.faviconUrl) {
-                    // Update favicon
                     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
                     if (!link) {
                         link = document.createElement('link');
@@ -52,6 +78,9 @@ export default function LoginPage() {
             })
             .catch((error) => {
                 console.error('⚠ Failed to fetch settings on login page:', error.response?.status, error.message);
+            })
+            .finally(() => {
+                setBrandingLoaded(true);
             });
     }, []);
 
@@ -160,8 +189,26 @@ export default function LoginPage() {
         }
     };
 
+    // Gate: don't render the page at all until branding is resolved
+    if (!brandingLoaded) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900">
+                <div className="relative flex items-center justify-center mb-6">
+                    {/* Outer ring */}
+                    <div className="w-16 h-16 rounded-full border-4 border-slate-700" />
+                    {/* Spinning arc */}
+                    <div className="absolute w-16 h-16 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
+                    {/* Inner dot */}
+                    <div className="absolute w-4 h-4 rounded-full bg-emerald-500 opacity-80" />
+                </div>
+                <p className="text-slate-400 text-sm tracking-wide animate-pulse">Loading&hellip;</p>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex bg-slate-50 font-sans">
+
             {/* Left Side Branding */}
             <div className="hidden lg:flex w-1/2 bg-slate-900 flex-col justify-center items-center p-12 text-white relative">
                 <div className="relative z-10 text-center">
@@ -401,7 +448,7 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <div className="w-full text-center py-6 text-slate-400 text-sm mt-auto border-t border-slate-200">
-                    <p>© {new Date().getFullYear()} {saccoName}. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} {saccoName || 'Secure SACCO'}. All rights reserved.</p>
                     <div className="flex justify-center gap-4 mt-2">
                         <a href="/privacy-policy" className="hover:text-emerald-600 transition">Privacy Policy</a>
                         <span>•</span>
