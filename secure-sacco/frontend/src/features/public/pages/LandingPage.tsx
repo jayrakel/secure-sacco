@@ -110,7 +110,7 @@ export default function LandingPage() {
     }, []);
 
     const p = data?.profile;
-    const name   = p?.saccoName?.trim() || 'Betterlink Ventures SACCO';
+    const name   = p?.saccoName?.trim() || '';
     const tagline = p?.tagline?.trim() || 'Built on trust. Growing through unity.';
     const initial = name.charAt(0).toUpperCase();
     const yearsActive = p?.foundedYear ? new Date().getFullYear() - p.foundedYear : 0;

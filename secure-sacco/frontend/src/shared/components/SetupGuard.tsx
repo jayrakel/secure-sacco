@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSetup } from '../../features/setup/context/useSetup';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 /**
  * SetupGuard wraps the entire authenticated app shell.
@@ -21,8 +21,13 @@ const SetupGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     // Don't block while either auth or setup is loading
     if (setupLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
+                <div className="relative flex items-center justify-center mb-4">
+                    <div className="w-14 h-14 rounded-full border-4 border-slate-200" />
+                    <div className="absolute w-14 h-14 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
+                    <div className="absolute w-3.5 h-3.5 rounded-full bg-emerald-500 opacity-80" />
+                </div>
+                <p className="text-slate-400 text-sm tracking-wide animate-pulse">Loading…</p>
             </div>
         );
     }
