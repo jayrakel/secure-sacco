@@ -72,6 +72,9 @@ jobs:
           COOP_CALLBACK_BASE_URL: "http://localhost:8080"
           COOP_SACCO_ACCOUNT_NUMBER: "000000000000"
           COOP_ALLOWED_CALLBACK_IPS: ""
+          COOP_PROXY_HOST: ""
+          COOP_PROXY_PORT: ""
+
 
       - name: Upload test reports
         if: always()

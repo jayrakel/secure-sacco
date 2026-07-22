@@ -133,6 +133,9 @@ sacco:
 
     # Co-op Connect production API base URL
     base-url:          ${COOP_BASE_URL:https://openapi.co-opbank.co.ke}
+    proxy-host:        ${COOP_PROXY_HOST:}
+    proxy-port:        ${COOP_PROXY_PORT:8888}
+
 
     # Your server base URL — Co-op will POST callbacks to:
     #   {callback-base-url}/api/v1/payments/coop/stk-callback

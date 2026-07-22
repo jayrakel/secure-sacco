@@ -98,6 +98,8 @@ jobs:
             printf 'COOP_CALLBACK_BASE_URL=%s\n'     "${{ vars.COOP_CALLBACK_BASE_URL }}"
             printf 'COOP_SACCO_ACCOUNT_NUMBER=%s\n'  "${{ secrets.COOP_SACCO_ACCOUNT_NUMBER }}"
             printf 'COOP_ALLOWED_CALLBACK_IPS=%s\n'  "${{ vars.COOP_ALLOWED_CALLBACK_IPS }}"
+            printf 'COOP_PROXY_HOST=%s\n'            "${{ vars.COOP_PROXY_HOST }}"
+            printf 'COOP_PROXY_PORT=%s\n'            "${{ vars.COOP_PROXY_PORT }}"
             printf 'RESEND_API_KEY=%s\n'             "${{ secrets.RESEND_API_KEY }}"
             printf 'MAIL_FROM=%s\n'                  "${{ vars.MAIL_FROM }}"
             printf 'FRONTEND_URL=%s\n'               "${{ vars.FRONTEND_URL }}"
