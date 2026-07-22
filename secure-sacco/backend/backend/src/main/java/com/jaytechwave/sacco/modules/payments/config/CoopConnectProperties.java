@@ -17,7 +17,8 @@ public class CoopConnectProperties {
 
     /**
      * Optional: pre-computed Basic auth value (Base64 of key:secret).
-     * If set, this is used directly instead of encoding consumerKey + consumerSecret.
+     * If set, this is used directly instead of encoding consumerKey +
+     * consumerSecret.
      * Set COOP_BASIC_AUTH in GitHub secrets to the value Co-op provided.
      * Format: the raw Base64 string only (without the "Basic " prefix).
      */
@@ -34,7 +35,8 @@ public class CoopConnectProperties {
 
     /**
      * Base URL for our callback endpoints.
-     * Co-op will post STK results to: {callbackBaseUrl}/api/v1/payments/coop/stk-callback
+     * Co-op will post STK results to:
+     * {callbackBaseUrl}/api/v1/payments/coop/stk-callback
      * Co-op IPN will post to: {callbackBaseUrl}/api/v1/payments/coop/ipn
      */
     private String callbackBaseUrl = "https://api-staging.jaytechwavesolutions.co.ke";
@@ -50,4 +52,18 @@ public class CoopConnectProperties {
      * SACCO's Co-op Bank account number (for balance and mini-statement queries).
      */
     private String saccoAccountNumber = "";
+
+    // ── Outbound proxy (Co-op Gateway) ────────────────────────────────────────
+    /**
+     * Hostname or IP of the dedicated outbound proxy used for all Co-op API
+     * calls. Set to the DigitalOcean gateway droplet IP (139.59.152.31) so
+     * Co-op only ever sees that static IP, regardless of where the app runs.
+     * Leave blank to bypass the proxy (local dev / testing).
+     */
+    private String proxyHost = "";
+
+    /**
+     * Port tinyproxy listens on (default 8888).
+     */
+    private int proxyPort = 8888;
 }
