@@ -40,7 +40,7 @@ sacco:
     sacco-account-number: ${COOP_SACCO_ACCOUNT_NUMBER:}
     allowed-callback-ips: ${COOP_ALLOWED_CALLBACK_IPS:}
     proxy-host:           ${COOP_PROXY_HOST:}
-    proxy-port:           ${COOP_PROXY_PORT:}
+    proxy-port:           ${COOP_PROXY_PORT:8888}
 
 # Production
 
