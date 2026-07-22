@@ -4,7 +4,6 @@ import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.config.CoopConnectProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -50,16 +49,45 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CoopConnectService {
 
     private final CoopConnectProperties   props;
     private final UserRepository           userRepository;
     private final PiiSearchHashConverter   piiHashConverter;
     private final StringRedisTemplate redisTemplate;
-    private final RestClient restClient = RestClient.builder()
-            .requestInterceptor(new CoopHttpLogger())
-            .build();
+    private final RestClient restClient;
+
+    // Explicit constructor to initialize the proxy before building RestClient
+    public CoopConnectService(
+            CoopConnectProperties props,
+            UserRepository userRepository,
+            PiiSearchHashConverter piiHashConverter,
+            StringRedisTemplate redisTemplate) {
+
+        this.props = props;
+        this.userRepository = userRepository;
+        this.piiHashConverter = piiHashConverter;
+        this.redisTemplate = redisTemplate;
+
+        RestClient.Builder builder = RestClient.builder()
+                .requestInterceptor(new CoopHttpLogger());
+
+        // Configure the proxy if it is set in properties/environment variables
+        if (props.getProxyHost() != null && !props.getProxyHost().trim().isEmpty()) {
+            org.springframework.http.client.SimpleClientHttpRequestFactory requestFactory =
+                    new org.springframework.http.client.SimpleClientHttpRequestFactory();
+
+            java.net.Proxy proxy = new java.net.Proxy(
+                    java.net.Proxy.Type.HTTP,
+                    new java.net.InetSocketAddress(props.getProxyHost(), props.getProxyPort())
+            );
+
+            requestFactory.setProxy(proxy);
+            builder.requestFactory(requestFactory);
+        }
+
+        this.restClient = builder.build();
+    }
 
     // == Token cache ===========================================================
     private final AtomicReference<String> cachedToken      = new AtomicReference<>();
@@ -492,11 +520,11 @@ public class CoopConnectService {
         // Derive the 9-digit local suffix (e.g. "717921562")
         String nineSuffix = null;
         if (digits.startsWith("254") && digits.length() == 12) {
-            nineSuffix = digits.substring(3);           // 254XXXXXXXXX → XXXXXXXXX
+            nineSuffix = digits.substring(3);            // 254XXXXXXXXX → XXXXXXXXX
         } else if ((digits.startsWith("07") || digits.startsWith("01")) && digits.length() == 10) {
-            nineSuffix = digits.substring(1);           // 07XXXXXXXX → 7XXXXXXXX
+            nineSuffix = digits.substring(1);            // 07XXXXXXXX → 7XXXXXXXX
         } else if (digits.length() == 9) {
-            nineSuffix = digits;                        // already trunk-stripped
+            nineSuffix = digits;                         // already trunk-stripped
         }
 
         if (nineSuffix == null) {
@@ -528,6 +556,4 @@ public class CoopConnectService {
 
         return out;
     }
-
-
 }
