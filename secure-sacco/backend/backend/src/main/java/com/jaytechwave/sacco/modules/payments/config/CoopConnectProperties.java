@@ -65,5 +65,5 @@ public class CoopConnectProperties {
     /**
      * Port tinyproxy listens on (default 8888).
      */
-    private Integer proxyPort = 8888;
+    private int proxyPort = 8888;
 }
