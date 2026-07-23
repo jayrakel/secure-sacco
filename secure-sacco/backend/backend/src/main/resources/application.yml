@@ -68,7 +68,7 @@ spring:
   # Resend sends over HTTPS (port 443) — no SMTP port restrictions.
   # Get your API key at https://resend.com
   mail:
-    from: ${MAIL_FROM:noreply@jaytechwavesolutions.co.ke}
+    from: ${MAIL_FROM:noreply@${APP_OFFICIAL_EMAIL_DOMAIN}}
 
 resend:
   api-key: ${RESEND_API_KEY:}
@@ -88,10 +88,10 @@ app:
   # Public URL of the frontend — used to build links in outgoing emails.
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
 
-  official-email-domain: ${APP_OFFICIAL_EMAIL_DOMAIN:jaytechwave.org}
+  official-email-domain: ${APP_OFFICIAL_EMAIL_DOMAIN:jaytech.org}
 
   default-admin:
-    email: ${APP_DEFAULT_ADMIN_EMAIL:admin@jaytechwave.org}
+    email: ${APP_DEFAULT_ADMIN_EMAIL:admin@${APP_OFFICIAL_EMAIL_DOMAIN}}
     password: ${APP_DEFAULT_ADMIN_PASSWORD:Admin@12345678}
     phone: ${APP_DEFAULT_ADMIN_PHONE:+254700000000}
 
@@ -133,14 +133,11 @@ sacco:
 
     # Co-op Connect production API base URL
     base-url:          ${COOP_BASE_URL:https://openapi.co-opbank.co.ke}
-    proxy-host:        ${COOP_PROXY_HOST:}
-    proxy-port:        ${COOP_PROXY_PORT:8888}
-
 
     # Your server base URL — Co-op will POST callbacks to:
     #   {callback-base-url}/api/v1/payments/coop/stk-callback
     #   {callback-base-url}/api/v1/payments/coop/ipn
-    callback-base-url: ${COOP_CALLBACK_BASE_URL:https://api-staging.jaytechwavesolutions.co.ke}
+    callback-base-url: ${COOP_CALLBACK_BASE_URL:https://api.betterlinkventureslimited.co.ke}
 
     # SACCO's Co-op Bank account number (for balance / mini-statement queries)
     sacco-account-number: ${COOP_SACCO_ACCOUNT_NUMBER:}
@@ -148,6 +145,11 @@ sacco:
     # Co-op Connect callback IP whitelist — set once Co-op provides their IPs.
     # When empty the filter allows all IPs (bypass mode) with a warning.
     allowed-callback-ips: ${COOP_ALLOWED_CALLBACK_IPS:}
+
+
+    proxy-host:        ${COOP_PROXY_HOST:}
+    proxy-port:        ${COOP_PROXY_PORT:8888}
+
 
 management:
   endpoints:

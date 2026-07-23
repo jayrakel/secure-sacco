@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.config.CoopConnectProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -57,33 +58,35 @@ public class CoopConnectService {
     private final StringRedisTemplate redisTemplate;
     private final RestClient restClient;
 
-    // Explicit constructor to initialize the proxy before building RestClient
-    public CoopConnectService(
-            CoopConnectProperties props,
-            UserRepository userRepository,
-            PiiSearchHashConverter piiHashConverter,
-            StringRedisTemplate redisTemplate) {
-
-        this.props = props;
-        this.userRepository = userRepository;
+    public CoopConnectService(CoopConnectProperties props,
+                              UserRepository userRepository,
+                              PiiSearchHashConverter piiHashConverter,
+                              StringRedisTemplate redisTemplate) {
+        this.props            = props;
+        this.userRepository   = userRepository;
         this.piiHashConverter = piiHashConverter;
-        this.redisTemplate = redisTemplate;
+        this.redisTemplate    = redisTemplate;
 
+        // Build the RestClient — route ALL Co-op traffic through the dedicated
+        // gateway proxy (209.38.188.39) so Co-op always sees one static IP
+        // regardless of which server the app is running on. If proxyHost is
+        // not configured (local dev), bypass the proxy entirely.
         RestClient.Builder builder = RestClient.builder()
                 .requestInterceptor(new CoopHttpLogger());
 
-        // Configure the proxy if it is set in properties/environment variables
-        if (props.getProxyHost() != null && !props.getProxyHost().trim().isEmpty()) {
-            org.springframework.http.client.SimpleClientHttpRequestFactory requestFactory =
+        if (props.getProxyHost() != null && !props.getProxyHost().isBlank()) {
+            java.net.InetSocketAddress proxyAddress =
+                    new java.net.InetSocketAddress(props.getProxyHost(), props.getProxyPort());
+            java.net.Proxy proxy = new java.net.Proxy(java.net.Proxy.Type.HTTP, proxyAddress);
+
+            org.springframework.http.client.SimpleClientHttpRequestFactory factory =
                     new org.springframework.http.client.SimpleClientHttpRequestFactory();
+            factory.setProxy(proxy);
+            builder.requestFactory(factory);
 
-            java.net.Proxy proxy = new java.net.Proxy(
-                    java.net.Proxy.Type.HTTP,
-                    new java.net.InetSocketAddress(props.getProxyHost(), props.getProxyPort())
-            );
-
-            requestFactory.setProxy(proxy);
-            builder.requestFactory(requestFactory);
+            log.info("Co-op Connect: routing via proxy {}:{}", props.getProxyHost(), props.getProxyPort());
+        } else {
+            log.info("Co-op Connect: no proxy configured — connecting directly");
         }
 
         this.restClient = builder.build();
@@ -520,11 +523,11 @@ public class CoopConnectService {
         // Derive the 9-digit local suffix (e.g. "717921562")
         String nineSuffix = null;
         if (digits.startsWith("254") && digits.length() == 12) {
-            nineSuffix = digits.substring(3);            // 254XXXXXXXXX → XXXXXXXXX
+            nineSuffix = digits.substring(3);           // 254XXXXXXXXX → XXXXXXXXX
         } else if ((digits.startsWith("07") || digits.startsWith("01")) && digits.length() == 10) {
-            nineSuffix = digits.substring(1);            // 07XXXXXXXX → 7XXXXXXXX
+            nineSuffix = digits.substring(1);           // 07XXXXXXXX → 7XXXXXXXX
         } else if (digits.length() == 9) {
-            nineSuffix = digits;                         // already trunk-stripped
+            nineSuffix = digits;                        // already trunk-stripped
         }
 
         if (nineSuffix == null) {
@@ -556,4 +559,6 @@ public class CoopConnectService {
 
         return out;
     }
+
+
 }
