@@ -14,7 +14,10 @@ import org.springframework.cache.CacheManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -163,6 +166,25 @@ public class UserService {
         );
     }
 
+    @Transactional
+    public void uploadProfilePhoto(UUID id, MultipartFile photo) throws IOException {
+        User user = getUserEntityById(id);
+        user.setProfilePhoto(photo.getBytes());
+        String profilePhotoUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/v1/users/")
+                .path(id.toString())
+                .path("/profile-photo")
+                .toUriString();
+        user.setProfilePhotoUrl(profilePhotoUrl);
+        userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] getProfilePhoto(UUID id) {
+        User user = getUserEntityById(id);
+        return user.getProfilePhoto();
+    }
+
     // --- HELPER METHODS ---
 
     private User getUserEntityById(UUID id) {
@@ -184,6 +206,7 @@ public class UserService {
                 .phoneNumber(user.getPhoneNumber())
                 .status(user.getStatus())
                 .roles(roleNames)
+                .profilePhotoUrl(user.getProfilePhotoUrl())
                 .build();
     }
 

@@ -83,4 +83,11 @@ public class User {
     @JoinColumn(name = "member_id")
     private com.jaytechwave.sacco.modules.members.domain.entity.Member member;
 
+    @Column(name = "profile_photo_url")
+    private String profilePhotoUrl;
+
+    @Lob
+    @Column(name = "profile_photo")
+    private byte[] profilePhoto;
+
 }

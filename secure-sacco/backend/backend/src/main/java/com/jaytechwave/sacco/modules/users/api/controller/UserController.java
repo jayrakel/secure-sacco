@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -98,5 +100,21 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+    }
+
+    @Operation(summary = "Upload profile photo", description = "Upload a profile photo for a user.")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    @PostMapping("/{id}/profile-photo")
+    public ResponseEntity<?> uploadProfilePhoto(
+            @PathVariable UUID id,
+            @RequestParam("photo") MultipartFile photo) throws IOException {
+        userService.uploadProfilePhoto(id, photo);
+        return ResponseEntity.ok(Map.of("message", "Profile photo uploaded successfully"));
+    }
+
+    @Operation(summary = "Get profile photo", description = "Get a user's profile photo.")
+    @GetMapping("/{id}/profile-photo")
+    public ResponseEntity<byte[]> getProfilePhoto(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.getProfilePhoto(id));
     }
 }
