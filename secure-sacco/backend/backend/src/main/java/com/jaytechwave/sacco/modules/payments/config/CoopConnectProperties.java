@@ -39,7 +39,7 @@ public class CoopConnectProperties {
      * {callbackBaseUrl}/api/v1/payments/coop/stk-callback
      * Co-op IPN will post to: {callbackBaseUrl}/api/v1/payments/coop/ipn
      */
-    private String callbackBaseUrl = "https://api-staging.jaytechwavesolutions.co.ke";
+    private String callbackBaseUrl = "https://api.betterlinkventureslimited.co.ke";
 
     /**
      * Comma-separated IP addresses / CIDR ranges that are allowed to call
@@ -65,5 +65,5 @@ public class CoopConnectProperties {
     /**
      * Port tinyproxy listens on (default 8888).
      */
-    private Integer proxyPort = 8888;
+    private int proxyPort = 8888;
 }

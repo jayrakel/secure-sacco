@@ -73,7 +73,7 @@ jobs:
           COOP_SACCO_ACCOUNT_NUMBER: "000000000000"
           COOP_ALLOWED_CALLBACK_IPS: ""
           COOP_PROXY_HOST: ""
-          COOP_PROXY_PORT: ""
+          COOP_PROXY_PORT: "8888"
 
 
       - name: Upload test reports

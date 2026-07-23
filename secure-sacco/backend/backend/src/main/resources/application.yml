@@ -95,14 +95,14 @@ app:
     password: ${APP_DEFAULT_ADMIN_PASSWORD:Admin@12345678}
     phone: ${APP_DEFAULT_ADMIN_PHONE:+254700000000}
 
-    security:
-      password:
-        argon2:
-          salt-length: ${APP_ARGON2_SALT_LENGTH:16}
-          hash-length: ${APP_ARGON2_HASH_LENGTH:32}
-          parallelism: ${APP_ARGON2_PARALLELISM:1}
-          memory: ${APP_ARGON2_MEMORY:65536}
-          iterations: ${APP_ARGON2_ITERATIONS:3}
+  security:
+    password:
+      argon2:
+        salt-length: ${APP_ARGON2_SALT_LENGTH:16}
+        hash-length: ${APP_ARGON2_HASH_LENGTH:32}
+        parallelism: ${APP_ARGON2_PARALLELISM:1}
+        memory: ${APP_ARGON2_MEMORY:65536}
+        iterations: ${APP_ARGON2_ITERATIONS:3}
 
   time-travel:
     enabled: true
@@ -140,7 +140,7 @@ sacco:
     # Your server base URL — Co-op will POST callbacks to:
     #   {callback-base-url}/api/v1/payments/coop/stk-callback
     #   {callback-base-url}/api/v1/payments/coop/ipn
-    callback-base-url: ${COOP_CALLBACK_BASE_URL:https://api-staging.jaytechwavesolutions.co.ke}
+    callback-base-url: ${COOP_CALLBACK_BASE_URL:https://api.betterlinkventureslimited.co.ke}
 
     # SACCO's Co-op Bank account number (for balance / mini-statement queries)
     sacco-account-number: ${COOP_SACCO_ACCOUNT_NUMBER:}
