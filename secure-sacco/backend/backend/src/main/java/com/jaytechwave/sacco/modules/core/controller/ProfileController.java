@@ -1,7 +1,6 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
-import com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.users.domain.service.UserService;
@@ -15,25 +14,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Endpoints that let any authenticated user manage their own profile.
- *
- * <p>No special permission is required — only authentication.
- * Users can only modify their own account; admin-level changes
- * (roles, status, email change) go through UserController.</p>
- */
 @RestController
 @RequestMapping("/api/v1/auth/profile")
 @RequiredArgsConstructor
 @Tag(name = "Profile", description = "Self-service profile management for authenticated users")
 public class ProfileController {
 
-    private final UserRepository      userRepository;
-    private final UserService         userService;
+    private final UserRepository userRepository;
+    private final UserService userService;
     private final SecurityAuditService auditService;
 
     // ── DTOs ─────────────────────────────────────────────────────────────────
@@ -64,6 +58,7 @@ public class ProfileController {
         body.put("phoneVerified", user.isPhoneVerified());
         body.put("mfaEnabled",    user.isMfaEnabled());
         body.put("status",        user.getStatus().name());
+        body.put("profilePhotoUrl", user.getProfilePhotoUrl());
         return ResponseEntity.ok(body);
     }
 
@@ -106,5 +101,32 @@ public class ProfileController {
         body.put("lastName",  user.getLastName());
         body.put("phoneNumber", user.getPhoneNumber());
         return ResponseEntity.ok(body);
+    }
+
+    // ── POST /auth/profile/photo (Self-Service Photo Upload) ──────────────────
+
+    @Operation(summary = "Upload own profile photo", description = "Upload a profile photo for the authenticated user.")
+    @PostMapping("/photo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> uploadOwnProfilePhoto(
+            @RequestParam("photo") MultipartFile photo,
+            Authentication auth) throws IOException {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        userService.uploadProfilePhoto(user.getId(), photo);
+        return ResponseEntity.ok(Map.of("message", "Profile photo uploaded successfully"));
+    }
+
+    // ── GET /auth/profile/photo ───────────────────────────────────────────────
+
+    @Operation(summary = "Get own profile photo", description = "Get the authenticated user's profile photo binary.")
+    @GetMapping("/photo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> getOwnProfilePhoto(Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        return ResponseEntity.ok(userService.getProfilePhoto(user.getId()));
     }
 }

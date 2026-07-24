@@ -37,6 +37,18 @@ public class UserService {
     private final CacheManager cacheManager;
     private final SessionInvalidationService sessionInvalidationService;
 
+    /**
+     * Security check helper used in @PreAuthorize annotations.
+     * Verifies if the authenticated user is accessing their own record.
+     */
+    @Transactional(readOnly = true)
+    public boolean isSelf(UUID userId, String authenticatedEmail) {
+        if (authenticatedEmail == null || userId == null) return false;
+        return userRepository.findByEmail(authenticatedEmail)
+                .map(user -> user.getId().equals(userId))
+                .orElse(false);
+    }
+
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         return userRepository.findAllByIsDeletedFalse().stream()
@@ -64,10 +76,6 @@ public class UserService {
             throw new IllegalArgumentException("Valid roles must be provided");
         }
 
-        // Staff users must change their temp password on first login and verify
-        // their email/phone before gaining access to the system.
-        // - MustChangePasswordFilter enforces mustChangePassword = true
-        // - ContactVerificationFilter enforces emailVerified + phoneVerified
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -119,7 +127,6 @@ public class UserService {
         user.setStatus(newStatus);
         userRepository.save(user);
 
-        // If user is being disabled or locked, invalidate all their sessions immediately
         if (newStatus == UserStatus.DISABLED || newStatus == UserStatus.LOCKED) {
             sessionInvalidationService.invalidateAllUserSessions(user.getEmail());
         }
@@ -141,8 +148,6 @@ public class UserService {
         user.setRoles(roles);
         userRepository.save(user);
 
-        // ✅ CRITICAL: Invalidate user's sessions so authorities are reloaded on next auth
-        // This forces the user to re-authenticate with their updated permissions
         sessionInvalidationService.invalidateAllUserSessions(user.getEmail());
 
         securityAuditService.logEvent(
@@ -177,12 +182,19 @@ public class UserService {
                 .toUriString();
         user.setProfilePhotoUrl(profilePhotoUrl);
         userRepository.save(user);
+
+        securityAuditService.logEvent(
+                "PROFILE_PHOTO_UPLOADED",
+                user.getEmail(),
+                "User updated profile avatar"
+        );
     }
 
     @Transactional(readOnly = true)
     public byte[] getProfilePhoto(UUID id) {
         User user = getUserEntityById(id);
-        return user.getProfilePhoto();
+        byte[] photo = user.getProfilePhoto();
+        return photo != null ? photo : new byte[0];
     }
 
     // --- HELPER METHODS ---
@@ -275,7 +287,6 @@ public class UserService {
         return email.trim().toLowerCase(Locale.ROOT);
     }
 
-    /** Same as normalizeEmail but returns null instead of throwing — for optional email fields. */
     private String normalizeOptionalEmail(String email) {
         if (email == null || email.isBlank()) return null;
         return email.trim().toLowerCase(Locale.ROOT);
@@ -285,7 +296,7 @@ public class UserService {
         if (phone == null || phone.isBlank()) return null;
         return phone.trim();
     }
-    /** Admin-initiated email change. Invalidates the user's existing sessions. */
+
     @Transactional
     public void changeUserEmail(UUID id, String rawNewEmail) {
         User user = getUserEntityById(id);
@@ -302,10 +313,9 @@ public class UserService {
 
         String oldEmail = user.getEmail();
         user.setEmail(normalized);
-        user.setEmailVerified(false); // Must re-verify after email change
+        user.setEmailVerified(false);
         userRepository.save(user);
 
-        // Invalidate all sessions so the user is forced to log in with the new email
         sessionInvalidationService.invalidateAllUserSessions(oldEmail);
 
         securityAuditService.logEvent(
@@ -314,5 +324,4 @@ public class UserService {
                 String.format("Email changed to: %s", normalized)
         );
     }
-
 }
