@@ -1,39 +1,45 @@
-# ─── Stage 1: Build ───────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+# Stage 1 — Build
+# ─────────────────────────────────────────────────────────────
 FROM maven:3.9-eclipse-temurin-17-alpine AS build
 
 WORKDIR /app
 
-# Cache dependencies separately from source (layer cache optimisation)
+# Copy Maven descriptor first for dependency caching
 COPY pom.xml .
-RUN mvn --batch-mode dependency:go-offline -q
 
-# Copy source and build
+RUN mvn -B dependency:go-offline
+
+# Copy application source
 COPY src ./src
-RUN mvn --batch-mode package -DskipTests -q
 
-# ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM eclipse-temurin:17-jre-alpine AS runtime
+# Build application
+RUN mvn -B clean package -DskipTests
 
-# Security: run as non-root
-RUN addgroup --system sacco && adduser --system --ingroup sacco sacco
+# ─────────────────────────────────────────────────────────────
+# Stage 2 — Runtime
+# ─────────────────────────────────────────────────────────────
+FROM eclipse-temurin:17-jre-alpine
+
+# Create non-root user
+RUN addgroup -S sacco && adduser -S -G sacco sacco
 
 WORKDIR /app
 
-# Copy built JAR from build stage
-COPY --from=build /app/target/*.jar app.jar
-
-# Ensure the sacco user owns the working directory
-RUN chown -R sacco:sacco /app
+# Copy application with correct ownership
+COPY --from=build --chown=sacco:sacco /app/target/*.jar app.jar
 
 USER sacco
 
 EXPOSE 8080
 
-# JVM tuning: container-aware heap, use G1GC, crash on OOM
-ENTRYPOINT ["java", \
-    "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-XX:+UseG1GC", \
-    "-XX:+ExitOnOutOfMemoryError", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "-jar", "app.jar"]
+ENTRYPOINT [
+    "java",
+    "-XX:+UseContainerSupport",
+    "-XX:MaxRAMPercentage=75.0",
+    "-XX:+UseG1GC",
+    "-XX:+ExitOnOutOfMemoryError",
+    "-Djava.security.egd=file:/dev/./urandom",
+    "-jar",
+    "app.jar"
+]
