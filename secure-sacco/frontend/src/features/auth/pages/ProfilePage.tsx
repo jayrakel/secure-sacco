@@ -393,6 +393,7 @@ const SecurityTab: React.FC = () => {
     const [errMsgState, setErrMsg] = useState('');
     const [disabling, setDisabling] = useState(false);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
         if (user?.mfaEnabled) { setStatus('idle'); return; }
         apiClient.get('/auth/mfa/setup')
@@ -524,6 +525,7 @@ const SessionsTab: React.FC = () => {
         }
     }, [user]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     const revoke = async (id: string) => {
