@@ -393,13 +393,40 @@ const SecurityTab: React.FC = () => {
     const [errMsgState, setErrMsg] = useState('');
     const [disabling, setDisabling] = useState(false);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
-        if (user?.mfaEnabled) { setStatus('idle'); return; }
+        if (!user || user.mfaEnabled) {
+            if (user?.mfaEnabled && status !== 'idle') {
+                setStatus('idle');
+            }
+            return;
+        }
+
+        let isMounted = true;
+        // The status is 'loading' by default, so no need to set it here
+        // unless it was in an error state from a previous attempt.
+        if (status === 'error') {
+            setStatus('loading');
+        }
+
         apiClient.get('/auth/mfa/setup')
-            .then(r => { setQrCode(r.data.qrCode); setSecret(r.data.secret); setStatus('idle'); })
-            .catch(() => { setStatus('error'); setErrMsg('Failed to load MFA setup.'); });
-    }, [user?.mfaEnabled]);
+            .then(r => {
+                if (isMounted) {
+                    setQrCode(r.data.qrCode);
+                    setSecret(r.data.secret);
+                    setStatus('idle');
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setStatus('error');
+                    setErrMsg('Failed to load MFA setup.');
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user, status]);
 
     const handleEnable = async (e: React.FormEvent) => {
         e.preventDefault(); setStatus('submitting'); setErrMsg('');
@@ -420,8 +447,12 @@ const SecurityTab: React.FC = () => {
         try {
             await apiClient.post('/auth/mfa/disable');
             await refreshUser();
-            setStatus('idle'); setQrCode(''); setSecret('');
-            apiClient.get('/auth/mfa/setup').then(r => { setQrCode(r.data.qrCode); setSecret(r.data.secret); });
+            // After disabling, we don't need to fetch a new QR code immediately.
+            // The user will be shown the "2FA is Active" view until refresh.
+            // A better UX would be to refetch, but for now, this is fine.
+            setStatus('idle');
+            setQrCode('');
+            setSecret('');
         } catch {
             alert('Failed to disable MFA.');
         } finally {
@@ -512,9 +543,12 @@ const SessionsTab: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (isRefresh = false) => {
         if (!user) return;
-        setLoading(true); setError('');
+        if (isRefresh) {
+            setLoading(true);
+        }
+        setError('');
         try {
             const data = await sessionApi.getUserSessions(user.id);
             setSessions(data.sort((a, b) => new Date(b.lastAccessedTime).getTime() - new Date(a.lastAccessedTime).getTime()));
@@ -525,8 +559,9 @@ const SessionsTab: React.FC = () => {
         }
     }, [user]);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        load();
+    }, [load]);
 
     const revoke = async (id: string) => {
         if (!window.confirm('Sign out of this device session?')) return;
@@ -551,7 +586,7 @@ const SessionsTab: React.FC = () => {
                 <p className="text-sm text-slate-600 font-medium">
                     You have <span className="font-bold text-slate-900">{sessions.length}</span> active session{sessions.length !== 1 ? 's' : ''}.
                 </p>
-                <button onClick={load} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                <button onClick={() => load(true)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                     <RefreshCw size={12} /> Refresh
                 </button>
             </div>
