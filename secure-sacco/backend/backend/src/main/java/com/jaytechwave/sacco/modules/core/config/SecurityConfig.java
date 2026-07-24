@@ -101,6 +101,8 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/users/*/profile-photo", "/api/v1/auth/profile/photo").permitAll()
+
                         // --- M-Pesa callbacks (unauthenticated — Safaricom calls these) ---
                         .requestMatchers("/api/v1/payments/mpesa/**").permitAll()
 

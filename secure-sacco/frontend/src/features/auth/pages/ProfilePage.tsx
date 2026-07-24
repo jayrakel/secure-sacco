@@ -38,6 +38,9 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+    // Stable state for cache-busting avatar image without calling Date.now() during render
+    const [photoTimestamp, setPhotoTimestamp] = useState(() => Date.now());
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0]);
@@ -51,11 +54,11 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
         formData.append('photo', selectedFile);
 
         try {
-            // ✅ CRITICAL FIX: Directs upload to UserController endpoint accessible by self!
-            await apiClient.post(`/users/${user.id}/profile-photo`, formData, {
+            await apiClient.post('/auth/profile/photo', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             await refreshUser();
+            setPhotoTimestamp(Date.now()); // Update timestamp to bust browser cache
             setSuccess('Profile photo updated successfully.');
             setSelectedFile(null);
             onSaved();
@@ -97,7 +100,11 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
                 <div className="relative group shrink-0">
                     <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-slate-100 shadow-md">
                         {user?.profilePhotoUrl ? (
-                            <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                            <img
+                                src={`${user.profilePhotoUrl}?t=${photoTimestamp}`}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
                             `${(user?.firstName?.[0] ?? '?').toUpperCase()}${(user?.lastName?.[0] ?? '').toUpperCase()}`
                         )}
@@ -390,11 +397,37 @@ const SecurityTab: React.FC = () => {
     const [disabling, setDisabling] = useState(false);
 
     useEffect(() => {
-        if (user?.mfaEnabled) { setStatus('idle'); return; }
+        if (!user || user.mfaEnabled) {
+            if (user?.mfaEnabled && status !== 'idle') {
+                setStatus('idle');
+            }
+            return;
+        }
+
+        let isMounted = true;
+        if (status === 'error') {
+            setStatus('loading');
+        }
+
         apiClient.get('/auth/mfa/setup')
-            .then(r => { setQrCode(r.data.qrCode); setSecret(r.data.secret); setStatus('idle'); })
-            .catch(() => { setStatus('error'); setErrMsg('Failed to load MFA setup.'); });
-    }, [user?.mfaEnabled]);
+            .then(r => {
+                if (isMounted) {
+                    setQrCode(r.data.qrCode);
+                    setSecret(r.data.secret);
+                    setStatus('idle');
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setStatus('error');
+                    setErrMsg('Failed to load MFA setup.');
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user, status]);
 
     const handleEnable = async (e: React.FormEvent) => {
         e.preventDefault(); setStatus('submitting'); setErrMsg('');
@@ -415,8 +448,9 @@ const SecurityTab: React.FC = () => {
         try {
             await apiClient.post('/auth/mfa/disable');
             await refreshUser();
-            setStatus('idle'); setQrCode(''); setSecret('');
-            apiClient.get('/auth/mfa/setup').then(r => { setQrCode(r.data.qrCode); setSecret(r.data.secret); });
+            setStatus('idle');
+            setQrCode('');
+            setSecret('');
         } catch {
             alert('Failed to disable MFA.');
         } finally {
@@ -507,9 +541,12 @@ const SessionsTab: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (isRefresh = false) => {
         if (!user) return;
-        setLoading(true); setError('');
+        if (isRefresh) {
+            setLoading(true);
+        }
+        setError('');
         try {
             const data = await sessionApi.getUserSessions(user.id);
             setSessions(data.sort((a, b) => new Date(b.lastAccessedTime).getTime() - new Date(a.lastAccessedTime).getTime()));
@@ -520,7 +557,9 @@ const SessionsTab: React.FC = () => {
         }
     }, [user]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        load();
+    }, [load]);
 
     const revoke = async (id: string) => {
         if (!window.confirm('Sign out of this device session?')) return;
@@ -545,7 +584,7 @@ const SessionsTab: React.FC = () => {
                 <p className="text-sm text-slate-600 font-medium">
                     You have <span className="font-bold text-slate-900">{sessions.length}</span> active session{sessions.length !== 1 ? 's' : ''}.
                 </p>
-                <button onClick={load} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                <button onClick={() => load(true)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                     <RefreshCw size={12} /> Refresh
                 </button>
             </div>
