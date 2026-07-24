@@ -34,8 +34,8 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasAuthority('USER_READ')")
+    @Operation(summary = "Get user by ID", description = "Get user details. Accessible by admins (USER_READ) or the user themselves.")
+    @PreAuthorize("hasAuthority('USER_READ') or @userService.isSelf(#id, authentication.name)")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
@@ -57,7 +57,6 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 
-    /** Admin email change — separate endpoint so it's audited distinctly. */
     public record ChangeEmailRequest(
             @NotBlank(message = "Email is required")
             @Email(message = "Must be a valid email address")
@@ -102,8 +101,8 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
     }
 
-    @Operation(summary = "Upload profile photo", description = "Upload a profile photo for a user.")
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    @Operation(summary = "Upload profile photo", description = "Upload a profile photo for a user. Accessible by admins (USER_UPDATE) or the user themselves.")
+    @PreAuthorize("hasAuthority('USER_UPDATE') or @userService.isSelf(#id, authentication.name)")
     @PostMapping("/{id}/profile-photo")
     public ResponseEntity<?> uploadProfilePhoto(
             @PathVariable UUID id,
@@ -112,7 +111,8 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Profile photo uploaded successfully"));
     }
 
-    @Operation(summary = "Get profile photo", description = "Get a user's profile photo.")
+    @Operation(summary = "Get profile photo", description = "Get a user's profile photo. Accessible to any authenticated user.")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}/profile-photo")
     public ResponseEntity<byte[]> getProfilePhoto(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getProfilePhoto(id));

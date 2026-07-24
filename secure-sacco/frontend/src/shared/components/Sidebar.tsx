@@ -146,13 +146,11 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
     };
 
     const handleNavClick = () => {
-        // Close mobile sidebar on nav item click
         if (onMobileClose) onMobileClose();
     };
 
     return (
         <>
-            {/* ── Mobile overlay backdrop ────────────────────────────────── */}
             {mobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/60 z-30 lg:hidden"
@@ -160,15 +158,12 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 />
             )}
 
-            {/* ── Sidebar ───────────────────────────────────────────────── */}
             <aside className={`
     ${isCollapsed ? 'w-17' : 'w-60'}
     bg-slate-900 text-white transition-all duration-300 h-screen flex flex-col shrink-0 z-40
     fixed lg:static inset-y-0 left-0
     ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
 `}>
-
-                {/* Mobile close button */}
                 <button
                     onClick={onMobileClose}
                     className="absolute top-3 right-3 lg:hidden text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
@@ -176,7 +171,6 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                     <X size={18} />
                 </button>
 
-                {/* Desktop collapse toggle */}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="absolute -right-3 top-13 bg-emerald-600 rounded-full p-0.5 hover:bg-emerald-500 border-2 border-slate-900 z-50 transition-colors hidden lg:block"
@@ -184,13 +178,8 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                     {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                 </button>
 
-                {/* Logo */}
                 <div className={`flex items-center gap-3 border-b border-slate-800 shrink-0 ${isCollapsed ? 'p-4 justify-center' : 'p-5'}`}>
                     {settingsLoading ? (
-                        // SAC-265: while branding is still loading (first-ever visit, no
-                        // cache yet), show a neutral skeleton instead of a hardcoded
-                        // "Secure SACCO" name + generic "S" icon that would otherwise
-                        // flash briefly before the real branding arrives.
                         <>
                             <div className="bg-slate-700 w-8 h-8 rounded-lg shrink-0 animate-pulse" />
                             {!isCollapsed && (
@@ -202,7 +191,6 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                             key={settings.logoUrl}
                             src={settings.logoUrl}
                             alt="Logo"
-                            // 👇 Updated scaling logic here 👇
                             className={`object-contain shrink-0 drop-shadow-sm transition-all duration-300 ${isCollapsed ? 'w-8 h-8 rounded-lg' : 'h-8 w-auto max-w-[160px]'}`}
                         />
                     ) : (
@@ -216,7 +204,6 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                     )}
                 </div>
 
-                {/* Nav */}
                 <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
                     {filteredSections.map(section => (
                         <div key={section.sectionLabel}>
@@ -297,12 +284,15 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                     ))}
                 </nav>
 
-                {/* User footer */}
                 {!isCollapsed && (
                     <div className="p-3 border-t border-slate-800 shrink-0">
                         <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-slate-800/50">
-                            <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0 uppercase">
-                                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                            <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0 uppercase overflow-hidden">
+                                {user?.profilePhotoUrl ? (
+                                    <img src={user.profilePhotoUrl} alt="profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`
+                                )}
                             </div>
                             <div className="min-w-0">
                                 <p className="text-xs font-semibold text-slate-200 truncate leading-none">{user?.firstName} {user?.lastName}</p>
