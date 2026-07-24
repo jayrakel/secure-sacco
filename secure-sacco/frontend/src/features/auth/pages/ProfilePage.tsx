@@ -51,8 +51,8 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
         formData.append('photo', selectedFile);
 
         try {
-            // ✅ CRITICAL FIX: Directs upload to UserController endpoint accessible by self!
-            await apiClient.post(`/users/${user.id}/profile-photo`, formData, {
+            // Change from `/users/${user.id}/profile-photo` to the self-service auth endpoint:
+            await apiClient.post('/auth/profile/photo', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             await refreshUser();
@@ -97,7 +97,11 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
                 <div className="relative group shrink-0">
                     <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-slate-100 shadow-md">
                         {user?.profilePhotoUrl ? (
-                            <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                            <img
+    src={`${user.profilePhotoUrl}?t=${Date.now()}`}
+    alt="Profile"
+    className="w-full h-full object-cover"
+/>
                         ) : (
                             `${(user?.firstName?.[0] ?? '?').toUpperCase()}${(user?.lastName?.[0] ?? '').toUpperCase()}`
                         )}
