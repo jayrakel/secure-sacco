@@ -38,6 +38,9 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+    // Stable state for cache-busting avatar image without calling Date.now() during render
+    const [photoTimestamp, setPhotoTimestamp] = useState(() => Date.now());
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0]);
@@ -51,11 +54,11 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
         formData.append('photo', selectedFile);
 
         try {
-            // Change from `/users/${user.id}/profile-photo` to the self-service auth endpoint:
             await apiClient.post('/auth/profile/photo', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             await refreshUser();
+            setPhotoTimestamp(Date.now()); // Update timestamp to bust browser cache
             setSuccess('Profile photo updated successfully.');
             setSelectedFile(null);
             onSaved();
@@ -98,10 +101,10 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
                     <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-slate-100 shadow-md">
                         {user?.profilePhotoUrl ? (
                             <img
-    src={`${user.profilePhotoUrl}?t=${Date.now()}`}
-    alt="Profile"
-    className="w-full h-full object-cover"
-/>
+                                src={`${user.profilePhotoUrl}?t=${photoTimestamp}`}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
                             `${(user?.firstName?.[0] ?? '?').toUpperCase()}${(user?.lastName?.[0] ?? '').toUpperCase()}`
                         )}
@@ -402,8 +405,6 @@ const SecurityTab: React.FC = () => {
         }
 
         let isMounted = true;
-        // The status is 'loading' by default, so no need to set it here
-        // unless it was in an error state from a previous attempt.
         if (status === 'error') {
             setStatus('loading');
         }
@@ -447,9 +448,6 @@ const SecurityTab: React.FC = () => {
         try {
             await apiClient.post('/auth/mfa/disable');
             await refreshUser();
-            // After disabling, we don't need to fetch a new QR code immediately.
-            // The user will be shown the "2FA is Active" view until refresh.
-            // A better UX would be to refetch, but for now, this is fine.
             setStatus('idle');
             setQrCode('');
             setSecret('');
