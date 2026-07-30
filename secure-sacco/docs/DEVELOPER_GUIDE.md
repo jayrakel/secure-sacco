@@ -299,7 +299,7 @@ Before pushing changes, verify:
 ## 📖 Related Documentation
 
 - **AGENTS.md** — Project guidelines & patterns
-- **CODEBASE_AUDIT_REPORT.md** — Full architecture audit
+- **internal/CODEBASE_AUDIT_REPORT.md** — Full architecture audit
 - **SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md** — Time-traveler usage
 - **docs/naming.md** — Naming conventions
 - **docs/glossary.md** — Business terms
