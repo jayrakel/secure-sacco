@@ -285,7 +285,7 @@ Week 170 = 100%  (All done!)
 ## 📖 Documentation
 
 - **Full Guide:** `backend/TIME_TRAVELER_README.md`
-- **Implementation Details:** `backend/IMPLEMENTATION_SUMMARY.md`
+- **Implementation Details:** `internal/IMPLEMENTATION_SUMMARY.md`
 - **HTTP Examples:** `backend/benjamin-time-travel-api.http`
 - **This Card:** `backend/TIME_TRAVELER_QUICK_REFERENCE.md`
 
