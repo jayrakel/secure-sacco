@@ -585,3 +585,26 @@ If this project is useful, consider giving it a ⭐ on GitHub.
 <p align="center">
 Built with Spring Boot • React • PostgreSQL • Docker
 </p>
+
+## Project Statistics
+
+| Metric | Value |
+|---------|------:|
+| Backend | Spring Boot 3 |
+| Frontend | React 19 + TypeScript |
+| Database | PostgreSQL |
+| API Style | REST |
+| Authentication | JWT |
+| Architecture | Modular Monolith |
+| Deployment | Docker Compose |
+| License | MIT |
+
+## Feature Gallery
+
+| | |
+|---|---|
+| ![](images/login-page.png) | ![](images/dashboard-overview.png) |
+| ![](images/member-management.png) | ![](images/savings-management.png) |
+| ![](images/loan-management.png) | ![](images/accounting-module.png) |
+| ![](images/asset-management.png) | ![](images/meetings-management.png) |
+| ![](images/user-management.png) | ![](images/role-permission-management.png) |
