@@ -50,3 +50,104 @@ Secure SACCO is a modern, modular SACCO management platform designed to digitize
 - PostgreSQL database
 - Modular Spring Boot backend
 - React + TypeScript frontend
+
+## Overview
+
+Secure SACCO is a modern enterprise-grade Savings and Credit Cooperative (SACCO) Management System designed to automate financial operations, member management, loan processing, accounting, asset tracking, governance, and auditing within cooperative societies.
+
+The platform is built using a modern full-stack architecture with **Spring Boot**, **React**, **TypeScript**, **PostgreSQL**, and **Docker**, emphasizing scalability, security, maintainability, and modular domain-driven design.
+
+### Core Capabilities
+
+- Member Registration & Management
+- Savings Management
+- Loan Processing & Repayment
+- Double-Entry Accounting
+- Asset Management
+- User & Role Management
+- Fine-Grained Permission Management
+- Comprehensive Audit Trails
+- Meeting Management
+- Financial Reporting
+- Secure Authentication & Authorization
+- Docker-based Deployment
+
+---
+
+## Screenshots
+
+### Login
+
+![Login](images/login-page.png)
+
+---
+
+### Dashboard
+
+![Dashboard](images/dashboard-overview.png)
+
+---
+
+### Member Management
+
+| Member Directory | Member Registration |
+|------------------|---------------------|
+| ![](images/member-management.png) | ![](images/member-registration.png) |
+
+---
+
+### Savings Management
+
+![Savings](images/savings-management.png)
+
+---
+
+### Loan Management
+
+![Loans](images/loan-management.png)
+
+---
+
+### Accounting Module
+
+![Accounting](images/accounting-module.png)
+
+---
+
+### Asset Management
+
+![Assets](images/asset-management.png)
+
+---
+
+### User Management
+
+![Users](images/user-management.png)
+
+---
+
+### Roles & Permissions
+
+![Roles](images/role-permission-management.png)
+
+---
+
+### Meetings Management
+
+![Meetings](images/meetings-management.png)
+
+---
+
+### Audit Trail
+
+| Audit Logs | Detailed Audit |
+|-------------|----------------|
+| ![](images/audit-trail.png) | ![](images/audit-trail-2.png) |
+
+---
+
+### Responsive Interface
+
+| Desktop | Tablet | Mobile |
+|----------|--------|--------|
+| ![](images/responsive-1.png) | ![](images/responsive-2.png) | ![](images/responsive-3.png) |
