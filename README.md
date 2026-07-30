@@ -578,10 +578,6 @@ https://github.com/jayrakel
 
 ---
 
-If this project is useful, consider giving it a ⭐ on GitHub.
-
----
-
 ## Project Statistics
 
 | Metric | Value |
@@ -595,6 +591,8 @@ If this project is useful, consider giving it a ⭐ on GitHub.
 | Deployment | Docker Compose |
 | License | MIT |
 
+---
+
 ## Feature Gallery
 
 | | |
@@ -605,6 +603,11 @@ If this project is useful, consider giving it a ⭐ on GitHub.
 | ![](images/asset-management.png) | ![](images/meetings-management.png) |
 | ![](images/user-management.png) | ![](images/role-permission-management.png) |
 
+---
+
+If this project is useful, consider giving it a ⭐ on GitHub.
+
+---
 
 <p align="center">
 Built with Spring Boot • React • PostgreSQL • Docker
