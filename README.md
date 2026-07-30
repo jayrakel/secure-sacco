@@ -151,3 +151,77 @@ The platform is built using a modern full-stack architecture with **Spring Boot*
 | Desktop | Tablet | Mobile |
 |----------|--------|--------|
 | ![](images/responsive-1.png) | ![](images/responsive-2.png) | ![](images/responsive-3.png) |
+
+---
+
+# Architecture
+
+```
+                    ┌───────────────────────────────┐
+                    │         React 19 UI           │
+                    │     TypeScript + Vite         │
+                    └──────────────┬────────────────┘
+                                   │ REST API
+                    ┌──────────────▼────────────────┐
+                    │     Spring Boot Backend       │
+                    │      Modular Architecture     │
+                    ├───────────────────────────────┤
+                    │ Authentication               │
+                    │ Members                      │
+                    │ Savings                      │
+                    │ Loans                        │
+                    │ Accounting                  │
+                    │ Assets                       │
+                    │ Meetings                     │
+                    │ Reports                      │
+                    │ Audit                        │
+                    └──────────────┬───────────────┘
+                                   │
+                          PostgreSQL Database
+                                   │
+                         Docker Compose Deployment
+```
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|--------|------------|
+| Backend | Java 21 |
+| Framework | Spring Boot 3 |
+| Frontend | React 19 |
+| Language | TypeScript |
+| Database | PostgreSQL |
+| Authentication | Spring Security + JWT |
+| ORM | Spring Data JPA / Hibernate |
+| Build Tool | Maven |
+| Containerization | Docker & Docker Compose |
+| Reverse Proxy | Nginx |
+| Version Control | Git & GitHub |
+
+---
+
+## Project Structure
+
+```text
+secure-sacco/
+├── backend/
+│   ├── backend/          # Spring Boot application
+│   ├── *.http            # API test collections
+│   └── *.py              # Seeder utilities
+│
+├── frontend/             # React + TypeScript application
+│
+├── infra/                # Docker Compose
+│
+├── docs/                 # Public documentation
+│   └── internal/         # Internal architecture & audit docs
+│
+├── scripts/              # Deployment & maintenance scripts
+│
+├── images/               # README screenshots
+│
+├── LICENSE
+└── README.md
+```
