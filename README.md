@@ -494,3 +494,88 @@ These include:
 - `.http` files
 - Postman collections
 - Seeder utilities
+
+---
+
+# Security
+
+Secure SACCO is designed with security as a core principle.
+
+- JWT Authentication
+- Role-Based Access Control (RBAC)
+- Policy-Based Access Control (PBAC) migration ready
+- Comprehensive Audit Logging
+- Password Encryption
+- Input Validation
+- Transaction Integrity
+- Secure REST APIs
+
+---
+
+# Roadmap
+
+- [x] Member Management
+- [x] Savings Management
+- [x] Loan Management
+- [x] Accounting Module
+- [x] Asset Management
+- [x] Meeting Management
+- [x] Audit Trail
+- [x] Docker Deployment
+- [x] Responsive UI
+- [ ] Multi-Branch Support
+- [ ] Mobile Application
+- [ ] SMS Gateway Integration
+- [ ] Email Notifications
+- [ ] Analytics Dashboard
+- [ ] Public REST API
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+
+```bash
+git checkout -b feature/my-feature
+```
+
+3. Commit your changes.
+
+```bash
+git commit -m "Add my feature"
+```
+
+4. Push your branch.
+
+```bash
+git push origin feature/my-feature
+```
+
+5. Open a Pull Request.
+
+---
+
+# License
+
+This project is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+# Author
+
+**Nathan Gesora**
+
+Founder, Jay Techwave Solutions
+
+GitHub:
+https://github.com/jayrakel
+
+---
+
+If this project is useful, consider giving it a ⭐ on GitHub.
