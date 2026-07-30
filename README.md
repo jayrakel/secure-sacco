@@ -4,13 +4,13 @@
 
 Secure SACCO is a modern, modular SACCO management platform designed to digitize cooperative financial operations. It provides comprehensive member management, savings, loans, accounting, meetings, reporting, user administration, and audit logging within a secure, scalable architecture.
 
+<p align="center">
+  <img src="images/dashboard-overview.png" alt="Secure SACCO Dashboard">
+</p>
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
-
-<p align="center">
-  <img src="images/dashboard-overview.png" alt="Secure SACCO Dashboard">
-</p>
