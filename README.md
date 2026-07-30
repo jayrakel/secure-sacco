@@ -14,3 +14,5 @@ Secure SACCO is a modern, modular SACCO management platform designed to digitize
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)
+![Build](https://github.com/jayrakel/secure-sacco/actions/workflows/ci.yml/badge.svg)
