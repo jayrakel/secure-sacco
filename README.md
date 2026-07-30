@@ -579,3 +579,9 @@ https://github.com/jayrakel
 ---
 
 If this project is useful, consider giving it a ⭐ on GitHub.
+
+---
+
+<p align="center">
+Built with Spring Boot • React • PostgreSQL • Docker
+</p>
