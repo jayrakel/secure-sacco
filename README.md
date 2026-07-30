@@ -582,10 +582,6 @@ If this project is useful, consider giving it a ⭐ on GitHub.
 
 ---
 
-<p align="center">
-Built with Spring Boot • React • PostgreSQL • Docker
-</p>
-
 ## Project Statistics
 
 | Metric | Value |
@@ -608,3 +604,8 @@ Built with Spring Boot • React • PostgreSQL • Docker
 | ![](images/loan-management.png) | ![](images/accounting-module.png) |
 | ![](images/asset-management.png) | ![](images/meetings-management.png) |
 | ![](images/user-management.png) | ![](images/role-permission-management.png) |
+
+
+<p align="center">
+Built with Spring Boot • React • PostgreSQL • Docker
+</p>
