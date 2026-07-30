@@ -225,3 +225,272 @@ secure-sacco/
 ├── LICENSE
 └── README.md
 ```
+
+---
+
+# Quick Start
+
+## Prerequisites
+
+Before running Secure SACCO, ensure you have the following installed:
+
+| Software | Version |
+|----------|---------|
+| Java | 21+ |
+| Maven | 3.9+ |
+| Node.js | 20+ |
+| npm | 10+ |
+| PostgreSQL | 16+ |
+| Docker | Latest |
+| Docker Compose | Latest |
+| Git | Latest |
+
+---
+
+## Clone the Repository
+
+```bash
+git clone https://github.com/jayrakel/secure-sacco.git
+cd secure-sacco
+```
+
+---
+
+## Backend Setup
+
+Navigate to the backend:
+
+```bash
+cd secure-sacco/backend/backend
+```
+
+Install dependencies and build:
+
+```bash
+./mvnw clean install
+```
+
+Run the application:
+
+```bash
+./mvnw spring-boot:run
+```
+
+The backend will start on:
+
+```
+http://localhost:8080
+```
+
+---
+
+## Frontend Setup
+
+Open another terminal.
+
+```bash
+cd secure-sacco/frontend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Frontend:
+
+```
+http://localhost:5173
+```
+
+---
+
+## Docker Deployment
+
+From the infrastructure directory:
+
+```bash
+cd secure-sacco/infra
+
+docker compose up -d
+```
+
+To stop services:
+
+```bash
+docker compose down
+```
+
+---
+
+## Build for Production
+
+### Backend
+
+```bash
+./mvnw clean package
+```
+
+### Frontend
+
+```bash
+npm run build
+```
+
+---
+
+## Running Tests
+
+### Backend
+
+```bash
+./mvnw test
+```
+
+### Frontend
+
+```bash
+npm test
+```
+
+---
+
+## Project Documentation
+
+Documentation can be found in:
+
+```
+secure-sacco/docs/
+```
+
+Internal engineering and architecture documentation:
+
+```
+secure-sacco/docs/internal/
+```
+
+---
+
+# ⚙️ Environment Configuration
+
+Secure SACCO uses environment variables to configure the application for different environments.
+
+## Backend
+
+Create a `.env` file or configure the following environment variables:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| DB_HOST | PostgreSQL host | localhost |
+| DB_PORT | PostgreSQL port | 5432 |
+| DB_NAME | Database name | secure_sacco |
+| DB_USERNAME | Database username | postgres |
+| DB_PASSWORD | Database password | ******** |
+| JWT_SECRET | Secret used for JWT signing | ******** |
+| SERVER_PORT | Spring Boot server port | 8080 |
+
+---
+
+## Frontend
+
+Create a `.env` file inside the frontend directory.
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| VITE_API_BASE_URL | Backend API URL | http://localhost:8080/api |
+
+---
+
+## Example
+
+Backend
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=secure_sacco
+DB_USERNAME=postgres
+DB_PASSWORD=password
+
+JWT_SECRET=your-secret-key
+
+SERVER_PORT=8080
+```
+
+Frontend
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+---
+
+# 📡 API Documentation
+
+Secure SACCO exposes a RESTful API consumed by the React frontend.
+
+## Base URL
+
+Development
+
+```
+http://localhost:8080/api
+```
+
+Production
+
+```
+https://your-domain.com/api
+```
+
+---
+
+## Authentication
+
+Most endpoints require a valid JWT access token.
+
+Example:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+---
+
+## Core API Modules
+
+| Module | Description |
+|---------|-------------|
+| Authentication | Login & token management |
+| Members | Member lifecycle management |
+| Savings | Savings accounts & transactions |
+| Loans | Loan processing & repayments |
+| Accounting | Financial records & journal entries |
+| Assets | Asset management |
+| Meetings | Meeting scheduling & records |
+| Users | User administration |
+| Roles | Roles & permissions |
+| Audit | Audit trail & activity logs |
+
+---
+
+## API Testing
+
+HTTP request collections and API test files are located in:
+
+```
+secure-sacco/backend/
+```
+
+These include:
+
+- `.http` files
+- Postman collections
+- Seeder utilities
