@@ -1,161 +1,614 @@
+# Secure SACCO
 
-```markdown
-# 🏦 Secure SACCO Management System 
+> Enterprise-grade SACCO Management System built with Spring Boot, React, PostgreSQL and Docker.
 
-![Version](https://img.shields.io/badge/version-1.0.0-emerald.svg)
-![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
-![Architecture](https://img.shields.io/badge/architecture-Monorepo-blue)
+Secure SACCO is a modern, modular SACCO management platform designed to digitize cooperative financial operations. It provides comprehensive member management, savings, loans, accounting, meetings, reporting, user administration, and audit logging within a secure, scalable architecture.
 
-The **Secure SACCO Management System** is a modern, double-entry financial platform built for **Better Link Ventures Sacco**. It automates member lifecycle management, loan amortization, scheduled savings obligations, real-time penalty accruals, and regulatory financial reporting. 
+<p align="center">
+  <img src="images/dashboard-overview.png" alt="Secure SACCO Dashboard">
+</p>
 
-The system features real-time transactional synchronization with **Safaricom Daraja (M-Pesa)** and **Co-op Connect (Co-operative Bank of Kenya)** APIs.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6)
+![Build](https://github.com/jayrakel/secure-sacco/actions/workflows/ci.yml/badge.svg)
+
+## ✨ Features
+
+### 👥 Member Management
+- Member registration and profile management
+- Member directory with search and filtering
+- Member account history
+- Active and inactive member tracking
+
+### 💰 Financial Management
+- Savings management
+- Loan processing and repayment tracking
+- Accounting module
+- Asset management
+- Financial reporting
+
+### 📅 Operations
+- Meeting management
+- User management
+- Role & permission management
+- Dashboard with key performance indicators
+
+### 🔒 Security
+- Authentication and authorization
+- Role-Based Access Control (RBAC)
+- Policy-Based Access Control (PBAC) ready
+- Comprehensive audit trail
+- Secure REST APIs
+
+### ⚙️ Infrastructure
+- Dockerized deployment
+- PostgreSQL database
+- Modular Spring Boot backend
+- React + TypeScript frontend
+
+## Overview
+
+Secure SACCO is a modern enterprise-grade Savings and Credit Cooperative (SACCO) Management System designed to automate financial operations, member management, loan processing, accounting, asset tracking, governance, and auditing within cooperative societies.
+
+The platform is built using a modern full-stack architecture with **Spring Boot**, **React**, **TypeScript**, **PostgreSQL**, and **Docker**, emphasizing scalability, security, maintainability, and modular domain-driven design.
+
+### Core Capabilities
+
+- Member Registration & Management
+- Savings Management
+- Loan Processing & Repayment
+- Double-Entry Accounting
+- Asset Management
+- User & Role Management
+- Fine-Grained Permission Management
+- Comprehensive Audit Trails
+- Meeting Management
+- Financial Reporting
+- Secure Authentication & Authorization
+- Docker-based Deployment
 
 ---
 
-## ✨ Core Modules & Capabilities
+## Screenshots
 
-* **Financial Engine:** Automated general ledger, real-time double-entry accounting, trial balances, and automated dividend/expense calculations.
-* **Loan Lifecycle:** Dynamic loan products, committee approvals, instant disbursement, amortized scheduling, and automated arrears/penalty enforcement.
-* **Automated Obligations:** Tracks scheduled member deposits (e.g., Weekly/Monthly savings) and penalizes defaults.
-* **Live Bank Integration:** Fully integrated with Safaricom Daraja (STK Push) and Co-op Bank Connect for instant balance reflection and webhook-driven payment confirmations.
-* **Granular Security (PBAC):** Policy-Based Access Control with strict role segregation (System Admin, Cashier, Treasurer, Chairperson, Loan Officer, Secretary).
-* **Meeting & Attendance Matrix:** QR-code based physical meeting check-ins and absence penalty triggers.
-* **Audit & Compliance:** Immutable, cryptographic audit logging for every data mutation to satisfy financial compliance standards.
+### Login
+
+![Login](images/login-page.png)
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+### Dashboard
 
-This project utilizes a decoupled monorepo architecture.
-
-**Backend (Core Banking API)**
-* **Framework:** Java 21 / Spring Boot 3.x
-* **Database:** PostgreSQL (Render Managed)
-* **Migrations:** Flyway (88+ structural migrations)
-* **Security:** Spring Security, JWT, Encrypted PII Fields
-* **Secrets Management:** Doppler
-
-**Frontend (Web Application)**
-* **Framework:** React + TypeScript (Vite)
-* **Styling:** Tailwind CSS + Lucide Icons
-* **State Management:** React Context API + Custom Hooks
-* **Routing:** React Router DOM
-
-**Infrastructure & Integrations**
-* **Hosting:** Render (PaaS) with Docker containers
-* **CI/CD:** GitHub Actions (`deploy-prod.yml`, `deploy-staging.yml`)
-* **Banking:** Safaricom Daraja API & Co-op Connect API Gateway
-* **Media / Comms:** Cloudinary (Asset storage), SMTP (Email delivery)
+![Dashboard](images/dashboard-overview.png)
 
 ---
 
-## 📂 Repository Structure
+### Member Management
+
+| Member Directory | Member Registration |
+|------------------|---------------------|
+| ![](images/member-management.png) | ![](images/member-registration.png) |
+
+---
+
+### Savings Management
+
+![Savings](images/savings-management.png)
+
+---
+
+### Loan Management
+
+![Loans](images/loan-management.png)
+
+---
+
+### Accounting Module
+
+![Accounting](images/accounting-module.png)
+
+---
+
+### Asset Management
+
+![Assets](images/asset-management.png)
+
+---
+
+### User Management
+
+![Users](images/user-management.png)
+
+---
+
+### Roles & Permissions
+
+![Roles](images/role-permission-management.png)
+
+---
+
+### Meetings Management
+
+![Meetings](images/meetings-management.png)
+
+---
+
+### Audit Trail
+
+| Audit Logs | Detailed Audit |
+|-------------|----------------|
+| ![](images/audit-trail.png) | ![](images/audit-trail-2.png) |
+
+---
+
+### Responsive Interface
+
+| Desktop | Tablet | Mobile |
+|----------|--------|--------|
+| ![](images/responsive-1.png) | ![](images/responsive-2.png) | ![](images/responsive-3.png) |
+
+---
+
+# Architecture
+
+```
+                    ┌───────────────────────────────┐
+                    │         React 19 UI           │
+                    │     TypeScript + Vite         │
+                    └──────────────┬────────────────┘
+                                   │ REST API
+                    ┌──────────────▼────────────────┐
+                    │     Spring Boot Backend       │
+                    │      Modular Architecture     │
+                    ├───────────────────────────────┤
+                    │ Authentication               │
+                    │ Members                      │
+                    │ Savings                      │
+                    │ Loans                        │
+                    │ Accounting                  │
+                    │ Assets                       │
+                    │ Meetings                     │
+                    │ Reports                      │
+                    │ Audit                        │
+                    └──────────────┬───────────────┘
+                                   │
+                          PostgreSQL Database
+                                   │
+                         Docker Compose Deployment
+```
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|--------|------------|
+| Backend | Java 21 |
+| Framework | Spring Boot 3 |
+| Frontend | React 19 |
+| Language | TypeScript |
+| Database | PostgreSQL |
+| Authentication | Spring Security + JWT |
+| ORM | Spring Data JPA / Hibernate |
+| Build Tool | Maven |
+| Containerization | Docker & Docker Compose |
+| Reverse Proxy | Nginx |
+| Version Control | Git & GitHub |
+
+---
+
+## Project Structure
 
 ```text
 secure-sacco/
-├── backend/                  # Spring Boot Java Application
-│   ├── src/main/java/...     # Domain-Driven Design (Accounting, Loans, Payments, etc.)
-│   ├── src/main/resources/   # App configs & Flyway DB migrations
-│   └── pom.xml               # Maven dependencies
-├── frontend/                 # React Web Application
-│   ├── src/features/         # Feature-sliced React modules
-│   ├── src/shared/           # Global components, layouts, and API clients
-│   └── package.json          # NPM dependencies
-├── infra/                    # Infrastructure files
-│   └── docker-compose.yml    # Local development containers (Postgres, etc.)
-├── docs/                     # System documentation, audit reports, and test scripts
-└── .github/workflows/        # CI/CD Deployment pipelines
-
+├── backend/
+│   ├── backend/          # Spring Boot application
+│   ├── *.http            # API test collections
+│   └── *.py              # Seeder utilities
+│
+├── frontend/             # React + TypeScript application
+│
+├── infra/                # Docker Compose
+│
+├── docs/                 # Public documentation
+│   └── internal/         # Internal architecture & audit docs
+│
+├── scripts/              # Deployment & maintenance scripts
+│
+├── images/               # README screenshots
+│
+├── LICENSE
+└── README.md
 ```
 
 ---
 
-## 🚀 Local Development Setup
+# Quick Start
 
-### 1. Prerequisites
+## Prerequisites
 
-* Java 17 or 21
-* Node.js (v18+)
-* Docker Desktop
-* Doppler CLI (for secrets injection)
+Before running Secure SACCO, ensure you have the following installed:
 
-### 2. Environment Variables & Secrets
+| Software | Version |
+|----------|---------|
+| Java | 21+ |
+| Maven | 3.9+ |
+| Node.js | 20+ |
+| npm | 10+ |
+| PostgreSQL | 16+ |
+| Docker | Latest |
+| Docker Compose | Latest |
+| Git | Latest |
 
-All environment variables are managed securely via **Doppler**. You must have access to the Doppler workspace to run the application locally.
+---
+
+## Clone the Repository
 
 ```bash
-# Login to Doppler
-doppler login
-
-# Setup local environments
-cd backend && doppler setup
-cd ../frontend && doppler setup
-
+git clone https://github.com/jayrakel/secure-sacco.git
+cd secure-sacco
 ```
 
-### 3. Start Local Infrastructure (Database)
+---
 
-Spin up the local PostgreSQL database using Docker Compose:
+## Backend Setup
+
+Navigate to the backend:
 
 ```bash
-cd infra
-docker compose up -d
-
+cd secure-sacco/backend/backend
 ```
 
-### 4. Run the Backend API
-
-The backend uses Maven wrapper and runs on `localhost:8080`.
+Install dependencies and build:
 
 ```bash
-cd backend
-doppler run -- ./mvnw spring-boot:run
-
+./mvnw clean install
 ```
 
-*(Flyway will automatically execute and seed the database with required Kenyan Banks, Chart of Accounts, and System Roles on startup).*
-
-### 5. Run the Frontend Client
-
-The frontend Vite server runs on `localhost:5173`.
+Run the application:
 
 ```bash
-cd frontend
+./mvnw spring-boot:run
+```
+
+The backend will start on:
+
+```
+http://localhost:8080
+```
+
+---
+
+## Frontend Setup
+
+Open another terminal.
+
+```bash
+cd secure-sacco/frontend
+```
+
+Install dependencies:
+
+```bash
 npm install
-doppler run -- npm run dev
+```
 
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Frontend:
+
+```
+http://localhost:5173
 ```
 
 ---
 
-## 🌐 Deployment Pipeline
+## Docker Deployment
 
-Deployments are strictly controlled via GitHub Actions. We utilize a split-environment strategy:
+From the infrastructure directory:
 
-1. **Staging Environment (`main` pushes):** Merges to the `main` branch automatically trigger `.github/workflows/deploy-staging.yml`. This builds the Docker image and pushes it to the Staging Render environment. Sandbox credentials are used for M-Pesa and Co-op Bank.
-2. **Production Environment (Manual Release):** Production deployments are manual to prevent accidental financial disruptions. Go to the **Actions** tab in GitHub, select the `Deploy to Production` workflow, and trigger it via `workflow_dispatch`. This deploys strictly to the Live Render environment linked to the actual Sacco Bank Accounts.
+```bash
+cd secure-sacco/infra
+
+docker compose up -d
+```
+
+To stop services:
+
+```bash
+docker compose down
+```
 
 ---
 
-## 🏦 Webhook Integrations (Critical Info)
+## Build for Production
 
-For Safaricom and Co-op Bank to properly communicate with the application, strict URL whitelisting is required.
+### Backend
 
-* **Live STK Push Callback:** `https://api.betterlinkventureslimited.co.ke/api/v1/payments/coop/stk-callback`
-* **Live C2B IPN Callback:** `https://api.betterlinkventureslimited.co.ke/api/v1/payments/coop/webhook`
+```bash
+./mvnw clean package
+```
 
-*Note: Safaricom STK Push payloads strictly omit the `senderName`. The backend intercepts these requests and automatically matches the payload's `PhoneNumber` against the SACCO `Member` database to retroactively enrich the transaction ledger.*
+### Frontend
+
+```bash
+npm run build
+```
 
 ---
 
-## 🛡️ Auditing & Compliance
+## Running Tests
 
-This system enforces strict immutability.
+### Backend
 
-* **No Hard Deletes:** Data rows (members, loans, payments) cannot be deleted, only deactivated or soft-deleted.
-* **Cryptographic Event Logging:** All sensitive security events (Role escalations, PBAC modifications, Interest rate changes) are permanently written to the `SecurityAuditLog` table.
-* **PII Encryption:** Sensitive user data is encrypted at rest in the PostgreSQL database using AES-256 via custom JPA attribute converters (`@Convert(converter = EncryptedStringConverter.class)`).
-
+```bash
+./mvnw test
 ```
 
+### Frontend
+
+```bash
+npm test
 ```
+
+---
+
+## Project Documentation
+
+Documentation can be found in:
+
+```
+secure-sacco/docs/
+```
+
+Internal engineering and architecture documentation:
+
+```
+secure-sacco/docs/internal/
+```
+
+---
+
+# ⚙️ Environment Configuration
+
+Secure SACCO uses environment variables to configure the application for different environments.
+
+## Backend
+
+Create a `.env` file or configure the following environment variables:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| DB_HOST | PostgreSQL host | localhost |
+| DB_PORT | PostgreSQL port | 5432 |
+| DB_NAME | Database name | secure_sacco |
+| DB_USERNAME | Database username | postgres |
+| DB_PASSWORD | Database password | ******** |
+| JWT_SECRET | Secret used for JWT signing | ******** |
+| SERVER_PORT | Spring Boot server port | 8080 |
+
+---
+
+## Frontend
+
+Create a `.env` file inside the frontend directory.
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| VITE_API_BASE_URL | Backend API URL | http://localhost:8080/api |
+
+---
+
+## Example
+
+Backend
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=secure_sacco
+DB_USERNAME=postgres
+DB_PASSWORD=password
+
+JWT_SECRET=your-secret-key
+
+SERVER_PORT=8080
+```
+
+Frontend
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+---
+
+# 📡 API Documentation
+
+Secure SACCO exposes a RESTful API consumed by the React frontend.
+
+## Base URL
+
+Development
+
+```
+http://localhost:8080/api
+```
+
+Production
+
+```
+https://your-domain.com/api
+```
+
+---
+
+## Authentication
+
+Most endpoints require a valid JWT access token.
+
+Example:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+---
+
+## Core API Modules
+
+| Module | Description |
+|---------|-------------|
+| Authentication | Login & token management |
+| Members | Member lifecycle management |
+| Savings | Savings accounts & transactions |
+| Loans | Loan processing & repayments |
+| Accounting | Financial records & journal entries |
+| Assets | Asset management |
+| Meetings | Meeting scheduling & records |
+| Users | User administration |
+| Roles | Roles & permissions |
+| Audit | Audit trail & activity logs |
+
+---
+
+## API Testing
+
+HTTP request collections and API test files are located in:
+
+```
+secure-sacco/backend/
+```
+
+These include:
+
+- `.http` files
+- Postman collections
+- Seeder utilities
+
+---
+
+# Security
+
+Secure SACCO is designed with security as a core principle.
+
+- JWT Authentication
+- Role-Based Access Control (RBAC)
+- Policy-Based Access Control (PBAC) migration ready
+- Comprehensive Audit Logging
+- Password Encryption
+- Input Validation
+- Transaction Integrity
+- Secure REST APIs
+
+---
+
+# Roadmap
+
+- [x] Member Management
+- [x] Savings Management
+- [x] Loan Management
+- [x] Accounting Module
+- [x] Asset Management
+- [x] Meeting Management
+- [x] Audit Trail
+- [x] Docker Deployment
+- [x] Responsive UI
+- [ ] Multi-Branch Support
+- [ ] Mobile Application
+- [ ] SMS Gateway Integration
+- [ ] Email Notifications
+- [ ] Analytics Dashboard
+- [ ] Public REST API
+
+---
+
+# Contributing
+
+Contributions are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+
+```bash
+git checkout -b feature/my-feature
+```
+
+3. Commit your changes.
+
+```bash
+git commit -m "Add my feature"
+```
+
+4. Push your branch.
+
+```bash
+git push origin feature/my-feature
+```
+
+5. Open a Pull Request.
+
+---
+
+# License
+
+This project is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+# Author
+
+**Nathan Gesora**
+
+Founder, Jay Techwave Solutions
+
+GitHub:
+https://github.com/jayrakel
+
+---
+
+## Project Statistics
+
+| Metric | Value |
+|---------|------:|
+| Backend | Spring Boot 3 |
+| Frontend | React 19 + TypeScript |
+| Database | PostgreSQL |
+| API Style | REST |
+| Authentication | JWT |
+| Architecture | Modular Monolith |
+| Deployment | Docker Compose |
+| License | MIT |
+
+---
+
+## Feature Gallery
+
+| | |
+|---|---|
+| ![](images/login-page.png) | ![](images/dashboard-overview.png) |
+| ![](images/member-management.png) | ![](images/savings-management.png) |
+| ![](images/loan-management.png) | ![](images/accounting-module.png) |
+| ![](images/asset-management.png) | ![](images/meetings-management.png) |
+| ![](images/user-management.png) | ![](images/role-permission-management.png) |
+
+---
+
+If this project is useful, consider giving it a ⭐ on GitHub.
+
+---
+
+<p align="center">
+Built with Spring Boot • React • PostgreSQL • Docker
+</p>
