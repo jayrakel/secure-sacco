@@ -75,6 +75,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/activation/**",
                                 "/api/v1/payments/mpesa/**",
                                 "/api/v1/payments/coop/**",
+                                "/api/v1/callbacks/africastalking/**",
                                 "/error"
                         )
                 )
@@ -105,6 +106,9 @@ public class SecurityConfig {
 
                         // --- M-Pesa callbacks (unauthenticated — Safaricom calls these) ---
                         .requestMatchers("/api/v1/payments/mpesa/**").permitAll()
+
+                        // --- Africa's Talking callbacks (unauthenticated) ---
+                        .requestMatchers("/api/v1/callbacks/africastalking/**").permitAll()
 
                         // --- Setup wizard status — public so the frontend can check before login ---
                         .requestMatchers("/api/v1/setup/**").permitAll()
