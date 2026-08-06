@@ -128,7 +128,7 @@ public class MiniStatementPollingJob {
             boolean isCredit = "CR".equals(tx.getTransactionType());
             LocalDate valueDate = tx.getValueDate() != null
                     ? tx.getValueDate().toLocalDate()
-                    : tx.getCreatedAt().toLocalDate();
+                    : (tx.getCreatedAt() != null ? tx.getCreatedAt().toLocalDate() : LocalDate.now());
 
             // ── STEP 2: Post GL entry for every new transaction ───────────────────
             if (isCredit && tx.getMemberId() != null) {
