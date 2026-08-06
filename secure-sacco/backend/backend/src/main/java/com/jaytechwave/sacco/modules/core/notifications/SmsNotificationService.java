@@ -110,6 +110,47 @@ public class SmsNotificationService {
     }
 
     /**
+     * Sends a custom notification SMS to the given phone number.
+     *
+     * <p>The phone number must be in international format (e.g. {@code +254721338747}).
+     * The call is fire-and-forget — delivery failure is logged but does not throw.
+     *
+     * @param phoneNumber E.164 phone number (e.g. {@code +254721338747})
+     * @param message     The SMS content to send
+     */
+    @Async
+    public void sendNotificationSms(String phoneNumber, String message) {
+        if (smsService == null) {
+            log.warn("SmsNotificationService: SMS service not initialized — skipping notification to {}. " +
+                    "Configure AT_API_KEY to enable.", phoneNumber);
+            return;
+        }
+
+        String normalized = normalizePhone(phoneNumber);
+        if (normalized == null) {
+            log.error("SmsNotificationService: Cannot send SMS — invalid phone number: {}", phoneNumber);
+            return;
+        }
+
+        try {
+            List<Recipient> recipients = smsService.send(
+                    message,
+                    senderId,   // null = default short code; set AT_SENDER_ID for custom sender
+                    new String[]{normalized},
+                    false       // not premium / subscription
+            );
+
+            if (recipients != null && !recipients.isEmpty()) {
+                Recipient r = recipients.get(0);
+                log.info("SmsNotificationService: SMS sent to {} — status={} cost={} msgId={}",
+                        normalized, r.status, r.cost, r.messageId);
+            }
+        } catch (Exception e) {
+            log.error("SmsNotificationService: Failed to send SMS to {}: {}", normalized, e.getMessage());
+        }
+    }
+
+    /**
      * Normalises a phone number to E.164 format ({@code +254XXXXXXXXX}) for AT.
      * Returns {@code null} if the number cannot be normalised.
      */

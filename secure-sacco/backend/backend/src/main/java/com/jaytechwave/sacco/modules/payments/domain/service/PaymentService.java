@@ -298,6 +298,10 @@ public class PaymentService {
                             .orElse(java.time.LocalDate.now());
                     journalEntryService.postNonMemberBankCredit(amount, mpesaRef,
                             ipn.getNarration(), valueDate);
+                            
+                    eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.NonMemberPaymentReceivedEvent(
+                            payment.getId(), amount, phone, senderName, mpesaRef
+                    ));
                 }
             }
         } else {
