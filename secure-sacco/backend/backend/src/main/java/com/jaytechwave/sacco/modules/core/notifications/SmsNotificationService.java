@@ -15,12 +15,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
- * Sends SMS messages via Africa's Talking using a robust raw HTTP implementation
+ * Sends SMS messages via Africa's Talking using a robust raw HTTP
+ * implementation
  * with strict timeouts to prevent thread hanging.
  *
- * <p>All sends are {@code @Async} so they never block the calling request thread.
+ * <p>
+ * All sends are {@code @Async} so they never block the calling request thread.
  * Set {@code AT_SANDBOX=true} (the default) to use the Africa's Talking sandbox
- * for development/staging. Set {@code AT_SANDBOX=false} in production to go live.
+ * for development/staging. Set {@code AT_SANDBOX=false} in production to go
+ * live.
  */
 @Slf4j
 @Service
@@ -46,12 +49,13 @@ public class SmsNotificationService {
             log.warn("SmsNotificationService: AT_API_KEY is not set — SMS delivery will be skipped.");
             return;
         }
-        
-        apiUrl = sandbox 
-                ? "https://api.sandbox.africastalking.com/version1/messaging" 
+
+        apiUrl = sandbox
+                ? "https://api.sandbox.africastalking.com/version1/messaging"
                 : "https://api.africastalking.com/version1/messaging";
-                
-        log.info("SmsNotificationService: Initialized raw HTTP client. username={} sandbox={} url={}", username, sandbox, apiUrl);
+
+        log.info("SmsNotificationService: Initialized raw HTTP client. username={} sandbox={} url={}", username,
+                sandbox, apiUrl);
     }
 
     /**
@@ -61,7 +65,8 @@ public class SmsNotificationService {
     public void sendOtp(String phoneNumber, String otp) {
         String message = String.format(
                 "Your Betterlink Ventures SACCO verification code is: %s. " +
-                "Valid for 10 minutes. Do not share this code with anyone.", otp);
+                        "Valid for 10 minutes. Do not share this code with anyone.",
+                otp);
         sendNotificationSms(phoneNumber, message);
     }
 
@@ -104,7 +109,8 @@ public class SmsNotificationService {
             conn.setReadTimeout(5000);
 
             // Authentication
-            // Africa's talking uses ApiKey as a header OR Basic auth depending on the endpoint.
+            // Africa's talking uses ApiKey as a header OR Basic auth depending on the
+            // endpoint.
             // The standard way for /version1/messaging is the apiKey header:
             conn.setRequestProperty("apiKey", apiKey);
 
@@ -114,7 +120,7 @@ public class SmsNotificationService {
 
             int responseCode = conn.getResponseCode();
             StringBuilder response = new StringBuilder();
-            
+
             // Read response whether it's 200 OK or 400 Bad Request
             try (BufferedReader br = new BufferedReader(new InputStreamReader(
                     responseCode < 400 ? conn.getInputStream() : conn.getErrorStream()))) {
@@ -125,13 +131,13 @@ public class SmsNotificationService {
             }
 
             if (responseCode == 200 || responseCode == 201) {
-                log.info("SmsNotificationService: SMS sent to {} — status={} AT_Response={}", 
+                log.info("SmsNotificationService: SMS sent to {} — status={} AT_Response={}",
                         normalized, responseCode, response.toString());
             } else {
-                log.error("SmsNotificationService: Failed to send SMS to {}. HTTP {} Response: {}", 
+                log.error("SmsNotificationService: Failed to send SMS to {}. HTTP {} Response: {}",
                         normalized, responseCode, response.toString());
             }
-            
+
         } catch (java.net.SocketTimeoutException e) {
             log.error("SmsNotificationService: Timeout while sending SMS to {}: {}", normalized, e.getMessage());
         } catch (Exception e) {
@@ -140,13 +146,19 @@ public class SmsNotificationService {
     }
 
     private String normalizePhone(String raw) {
-        if (raw == null || raw.isBlank()) return null;
+        if (raw == null || raw.isBlank())
+            return null;
         String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return null;
-        if (digits.startsWith("07") || digits.startsWith("01")) return "+254" + digits.substring(1);
-        if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length() == 9) return "+254" + digits;
-        if (digits.startsWith("254") && digits.length() == 12) return "+" + digits;
-        if (raw.startsWith("+") && digits.length() >= 11) return "+" + digits;
+        if (digits.isEmpty())
+            return null;
+        if (digits.startsWith("07") || digits.startsWith("01"))
+            return "+254" + digits.substring(1);
+        if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length() == 9)
+            return "+254" + digits;
+        if (digits.startsWith("254") && digits.length() == 12)
+            return "+" + digits;
+        if (raw.startsWith("+") && digits.length() >= 11)
+            return "+" + digits;
         return null;
     }
 }
