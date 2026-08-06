@@ -24,7 +24,7 @@ public class AfricasTalkingCallbackController {
     @PostMapping(value = "/sms/delivery", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleSmsDeliveryReport(@RequestParam Map<String, String> payload) {
         log.info("Received Africa's Talking SMS Delivery Report: {}", payload);
-        
+
         // Example of fields received:
         // String status = payload.get("status");
         // String messageId = payload.get("id");
@@ -42,7 +42,7 @@ public class AfricasTalkingCallbackController {
     @PostMapping(value = "/sms/incoming", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<String> handleIncomingSms(@RequestParam Map<String, String> payload) {
         log.info("Received Africa's Talking Incoming SMS: {}", payload);
-        
+
         // Example of fields received:
         // String from = payload.get("from");
         // String to = payload.get("to");
