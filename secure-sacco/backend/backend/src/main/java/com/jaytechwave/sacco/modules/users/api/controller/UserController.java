@@ -12,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,8 +34,8 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasAuthority('USER_READ')")
+    @Operation(summary = "Get user by ID", description = "Get user details. Accessible by admins (USER_READ) or the user themselves.")
+    @PreAuthorize("hasAuthority('USER_READ') or @userService.isSelf(#id, authentication.name)")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
@@ -55,7 +57,6 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 
-    /** Admin email change — separate endpoint so it's audited distinctly. */
     public record ChangeEmailRequest(
             @NotBlank(message = "Email is required")
             @Email(message = "Must be a valid email address")
@@ -98,5 +99,22 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+    }
+
+    @Operation(summary = "Upload profile photo", description = "Upload a profile photo for a user. Accessible by admins (USER_UPDATE) or the user themselves.")
+    @PreAuthorize("hasAuthority('USER_UPDATE') or @userService.isSelf(#id, authentication.name)")
+    @PostMapping("/{id}/profile-photo")
+    public ResponseEntity<?> uploadProfilePhoto(
+            @PathVariable UUID id,
+            @RequestParam("photo") MultipartFile photo) throws IOException {
+        userService.uploadProfilePhoto(id, photo);
+        return ResponseEntity.ok(Map.of("message", "Profile photo uploaded successfully"));
+    }
+
+    @Operation(summary = "Get profile photo", description = "Get a user's profile photo. Accessible to any authenticated user.")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{id}/profile-photo")
+    public ResponseEntity<byte[]> getProfilePhoto(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.getProfilePhoto(id));
     }
 }

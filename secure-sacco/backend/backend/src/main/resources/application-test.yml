@@ -43,6 +43,8 @@ sacco:
       passkey: ${MPESA_PASSKEY:test_passkey}
       shortcode: "${MPESA_SHORTCODE:174379}"
       callback-base-url: "${MPESA_CALLBACK_BASE_URL:http://localhost:8080}"
+  coopconnect:
+    proxy-port: ${COOP_PROXY_PORT:0}
 
 app:
   field-encryption-key: dGVzdGVuY3J5cHRpb25rZXlfZm9yX2Rldl9vbmx5X18=  # 32-byte test key (NOT for prod)

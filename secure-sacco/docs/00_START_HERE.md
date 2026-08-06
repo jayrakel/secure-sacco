@@ -6,7 +6,7 @@ This index helps you navigate all audit documentation and understand the codebas
 
 ## 📋 DOCUMENTS CREATED
 
-### 1. **CODEBASE_AUDIT_REPORT.md** ⭐ Start Here
+### 1. **internal/CODEBASE_AUDIT_REPORT.md** ⭐ Start Here
 - **What:** Comprehensive architecture audit
 - **Contains:** Full assessment of every component
 - **Read Time:** 30 minutes
@@ -62,7 +62,7 @@ mvn spring-boot:run
 ### 👨‍💼 Project Manager / Product Owner
 ```
 1. AUDIT_COMPLETE.md (summary section)
-2. CODEBASE_AUDIT_REPORT.md (strengths & observations)
+2. internal/CODEBASE_AUDIT_REPORT.md (strengths & observations)
 3. DEVELOPER_GUIDE.md (priorities section)
 ```
 **Time:** ~20 minutes
@@ -71,7 +71,7 @@ mvn spring-boot:run
 ```
 1. AUDIT_COMPLETE.md (quick reference)
 2. DEVELOPER_GUIDE.md (how to make changes)
-3. CODEBASE_AUDIT_REPORT.md (architecture section)
+3. internal/CODEBASE_AUDIT_REPORT.md (architecture section)
 4. AGENTS.md (guidelines & patterns)
 ```
 **Time:** ~60 minutes
@@ -86,7 +86,7 @@ mvn spring-boot:run
 
 ### 🚀 DevOps / SRE
 ```
-1. CODEBASE_AUDIT_REPORT.md (deployment readiness)
+1. internal/CODEBASE_AUDIT_REPORT.md (deployment readiness)
 2. AUDIT_COMPLETE.md (deployment checklist)
 3. README.md (setup instructions)
 ```
@@ -94,7 +94,7 @@ mvn spring-boot:run
 
 ### 🏗️ Architect / Lead
 ```
-1. CODEBASE_AUDIT_REPORT.md (full report)
+1. internal/CODEBASE_AUDIT_REPORT.md (full report)
 2. AUDIT_COMPLETE.md (findings)
 3. AGENTS.md (guidelines)
 ```
@@ -107,7 +107,7 @@ mvn spring-boot:run
 ### If You Want To...
 
 **Understand the system:**
-→ Read AUDIT_COMPLETE.md + CODEBASE_AUDIT_REPORT.md
+→ Read AUDIT_COMPLETE.md + internal/CODEBASE_AUDIT_REPORT.md
 
 **Start coding:**
 → Read DEVELOPER_GUIDE.md + AGENTS.md
@@ -116,7 +116,7 @@ mvn spring-boot:run
 → Read SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md
 
 **Deploy to production:**
-→ See CODEBASE_AUDIT_REPORT.md deployment section
+→ See internal/CODEBASE_AUDIT_REPORT.md deployment section
 
 **Fix a bug:**
 → See DEVELOPER_GUIDE.md "Type 4: Fixing a Bug"
@@ -250,7 +250,7 @@ Secure SACCO
 
 | What | Where |
 |------|-------|
-| Architecture Overview | CODEBASE_AUDIT_REPORT.md |
+| Architecture Overview | internal/CODEBASE_AUDIT_REPORT.md |
 | How to Code | DEVELOPER_GUIDE.md |
 | Time-Traveler | SYSTEM_WIDE_TIME_TRAVEL_UPDATE.md |
 | Patterns | AGENTS.md |

@@ -1,9 +1,17 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSettings } from '../../features/settings/context/useSettings';
-import { LogOut, ChevronRight, Menu } from 'lucide-react';
+import { LogOut, ChevronRight, Menu, UserCircle } from 'lucide-react';
 import { useState } from 'react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 
 const PAGE_LABELS: Record<string, string> = {
     '/dashboard':                  'Dashboard',
@@ -30,6 +38,7 @@ const PAGE_LABELS: Record<string, string> = {
     '/security':                   'Security Settings',
     '/settings':                   'Platform Settings',
     '/admin/time-machine':            'System Time Machine',
+    '/profile':                    'My Profile',
 };
 
 export const DashboardLayout = () => {
@@ -100,15 +109,37 @@ export const DashboardLayout = () => {
                     {/* Right: user pill + logout */}
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         {user && (
-                            <div className="flex items-center gap-2.5">
-                                <div className="text-right hidden sm:block leading-none">
-                                    <p className="text-xs font-semibold text-slate-800">{user.firstName} {user.lastName}</p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5 capitalize">{roleName}</p>
-                                </div>
-                                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold border border-emerald-200 uppercase shrink-0">
-                                    {user.firstName?.[0]}{user.lastName?.[0]}
-                                </div>
-                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <div className="flex items-center gap-2.5 cursor-pointer">
+                                        <div className="text-right hidden sm:block leading-none">
+                                            <p className="text-xs font-semibold text-slate-800">{user.firstName} {user.lastName}</p>
+                                            <p className="text-[10px] text-slate-400 mt-0.5 capitalize">{roleName}</p>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold border border-emerald-200 uppercase shrink-0">
+                                            {user.profilePhotoUrl ? (
+                                                <img src={user.profilePhotoUrl} alt="profile" className="w-full h-full rounded-full object-cover" />
+                                            ) : (
+                                                `${user.firstName?.[0]}${user.lastName?.[0]}`
+                                            )}
+                                        </div>
+                                    </div>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/profile">
+                                            <UserCircle className="mr-2 h-4 w-4" />
+                                            <span>My Profile</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={logout}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>Logout</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         )}
 
                         <div className="h-6 w-px bg-slate-200 hidden sm:block" />

@@ -79,6 +79,10 @@ jobs:
             printf 'APP_NAME=Secure Sacco\n'
             printf 'APP_FIELD_ENCRYPTION_KEY=%s\n'   "${{ secrets.APP_FIELD_ENCRYPTION_KEY }}"
             printf 'APP_PII_HMAC_KEY=%s\n'           "${{ secrets.APP_PII_HMAC_KEY }}"
+            printf 'AT_API_KEY=%s\n'               "${{ secrets.AT_API_KEY }}"
+            printf 'AT_SENDER_ID=%s\n'             "${{ vars.AT_SENDER_ID }}"
+            printf 'AT_USERNAME=%s\n'                  "${{ vars.AT_USERNAME }}"
+            printf 'AT_SANDBOX=%s\n'                 "${{ vars.AT_SANDBOX }}"
             printf 'REDIS_HOST=redis\n'
             printf 'REDIS_PORT=6379\n'
             printf 'REDIS_PASSWORD=%s\n'             "${{ secrets.REDIS_PASSWORD }}"
@@ -98,6 +102,8 @@ jobs:
             printf 'COOP_CALLBACK_BASE_URL=%s\n'     "${{ vars.COOP_CALLBACK_BASE_URL }}"
             printf 'COOP_SACCO_ACCOUNT_NUMBER=%s\n'  "${{ secrets.COOP_SACCO_ACCOUNT_NUMBER }}"
             printf 'COOP_ALLOWED_CALLBACK_IPS=%s\n'  "${{ vars.COOP_ALLOWED_CALLBACK_IPS }}"
+            printf 'COOP_PROXY_HOST=%s\n'            "${{ vars.COOP_PROXY_HOST }}"
+            printf 'COOP_PROXY_PORT=%s\n'            "${{ vars.COOP_PROXY_PORT }}"
             printf 'RESEND_API_KEY=%s\n'             "${{ secrets.RESEND_API_KEY }}"
             printf 'MAIL_FROM=%s\n'                  "${{ vars.MAIL_FROM }}"
             printf 'FRONTEND_URL=%s\n'               "${{ vars.FRONTEND_URL }}"

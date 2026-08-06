@@ -49,7 +49,7 @@ public class UserDTOs {
 
     @Data
     public static class UpdateUserRolesRequest {
-        @NotEmpty(message = "At least one role ID is required")
+        @NotEmpty(message = "At least one role ID is new")
         private Set<UUID> roleIds;
     }
 
@@ -64,5 +64,6 @@ public class UserDTOs {
         private String phoneNumber;
         private UserStatus status;
         private List<String> roles;
+        private String profilePhotoUrl;
     }
 }

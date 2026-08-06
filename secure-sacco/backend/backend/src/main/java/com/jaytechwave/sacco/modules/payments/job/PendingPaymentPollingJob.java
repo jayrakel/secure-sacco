@@ -21,34 +21,39 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Polls Co-op Connect Transaction Status API every 10 seconds for PENDING STK push payments.
+ * Polls Co-op Connect Transaction Status API every 10 seconds for PENDING STK
+ * push payments.
  *
- * Co-op Bank advised using the Transaction Status enquiry API to confirm payment
+ * Co-op Bank advised using the Transaction Status enquiry API to confirm
+ * payment
  * rather than relying solely on the STK callback/IPN delivery.
  *
+ * 
  * On confirmation:
- * - transactionRef is set to the M-Pesa receipt (e.g. UETA45S0OJ) from Co-op's TransactionID
- * - senderName is set to the SACCO member's full name (account holder), not the M-Pesa phone owner
+ * - transactionRef is set to the M-Pesa receipt (e.g. UETA45S0OJ) from Co-op's
+ * TransactionID
+ * - senderName is set to the SACCO member's full name (account holder), not the
+ * M-Pesa phone owner
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PendingPaymentPollingJob {
 
-    private final PaymentRepository        paymentRepository;
-    private final CoopConnectService       coopConnectService;
+    private final PaymentRepository paymentRepository;
+    private final CoopConnectService coopConnectService;
     private final ApplicationEventPublisher eventPublisher;
-    private final UserRepository           userRepository;
+    private final UserRepository userRepository;
 
     // Poll every 10 seconds
     @Scheduled(fixedDelay = 10_000)
     @Transactional
     public void pollPendingPayments() {
         List<Payment> pending = paymentRepository.findByStatusAndPaymentType(
-                PaymentStatus.PENDING, "STK_PUSH"
-        );
+                PaymentStatus.PENDING, "STK_PUSH");
 
-        if (pending.isEmpty()) return;
+        if (pending.isEmpty())
+            return;
 
         log.info("PendingPaymentPollingJob: checking {} PENDING STK payment(s)", pending.size());
 
@@ -74,16 +79,14 @@ public class PendingPaymentPollingJob {
             if (payment.getMemberId() != null) {
                 eventPublisher.publishEvent(new PaymentFailedEvent(
                         payment.getId(), payment.getMemberId(), payment.getAmount(),
-                        payment.getAccountReference(), "Payment expired"
-                ));
+                        payment.getAccountReference(), "Payment expired"));
             }
             return;
         }
 
         // Query Co-op for transaction status
         TransactionStatusResponse status = coopConnectService.checkTransactionStatus(
-                payment.getInternalRef()
-        );
+                payment.getInternalRef());
 
         if (status == null) {
             log.debug("PendingPaymentPollingJob: null response for ref={}", payment.getInternalRef());
@@ -102,21 +105,18 @@ public class PendingPaymentPollingJob {
             // double-crediting when the Co-op IPN arrives for this same transaction.
             String mpesaRef = status.getTransactionId();
             payment.setTransactionRef(mpesaRef);
-            payment.setMpesaRef(mpesaRef);   // ← was missing; caused IPN guard to always miss
+            payment.setMpesaRef(mpesaRef); // ← was missing; caused IPN guard to always miss
 
             // Set sender name = the SACCO member's full name (account holder)
             // NOT the M-Pesa phone owner — one can pay using someone else's phone
             if (payment.getMemberId() != null) {
                 Optional<User> memberUser = userRepository.findByMemberId(payment.getMemberId());
-                memberUser.ifPresent(user ->
-                        payment.setSenderName(user.getFirstName() + " " + user.getLastName())
-                );
+                memberUser.ifPresent(user -> payment.setSenderName(user.getFirstName() + " " + user.getLastName()));
             }
 
             payment.setStatus(PaymentStatus.COMPLETED);
             payment.setProviderMetadata(
-                    "{\"source\":\"poll\",\"messageCode\":\"0\",\"transactionId\":\"" + mpesaRef + "\"}"
-            );
+                    "{\"source\":\"poll\",\"messageCode\":\"0\",\"transactionId\":\"" + mpesaRef + "\"}");
             paymentRepository.save(payment);
 
             log.info("PendingPaymentPollingJob: ✅ COMPLETED ref={} mpesaRef={} member={}",
@@ -128,8 +128,7 @@ public class PendingPaymentPollingJob {
                         payment.getMemberId(),
                         payment.getAmount(),
                         payment.getAccountReference(),
-                        mpesaRef != null ? mpesaRef : payment.getInternalRef()
-                ));
+                        mpesaRef != null ? mpesaRef : payment.getInternalRef()));
             }
 
         } else if (isFailureCode(status.getMessageCode())) {
@@ -143,8 +142,7 @@ public class PendingPaymentPollingJob {
             if (payment.getMemberId() != null) {
                 eventPublisher.publishEvent(new PaymentFailedEvent(
                         payment.getId(), payment.getMemberId(), payment.getAmount(),
-                        payment.getAccountReference(), status.getMessageDescription()
-                ));
+                        payment.getAccountReference(), status.getMessageDescription()));
             }
         }
         // Any other code = still processing — leave PENDING, poll again next cycle
@@ -159,7 +157,8 @@ public class PendingPaymentPollingJob {
      * 1001 = Insufficient funds
      */
     private boolean isFailureCode(String code) {
-        if (code == null) return false;
+        if (code == null)
+            return false;
         return switch (code) {
             case "1032", "1037", "2001", "1019", "1001" -> true;
             default -> false;

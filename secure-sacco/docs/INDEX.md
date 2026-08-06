@@ -2,8 +2,8 @@
 
 ## 🎯 Start Here
 
-**For Quick Overview:** Read `VISUAL_SUMMARY.md` (5 min read)  
-**For Complete Details:** Read `IMPLEMENTATION_SUMMARY.md` (15 min read)  
+**For Quick Overview:** Read `internal/VISUAL_SUMMARY.md` (5 min read)  
+**For Complete Details:** Read `internal/IMPLEMENTATION_SUMMARY.md` (15 min read)  
 **For Quick Commands:** Reference `TIME_TRAVELER_QUICK_REFERENCE.md` (2 min lookup)  
 
 ---
@@ -22,11 +22,11 @@
 
 | File | Lines | Audience | Read Time |
 |------|-------|----------|-----------|
-| **VISUAL_SUMMARY.md** | 500 | Everyone | 5 min |
+| **internal/VISUAL_SUMMARY.md** | 500 | Everyone | 5 min |
 | **TIME_TRAVELER_README.md** | 380 | Developers | 15 min |
-| **IMPLEMENTATION_SUMMARY.md** | 450 | Architects | 20 min |
+| **internal/IMPLEMENTATION_SUMMARY.md** | 450 | Architects | 20 min |
 | **TIME_TRAVELER_QUICK_REFERENCE.md** | 250 | DevOps/QA | 2 min (reference) |
-| **DELIVERABLES.md** | 400 | Project Managers | 10 min |
+| **internal/DELIVERABLES.md** | 400 | Project Managers | 10 min |
 | **INDEX.md (this file)** | 200 | All | 5 min |
 
 ### Test Suite
@@ -41,19 +41,19 @@
 ## 🎯 Choose Your Path
 
 ### 👨‍💼 I'm a Project Manager
-**Read:** `VISUAL_SUMMARY.md` → `DELIVERABLES.md`  
+**Read:** `internal/VISUAL_SUMMARY.md` → `internal/DELIVERABLES.md`  
 **Time:** 15 minutes  
 **Output:** Understand what was delivered & when it's ready to use
 
 ### 👨‍💻 I'm a Developer
-**Read:** `IMPLEMENTATION_SUMMARY.md` → `TIME_TRAVELER_README.md`  
+**Read:** `internal/IMPLEMENTATION_SUMMARY.md` → `TIME_TRAVELER_README.md`  
 **Study:** `TimeTravelerService.java` source code  
 **Test:** `benjamin-time-travel-api.http` requests  
 **Time:** 30 minutes  
 **Output:** Able to extend, debug, and maintain the system
 
 ### 🏗️ I'm a DevOps/Architect
-**Read:** `IMPLEMENTATION_SUMMARY.md` (architecture section)  
+**Read:** `internal/IMPLEMENTATION_SUMMARY.md` (architecture section)  
 **Reference:** `TIME_TRAVELER_QUICK_REFERENCE.md` (operations)  
 **Monitor:** Logs for `⏱️` emoji every 6 hours  
 **Time:** 15 minutes initial + ongoing  
@@ -68,7 +68,7 @@
 
 ### 🔍 I'm Debugging a Bug
 **Quick Ref:** `TIME_TRAVELER_QUICK_REFERENCE.md` → Troubleshooting section  
-**Context:** `IMPLEMENTATION_SUMMARY.md` → Design decisions  
+**Context:** `internal/IMPLEMENTATION_SUMMARY.md` → Design decisions  
 **Code:** `TimeTravelerService.java` source  
 **Time:** 5-10 minutes  
 **Output:** Root cause identified
@@ -97,12 +97,12 @@
 
 ### Documentation (5 Markdown Files)
 ```
-📖 VISUAL_SUMMARY.md (500 LOC)
+📖 internal/VISUAL_SUMMARY.md (500 LOC)
    - Architecture diagrams
    - Timeline visualizations
    - Quick reference tables
 
-📖 IMPLEMENTATION_SUMMARY.md (450 LOC)
+📖 internal/IMPLEMENTATION_SUMMARY.md (450 LOC)
    - Design decisions (why virtual time?)
    - Component descriptions
    - Testing strategy
@@ -117,7 +117,7 @@
    - Configuration options
    - Common mistakes
 
-📖 DELIVERABLES.md (400 LOC)
+📖 internal/DELIVERABLES.md (400 LOC)
    - Checklist of what's included
    - File organization
    - Activation instructions
@@ -140,7 +140,7 @@
 ### 1. Read Overview
 ```
 cd backend
-cat VISUAL_SUMMARY.md | less
+cat internal/VISUAL_SUMMARY.md | less
 ```
 
 ### 2. Build & Deploy
@@ -345,7 +345,7 @@ Month 9      Aug 28, 2025          Loan 3 COMPLETE ✅
 
 ## 🎓 Learning Path
 
-1. **Beginner**: Read `VISUAL_SUMMARY.md`
+1. **Beginner**: Read `internal/VISUAL_SUMMARY.md`
 2. **Intermediate**: Read `TIME_TRAVELER_README.md`
 3. **Advanced**: Study `TimeTravelerService.java` source
 4. **Expert**: Debug issues, extend functionality, optimize
@@ -358,7 +358,7 @@ Month 9      Aug 28, 2025          Loan 3 COMPLETE ✅
 **Solution:** See `TIME_TRAVELER_QUICK_REFERENCE.md` → Troubleshooting
 
 **Issue:** Schedule not advancing  
-**Solution:** See `IMPLEMENTATION_SUMMARY.md` → Troubleshooting
+**Solution:** See `internal/IMPLEMENTATION_SUMMARY.md` → Troubleshooting
 
 **Issue:** Want to extend functionality  
 **Solution:** See `TIME_TRAVELER_README.md` → Future Enhancements
@@ -386,5 +386,5 @@ You have a **production-ready time-traveling loan test system** that:
 **Lines:** ~2,100 total  
 **Test Scenarios:** 17 ready-to-run  
 
-🎉 **Start with `VISUAL_SUMMARY.md` — it's your roadmap!**
+🎉 **Start with `internal/VISUAL_SUMMARY.md` — it's your roadmap!**
 

@@ -14,14 +14,14 @@
    - Verified arrears: 162,275.38 KES
    - Outstanding balance: 278,557.50 KES
 
-2. **INDEPENDENT_AUDIT_VERIFICATION.md**
+2. **internal/INDEPENDENT_AUDIT_VERIFICATION.md**
    - Verification against CSV data
    - Phase-by-phase comparison
    - 99.95% accuracy confirmed
 
 ### ROOT CAUSE DOCUMENTS (The Discovery)
 
-3. **FINAL_ROOT_CAUSE_10023_KES_GAP.md** ⭐ **START HERE**
+3. **internal/FINAL_ROOT_CAUSE_10023_KES_GAP.md** ⭐ **START HERE**
    - The 10,023 KES mystery SOLVED
    - Loan statuses reversed in database
    - SQL fix provided
@@ -32,26 +32,26 @@
    - 3 loan schedules overlapping
    - 354 duplicate items identified
 
-5. **ROOT_CAUSE_UI_ARREARS_DISCREPANCY.md**
+5. **internal/ROOT_CAUSE_UI_ARREARS_DISCREPANCY.md**
    - Why UI showed wrong amount
    - Status-based vs date-based calculation
    - 40,097 KES gap explained
 
-6. **WHY_ONLY_CHARLES_HAS_ISSUE.md**
+6. **internal/WHY_ONLY_CHARLES_HAS_ISSUE.md**
    - Benjamin & Salesio had 0 loans before
    - Bug only affects members with refinances
    - Systematic issue, not member-specific
 
 ### SYSTEM-WIDE FIX DOCUMENTS (The Solution)
 
-7. **SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md** ⭐ **IMPLEMENTATION GUIDE**
+7. **internal/SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md** ⭐ **IMPLEMENTATION GUIDE**
    - Complete technical fix for ghost schedules
    - 4 code changes with full details
    - Data cleanup scripts
    - SQL verification queries
    - Benjamin's 1,111,408 KES explained
 
-8. **IMPLEMENTATION_CHECKLIST.md** ⭐ **STEP-BY-STEP**
+8. **internal/IMPLEMENTATION_CHECKLIST.md** ⭐ **STEP-BY-STEP**
    - 7 implementation steps (29 minutes)
    - Before/after comparisons
    - Testing checklist
@@ -65,13 +65,13 @@
 
 ### MIGRATION & VERIFICATION DOCUMENTS
 
-10. **MIGRATION_COMPLETION_REPORT.md**
+10. **internal/MIGRATION_COMPLETION_REPORT.md**
     - Benjamin migration confirmed
     - Salesio migration confirmed
     - Detailed member profiles
     - Issues and recommendations
 
-11. **BEFORE_AFTER_MIGRATION.md**
+11. **internal/BEFORE_AFTER_MIGRATION.md**
     - Pre-migration status
     - Post-migration status
     - Comparative analysis
@@ -79,7 +79,7 @@
 
 ### SUMMARY & INDEX DOCUMENTS
 
-12. **COMPLETE_AUDIT_DOCUMENTATION.md**
+12. **internal/COMPLETE_AUDIT_DOCUMENTATION.md**
     - Master index of all findings
     - Key insights summary
     - Critical fixes required
@@ -155,19 +155,19 @@ WHERE id = '58d0023f-833d-4690-86b2-db1d469c9655';
 
 ### For Understanding the Problem:
 
-1. **Start here:** FINAL_ROOT_CAUSE_10023_KES_GAP.md
+1. **Start here:** internal/FINAL_ROOT_CAUSE_10023_KES_GAP.md
 2. **Then read:** BENJAMIN_STORY.md
-3. **Then understand:** SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md
+3. **Then understand:** internal/SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md
 
 ### For Implementation:
 
-1. **Follow:** IMPLEMENTATION_CHECKLIST.md (step-by-step)
-2. **Reference:** SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md (technical details)
+1. **Follow:** internal/IMPLEMENTATION_CHECKLIST.md (step-by-step)
+2. **Reference:** internal/SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md (technical details)
 3. **Verify:** Both before and after queries provided
 
 ### For Verification:
 
-1. **Check:** MIGRATION_COMPLETION_REPORT.md (member status)
+1. **Check:** internal/MIGRATION_COMPLETION_REPORT.md (member status)
 2. **Verify:** Expected results in each fix document
 3. **Monitor:** Success criteria provided
 
@@ -205,9 +205,9 @@ WHERE id = '58d0023f-833d-4690-86b2-db1d469c9655';
 ## 🚀 NEXT STEPS
 
 ### Immediate (Ready Now):
-1. Review FINAL_ROOT_CAUSE_10023_KES_GAP.md
-2. Review SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md
-3. Review IMPLEMENTATION_CHECKLIST.md
+1. Review internal/FINAL_ROOT_CAUSE_10023_KES_GAP.md
+2. Review internal/SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md
+3. Review internal/IMPLEMENTATION_CHECKLIST.md
 
 ### Short-term (Implementation):
 1. Implement 4 code changes (~15 minutes)
@@ -292,9 +292,9 @@ WHERE id = '58d0023f-833d-4690-86b2-db1d469c9655';
 | Question | Answer | Document |
 |----------|--------|----------|
 | Why does Benjamin show 1.1M arrears? | Ghost schedules (double-counting) | BENJAMIN_STORY.md |
-| Why does Charles show 152K not 162K? | Loan statuses reversed | FINAL_ROOT_CAUSE_10023_KES_GAP.md |
-| How to fix the ghost schedules? | Follow implementation guide | IMPLEMENTATION_CHECKLIST.md |
-| What are the code changes? | See technical guide | SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md |
+| Why does Charles show 152K not 162K? | Loan statuses reversed | internal/FINAL_ROOT_CAUSE_10023_KES_GAP.md |
+| How to fix the ghost schedules? | Follow implementation guide | internal/IMPLEMENTATION_CHECKLIST.md |
+| What are the code changes? | See technical guide | internal/SYSTEM_WIDE_FIX_GHOST_SCHEDULES.md |
 | What will results be after fix? | All arrears corrected | GHOST_SCHEDULES_FIX_SUMMARY.md |
 
 ---

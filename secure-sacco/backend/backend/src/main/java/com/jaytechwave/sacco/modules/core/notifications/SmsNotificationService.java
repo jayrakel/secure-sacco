@@ -1,31 +1,29 @@
 package com.jaytechwave.sacco.modules.core.notifications;
 
-import com.africastalking.AfricasTalking;
-import com.africastalking.SmsService;
-import com.africastalking.sms.Recipient;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 /**
- * Sends SMS messages via Africa's Talking.
+ * Sends SMS messages via Africa's Talking using a robust raw HTTP
+ * implementation
+ * with strict timeouts to prevent thread hanging.
  *
- * <p>All sends are {@code @Async} so they never block the calling request thread.
+ * <p>
+ * All sends are {@code @Async} so they never block the calling request thread.
  * Set {@code AT_SANDBOX=true} (the default) to use the Africa's Talking sandbox
- * for development/staging — no real SMS is sent and no balance is consumed.
- * Set {@code AT_SANDBOX=false} in production to go live.
- *
- * <p>Required environment variables:
- * <ul>
- *   <li>{@code AT_USERNAME}  — Africa's Talking account username</li>
- *   <li>{@code AT_API_KEY}   — Africa's Talking API key</li>
- *   <li>{@code AT_SENDER_ID} — Short code or alphanumeric sender ID (optional)</li>
- *   <li>{@code AT_SANDBOX}   — {@code true} for sandbox, {@code false} for live</li>
- * </ul>
+ * for development/staging. Set {@code AT_SANDBOX=false} in production to go
+ * live.
  */
 @Slf4j
 @Service
@@ -43,88 +41,124 @@ public class SmsNotificationService {
     @Value("${africastalking.sandbox:true}")
     private boolean sandbox;
 
-    private SmsService smsService;
+    private String apiUrl;
 
     @PostConstruct
     public void init() {
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("SmsNotificationService: AT_API_KEY is not set — SMS delivery will be skipped. " +
-                    "Set AT_API_KEY to enable Africa's Talking SMS.");
+            log.warn("SmsNotificationService: AT_API_KEY is not set — SMS delivery will be skipped.");
             return;
         }
-        try {
-            AfricasTalking.initialize(username, apiKey);
-            smsService = AfricasTalking.getService(AfricasTalking.SERVICE_SMS);
-            log.info("SmsNotificationService: Africa's Talking initialized. username={} sandbox={}", username, sandbox);
-        } catch (Exception e) {
-            log.error("SmsNotificationService: Failed to initialize Africa's Talking: {}", e.getMessage());
-        }
+
+        apiUrl = sandbox
+                ? "https://api.sandbox.africastalking.com/version1/messaging"
+                : "https://api.africastalking.com/version1/messaging";
+
+        log.info("SmsNotificationService: Initialized raw HTTP client. username={} sandbox={} url={}", username,
+                sandbox, apiUrl);
     }
 
     /**
      * Sends a 6-digit OTP to the given phone number.
-     *
-     * <p>The phone number must be in international format (e.g. {@code +254721338747}).
-     * The call is fire-and-forget — delivery failure is logged but does not throw.
-     *
-     * @param phoneNumber E.164 phone number (e.g. {@code +254721338747})
-     * @param otp         6-digit one-time password
      */
     @Async
     public void sendOtp(String phoneNumber, String otp) {
-        if (smsService == null) {
-            log.warn("SmsNotificationService: SMS service not initialized — skipping OTP to {}. " +
-                    "Configure AT_API_KEY to enable.", phoneNumber);
+        String message = String.format(
+                "Your Betterlink Ventures SACCO verification code is: %s. " +
+                        "Valid for 10 minutes. Do not share this code with anyone.",
+                otp);
+        sendNotificationSms(phoneNumber, message);
+    }
+
+    /**
+     * Sends a custom notification SMS to the given phone number.
+     */
+    @Async
+    public void sendNotificationSms(String phoneNumber, String message) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("SmsNotificationService: API key not set — skipping SMS to {}", phoneNumber);
             return;
         }
 
-        String message = String.format(
-                "Your Betterlink Ventures SACCO verification code is: %s. " +
-                "Valid for 10 minutes. Do not share this code with anyone.", otp);
-
-        // Ensure E.164 format
         String normalized = normalizePhone(phoneNumber);
         if (normalized == null) {
-            log.error("SmsNotificationService: Cannot send OTP — invalid phone number: {}", phoneNumber);
+            log.error("SmsNotificationService: Cannot send SMS — invalid phone number: {}", phoneNumber);
             return;
         }
 
         try {
-            List<Recipient> recipients = smsService.send(
-                    message,
-                    senderId,   // null = default short code; set AT_SENDER_ID for custom sender
-                    new String[]{normalized},
-                    false       // not premium / subscription
-            );
+            log.info("SmsNotificationService: Sending SMS to {}...", normalized);
 
-            if (recipients != null && !recipients.isEmpty()) {
-                Recipient r = recipients.get(0);
-                log.info("SmsNotificationService: OTP sent to {} — status={} cost={} msgId={}",
-                        normalized, r.status, r.cost, r.messageId);
+            String postData = "username=" + username +
+                    "&to=" + normalized +
+                    "&message=" + message;
+
+            if (senderId != null && !senderId.isBlank()) {
+                postData += "&from=" + senderId;
             }
+
+            URL url = new URL(apiUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("Accept", "application/json");
+
+            // CRITICAL: Set strict timeouts (5 seconds) to prevent infinite hanging!
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            // Authentication
+            // Africa's talking uses ApiKey as a header OR Basic auth depending on the
+            // endpoint.
+            // The standard way for /version1/messaging is the apiKey header:
+            conn.setRequestProperty("apiKey", apiKey);
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(postData.getBytes(StandardCharsets.UTF_8));
+            }
+
+            int responseCode = conn.getResponseCode();
+            StringBuilder response = new StringBuilder();
+
+            // Read response whether it's 200 OK or 400 Bad Request
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                    responseCode < 400 ? conn.getInputStream() : conn.getErrorStream()))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    response.append(line);
+                }
+            }
+
+            if (responseCode == 200 || responseCode == 201) {
+                log.info("SmsNotificationService: SMS sent to {} — status={} AT_Response={}",
+                        normalized, responseCode, response.toString());
+            } else {
+                log.error("SmsNotificationService: Failed to send SMS to {}. HTTP {} Response: {}",
+                        normalized, responseCode, response.toString());
+            }
+
+        } catch (java.net.SocketTimeoutException e) {
+            log.error("SmsNotificationService: Timeout while sending SMS to {}: {}", normalized, e.getMessage());
         } catch (Exception e) {
-            // Log and swallow — OTP send failure must not crash the verification request.
-            // The user can retry via the resend endpoint.
-            log.error("SmsNotificationService: Failed to send OTP to {}: {}", normalized, e.getMessage());
+            log.error("SmsNotificationService: Failed to send SMS to {}: {}", normalized, e.getMessage(), e);
         }
     }
 
-    /**
-     * Normalises a phone number to E.164 format ({@code +254XXXXXXXXX}) for AT.
-     * Returns {@code null} if the number cannot be normalised.
-     */
     private String normalizePhone(String raw) {
-        if (raw == null || raw.isBlank()) return null;
+        if (raw == null || raw.isBlank())
+            return null;
         String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return null;
-        // 0XXXXXXXXX  → +254XXXXXXXXX
-        if (digits.startsWith("07") || digits.startsWith("01")) return "+254" + digits.substring(1);
-        // 7XXXXXXXXX  → +254XXXXXXXXX
-        if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length() == 9) return "+254" + digits;
-        // 254XXXXXXXXX → +254XXXXXXXXX
-        if (digits.startsWith("254") && digits.length() == 12) return "+" + digits;
-        // Already has + and correct length
-        if (raw.startsWith("+") && digits.length() >= 11) return "+" + digits;
+        if (digits.isEmpty())
+            return null;
+        if (digits.startsWith("07") || digits.startsWith("01"))
+            return "+254" + digits.substring(1);
+        if ((digits.startsWith("7") || digits.startsWith("1")) && digits.length() == 9)
+            return "+254" + digits;
+        if (digits.startsWith("254") && digits.length() == 12)
+            return "+" + digits;
+        if (raw.startsWith("+") && digits.length() >= 11)
+            return "+" + digits;
         return null;
     }
 }

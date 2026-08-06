@@ -1,0 +1,19 @@
+ .../users/api/controller/UserController.java       |  18 +
+ .../sacco/modules/users/api/dto/UserDTOs.java      |   3 +-
+ .../sacco/modules/users/domain/entity/User.java    |   9 +
+ .../modules/users/domain/service/UserService.java  |  23 +
+ .../migration/V95__add_profile_photo_to_users.sql  |   2 +
+ secure-sacco/frontend/package-lock.json            | 705 ++++++++++++++++++++-
+ secure-sacco/frontend/package.json                 |   7 +-
+ secure-sacco/frontend/src/App.tsx                  |   2 +-
+ .../src/features/auth/context/AuthProvider.tsx     |   1 +
+ .../src/features/auth/pages/ProfilePage.tsx        | 591 -----------------
+ .../frontend/src/features/profile/ProfilePage.tsx  |  74 +++
+ .../frontend/src/shared/components/Sidebar.tsx     |   2 -
+ .../frontend/src/shared/components/ui/button.tsx   |  57 ++
+ .../frontend/src/shared/components/ui/card.tsx     |  79 +++
+ .../src/shared/components/ui/dropdown-menu.tsx     | 200 ++++++
+ .../frontend/src/shared/components/ui/input.tsx    |  24 +
+ .../src/shared/layouts/DashboardLayout.tsx         |  53 +-
+ secure-sacco/frontend/src/shared/utils/cn.ts       |   6 +
+ 18 files changed, 1247 insertions(+), 609 deletions(-)

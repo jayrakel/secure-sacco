@@ -20,6 +20,7 @@ interface User {
     memberNumber?: string;
     memberStatus?: string;
     memberId?: string;
+    profilePhotoUrl?: string;
 }
 
 interface AuthContextType {

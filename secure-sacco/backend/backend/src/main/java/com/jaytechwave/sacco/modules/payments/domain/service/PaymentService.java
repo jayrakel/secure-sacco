@@ -292,12 +292,18 @@ public class PaymentService {
                     // When re-enrich matches this to a member, it will reverse the suspense entry
                     // and post the proper savings credit.
                     java.time.LocalDate valueDate = coopTxOpt
-                            .map(ct -> ct.getValueDate() != null
-                                    ? ct.getValueDate().toLocalDate()
-                                    : ct.getCreatedAt().toLocalDate())
+                            .map(ct -> {
+                                if (ct.getValueDate() != null) return ct.getValueDate().toLocalDate();
+                                if (ct.getCreatedAt() != null) return ct.getCreatedAt().toLocalDate();
+                                return java.time.LocalDate.now();
+                            })
                             .orElse(java.time.LocalDate.now());
                     journalEntryService.postNonMemberBankCredit(amount, mpesaRef,
                             ipn.getNarration(), valueDate);
+                            
+                    eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.NonMemberPaymentReceivedEvent(
+                            payment.getId(), amount, phone, senderName, mpesaRef
+                    ));
                 }
             }
         } else {

@@ -5,7 +5,9 @@ import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
 import com.jaytechwave.sacco.modules.roles.domain.entity.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -82,5 +84,12 @@ public class User {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private com.jaytechwave.sacco.modules.members.domain.entity.Member member;
+
+    @Column(name = "profile_photo_url")
+    private String profilePhotoUrl;
+
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "profile_photo")
+    private byte[] profilePhoto;
 
 }
