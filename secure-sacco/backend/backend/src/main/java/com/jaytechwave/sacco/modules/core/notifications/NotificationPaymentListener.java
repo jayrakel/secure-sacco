@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +43,7 @@ public class NotificationPaymentListener {
     @Value("${sacco.notifications.admin-alert-roles:CHAIRPERSON,SECRETARY,TREASURER}")
     private List<String> adminAlertRoles;
 
-    @Async
+    @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
     @EventListener
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
