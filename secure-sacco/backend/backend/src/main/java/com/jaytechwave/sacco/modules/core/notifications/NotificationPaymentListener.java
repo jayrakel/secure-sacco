@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +43,7 @@ public class NotificationPaymentListener {
     @Value("${sacco.notifications.admin-alert-roles:CHAIRPERSON,SECRETARY,TREASURER}")
     private List<String> adminAlertRoles;
 
-    @Async
+    @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
     @EventListener
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
@@ -80,7 +81,7 @@ public class NotificationPaymentListener {
 
             // Notify Admins
             String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
-            notifyAdmins(fullName, event.amount(), event.receiptNumber() != null ? event.receiptNumber() : "N/A", event.paymentId());
+            notifyAdmins(fullName, phone, event.amount(), event.receiptNumber() != null ? event.receiptNumber() : "N/A", event.paymentId());
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentCompletedEvent. {}", e.getMessage(), e);
@@ -102,17 +103,17 @@ public class NotificationPaymentListener {
             }
 
             // Notify Admins
-            notifyAdmins(event.senderName(), event.amount(), event.mpesaRef(), event.paymentId());
+            notifyAdmins(event.senderName(), event.senderPhone(), event.amount(), event.mpesaRef(), event.paymentId());
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for NonMemberPaymentReceivedEvent. {}", e.getMessage(), e);
         }
     }
 
-    private void notifyAdmins(String senderName, BigDecimal amount, String mpesaRef, UUID paymentId) {
+    private void notifyAdmins(String senderName, String senderPhone, BigDecimal amount, String mpesaRef, UUID paymentId) {
         String formattedAmount = formatAmount(amount);
         String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
-        String name = formatName(senderName);
+        String name = formatName(senderName, senderPhone);
         
         String allocationsStr = "";
         if (paymentId != null) {
@@ -145,8 +146,10 @@ public class NotificationPaymentListener {
         return str;
     }
 
-    private String formatName(String fullName) {
-        if (fullName == null || fullName.isBlank()) return "Customer";
+    private String formatName(String fullName, String phone) {
+        if (fullName == null || fullName.isBlank()) {
+            return (phone != null && !phone.isBlank()) ? phone : "Customer";
+        }
         String[] parts = fullName.trim().split("\\s+");
         if (parts.length == 1) return capitalize(parts[0]);
         return capitalize(parts[0]) + " " + capitalize(parts[1]);
