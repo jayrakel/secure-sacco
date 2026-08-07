@@ -118,6 +118,9 @@ africastalking:
 
 # --- SECURITY & CORS BASELINE (PROD DEFAULTS) ---
 sacco:
+  notifications:
+    admin-alert-roles: CHAIRPERSON,SECRETARY,TREASURER
+
   security:
     cors:
       allowed-origins: "${FRONTEND_URL:http://localhost:5173}" # Change this to your actual frontend prod URL
