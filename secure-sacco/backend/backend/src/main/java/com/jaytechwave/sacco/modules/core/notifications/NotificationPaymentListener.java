@@ -92,17 +92,9 @@ public class NotificationPaymentListener {
     public void handleNonMemberPaymentReceived(NonMemberPaymentReceivedEvent event) {
         try {
             if (event.senderPhone() != null && !event.senderPhone().isBlank()) {
-                String name = event.senderName();
-                if (name == null || name.isBlank()) {
-                    name = "Customer";
-                }
-
-                String[] parts = name.split(" ");
-                String firstName = capitalize(parts[0]);
-
                 String message = String.format(
-                        "Dear %s, we received your payment of KES %s (Ref: %s). However, your phone number is not linked to a member account. Please contact Betterlink Ventures SACCO.",
-                        firstName, event.amount().toPlainString(), event.mpesaRef()
+                        "Dear Customer, we have received your payment of KES %s. for Better Link Ventures Limited. Thank you for choosing Us.",
+                        event.amount().toPlainString()
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS to Non-Member (Phone: {})", event.senderPhone());
