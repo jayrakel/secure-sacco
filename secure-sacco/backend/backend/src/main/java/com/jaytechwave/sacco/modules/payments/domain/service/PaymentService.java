@@ -408,6 +408,11 @@ public class PaymentService {
     private String extractSenderName(String memoLine3) {
         if (memoLine3 == null) return null;
         String[] parts = memoLine3.split("~");
-        return parts.length >= 2 ? parts[1].trim() : null;
+        if (parts.length >= 2) {
+            String candidate = parts[1].trim();
+            if (candidate.toLowerCase().startsWith("accountref")) return null;
+            return candidate;
+        }
+        return null;
     }
 }
