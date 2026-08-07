@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.penalties.domain.service.PenaltyRepaymentSe
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -17,6 +18,7 @@ public class PenaltyPaymentListener {
 
     private final PenaltyRepaymentService penaltyRepaymentService;
 
+    @Order(1)
     @EventListener
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         if (event.accountReference() != null && event.accountReference().startsWith("PENREP-")) {

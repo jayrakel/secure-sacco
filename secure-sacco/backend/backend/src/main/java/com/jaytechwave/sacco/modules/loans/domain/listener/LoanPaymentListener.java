@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class LoanPaymentListener {
     private final JournalEntryService journalEntryService;
     private final LoanRepaymentService loanRepaymentService;
 
+    @Order(1)
     @EventListener
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         if (event.accountReference() != null) {

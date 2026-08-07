@@ -12,6 +12,7 @@ import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class SavingsPaymentListener {
     private final SavingsService               savingsService;
     private final CoopTransactionRepository    coopTransactionRepository;
 
+    @Order(1)
     @EventListener
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
 
