@@ -63,4 +63,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * Used when changing role permissions to determine how many sessions will be affected.
      */
     long countByRolesId(UUID roleId);
+
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.name IN :roleNames AND u.isDeleted = false")
+    List<User> findAllByRolesNameInAndIsDeletedFalse(@Param("roleNames") List<String> roleNames);
 }
