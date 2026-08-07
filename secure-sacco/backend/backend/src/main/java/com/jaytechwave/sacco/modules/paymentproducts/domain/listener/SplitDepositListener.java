@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.paymentproducts.domain.service.DepositAlloc
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,6 +25,7 @@ public class SplitDepositListener {
     private final PaymentRepository                paymentRepository;
     private final DepositAllocationRouterService   routerService;
 
+    @Order(1)
     @EventListener
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         if (event.accountReference() == null || !event.accountReference().startsWith("SPLIT-")) return;
