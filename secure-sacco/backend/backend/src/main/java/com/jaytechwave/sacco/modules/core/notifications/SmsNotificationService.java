@@ -89,12 +89,12 @@ public class SmsNotificationService {
         try {
             log.info("SmsNotificationService: Sending SMS to {}...", normalized);
 
-            String postData = "username=" + username +
-                    "&to=" + normalized +
-                    "&message=" + message;
+            String postData = "username=" + java.net.URLEncoder.encode(username, StandardCharsets.UTF_8) +
+                    "&to=" + java.net.URLEncoder.encode(normalized, StandardCharsets.UTF_8) +
+                    "&message=" + java.net.URLEncoder.encode(message, StandardCharsets.UTF_8);
 
             if (senderId != null && !senderId.isBlank()) {
-                postData += "&from=" + senderId;
+                postData += "&from=" + java.net.URLEncoder.encode(senderId, StandardCharsets.UTF_8);
             }
 
             URL url = new URL(apiUrl);
