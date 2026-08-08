@@ -14,7 +14,8 @@ import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -44,7 +45,8 @@ public class NotificationPaymentListener {
     private List<String> adminAlertRoles;
 
     @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
             // Find member
@@ -71,8 +73,8 @@ public class NotificationPaymentListener {
                     name = "Member";
                 }
                 String message = String.format(
-                        "Dear %s, we have received your deposit of KES %s. Your new savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        name, event.amount().toPlainString(), balance.toPlainString()
+                        "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
+                        name, formatAmount(event.amount()), event.receiptNumber() != null ? event.receiptNumber() : "N/A", formatAmount(balance)
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {})", member.getMemberNumber(), phone);
@@ -89,13 +91,13 @@ public class NotificationPaymentListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleNonMemberPaymentReceived(NonMemberPaymentReceivedEvent event) {
         try {
             if (event.senderPhone() != null && !event.senderPhone().isBlank()) {
                 String message = String.format(
-                        "Dear Customer, we have received your payment of KES %s. for Better Link Ventures Limited. Thank you for choosing Us.",
-                        event.amount().toPlainString()
+                        "Dear Customer, payment of KES %s received. Ref: %s. Thank you for choosing Betterlink Ventures SACCO.",
+                        formatAmount(event.amount()), event.mpesaRef() != null ? event.mpesaRef() : "N/A"
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS to Non-Member (Phone: {})", event.senderPhone());

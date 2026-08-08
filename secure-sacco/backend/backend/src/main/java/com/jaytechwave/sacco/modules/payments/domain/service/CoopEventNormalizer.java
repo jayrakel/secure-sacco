@@ -153,22 +153,23 @@ public class CoopEventNormalizer {
             return Optional.empty();
         }
 
-        // Use MessageReference as mpesaRef (checkout request ID — unique per push)
-        String mpesaRef = callback.getMessageReference();
-        if (mpesaRef == null || mpesaRef.isBlank()) return Optional.empty();
+        String messageRef = callback.getMessageReference();
+        if (messageRef == null || messageRef.isBlank()) return Optional.empty();
 
-        if (coopTransactionRepository.existsByMpesaRef(mpesaRef)) {
-            log.debug("CoopEventNormalizer: duplicate STK mpesaRef={} — skipping", mpesaRef);
+        String receiptId  = callback.getTransactionId(); // M-Pesa receipt e.g. UF5BY709I7
+        if (receiptId == null || receiptId.isBlank()) return Optional.empty();
+
+        if (coopTransactionRepository.existsByMpesaRef(receiptId)) {
+            log.debug("CoopEventNormalizer: duplicate STK mpesaRef={} — skipping", receiptId);
             return Optional.empty();
         }
 
         String phone  = normalizePhone(callback.getMobileNumber());
         BigDecimal amount = parseAmount(callback.getAmount());
-        String receiptId  = callback.getTransactionId(); // M-Pesa receipt e.g. UF5BY709I7
 
         CoopTransaction tx = CoopTransaction.builder()
-                .mpesaRef(mpesaRef)
-                .coopTransactionId(receiptId)
+                .mpesaRef(receiptId)          // Real M-Pesa receipt
+                .coopTransactionId(messageRef) // Track the MessageReference here
                 .source(CoopTransactionSource.STK_CALLBACK)
                 .transactionType("CR")
                 .amount(amount)
@@ -176,14 +177,14 @@ public class CoopEventNormalizer {
                 .transactionDate(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .valueDate(LocalDateTime.now(SaccoDateUtils.NAIROBI))
                 .senderPhone(phone)
-                .rawNarration("STK:" + (receiptId != null ? receiptId : mpesaRef))
+                .rawNarration("STK:" + receiptId)
                 .rawPayload(rawJson)
                 .build();
 
         enrichWithMember(tx, phone);
         coopTransactionRepository.save(tx);
         log.info("CoopEventNormalizer: ✅ STK stored — CR KES {} from {} ref={}",
-                amount, tx.getSenderName() != null ? tx.getSenderName() : phone, mpesaRef);
+                amount, tx.getSenderName() != null ? tx.getSenderName() : phone, receiptId);
         return Optional.of(tx);
     }
 
@@ -447,9 +448,8 @@ public class CoopEventNormalizer {
         // Try narration first (most complete)
         if (narration != null && !narration.isBlank()) {
             String[] parts = narration.split("~");
-            if (parts.length >= 3) {
-                String candidate = parts[2].trim();
-                if (candidate.matches("[0-9+]{9,15}")) return candidate;
+            for (String part : parts) {
+                if (part.trim().matches("[0-9+]{9,15}")) return part.trim();
             }
         }
         // Try CustMemoLine2 (often contains the phone when line1 is truncated)

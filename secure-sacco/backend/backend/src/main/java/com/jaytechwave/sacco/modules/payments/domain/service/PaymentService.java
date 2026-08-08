@@ -139,7 +139,18 @@ public class PaymentService {
 
         // Idempotency: one record per TransactionId
         String txId = ipn.getTransactionId();
-        if (paymentRepository.findByTransactionRef(txId).isPresent()) {
+        
+        // SAC-301: If CBS IPN includes our STK push MessageReference, skip it!
+        // We must wait for the STK Callback to get the actual M-Pesa receipt.
+        if (ipn.getMessageReference() != null) {
+            Optional<Payment> stkOpt = paymentRepository.findByInternalRef(ipn.getMessageReference());
+            if (stkOpt.isPresent() && "STK_PUSH".equals(stkOpt.get().getPaymentType())) {
+                log.info("Co-op IPN: Skipping CBS IPN for STK push (MessageRef={}). Waiting for STK Callback.", ipn.getMessageReference());
+                return;
+            }
+        }
+
+        if (txId != null && paymentRepository.findByTransactionRef(txId).isPresent()) {
             log.info("Co-op IPN: duplicate TransactionId={} — skipping", txId);
             return;
         }
@@ -215,7 +226,11 @@ public class PaymentService {
                         .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.PENDING);
                 if (!pending.isEmpty()) {
                     payment = pending.get(0);
-                    log.info("Co-op IPN: matched to pending STK payment id={} ref={}",
+                    if ("STK_PUSH".equals(payment.getPaymentType())) {
+                        log.info("Co-op IPN: Matched pending STK push via phone={}. Skipping CBS IPN to wait for STK Callback.", phone);
+                        return; // Let the stk-callback endpoint handle it to get the real M-Pesa ref
+                    }
+                    log.info("Co-op IPN: matched to pending payment id={} ref={}",
                             payment.getId(), payment.getInternalRef());
                 }
             }
@@ -285,7 +300,7 @@ public class PaymentService {
                 if (resolvedMemberId != null) {
                     String eventAccountRef = "PAYBILL-" + mpesaRef;
                     eventPublisher.publishEvent(new PaymentCompletedEvent(
-                            payment.getId(), resolvedMemberId, amount, eventAccountRef, txId
+                            payment.getId(), resolvedMemberId, amount, eventAccountRef, mpesaRef
                     ));
                 } else {
                     // No member resolved — post GL to suspense so the balance sheet stays intact.
@@ -402,7 +417,13 @@ public class PaymentService {
     private String extractPhone(String memoLine1) {
         if (memoLine1 == null) return null;
         String[] parts = memoLine1.split("~");
-        return parts.length >= 2 ? parts[1].trim() : null;
+        if (parts.length >= 2) {
+            String candidate = parts[1].trim();
+            if (candidate.matches("[0-9+]{9,15}")) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private String extractSenderName(String memoLine3) {
