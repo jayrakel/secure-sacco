@@ -35,6 +35,7 @@ public class PaymentService {
     private final SecurityAuditService      securityAuditService;
     private final CoopEventNormalizer       coopEventNormalizer;
     private final JournalEntryService       journalEntryService;
+    private final PhoneNameCacheService     phoneNameCacheService;
 
     // ── STK Push initiation ───────────────────────────────────────────────────
 
@@ -118,6 +119,13 @@ public class PaymentService {
                 if (coopTxOpt.get().getSenderName()  != null) payment.setSenderName(coopTxOpt.get().getSenderName());
                 if (coopTxOpt.get().getSenderPhone() != null) payment.setSenderPhoneNumber(coopTxOpt.get().getSenderPhone());
             }
+            
+            // If senderName is still missing (which it is for Co-op STK callbacks), try the phonebook cache!
+            if ((payment.getSenderName() == null || payment.getSenderName().isBlank()) && payment.getSenderPhoneNumber() != null) {
+                phoneNameCacheService.getName(payment.getSenderPhoneNumber())
+                        .ifPresent(payment::setSenderName);
+            }
+
             markCompleted(payment, callback.getTransactionId(), rawJson);
         } else {
             markFailed(payment, callback.getMessageDescription());
@@ -139,6 +147,23 @@ public class PaymentService {
 
         // Idempotency: one record per TransactionId
         String txId = ipn.getTransactionId();
+        
+        // ── PHONEBOOK CACHE UPDATE ───────────────────────────────────────────
+        // Passively extract name from every incoming CBS IPN narration to update our phonebook
+        // regardless of whether we skip processing this IPN or not.
+        try {
+            if (isCredit && ipn.getNarration() != null && ipn.getNarration().contains("~")) {
+                String[] parts = ipn.getNarration().split("~");
+                if (parts.length >= 5) {
+                    String cachePhone = parts[1].trim();
+                    String cacheName = parts[4].trim();
+                    phoneNameCacheService.updateCache(cachePhone, cacheName);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Co-op IPN: Failed to update PhoneNameCache: {}", e.getMessage());
+        }
+        // ─────────────────────────────────────────────────────────────────────
         
         // SAC-301: If CBS IPN includes our STK push MessageReference, skip it!
         // We must wait for the STK Callback to get the actual M-Pesa receipt.
