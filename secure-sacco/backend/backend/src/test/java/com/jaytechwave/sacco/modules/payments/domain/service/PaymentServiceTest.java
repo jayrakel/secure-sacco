@@ -34,6 +34,7 @@ class PaymentServiceTest {
     @Mock ApplicationEventPublisher eventPublisher;
     @Mock SecurityAuditService  securityAuditService;
     @Mock CoopEventNormalizer coopEventNormalizer;
+    @Mock PhoneNameCacheService phoneNameCacheService;
 
     @InjectMocks
     private PaymentService service;

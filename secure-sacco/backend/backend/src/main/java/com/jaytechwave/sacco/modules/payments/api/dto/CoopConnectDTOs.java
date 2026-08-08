@@ -142,6 +142,9 @@ public class CoopConnectDTOs {
 
     @Data
     public static class CoopIpnPayload {
+        @JsonProperty("MessageReference")
+        private String messageReference;
+
         @JsonProperty("AcctNo")
         private String acctNo;
 
