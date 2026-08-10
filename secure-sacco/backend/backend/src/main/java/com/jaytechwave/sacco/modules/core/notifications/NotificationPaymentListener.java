@@ -46,6 +46,7 @@ public class NotificationPaymentListener {
 
     @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
     @Async
+    @Transactional
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {

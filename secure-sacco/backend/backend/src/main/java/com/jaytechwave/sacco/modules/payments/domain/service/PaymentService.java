@@ -154,10 +154,13 @@ public class PaymentService {
         try {
             if (isCredit && ipn.getNarration() != null && ipn.getNarration().contains("~")) {
                 String[] parts = ipn.getNarration().split("~");
-                if (parts.length >= 5) {
-                    String cachePhone = parts[1].trim();
-                    String cacheName = parts[4].trim();
-                    phoneNameCacheService.updateCache(cachePhone, cacheName);
+                if (parts.length >= 4) { // Fallback just in case
+                    String cachePhone = parts[2].trim();
+                    // Sender name is at index 3 for manual Paybill. STK pushes don't have the name (length is 4).
+                    if (parts.length >= 5) {
+                        String cacheName = parts[3].trim(); 
+                        phoneNameCacheService.updateCache(cachePhone, cacheName);
+                    }
                 }
             }
         } catch (Exception e) {

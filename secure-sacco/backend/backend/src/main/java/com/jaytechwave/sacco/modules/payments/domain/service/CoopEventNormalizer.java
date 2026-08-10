@@ -539,13 +539,11 @@ public class CoopEventNormalizer {
             return toTitleCase(parts[4].trim());
         }
 
-        // POS agent / org: 3rd segment starts with "from" or "From:"
-        if (parts.length >= 3) {
+        // POS agent / org: 1st segment starts with POSAG, 3rd segment is the name
+        if (parts[0].trim().startsWith("POSAG") && parts.length >= 3) {
             String segment = parts[2].trim();
-            if (segment.toLowerCase().startsWith("from")) {
-                String name = segment.replaceFirst("(?i)from:?\\s+", "").trim();
-                if (!name.isBlank()) return toTitleCase(name);
-            }
+            String name = segment.replaceFirst("(?i)^from:?\\s+", "").trim();
+            if (!name.isBlank()) return toTitleCase(name);
         }
 
         return null;
