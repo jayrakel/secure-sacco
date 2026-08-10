@@ -19,6 +19,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.ZoneId;
@@ -88,6 +89,42 @@ public class NotificationPaymentListener {
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentCompletedEvent. {}", e.getMessage(), e);
+        }
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleSavingsTransactionPosted(com.jaytechwave.sacco.modules.savings.domain.event.SavingsTransactionPostedEvent event) {
+        try {
+            // We only want to send notifications for withdrawals and deductions (not deposits, because PaymentCompletedEvent already handles paybill/STK deposits)
+            if (event.type() != com.jaytechwave.sacco.modules.savings.domain.entity.TransactionType.WITHDRAWAL) {
+                return;
+            }
+
+            Optional<Member> memberOpt = memberRepository.findById(event.memberId());
+            if (memberOpt.isEmpty()) {
+                return;
+            }
+            Member member = memberOpt.get();
+
+            String phone = member.getPhoneNumber();
+            if (phone != null && !phone.isBlank()) {
+                BigDecimal balance = savingsTransactionRepository.calculateBalance(event.savingsAccountId());
+                String name = member.getFirstName();
+                if (name == null || name.isBlank()) {
+                    name = "Member";
+                }
+
+                String message = String.format(
+                        "Dear %s, a withdrawal of KES %s has been processed from your Savings Account. Ref: %s. New balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
+                        name, formatAmount(event.amount()), event.reference() != null ? event.reference() : "N/A", formatAmount(balance)
+                );
+
+                log.info("NotificationPaymentListener: Sending SMS for withdrawal to Member {} (Phone: {})", member.getMemberNumber(), phone);
+                smsNotificationService.sendNotificationSms(phone, message);
+            }
+        } catch (Exception e) {
+            log.error("NotificationPaymentListener: Failed to send SMS for SavingsTransactionPostedEvent. {}", e.getMessage(), e);
         }
     }
 
