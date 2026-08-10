@@ -68,7 +68,15 @@ public class PhoneNameCacheService {
             return Optional.empty();
         }
 
-        Optional<PhoneNameCache> cacheOpt = phoneNameCacheRepository.findByPhoneNumber(phoneNumber.trim());
+        phoneNumber = phoneNumber.trim();
+        // Normalize phone number (ensure +254 format) just like we do when saving
+        if (phoneNumber.startsWith("0")) {
+            phoneNumber = "+254" + phoneNumber.substring(1);
+        } else if (phoneNumber.startsWith("254")) {
+            phoneNumber = "+" + phoneNumber;
+        }
+
+        Optional<PhoneNameCache> cacheOpt = phoneNameCacheRepository.findByPhoneNumber(phoneNumber);
         
         if (cacheOpt.isEmpty()) {
             return Optional.empty();

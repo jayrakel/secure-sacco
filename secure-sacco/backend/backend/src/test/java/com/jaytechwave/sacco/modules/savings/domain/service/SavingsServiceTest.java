@@ -39,6 +39,7 @@ class SavingsServiceTest {
     @Mock PaymentService paymentService;
     @Mock UserRepository userRepository;
     @Mock SecurityAuditService securityAuditService;
+    @Mock org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private SavingsService service;

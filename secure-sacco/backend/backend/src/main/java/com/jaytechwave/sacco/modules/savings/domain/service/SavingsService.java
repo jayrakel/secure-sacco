@@ -37,6 +37,7 @@ public class SavingsService {
     private final PaymentService paymentService;
     private final UserRepository userRepository;
     private final SecurityAuditService securityAuditService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public SavingsTransactionResponse processManualDeposit(ManualDepositRequest request) {
@@ -243,6 +244,14 @@ public class SavingsService {
         );
 
         log.info("Processed manual CASH withdrawal of {} for member {}", request.amount(), member.getMemberNumber());
+
+        eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.savings.domain.event.SavingsTransactionPostedEvent(
+                member.getId(),
+                account.getId(),
+                transaction.getType(),
+                transaction.getAmount(),
+                transaction.getReference()
+        ));
 
         return new SavingsTransactionResponse(
                 transaction.getId(), transaction.getSavingsAccountId(),
