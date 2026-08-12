@@ -150,6 +150,30 @@ public class NotificationPaymentListener {
         }
     }
 
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleBankDebitReceived(com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent event) {
+        try {
+            String formattedAmount = formatAmount(event.amount());
+            String dateStr = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Nairobi")).format(java.time.format.DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
+            
+            String adminMessage = String.format("Dear BETTER LINK VENTURES LTD, your Co-op Bank account has been debited Ksh. %s on %s. Narration: %s. Ref: %s.",
+                    formattedAmount, dateStr, event.narration() != null ? event.narration() : "N/A", event.reference() != null ? event.reference() : "N/A");
+
+            java.util.List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
+            log.info("NotificationPaymentListener: Sending admin alerts to {} admins for bank debit {}", admins.size(), event.paymentId());
+            
+            for (User admin : admins) {
+                String adminPhone = admin.getPhoneNumber();
+                if (adminPhone != null && !adminPhone.isBlank()) {
+                    smsNotificationService.sendNotificationSms(adminPhone, adminMessage);
+                }
+            }
+        } catch (Exception e) {
+            log.error("NotificationPaymentListener: Failed to send SMS for BankDebitReceivedEvent. {}", e.getMessage(), e);
+        }
+    }
+
     private void notifyAdmins(String senderName, String senderPhone, BigDecimal amount, String mpesaRef, UUID paymentId) {
         String formattedAmount = formatAmount(amount);
         String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));

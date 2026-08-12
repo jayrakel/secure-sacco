@@ -59,6 +59,9 @@ public class PaymentService {
         if (coopResponse == null) {
             throw new RuntimeException("Co-op Connect returned no response to STK Push");
         }
+        if (coopResponse.getMessageCode() == null) {
+            throw new RuntimeException("Co-op Connect returned an empty or invalid STK push response. Please ensure the phone number is correct.");
+        }
         if (!"0".equals(coopResponse.getMessageCode())) {
             throw new RuntimeException("Co-op STK Push failed: " + coopResponse.getMessageDescription());
         }
@@ -380,6 +383,10 @@ public class PaymentService {
                     "Co-op IPN debit KES " + amount + ". Narration: "
                             + ipn.getNarration() + ". TxId: " + txId
             );
+
+            eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent(
+                    payment.getId(), amount, ipn.getNarration(), txId
+            ));
         }
     }
 
@@ -439,6 +446,7 @@ public class PaymentService {
         String phone = raw.replaceAll("\\s+", "");
         if (phone.startsWith("+"))  return phone.substring(1);
         if (phone.startsWith("0"))  return "254" + phone.substring(1);
+        if (phone.matches("^[71][0-9]{8}$")) return "254" + phone;
         return phone;
     }
 
