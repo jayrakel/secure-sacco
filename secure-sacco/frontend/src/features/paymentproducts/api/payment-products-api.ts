@@ -1,6 +1,7 @@
 import apiClient from '../../../shared/api/api-client';
 
 export type ModuleType = 'SAVINGS' | 'PENALTY' | 'LOAN' | 'CUSTOM';
+export type ProductFrequency = 'ONE_OFF' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
 export interface PaymentProduct {
     id: string;
@@ -15,6 +16,7 @@ export interface PaymentProduct {
     isSystem: boolean;
     displayOrder: number;
     requiredAmount: number | null; // per-member target, e.g. "KES 2,000 each". Null = uncapped.
+    frequency: ProductFrequency;
     createdAt: string;
 }
 
@@ -102,6 +104,7 @@ export const paymentProductsApi = {
         glAccountId: string;
         displayOrder?: number;
         requiredAmount?: number;
+        frequency?: ProductFrequency;
     }): Promise<PaymentProduct> => {
         const res = await apiClient.post('/payment-products', data);
         return res.data;
@@ -115,6 +118,7 @@ export const paymentProductsApi = {
         displayOrder?: number;
         requiredAmount?: number;
         clearRequiredAmount?: boolean;
+        frequency?: ProductFrequency;
     }): Promise<PaymentProduct> => {
         const res = await apiClient.put(`/payment-products/${id}`, data);
         return res.data;
