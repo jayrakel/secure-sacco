@@ -35,12 +35,25 @@ public interface DepositAllocationRepository extends JpaRepository<DepositAlloca
            """)
     BigDecimal sumRoutedAmountByProductAndMember(@Param("productId") UUID productId, @Param("memberId") UUID memberId);
 
+    @Query("""
+            SELECT COALESCE(SUM(da.amount), 0)
+            FROM DepositAllocation da
+            WHERE da.product.id = :productId
+              AND da.status = 'ROUTED'
+           """)
+    BigDecimal sumRoutedAmountByProduct(@Param("productId") UUID productId);
+
     /**
      * SAC-263: powers the "smart tab" — every product (especially CUSTOM ones like
      * "Meat Contribution") automatically gets a transaction history view with no new
      * code required per product, since this query is generic over productId.
      */
     Page<DepositAllocation> findByProductIdOrderByCreatedAtDesc(UUID productId, Pageable pageable);
+
+    /**
+     * Used by the "smart tab" for members to view their specific transactions.
+     */
+    Page<DepositAllocation> findByProductIdAndPaymentMemberIdOrderByCreatedAtDesc(UUID productId, UUID memberId, Pageable pageable);
 
     /** Unpaginated variant for statement export (CSV/PDF) — full history, not just one page. */
     List<DepositAllocation> findByProductIdOrderByCreatedAtAsc(UUID productId);
