@@ -46,12 +46,13 @@ interface FormState {
     name: string;
     code: string;
     description: string;
+    moduleType: ModuleType;
     glAccountId: string;
     requiredAmount: string; // kept as string for the input; parsed to number on submit
     frequency: ProductFrequency;
 }
 
-const emptyForm: FormState = { name: '', code: '', description: '', glAccountId: '', requiredAmount: '', frequency: 'ONE_OFF' };
+const emptyForm: FormState = { name: '', code: '', description: '', moduleType: 'CUSTOM', glAccountId: '', requiredAmount: '', frequency: 'ONE_OFF' };
 
 /**
  * SAC-263: the "smart tab" — for ANY product (including a brand-new custom one an
@@ -222,7 +223,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                 name: form.name,
                 code: form.code,
                 description: form.description || undefined,
-                moduleType: 'CUSTOM',
+                moduleType: form.moduleType,
                 glAccountId: form.glAccountId,
                 requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
                 frequency: form.frequency,
@@ -324,6 +325,22 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                             placeholder="Shown to members on the allocation screen"
                             className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm"
                         />
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-medium text-slate-500">Module Type (System Behavior)</label>
+                        <select
+                            value={form.moduleType}
+                            onChange={e => setForm({ ...form, moduleType: e.target.value as ModuleType })}
+                            className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm"
+                        >
+                            {Object.entries(MODULE_LABELS).map(([key, label]) => (
+                                <option key={key} value={key}>{label}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-slate-400 mt-1">
+                            Determines how the backend logic handles this product (e.g. Dividend processing).
+                        </p>
                     </div>
 
                     <div>
