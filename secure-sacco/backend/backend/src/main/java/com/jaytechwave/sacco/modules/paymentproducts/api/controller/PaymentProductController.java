@@ -28,6 +28,7 @@ import java.util.UUID;
 public class PaymentProductController {
 
     private final PaymentProductService productService;
+    private final com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository memberRepository;
 
     @Operation(summary = "List all payment products (admin)")
     @GetMapping
@@ -74,6 +75,26 @@ public class PaymentProductController {
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(productService.getProductTransactions(id, pageable));
+    }
+
+    @Operation(summary = "Member view: paginated transaction history for a product")
+    @GetMapping("/{id}/my-transactions")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ProductTransactionPage> getMyTransactions(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            org.springframework.security.core.Authentication authentication) {
+        
+        com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService.CustomUserDetails userDetails = 
+                (com.jaytechwave.sacco.modules.core.security.CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
+        
+        UUID memberId = memberRepository.findByUserId(userDetails.getId())
+                .orElseThrow(() -> new IllegalStateException("No member linked to this account"))
+                .getId();
+                
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(productService.getMyProductTransactions(id, memberId, pageable));
     }
 
     @Operation(summary = "SAC-263: downloadable standalone statement (CSV) for a single product's full history")

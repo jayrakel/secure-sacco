@@ -17,11 +17,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.security.SecureRandom;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -38,6 +38,7 @@ public class MeetingService {
     private final UserRepository userRepository;
     private final SecurityAuditService securityAuditService;
     private final MeetingPenaltyService meetingPenaltyService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<MeetingSummaryResponse> listAllMeetings(Pageable pageable) {
@@ -109,6 +110,8 @@ public class MeetingService {
                 "MEETING-" + saved.getId(),
                 "Meeting scheduled: '" + saved.getTitle() + "' on " + saved.getStartAt()
         );
+
+        eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.meetings.domain.event.MeetingCreatedEvent(saved.getId()));
 
         log.info("Meeting created [{}] by {}", saved.getId(), creatorEmail);
         return toSummary(saved);

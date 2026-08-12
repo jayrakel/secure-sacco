@@ -137,10 +137,23 @@ public class PaymentProductService {
         Page<DepositAllocation> page = allocationRepository.findByProductIdOrderByCreatedAtDesc(productId, pageable);
         List<ProductTransactionItem> items = toTransactionItems(page.getContent());
 
-        BigDecimal totalAmount = page.getContent().stream()
-                .filter(a -> a.getStatus().name().equals("ROUTED"))
-                .map(DepositAllocation::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalAmount = allocationRepository.sumRoutedAmountByProduct(productId);
+
+        return new ProductTransactionPage(
+                items, page.getTotalElements(), page.getTotalPages(),
+                page.getNumber(), page.getSize(), totalAmount
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ProductTransactionPage getMyProductTransactions(UUID productId, UUID memberId, Pageable pageable) {
+        productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
+
+        Page<DepositAllocation> page = allocationRepository.findByProductIdAndPaymentMemberIdOrderByCreatedAtDesc(productId, memberId, pageable);
+        List<ProductTransactionItem> items = toTransactionItems(page.getContent());
+
+        BigDecimal totalAmount = allocationRepository.sumRoutedAmountByProductAndMember(productId, memberId);
 
         return new ProductTransactionPage(
                 items, page.getTotalElements(), page.getTotalPages(),

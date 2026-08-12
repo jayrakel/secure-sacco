@@ -6,7 +6,8 @@ import {
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
     ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe, Wallet, HandCoins,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { paymentProductsApi } from '../../features/paymentproducts/api/payment-products-api';
 
 interface NavItem {
     label: string;
@@ -121,6 +122,36 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             ],
         },
     ];
+
+    const [customProducts, setCustomProducts] = useState<NavItem[]>([]);
+
+    useEffect(() => {
+        if (!user) return;
+        const fetchProducts = async () => {
+            try {
+                const products = isStaff 
+                    ? await paymentProductsApi.getAll() 
+                    : await paymentProductsApi.getActive();
+                
+                const customItems = products
+                    .filter(p => !p.isSystem)
+                    .map(p => ({
+                        label: p.name,
+                        path: `/products/${p.id}`,
+                        icon: Wallet
+                    }));
+                setCustomProducts(customItems);
+            } catch (err) {
+                console.error('Failed to load custom products for sidebar', err);
+            }
+        };
+        fetchProducts();
+    }, [user, isStaff]);
+
+    if (customProducts.length > 0) {
+        staffSections[2].items.push(...customProducts);
+        memberSections[1].items.push(...customProducts);
+    }
 
     const activeSections = isStaff ? staffSections : memberSections;
     const isSystemAdmin = user?.roles?.includes('ROLE_SYSTEM_ADMIN');

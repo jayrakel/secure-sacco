@@ -124,10 +124,18 @@ export const paymentProductsApi = {
         await apiClient.delete(`/payment-products/${id}`);
     },
 
-    // SAC-263: the "smart tab" data source — works for any product automatically.
-    getTransactions: async (productId: string, page = 0, size = 20): Promise<ProductTransactionPage> => {
-        const res = await apiClient.get(`/payment-products/${productId}/transactions`, {
-            params: { page, size },
+    // ── Staff ───────────────────────────────────────────────────────────────
+    getTransactions: async (id: string, page = 0, size = 20): Promise<ProductTransactionPage> => {
+        const res = await apiClient.get(`/payment-products/${id}/transactions`, {
+            params: { page, size }
+        });
+        return res.data;
+    },
+
+    // ── Member ──────────────────────────────────────────────────────────────
+    getMyTransactions: async (id: string, page = 0, size = 20): Promise<ProductTransactionPage> => {
+        const res = await apiClient.get(`/payment-products/${id}/my-transactions`, {
+            params: { page, size }
         });
         return res.data;
     },

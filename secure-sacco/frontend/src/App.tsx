@@ -57,6 +57,7 @@ import StaffAssetsPage from './features/assets/pages/StaffAssetsPage';
 import LoanProductsPage from './features/loans/pages/LoanProductsPage';
 import LandingPage from './features/public/pages/LandingPage';
 import SecretaryPortalPage from './features/public/pages/SecretaryPortalPage';
+import { ProductSmartTabPage } from './features/paymentproducts/pages/ProductSmartTabPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -159,6 +160,13 @@ function App() {
                                 <Route path="/dashboard" element={
                                     <ProtectedRoute>
                                         <DashboardRouter />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Dynamic Product Tab Route (SAC-263) */}
+                                <Route path="/products/:productId" element={
+                                    <ProtectedRoute>
+                                        <ProductSmartTabPage />
                                     </ProtectedRoute>
                                 } />
 
