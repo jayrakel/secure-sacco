@@ -13,6 +13,8 @@ const MODULE_LABELS: Record<ModuleType, string> = {
     SAVINGS: 'Savings',
     PENALTY: 'Penalty',
     LOAN: 'Loan',
+    SHARE_CAPITAL: 'Share Capital',
+    DEPOSIT_SHARES: 'Deposit Shares',
     CUSTOM: 'Custom',
 };
 
@@ -27,6 +29,8 @@ const MODULE_COLORS: Record<ModuleType, string> = {
     SAVINGS: 'bg-emerald-100 text-emerald-700',
     PENALTY: 'bg-red-100 text-red-700',
     LOAN: 'bg-blue-100 text-blue-700',
+    SHARE_CAPITAL: 'bg-indigo-100 text-indigo-700',
+    DEPOSIT_SHARES: 'bg-cyan-100 text-cyan-700',
     CUSTOM: 'bg-purple-100 text-purple-700',
 };
 

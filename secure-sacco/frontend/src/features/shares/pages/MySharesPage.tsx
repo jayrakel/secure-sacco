@@ -90,26 +90,46 @@ export default function MySharesPage() {
         <div className="p-8 max-w-7xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">My Shares</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {accounts.map(account => (
-                    <div 
-                        key={account.id} 
-                        onClick={() => setSelectedAccount(account.id)}
-                        className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${selectedAccount === account.id ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300'}`}
-                    >
-                        <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">{account.product.name}</h3>
-                        <div className="text-3xl font-bold text-gray-900">
-                            KES {account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {accounts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {accounts.map(account => (
+                        <div 
+                            key={account.id} 
+                            onClick={() => setSelectedAccount(account.id)}
+                            className={`bg-white rounded-xl shadow-sm border p-6 cursor-pointer transition-all ${selectedAccount === account.id ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200 hover:border-blue-300'}`}
+                        >
+                            <h3 className="text-gray-500 text-sm font-medium uppercase tracking-wider mb-2">{account.product.name}</h3>
+                            <div className="text-3xl font-bold text-gray-900">
+                                KES {account.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                            <div className="mt-4 flex items-center justify-between text-sm">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${account.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                                    {account.status}
+                                </span>
+                                <span className="text-gray-500">Since {new Date(account.createdAt).toLocaleDateString()}</span>
+                            </div>
                         </div>
-                        <div className="mt-4 flex items-center justify-between text-sm">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${account.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                                {account.status}
-                            </span>
-                            <span className="text-gray-500">Since {new Date(account.createdAt).toLocaleDateString()}</span>
-                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center mb-8">
+                    <div className="mx-auto h-12 w-12 text-gray-400 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                     </div>
-                ))}
-            </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Share Accounts Found</h3>
+                    <p className="text-gray-500 max-w-sm mx-auto">
+                        You currently do not own any shares in the Sacco. Share accounts are automatically created when you make your first share purchase or when dividends are distributed.
+                    </p>
+                    <button 
+                        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+                        onClick={() => alert("Purchasing shares is not yet enabled for this account.")}
+                    >
+                        Purchase Shares
+                    </button>
+                </div>
+            )}
 
             {selectedAccount && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

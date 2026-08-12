@@ -1,6 +1,6 @@
 import apiClient from '../../../shared/api/api-client';
 
-export type ModuleType = 'SAVINGS' | 'PENALTY' | 'LOAN' | 'CUSTOM';
+export type ModuleType = 'SAVINGS' | 'PENALTY' | 'LOAN' | 'SHARE_CAPITAL' | 'DEPOSIT_SHARES' | 'CUSTOM';
 export type ProductFrequency = 'ONE_OFF' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
 export interface PaymentProduct {
