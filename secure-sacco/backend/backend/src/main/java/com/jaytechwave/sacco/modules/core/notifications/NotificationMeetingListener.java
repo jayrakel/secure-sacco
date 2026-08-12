@@ -6,6 +6,8 @@ import com.jaytechwave.sacco.modules.meetings.domain.repository.MeetingRepositor
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.users.domain.entity.User;
+import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -26,6 +29,7 @@ public class NotificationMeetingListener {
     private final SmsNotificationService smsNotificationService;
     private final MemberRepository memberRepository;
     private final MeetingRepository meetingRepository;
+    private final UserRepository userRepository;
 
     @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
     @Async
@@ -40,58 +44,9 @@ public class NotificationMeetingListener {
             return;
         }
 
-        List<Member> activeMembers = memberRepository.findByStatus(MemberStatus.ACTIVE);
-        if (activeMembers.isEmpty()) {
-            log.info("No ACTIVE members to notify for meeting: {}", meeting.getId());
-            return;
-        }
-
-        String meetingTypeStr = meeting.getMeetingType() != null ? meeting.getMeetingType().name() : "GENERAL";
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
-
-        String formattedDate = meeting.getStartAt().format(dateFormatter);
-        String formattedTime = meeting.getStartAt().format(timeFormatter);
-
-        // Calculate available space for title.
-        // SMS Format: Dear {firstName}, {type} meeting '{title}' on {date} {time}. Please attend.
-        // We will process the title per member to ensure it doesn't exceed 158 chars.
-
-        for (Member member : activeMembers) {
-            if (member.getPhoneNumber() == null || member.getPhoneNumber().isBlank()) {
-                continue;
-            }
-
-            String firstName = member.getFirstName();
-            if (firstName == null || firstName.isBlank()) {
-                firstName = "Member";
-            }
-
-            String baseMessage = String.format("Dear %s, %s meeting '' on %s %s. Please attend.", 
-                    firstName, meetingTypeStr, formattedDate, formattedTime);
-
-            int allowedTitleLength = 158 - baseMessage.length();
-            String title = meeting.getTitle();
-            
-            if (allowedTitleLength < 5) {
-                // In an extreme case where firstName is extremely long, fallback to generic
-                baseMessage = String.format("Dear Member, %s meeting '' on %s %s. Please attend.", 
-                        meetingTypeStr, formattedDate, formattedTime);
-                allowedTitleLength = 158 - baseMessage.length();
-            }
-
-            if (title != null && title.length() > allowedTitleLength) {
-                title = title.substring(0, allowedTitleLength - 3) + "...";
-            } else if (title == null) {
-                title = "Meeting";
-            }
-
-            String finalMessage = String.format("Dear %s, %s meeting '%s' on %s %s. Please attend.", 
-                    firstName, meetingTypeStr, title, formattedDate, formattedTime);
-
-            smsNotificationService.sendNotificationSms(member.getPhoneNumber(), finalMessage);
-        }
-
-        log.info("Finished dispatching {} SMS notifications for Meeting {}", activeMembers.size(), meeting.getId());
+        // We no longer send SMS notifications immediately here.
+        // Instead, the MeetingNotificationJob will handle sending reminders
+        // 24 hours before the meeting starts.
+        log.info("Meeting {} scheduled. Notifications will be handled by MeetingNotificationJob.", meeting.getId());
     }
 }

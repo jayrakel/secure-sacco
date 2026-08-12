@@ -53,6 +53,10 @@ public class Meeting {
     @Builder.Default
     private boolean attendanceSeeded = false;
 
+    @Column(name = "notification_sent", nullable = false)
+    @Builder.Default
+    private boolean notificationSent = false;
+
     @Column(name = "created_by_user_id")
     private UUID createdByUserId;
 

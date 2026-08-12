@@ -65,4 +65,16 @@ public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
     List<Meeting> findScheduledWithNoEndAtBefore(
             @Param("status") MeetingStatus status,
             @Param("cutoff") LocalDateTime cutoff);
+
+    // ── Used by MeetingNotificationJob ────────────────────────────────────────
+
+    @Query("""
+            SELECT m FROM Meeting m
+            WHERE m.status = :status
+              AND m.startAt <= :cutoff
+              AND m.notificationSent = false
+            """)
+    List<Meeting> findMeetingsForNotification(
+            @Param("status") MeetingStatus status,
+            @Param("cutoff") LocalDateTime cutoff);
 }

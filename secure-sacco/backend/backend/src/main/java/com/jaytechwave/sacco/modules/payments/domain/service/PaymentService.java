@@ -263,6 +263,36 @@ public class PaymentService {
                     }
                     log.info("Co-op IPN: matched to pending payment id={} ref={}",
                             payment.getId(), payment.getInternalRef());
+                } else {
+                    // SAC-266: PendingPaymentPollingJob may have already marked the STK push as COMPLETED
+                    // before the IPN arrives, but it set the mpesaRef to the internal MessageReference (20 chars).
+                    // We must match it here and update the real M-Pesa receipt to prevent a duplicate PAYBILL_DEPOSIT.
+                    List<Payment> completed = paymentRepository
+                            .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.COMPLETED);
+                    for (Payment p : completed) {
+                        if ("STK_PUSH".equals(p.getPaymentType()) &&
+                            p.getAmount().compareTo(amount) == 0 &&
+                            p.getMpesaRef() != null &&
+                            p.getMpesaRef().equals(p.getInternalRef()) &&
+                            p.getCreatedAt().isAfter(java.time.ZonedDateTime.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI).minusMinutes(15))) {
+
+                            log.info("Co-op IPN: Matched completed STK push (id={}) that has a MessageReference instead of M-Pesa receipt. Updating mpesaRef to {}. Skipping IPN duplicate.", p.getId(), mpesaRef);
+                            
+                            p.setMpesaRef(mpesaRef);
+                            p.setTransactionRef(txId);
+                            paymentRepository.save(p);
+                            
+                            // Mark the CoopTransaction as credited so it doesn't get picked up by re-enrich
+                            coopTxOpt.ifPresent(ct -> {
+                                if (!ct.isSavingsCredited()) {
+                                    coopEventNormalizer.markSavingsCredited(ct.getId());
+                                }
+                            });
+                            
+                            // Do NOT emit a new PaymentCompletedEvent or continue processing below
+                            return;
+                        }
+                    }
                 }
             }
 
