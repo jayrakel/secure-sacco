@@ -70,7 +70,7 @@ public class ObligationPeriodService {
         LocalDateTime dl   = savingsDeadlineFor(today);
         int newOverdue     = 0;
 
-        LocalDate cursor = obligation.getStartDate();
+        LocalDate cursor = alignToPeriodStart(obligation.getFrequency(), obligation.getStartDate());
         while (!cursor.isAfter(today)) {
             LocalDate end = periodEndFor(obligation.getFrequency(), cursor);
             if (evaluatePeriodAt(obligation, cursor, end, today, dl)) newOverdue++;
@@ -180,6 +180,17 @@ public class ObligationPeriodService {
         return false;
     }
 
+    private LocalDate alignToPeriodStart(ObligationFrequency freq, LocalDate date) {
+        if (freq == ObligationFrequency.MONTHLY) {
+            return date.withDayOfMonth(1);
+        } else {
+            if (date.getDayOfWeek() == DayOfWeek.FRIDAY) {
+                return date.plusDays(1); // Friday falls into the upcoming Saturday period
+            }
+            return date.with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.SATURDAY));
+        }
+    }
+
     private LocalDate periodEndFor(ObligationFrequency freq, LocalDate start) {
         // WEEKLY: period runs Saturday → Thursday (savings day).
         // Saturday (day 0) + 5 days = Thursday.
@@ -193,27 +204,16 @@ public class ObligationPeriodService {
     }
 
     LocalDate currentPeriodStart(SavingsObligation obligation, LocalDate today) {
-        LocalDate start = obligation.getStartDate();
+        LocalDate start = alignToPeriodStart(obligation.getFrequency(), obligation.getStartDate());
+        if (today.isBefore(start)) return start;
 
-        if (obligation.getFrequency() == ObligationFrequency.MONTHLY) {
-            if (today.isBefore(start)) return start;
-            long months   = ChronoUnit.MONTHS.between(start, today);
-            LocalDate calc = start.plusMonths(months);
-            return calc.isAfter(today) ? calc.minusMonths(1) : calc;
-        } else {
-            // WEEKLY: start = savings day (Thursday = period end).
-            // Period runs Sat (start-5) → Thu (start).
-            // Return the Saturday of the period containing today.
-            LocalDate firstPeriodStart = start.minusDays(5); // first Saturday
-            if (today.isBefore(firstPeriodStart)) return firstPeriodStart; // not started yet
-
-            long weeks   = ChronoUnit.WEEKS.between(start, today);
-            LocalDate cursor = start.plusWeeks(weeks); // candidate Thursday
-            // If today is before the period's Saturday, step back one week
-            if (today.isBefore(cursor.minusDays(5))) cursor = cursor.minusWeeks(1);
-            // If today is after the Thursday, step forward one week
-            if (today.isAfter(cursor)) cursor = cursor.plusWeeks(1);
-            return cursor.minusDays(5); // Saturday = period start stored in DB
+        LocalDate cursor = start;
+        while (true) {
+            LocalDate next = nextPeriodStart(obligation.getFrequency(), cursor);
+            if (next.isAfter(today)) {
+                return cursor;
+            }
+            cursor = next;
         }
     }
 

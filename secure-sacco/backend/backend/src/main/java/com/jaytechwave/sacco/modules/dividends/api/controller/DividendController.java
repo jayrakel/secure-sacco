@@ -18,13 +18,13 @@ public class DividendController {
     private final DividendService dividendService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DIVIDENDS_READ')")
     public ResponseEntity<List<DividendDeclaration>> getAllDeclarations() {
         return ResponseEntity.ok(dividendService.getAllDeclarations());
     }
 
     @PostMapping("/declare")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('DIVIDENDS_MANAGE')")
     public ResponseEntity<DividendDeclaration> declareDividend(
             @RequestBody DeclareDividendRequest request) {
         return ResponseEntity.ok(dividendService.declareDividend(request.getFinancialYear(), request.getRatePercentage()));
