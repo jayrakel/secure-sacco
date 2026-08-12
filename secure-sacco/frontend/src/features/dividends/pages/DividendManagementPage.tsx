@@ -141,76 +141,91 @@ export default function DividendManagementPage() {
             </div>
 
             {showDeclareModal && (
-                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowDeclareModal(false)}></div>
-                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                            <form onSubmit={handleDeclare}>
-                                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                    <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-50 overflow-y-auto">
+                    <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                        <form onSubmit={handleDeclare}>
+                            <div className="px-6 pt-6 pb-4">
+                                <div className="flex justify-between items-center mb-5">
+                                    <h3 className="text-xl font-bold text-gray-900" id="modal-title">
                                         Declare Dividend
                                     </h3>
-                                    
-                                    {declareError && (
-                                        <div className="mb-4 bg-red-50 text-red-700 p-3 rounded text-sm border border-red-200">
-                                            {declareError}
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Financial Year</label>
-                                            <input 
-                                                type="number" 
-                                                required
-                                                min={2000}
-                                                max={2100}
-                                                value={financialYear}
-                                                onChange={e => setFinancialYear(parseInt(e.target.value))}
-                                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border" 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">Dividend Rate (%)</label>
-                                            <input 
-                                                type="number" 
-                                                required
-                                                step="0.01"
-                                                min={0.01}
-                                                max={100}
-                                                value={ratePercentage}
-                                                onChange={e => setRatePercentage(parseFloat(e.target.value))}
-                                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 border" 
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">Calculated on members' Share Capital</p>
-                                        </div>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowDeclareModal(false)}
+                                        className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                {declareError && (
+                                    <div className="mb-5 bg-red-50 text-red-700 p-3 rounded-lg text-sm border border-red-200 flex items-start">
+                                        <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                                        {declareError}
                                     </div>
-                                    
-                                    <div className="mt-4 bg-yellow-50 p-3 border border-yellow-200 rounded-md">
-                                        <p className="text-sm text-yellow-800">
-                                            <strong>Warning:</strong> Declaring a dividend will immediately calculate payouts for all eligible share accounts and credit their Deposit Shares. This action cannot be easily undone.
+                                )}
+
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Financial Year</label>
+                                        <input 
+                                            type="number" 
+                                            required
+                                            min={2000}
+                                            max={2100}
+                                            value={financialYear}
+                                            onChange={e => setFinancialYear(parseInt(e.target.value))}
+                                            className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Dividend Rate (%)</label>
+                                        <input 
+                                            type="number" 
+                                            required
+                                            step="0.01"
+                                            min={0.01}
+                                            max={100}
+                                            value={ratePercentage}
+                                            onChange={e => setRatePercentage(parseFloat(e.target.value))}
+                                            className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border" 
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1.5 flex items-center">
+                                            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            Calculated on members' Share Capital
                                         </p>
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDeclareModal(false)}
-                                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={isDeclaring}
-                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none disabled:opacity-50 sm:w-auto sm:text-sm"
-                                    >
-                                        {isDeclaring ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm & Distribute'}
-                                    </button>
+                                
+                                <div className="mt-6 bg-yellow-50 p-4 border border-yellow-200 rounded-lg flex items-start">
+                                    <svg className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <p className="text-sm text-yellow-800 leading-relaxed">
+                                        <strong>Warning:</strong> Declaring a dividend will immediately calculate payouts for all eligible share accounts and credit their Deposit Shares. This action cannot be undone.
+                                    </p>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
+                            <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeclareModal(false)}
+                                    className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isDeclaring}
+                                    className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 border border-transparent rounded-lg text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                                >
+                                    {isDeclaring && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                    {isDeclaring ? 'Distributing...' : 'Confirm & Distribute'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
