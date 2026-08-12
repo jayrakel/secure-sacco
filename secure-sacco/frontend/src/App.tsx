@@ -45,6 +45,7 @@ import MeetingCheckInPage from './features/meetings/pages/MeetingCheckInPage';
 import MyMeetingsPage from './features/meetings/pages/MyMeetingsPage';
 import ObligationsCompliancePage from './features/obligations/pages/ObligationsCompliancePage';
 import AuditLogPage from './features/audit/pages/AuditLogPage';
+import SmsLogPage from './features/audit/pages/SmsLogPage';
 import StaffPenaltiesPage from './features/penalties/pages/StaffPenaltiesPage';
 import PermissionsRegistryPage from './features/users/pages/PermissionsRegistryPage';
 import MigrationPage from './features/migration/pages/MigrationPage';
@@ -362,6 +363,12 @@ function App() {
                                 <Route path="/audit/logs" element={
                                     <ProtectedRoute requiredPermissions={['AUDIT_LOG_READ']}>
                                         <AuditLogPage />
+                                    </ProtectedRoute>
+                                } />
+                                
+                                <Route path="/audit/sms-logs" element={
+                                    <ProtectedRoute requiredPermissions={['AUDIT_LOG_READ']}>
+                                        <SmsLogPage />
                                     </ProtectedRoute>
                                 } />
 

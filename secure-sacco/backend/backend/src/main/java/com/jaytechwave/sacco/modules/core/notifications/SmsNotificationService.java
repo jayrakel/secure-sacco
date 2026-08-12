@@ -1,10 +1,15 @@
 package com.jaytechwave.sacco.modules.core.notifications;
 
+import com.jaytechwave.sacco.modules.core.notifications.domain.entity.SmsLog;
+import com.jaytechwave.sacco.modules.core.notifications.domain.repository.SmsLogRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,7 +17,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 /**
  * Sends SMS messages via Africa's Talking using a robust raw HTTP
@@ -27,7 +31,10 @@ import java.util.Base64;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SmsNotificationService {
+
+    private final SmsLogRepository smsLogRepository;
 
     @Value("${africastalking.username:sandbox}")
     private String username;
@@ -74,24 +81,53 @@ public class SmsNotificationService {
      * Sends a custom notification SMS to the given phone number.
      */
     @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendNotificationSms(String phoneNumber, String message) {
-        if (apiKey == null || apiKey.isBlank()) {
-            log.warn("SmsNotificationService: API key not set — skipping SMS to {}", phoneNumber);
-            return;
-        }
-
         String normalized = normalizePhone(phoneNumber);
         if (normalized == null) {
             log.error("SmsNotificationService: Cannot send SMS — invalid phone number: {}", phoneNumber);
             return;
         }
 
+        SmsLog smsLog = SmsLog.builder()
+                .phoneNumber(normalized)
+                .message(message)
+                .status(SmsLog.SmsLogStatus.PENDING)
+                .build();
+        smsLog = smsLogRepository.save(smsLog);
+
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("SmsNotificationService: API key not set — skipping SMS to {}", phoneNumber);
+            smsLog.setStatus(SmsLog.SmsLogStatus.FAILED);
+            smsLog.setProviderResponse("API key not set");
+            smsLogRepository.save(smsLog);
+            return;
+        }
+
+        executeSend(smsLog);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void retryFailedSms(SmsLog smsLog) {
+        if (smsLog.getStatus() != SmsLog.SmsLogStatus.FAILED) {
+            return; // Only retry failed SMS
+        }
+        
+        log.info("SmsNotificationService: Retrying failed SMS to {}", smsLog.getPhoneNumber());
+        smsLog.setStatus(SmsLog.SmsLogStatus.PENDING);
+        smsLog.setProviderResponse(null);
+        smsLog = smsLogRepository.save(smsLog);
+        
+        executeSend(smsLog);
+    }
+
+    private void executeSend(SmsLog smsLog) {
         try {
-            log.info("SmsNotificationService: Sending SMS to {}...", normalized);
+            log.info("SmsNotificationService: Sending SMS to {}...", smsLog.getPhoneNumber());
 
             String postData = "username=" + java.net.URLEncoder.encode(username, StandardCharsets.UTF_8) +
-                    "&to=" + java.net.URLEncoder.encode(normalized, StandardCharsets.UTF_8) +
-                    "&message=" + java.net.URLEncoder.encode(message, StandardCharsets.UTF_8);
+                    "&to=" + java.net.URLEncoder.encode(smsLog.getPhoneNumber(), StandardCharsets.UTF_8) +
+                    "&message=" + java.net.URLEncoder.encode(smsLog.getMessage(), StandardCharsets.UTF_8);
 
             if (senderId != null && !senderId.isBlank()) {
                 postData += "&from=" + java.net.URLEncoder.encode(senderId, StandardCharsets.UTF_8);
@@ -109,9 +145,6 @@ public class SmsNotificationService {
             conn.setReadTimeout(5000);
 
             // Authentication
-            // Africa's talking uses ApiKey as a header OR Basic auth depending on the
-            // endpoint.
-            // The standard way for /version1/messaging is the apiKey header:
             conn.setRequestProperty("apiKey", apiKey);
 
             try (OutputStream os = conn.getOutputStream()) {
@@ -121,7 +154,6 @@ public class SmsNotificationService {
             int responseCode = conn.getResponseCode();
             StringBuilder response = new StringBuilder();
 
-            // Read response whether it's 200 OK or 400 Bad Request
             try (BufferedReader br = new BufferedReader(new InputStreamReader(
                     responseCode < 400 ? conn.getInputStream() : conn.getErrorStream()))) {
                 String line;
@@ -129,20 +161,44 @@ public class SmsNotificationService {
                     response.append(line);
                 }
             }
+            
+            String responseStr = response.toString();
+            smsLog.setProviderResponse(responseStr);
 
             if (responseCode == 200 || responseCode == 201) {
                 log.info("SmsNotificationService: SMS sent to {} — status={} AT_Response={}",
-                        normalized, responseCode, response.toString());
+                        smsLog.getPhoneNumber(), responseCode, responseStr);
+                smsLog.setStatus(SmsLog.SmsLogStatus.SENT);
+                
+                // Attempt to extract cost if it's in the response
+                if (responseStr.contains("Total Cost: ")) {
+                    try {
+                        String costPart = responseStr.substring(responseStr.indexOf("Total Cost: ") + 12);
+                        if (costPart.contains("\"")) {
+                            costPart = costPart.substring(0, costPart.indexOf("\""));
+                        }
+                        smsLog.setCost(costPart);
+                    } catch (Exception e) {
+                        // ignore parsing error
+                    }
+                }
             } else {
                 log.error("SmsNotificationService: Failed to send SMS to {}. HTTP {} Response: {}",
-                        normalized, responseCode, response.toString());
+                        smsLog.getPhoneNumber(), responseCode, responseStr);
+                smsLog.setStatus(SmsLog.SmsLogStatus.FAILED);
             }
 
         } catch (java.net.SocketTimeoutException e) {
-            log.error("SmsNotificationService: Timeout while sending SMS to {}: {}", normalized, e.getMessage());
+            log.error("SmsNotificationService: Timeout while sending SMS to {}: {}", smsLog.getPhoneNumber(), e.getMessage());
+            smsLog.setStatus(SmsLog.SmsLogStatus.FAILED);
+            smsLog.setProviderResponse("Connection Timeout: " + e.getMessage());
         } catch (Exception e) {
-            log.error("SmsNotificationService: Failed to send SMS to {}: {}", normalized, e.getMessage(), e);
+            log.error("SmsNotificationService: Failed to send SMS to {}: {}", smsLog.getPhoneNumber(), e.getMessage(), e);
+            smsLog.setStatus(SmsLog.SmsLogStatus.FAILED);
+            smsLog.setProviderResponse("Exception: " + e.getMessage());
         }
+        
+        smsLogRepository.save(smsLog);
     }
 
     private String normalizePhone(String raw) {

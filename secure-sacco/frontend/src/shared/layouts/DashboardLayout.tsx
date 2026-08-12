@@ -35,6 +35,7 @@ const PAGE_LABELS: Record<string, string> = {
     '/accounting/journals':        'Journal Entries',
     '/accounting/trial-balance':   'GL Trial Balance',
     '/audit/logs':                 'Security Audit Log',
+    '/audit/sms-logs':             'SMS Delivery Logs',
     '/security':                   'Security Settings',
     '/settings':                   'Platform Settings',
     '/admin/time-machine':            'System Time Machine',
