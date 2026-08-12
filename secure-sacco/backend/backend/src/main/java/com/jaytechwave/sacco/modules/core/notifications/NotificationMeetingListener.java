@@ -8,7 +8,7 @@ import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -29,7 +29,7 @@ public class NotificationMeetingListener {
 
     @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
     @Async
-    @EventListener
+    @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleMeetingCreated(MeetingCreatedEvent event) {
         log.info("NotificationMeetingListener: Processing MeetingCreatedEvent for meeting: {}", event.meetingId());
