@@ -19,7 +19,8 @@ public class PaymentProductDTOs {
             @NotNull ModuleType moduleType,
             @NotNull UUID glAccountId,
             Integer displayOrder,
-            BigDecimal requiredAmount // optional per-member target, e.g. "KES 2,000 each"
+            BigDecimal requiredAmount, // optional per-member target, e.g. "KES 2,000 each"
+            com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductFrequency frequency
     ) {}
 
     public record UpdateProductRequest(
@@ -29,7 +30,8 @@ public class PaymentProductDTOs {
             Boolean isActive,
             Integer displayOrder,
             BigDecimal requiredAmount,
-            Boolean clearRequiredAmount // explicit flag — distinguishes "leave unchanged" from "set to uncapped"
+            Boolean clearRequiredAmount, // explicit flag — distinguishes "leave unchanged" from "set to uncapped"
+            com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductFrequency frequency
     ) {}
 
     public record ProductResponse(
@@ -45,6 +47,7 @@ public class PaymentProductDTOs {
             boolean isSystem,
             int displayOrder,
             BigDecimal requiredAmount,
+            com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductFrequency frequency,
             ZonedDateTime createdAt
     ) {}
 

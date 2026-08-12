@@ -18,10 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductFrequency;
 
 /**
  * Validates a member's deposit split before any STK push is sent.
@@ -65,7 +68,9 @@ public class DepositAllocationValidationService {
                 case CUSTOM  -> {
                     if (p.getRequiredAmount() != null) {
                         paidSoFar = allocationRepository.sumRoutedAmountByProductAndMember(p.getId(), memberId);
-                        outstanding = p.getRequiredAmount().subtract(paidSoFar).max(BigDecimal.ZERO);
+                        long periods = calculatePeriods(p.getCreatedAt(), p.getFrequency());
+                        BigDecimal target = p.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
+                        outstanding = target.subtract(paidSoFar).max(BigDecimal.ZERO);
                     } else {
                         outstanding = null;
                     }
@@ -139,7 +144,9 @@ public class DepositAllocationValidationService {
             case CUSTOM  -> {
                 if (product.getRequiredAmount() == null) yield null;
                 BigDecimal paid = allocationRepository.sumRoutedAmountByProductAndMember(product.getId(), memberId);
-                yield product.getRequiredAmount().subtract(paid).max(BigDecimal.ZERO);
+                long periods = calculatePeriods(product.getCreatedAt(), product.getFrequency());
+                BigDecimal target = product.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
+                yield target.subtract(paid).max(BigDecimal.ZERO);
             }
             default -> null;
         };
@@ -169,5 +176,18 @@ public class DepositAllocationValidationService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return Optional.of(outstanding.max(BigDecimal.ZERO));
+    }
+
+    private long calculatePeriods(ZonedDateTime createdAt, ProductFrequency frequency) {
+        if (createdAt == null || frequency == null || frequency == ProductFrequency.ONE_OFF) {
+            return 1;
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        return switch (frequency) {
+            case WEEKLY -> Math.max(1, ChronoUnit.WEEKS.between(createdAt, now) + 1);
+            case MONTHLY -> Math.max(1, ChronoUnit.MONTHS.between(createdAt, now) + 1);
+            case YEARLY -> Math.max(1, ChronoUnit.YEARS.between(createdAt, now) + 1);
+            default -> 1;
+        };
     }
 }

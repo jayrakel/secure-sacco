@@ -51,6 +51,11 @@ public class PaymentProduct {
     @Builder.Default
     private boolean isSystem = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "frequency", length = 20)
+    @Builder.Default
+    private ProductFrequency frequency = ProductFrequency.ONE_OFF;
+
     @Column(name = "display_order", nullable = false)
     @Builder.Default
     private int displayOrder = 0;

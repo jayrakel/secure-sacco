@@ -65,6 +65,7 @@ public class PaymentProductService {
                 .isActive(true)
                 .isSystem(false)
                 .requiredAmount(request.requiredAmount())
+                .frequency(request.frequency() != null ? request.frequency() : com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductFrequency.ONE_OFF)
                 .displayOrder(request.displayOrder() != null ? request.displayOrder() : nextDisplayOrder())
                 .build();
 
@@ -100,6 +101,10 @@ public class PaymentProductService {
             product.setRequiredAmount(null);
         } else if (request.requiredAmount() != null) {
             product.setRequiredAmount(request.requiredAmount());
+        }
+        
+        if (request.frequency() != null) {
+            product.setFrequency(request.frequency());
         }
 
         product = productRepository.save(product);
@@ -201,7 +206,7 @@ public class PaymentProductService {
         return new ProductResponse(
                 p.getId(), p.getName(), p.getCode(), p.getDescription(), p.getModuleType(),
                 p.getGlAccount().getId(), p.getGlAccount().getAccountCode(), p.getGlAccount().getAccountName(),
-                p.isActive(), p.isSystem(), p.getDisplayOrder(), p.getRequiredAmount(), p.getCreatedAt()
+                p.isActive(), p.isSystem(), p.getDisplayOrder(), p.getRequiredAmount(), p.getFrequency(), p.getCreatedAt()
         );
     }
 }

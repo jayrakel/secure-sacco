@@ -4,7 +4,7 @@ import {
     ChevronDown, ChevronUp, Download, Receipt
 } from 'lucide-react';
 import { paymentProductsApi } from '../api/payment-products-api';
-import type { PaymentProduct, ModuleType, ProductTransactionPage } from '../api/payment-products-api';
+import type { PaymentProduct, ModuleType, ProductTransactionPage, ProductFrequency } from '../api/payment-products-api';
 import { accountingApi } from '../../accounting/api/accounting-api';
 import type { Account } from '../../accounting/api/accounting-api';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
@@ -14,6 +14,13 @@ const MODULE_LABELS: Record<ModuleType, string> = {
     PENALTY: 'Penalty',
     LOAN: 'Loan',
     CUSTOM: 'Custom',
+};
+
+const FREQUENCY_LABELS: Record<ProductFrequency, string> = {
+    ONE_OFF: 'One-off (Static target)',
+    WEEKLY: 'Weekly target',
+    MONTHLY: 'Monthly target',
+    YEARLY: 'Yearly target'
 };
 
 const MODULE_COLORS: Record<ModuleType, string> = {
@@ -37,9 +44,10 @@ interface FormState {
     description: string;
     glAccountId: string;
     requiredAmount: string; // kept as string for the input; parsed to number on submit
+    frequency: ProductFrequency;
 }
 
-const emptyForm: FormState = { name: '', code: '', description: '', glAccountId: '', requiredAmount: '' };
+const emptyForm: FormState = { name: '', code: '', description: '', glAccountId: '', requiredAmount: '', frequency: 'ONE_OFF' };
 
 /**
  * SAC-263: the "smart tab" — for ANY product (including a brand-new custom one an
@@ -213,6 +221,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                 moduleType: 'CUSTOM',
                 glAccountId: form.glAccountId,
                 requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
+                frequency: form.frequency,
             });
             setShowForm(false);
             setForm(emptyForm);
@@ -330,22 +339,37 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                         </p>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Required Amount per Member (optional)</label>
-                        <input
-                            type="number"
-                            min={0}
-                            value={form.requiredAmount}
-                            onChange={e => setForm({ ...form, requiredAmount: e.target.value })}
-                            placeholder="e.g. 2000"
-                            className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm"
-                        />
-                        <p className="text-xs text-slate-400 mt-1">
-                            If set, each member's deposit screen shows progress toward this target
-                            (paid so far / remaining) — the same way Savings Obligations works. Leave
-                            blank for an open-ended contribution with no fixed goal.
-                        </p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-xs font-medium text-slate-500">Required Amount per Member (optional)</label>
+                            <input
+                                type="number"
+                                min={0}
+                                value={form.requiredAmount}
+                                onChange={e => setForm({ ...form, requiredAmount: e.target.value })}
+                                placeholder="e.g. 2000"
+                                className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-medium text-slate-500">Target Frequency</label>
+                            <select
+                                value={form.frequency}
+                                onChange={e => setForm({ ...form, frequency: e.target.value as ProductFrequency })}
+                                disabled={!form.requiredAmount}
+                                className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm disabled:opacity-50 disabled:bg-slate-100"
+                            >
+                                {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                        If an amount is set, members see progress toward this target (e.g. "Meat Contribution"). 
+                        If frequency is Weekly/Monthly, the target amount automatically scales up over time.
+                        Leave amount blank for open-ended contributions.
+                    </p>
 
                     <button
                         onClick={handleCreate}
@@ -393,7 +417,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                                             </p>
                                             {p.requiredAmount != null && (
                                                 <p className="text-xs text-emerald-600 font-semibold mt-0.5">
-                                                    Target: KES {fmt(p.requiredAmount)} per member
+                                                    Target: KES {fmt(p.requiredAmount)} {FREQUENCY_LABELS[p.frequency]} per member
                                                 </p>
                                             )}
                                         </div>
