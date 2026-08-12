@@ -248,7 +248,7 @@ const SaccoSettingsPage: React.FC = () => {
 
     useEffect(() => {
         if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
-    }, [tab]); // eslint-disable-line
+    }, [tab]);  
 
     const openEditRule = (rule: PenaltyRule) => {
         setEditingRule(rule);

@@ -40,6 +40,8 @@ const PAGE_LABELS: Record<string, string> = {
     '/settings':                   'Platform Settings',
     '/admin/time-machine':            'System Time Machine',
     '/profile':                    'My Profile',
+    '/my-shares':                  'My Shares',
+    '/admin/dividends':            'Dividend Management',
 };
 
 export const DashboardLayout = () => {

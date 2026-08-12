@@ -102,7 +102,7 @@ export function MeetingQrScanner({ onClose, onScanSuccess }: MeetingQrScannerPro
                 html5QrCode.current.stop().catch(() => {});
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     const startCamera = async (cameraId: string) => {

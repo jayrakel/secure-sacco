@@ -74,7 +74,7 @@ const VerifyContactPage: React.FC = () => {
                 navigate('/verify-contact', { replace: true });
             });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     const sendEmail = () => act(async () => {

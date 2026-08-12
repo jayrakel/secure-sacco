@@ -20,7 +20,7 @@ export const SetupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        
         void refresh();
     }, [refresh]);
 

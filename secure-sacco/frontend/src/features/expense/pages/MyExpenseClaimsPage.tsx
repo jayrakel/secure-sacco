@@ -49,7 +49,7 @@ export default function MyExpenseClaimsPage() {
             const ctx = await splitDepositApi.getContext();
             setProducts(ctx);
             setLines(ctx.map(p => ({ productId: p.productId, amount: 0 })));
-        } catch (e) {
+        } catch {
             setSubmitError('Failed to load deposit options.');
         } finally {
             setLoadingProducts(false);

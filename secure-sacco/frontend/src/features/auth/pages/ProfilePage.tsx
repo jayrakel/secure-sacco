@@ -323,7 +323,7 @@ const PasswordTab: React.FC = () => {
         }
     };
 
-    const ToggleEye = ({ field }: { field: 'current' | 'next' | 'confirm' }) => (
+    const renderToggleEye = (field: 'current' | 'next' | 'confirm') => (
         <button type="button" onClick={() => setShow(s => ({ ...s, [field]: !s[field] }))}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
             {show[field] ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -340,7 +340,7 @@ const PasswordTab: React.FC = () => {
                 <div className="relative">
                     <input type={show.current ? 'text' : 'password'} required className={inputCls + ' pr-10'}
                            value={form.current} onChange={e => setForm(f => ({ ...f, current: e.target.value }))} />
-                    <ToggleEye field="current" />
+                    {renderToggleEye('current')}
                 </div>
             </div>
 
@@ -349,7 +349,7 @@ const PasswordTab: React.FC = () => {
                 <div className="relative">
                     <input type={show.next ? 'text' : 'password'} required className={inputCls + ' pr-10'}
                            value={form.next} onChange={e => setForm(f => ({ ...f, next: e.target.value }))} />
-                    <ToggleEye field="next" />
+                    {renderToggleEye('next')}
                 </div>
                 {form.next.length > 0 && (
                     <ul className="mt-2.5 grid grid-cols-2 gap-1.5">
@@ -367,7 +367,7 @@ const PasswordTab: React.FC = () => {
                 <div className="relative">
                     <input type={show.confirm ? 'text' : 'password'} required className={inputCls + ' pr-10'}
                            value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} />
-                    <ToggleEye field="confirm" />
+                    {renderToggleEye('confirm')}
                 </div>
                 {form.confirm.length > 0 && (
                     <p className={`text-xs mt-1.5 font-semibold flex items-center gap-1 ${matches ? 'text-emerald-600' : 'text-red-500'}`}>

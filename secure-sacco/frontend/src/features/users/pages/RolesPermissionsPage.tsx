@@ -168,7 +168,7 @@ export default function RolesPermissionsPage() {
         finally { setLoading(false); }
     }, [selectRole]);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     useEffect(() => { void load(); }, [load]);
 
     const toggle = (id: string) => {

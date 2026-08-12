@@ -60,6 +60,8 @@ import LoanProductsPage from './features/loans/pages/LoanProductsPage';
 import LandingPage from './features/public/pages/LandingPage';
 import SecretaryPortalPage from './features/public/pages/SecretaryPortalPage';
 import { ProductSmartTabPage } from './features/paymentproducts/pages/ProductSmartTabPage';
+import MySharesPage from './features/shares/pages/MySharesPage';
+import DividendManagementPage from './features/dividends/pages/DividendManagementPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -435,6 +437,18 @@ function App() {
                                         }>
                                             <SaccoSettingsPage />
                                         </HasPermission>
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/my-shares" element={
+                                    <ProtectedRoute>
+                                        <MySharesPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/admin/dividends" element={
+                                    <ProtectedRoute requiredPermissions={['SETTINGS_EDIT']}>
+                                        <DividendManagementPage />
                                     </ProtectedRoute>
                                 } />
 

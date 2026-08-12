@@ -29,7 +29,7 @@ export const PublicReceiptPage: React.FC = () => {
                 // Public endpoint
                 const res = await apiClient.get<PaymentRouteLookupResponse>(`/public/receipts/${ref}`);
                 setResult(res.data);
-            } catch (e) {
+            } catch {
                 setError(true);
             } finally {
                 setLoading(false);

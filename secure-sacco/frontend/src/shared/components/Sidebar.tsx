@@ -60,6 +60,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             items: [
                 { label: 'Users', path: '/users', icon: Users, requiredPermission: 'USER_READ' },
                 { label: 'Roles & Permissions', path: '/roles', icon: ShieldCheck, requiredPermission: 'ROLE_READ' },
+                { label: 'Dividends', path: '/admin/dividends', icon: Coins, requiredPermission: 'SETTINGS_EDIT' },
             ],
         },
         {
@@ -110,6 +111,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'My Accounts',
             items: [
                 { label: 'Savings Vault', path: '/savings',           icon: PiggyBank,  module: 'savings' },
+                { label: 'My Shares',     path: '/my-shares',         icon: Coins },
                 { label: 'My Loans',      path: '/my-loans',          icon: Coins,      module: 'loans' },
                 { label: 'Penalties',     path: '/my-penalties',      icon: AlertCircle },
                 { label: 'My Meetings',   path: '/my-meetings',       icon: CalendarDays },

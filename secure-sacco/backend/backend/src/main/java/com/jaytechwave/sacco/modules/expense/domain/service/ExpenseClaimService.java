@@ -261,6 +261,7 @@ public class ExpenseClaimService {
                     .amount(claim.getAmount())
                     .paymentMethod("EXPENSE_REIMBURSEMENT")
                     .paymentType("INTERNAL_REIMBURSEMENT")
+                    .mpesaRef(claim.getReceiptReference())
                     .internalRef(journalRef)
                     .status(PaymentStatus.COMPLETED)
                     .senderPhoneNumber(member.getPhoneNumber())
