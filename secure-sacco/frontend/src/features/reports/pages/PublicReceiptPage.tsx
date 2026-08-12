@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Receipt, CheckCircle2, XCircle, Clock, FileDown, ShieldCheck, Printer } from 'lucide-react';
-import api from '../../../shared/api/axiosInstance';
-import { PaymentRouteLookupResponse } from '../api/report-api';
+import apiClient from '../../../shared/api/api-client';
+import type { PaymentRouteLookupResponse } from '../api/report-api';
 
 const fmt = (n: number) => n.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -27,7 +27,7 @@ export const PublicReceiptPage: React.FC = () => {
         const fetchReceipt = async () => {
             try {
                 // Public endpoint
-                const res = await api.get<PaymentRouteLookupResponse>(`/public/receipts/${ref}`);
+                const res = await apiClient.get<PaymentRouteLookupResponse>(`/public/receipts/${ref}`);
                 setResult(res.data);
             } catch (e) {
                 setError(true);

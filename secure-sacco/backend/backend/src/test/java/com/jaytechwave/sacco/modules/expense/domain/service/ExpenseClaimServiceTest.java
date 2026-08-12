@@ -51,6 +51,13 @@ class ExpenseClaimServiceTest {
     // the member's savings vault (SAC-220 reimbursement workflow).
     @Mock private SavingsService         savingsService;
 
+    @Mock private com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimAllocationRepository allocationRepository;
+    @Mock private com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository paymentRepository;
+    @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository productRepository;
+    @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository depositAllocationRepository;
+    @Mock private com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService smsNotificationService;
+
+
     @InjectMocks
     private ExpenseClaimService expenseClaimService;
 
@@ -86,9 +93,7 @@ class ExpenseClaimServiceTest {
     @DisplayName("submitClaim: creates a PENDING claim — no GL entry posted")
     void testSubmitClaim_success_noglEntry() {
         // Arrange
-        SubmitExpenseClaimRequest request = new SubmitExpenseClaimRequest(
-                memberId, new BigDecimal("500.00"), "Bought printer paper", "RCP-001"
-        );
+        SubmitExpenseClaimRequest request = new SubmitExpenseClaimRequest(memberId, BigDecimal.valueOf(500), "Bought printer paper", "RCP-001", null);
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
 
@@ -122,9 +127,7 @@ class ExpenseClaimServiceTest {
         activeMember.setStatus(MemberStatus.INACTIVE);
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
 
-        SubmitExpenseClaimRequest request = new SubmitExpenseClaimRequest(
-                memberId, new BigDecimal("200.00"), "Stationery", null
-        );
+        SubmitExpenseClaimRequest request = new SubmitExpenseClaimRequest(memberId, BigDecimal.valueOf(200), "Stationery", null, null);
 
         assertThatThrownBy(() -> expenseClaimService.submitClaim(request, staffEmail))
                 .isInstanceOf(IllegalStateException.class)
@@ -151,8 +154,13 @@ class ExpenseClaimServiceTest {
         when(userRepository.findByEmail(staffEmail)).thenReturn(Optional.of(reviewerUser));
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
         when(expenseClaimRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(paymentRepository.save(any())).thenAnswer(inv -> {
+            com.jaytechwave.sacco.modules.payments.domain.entity.Payment p = inv.getArgument(0);
+            p.setId(UUID.randomUUID());
+            return p;
+        });
 
-        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null);
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null, null);
 
         // Act
         ExpenseClaimResponse response = expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1");
@@ -191,7 +199,7 @@ class ExpenseClaimServiceTest {
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
         when(expenseClaimRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(false, "Receipt not valid");
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(false, "Receipt not valid", null);
 
         // Act
         ExpenseClaimResponse response = expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1");
@@ -220,7 +228,7 @@ class ExpenseClaimServiceTest {
         // NOTE: reviewClaim validates the rejection reason BEFORE loading the reviewer user,
         // so no stub for userRepository is needed here — it would be flagged as unnecessary.
 
-        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(false, "");
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(false, "", null);
 
         assertThatThrownBy(() -> expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1"))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -244,7 +252,7 @@ class ExpenseClaimServiceTest {
         // NOTE: reviewClaim checks status BEFORE loading the reviewer user — the status
         // guard throws immediately, so userRepository is never called here.
 
-        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null);
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null, null);
 
         assertThatThrownBy(() -> expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1"))
                 .isInstanceOf(IllegalStateException.class)
