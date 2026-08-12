@@ -44,8 +44,10 @@ export const ProductSmartTabPage = () => {
                     : await paymentProductsApi.getMyTransactions(productId, page, 20);
                 setPageData(data);
                 
-            } catch (err: any) {
-                setError(err.response?.data?.message || err.message || 'Failed to load data');
+            } catch (err: unknown) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const error = err as any;
+                setError(error.response?.data?.message || error.message || 'Failed to load data');
             } finally {
                 setLoading(false);
             }

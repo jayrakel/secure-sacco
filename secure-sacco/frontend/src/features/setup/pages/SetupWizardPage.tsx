@@ -366,6 +366,7 @@ const ConfigurePlatformStep: React.FC<{ onDone: () => void }> = ({ onDone }) => 
             const auto = words.length >= 2
                 ? (words[0][0] + words[1][0] + (words[2]?.[0] ?? words[1][1] ?? 'X'))
                 : saccoName.trim().slice(0, 3).toUpperCase();
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setPrefix(auto.slice(0, 3));
         }
     }, [saccoName]);
