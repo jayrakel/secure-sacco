@@ -53,4 +53,11 @@ public class SmsLogController {
         }
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/send")
+    @PreAuthorize("hasAuthority('AUDIT_LOG_READ') or hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<Void> sendCustomSms(@RequestBody com.jaytechwave.sacco.modules.core.notifications.api.dto.SendSmsRequest request) {
+        smsNotificationService.sendNotificationSms(request.getPhoneNumber(), request.getMessage());
+        return ResponseEntity.ok().build();
+    }
 }

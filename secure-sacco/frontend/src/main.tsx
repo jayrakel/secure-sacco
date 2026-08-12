@@ -31,8 +31,8 @@ if (typeof win.trustedTypes !== 'undefined' && !win.trustedTypes.defaultPolicy) 
 
 // Prevent mouse wheel from changing values in number inputs
 document.addEventListener('wheel', function (event: WheelEvent) {
-  if (document.activeElement && (document.activeElement as HTMLInputElement).type === 'number') {
-    (document.activeElement as HTMLElement).blur();
+  if (event.target && (event.target as HTMLInputElement).type === 'number') {
+    (event.target as HTMLElement).blur();
   }
 }, { passive: false });
 

@@ -44,5 +44,10 @@ export const smsApi = {
     retrySms: async (id: string): Promise<void> => {
         const response = await apiClient.post<void>(`/sms-logs/${id}/retry`);
         return response.data;
+    },
+
+    sendCustomSms: async (data: { phoneNumber: string, message: string }): Promise<void> => {
+        const response = await apiClient.post<void>('/sms-logs/send', data);
+        return response.data;
     }
 };

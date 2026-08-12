@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/components/ui/card';
 import { smsApi, type SmsLog, type SmsLogPage as SmsLogPageType } from '../api/sms-api';
 import { format } from 'date-fns';
-import { Loader2, RefreshCw, Search, Phone } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Phone, Send, X } from 'lucide-react';
 
 export const SmsLogPage: React.FC = () => {
     const [page, setPage] = useState(0);
@@ -11,6 +11,12 @@ export const SmsLogPage: React.FC = () => {
     const [data, setData] = useState<SmsLogPageType | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRetrying, setIsRetrying] = useState<Record<string, boolean>>({});
+    
+    // Custom SMS Modal State
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [sendPhone, setSendPhone] = useState('');
+    const [sendMessage, setSendMessage] = useState('');
+    const [isSending, setIsSending] = useState(false);
 
     const fetchLogs = useCallback(async (p: number, s: string, st: string) => {
         setIsLoading(true);
@@ -44,6 +50,24 @@ export const SmsLogPage: React.FC = () => {
         }
     };
 
+    const handleSendCustomSms = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSending(true);
+        try {
+            await smsApi.sendCustomSms({ phoneNumber: sendPhone, message: sendMessage });
+            setShowSendModal(false);
+            setSendPhone('');
+            setSendMessage('');
+            // Refresh logs
+            fetchLogs(0, '', '');
+        } catch (error) {
+            console.error('Failed to send custom SMS', error);
+            alert('Failed to send SMS. Please try again.');
+        } finally {
+            setIsSending(false);
+        }
+    };
+
     const getStatusBadge = (logStatus: string) => {
         switch (logStatus) {
             case 'SENT':
@@ -64,13 +88,22 @@ export const SmsLogPage: React.FC = () => {
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight">SMS Delivery Logs</h1>
                     <p className="text-slate-500 mt-1">Track outgoing SMS messages and retry failed deliveries.</p>
                 </div>
-                <button
-                    onClick={() => fetchLogs(page, search, status)}
-                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm font-medium"
-                >
-                    <RefreshCw size={16} />
-                    Refresh
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSendModal(true)}
+                        className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm font-medium"
+                    >
+                        <Send size={16} />
+                        Send Custom SMS
+                    </button>
+                    <button
+                        onClick={() => fetchLogs(page, search, status)}
+                        className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm font-medium"
+                    >
+                        <RefreshCw size={16} />
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             <Card>
@@ -213,6 +246,75 @@ export const SmsLogPage: React.FC = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Custom SMS Modal */}
+            {showSendModal && (
+                <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                            <h2 className="text-lg font-semibold text-slate-800">Send Custom SMS</h2>
+                            <button 
+                                onClick={() => setShowSendModal(false)}
+                                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1 rounded-lg transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSendCustomSms} className="p-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Phone Number
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="e.g. 0712345678"
+                                    value={sendPhone}
+                                    onChange={(e) => setSendPhone(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Message
+                                </label>
+                                <textarea
+                                    required
+                                    rows={4}
+                                    maxLength={160}
+                                    placeholder="Type your message here..."
+                                    value={sendMessage}
+                                    onChange={(e) => setSendMessage(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                                />
+                                <div className="flex justify-between items-center mt-1">
+                                    <p className="text-xs text-slate-500">Keep it under 160 characters to avoid multiple SMS charges.</p>
+                                    <p className={`text-xs font-medium ${sendMessage.length > 158 ? 'text-red-500' : 'text-slate-500'}`}>
+                                        {sendMessage.length} / 160
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="pt-2 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSendModal(false)}
+                                    className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSending}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                                >
+                                    {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                    Send Message
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
