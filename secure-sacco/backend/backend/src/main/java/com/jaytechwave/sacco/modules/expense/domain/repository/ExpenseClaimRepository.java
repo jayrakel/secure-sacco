@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -19,4 +20,7 @@ public interface ExpenseClaimRepository extends JpaRepository<ExpenseClaim, UUID
 
     /** Returns all claims across all members, newest first — used for the staff view. */
     List<ExpenseClaim> findAllByOrderByCreatedAtDesc();
+
+    /** Look up a claim by its receipt reference (e.g., M-Pesa code) */
+    Optional<ExpenseClaim> findFirstByReceiptReferenceOrderByCreatedAtDesc(String receiptReference);
 }

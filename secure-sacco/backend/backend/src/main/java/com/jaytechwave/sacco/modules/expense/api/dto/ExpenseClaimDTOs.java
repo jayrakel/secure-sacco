@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -14,6 +15,15 @@ import java.util.UUID;
 public class ExpenseClaimDTOs {
 
     // ── Requests ──────────────────────────────────────────────────────────────
+
+    public record ExpenseAllocationDTO(
+            @NotNull(message = "Product ID is required")
+            UUID productId,
+
+            @NotNull(message = "Amount is required")
+            @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
+            BigDecimal amount
+    ) {}
 
     /**
      * Used by staff (Treasurer/Admin) to submit a claim on behalf of a member.
@@ -29,7 +39,9 @@ public class ExpenseClaimDTOs {
             @NotBlank(message = "Description is required")
             String description,
 
-            String receiptReference
+            String receiptReference,
+
+            List<ExpenseAllocationDTO> allocations
     ) {}
 
     /**
@@ -44,7 +56,9 @@ public class ExpenseClaimDTOs {
             @NotBlank(message = "Description is required")
             String description,
 
-            String receiptReference
+            String receiptReference,
+
+            List<ExpenseAllocationDTO> allocations
     ) {}
 
     /**
@@ -55,7 +69,9 @@ public class ExpenseClaimDTOs {
             @NotNull(message = "Approved flag is required")
             Boolean approved,
 
-            String rejectionReason
+            String rejectionReason,
+
+            List<ExpenseAllocationDTO> overrideAllocations
     ) {}
 
     // ── Responses ─────────────────────────────────────────────────────────────
@@ -76,6 +92,7 @@ public class ExpenseClaimDTOs {
             UUID reviewedByUserId,
             ZonedDateTime reviewedAt,
             String journalReference,
-            ZonedDateTime createdAt
+            ZonedDateTime createdAt,
+            List<ExpenseAllocationDTO> requestedAllocations
     ) {}
 }

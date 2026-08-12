@@ -2,13 +2,25 @@ package com.jaytechwave.sacco.modules.expense.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
+import com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService;
 import com.jaytechwave.sacco.modules.expense.api.dto.ExpenseClaimDTOs.*;
 import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaim;
+import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocation;
 import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimStatus;
+import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimAllocationRepository;
 import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimRepository;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.AllocationStatus;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAllocation;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.service.DepositAllocationRouterService;
+import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
+import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
+import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -17,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -35,11 +48,17 @@ import java.util.stream.Collectors;
 public class ExpenseClaimService {
 
     private final ExpenseClaimRepository expenseClaimRepository;
+    private final ExpenseClaimAllocationRepository allocationRepository;
     private final MemberRepository       memberRepository;
     private final UserRepository         userRepository;
     private final JournalEntryService    journalEntryService;
     private final SecurityAuditService   securityAuditService;
     private final SavingsService         savingsService;
+    private final PaymentRepository      paymentRepository;
+    private final PaymentProductRepository productRepository;
+    private final DepositAllocationRepository depositAllocationRepository;
+    private final DepositAllocationRouterService depositAllocationRouterService;
+    private final SmsNotificationService smsNotificationService;
 
     // ── Staff: Submit a claim on behalf of a member ───────────────────────────
 
@@ -65,6 +84,8 @@ public class ExpenseClaimService {
                 .build();
 
         claim = expenseClaimRepository.save(claim);
+
+        saveAllocations(claim.getId(), request.allocations());
 
         securityAuditService.logEvent(
                 "EXPENSE_CLAIM_SUBMITTED",
@@ -109,6 +130,8 @@ public class ExpenseClaimService {
 
         claim = expenseClaimRepository.save(claim);
 
+        saveAllocations(claim.getId(), request.allocations());
+
         securityAuditService.logEvent(
                 "EXPENSE_CLAIM_SELF_SUBMITTED",
                 "CLAIM-" + claim.getId(),
@@ -118,6 +141,21 @@ public class ExpenseClaimService {
 
         log.info("SAC-220: Member {} self-submitted expense claim {}", member.getMemberNumber(), claim.getId());
         return toResponse(claim, member);
+    }
+
+    private void saveAllocations(UUID claimId, List<ExpenseAllocationDTO> allocations) {
+        if (allocations == null || allocations.isEmpty()) return;
+        
+        List<ExpenseClaimAllocation> entities = allocations.stream().map(dto -> 
+            ExpenseClaimAllocation.builder()
+                .expenseClaimId(claimId)
+                .productId(dto.productId())
+                .amount(dto.amount())
+                .build()
+        ).collect(Collectors.toList());
+        
+        allocationRepository.deleteByExpenseClaimId(claimId);
+        allocationRepository.saveAll(entities);
     }
 
     // ── Member: View my own claims ────────────────────────────────────────────
@@ -202,16 +240,54 @@ public class ExpenseClaimService {
                 .orElseThrow(() -> new IllegalStateException("Member not found for claim: " + claimId));
 
         if (Boolean.TRUE.equals(request.approved())) {
-            // ── APPROVED: credit member's savings account, then mark claim ────────
             String journalRef = "EXP-" + claim.getId();
-
-            // This creates a SavingsTransaction + posts DR 5360 / CR 2100
-            savingsService.creditExpenseReimbursement(
-                    member.getId(), claim.getAmount(), claim.getId()
-            );
-
             claim.setStatus(ExpenseClaimStatus.APPROVED);
             claim.setJournalReference(journalRef);
+            
+            List<ExpenseAllocationDTO> finalAllocations = request.overrideAllocations();
+            if (finalAllocations != null && !finalAllocations.isEmpty()) {
+                saveAllocations(claim.getId(), finalAllocations);
+            } else {
+                finalAllocations = allocationRepository.findByExpenseClaimId(claim.getId())
+                    .stream()
+                    .map(a -> new ExpenseAllocationDTO(a.getProductId(), a.getAmount()))
+                    .collect(Collectors.toList());
+            }
+            
+            if (finalAllocations != null && !finalAllocations.isEmpty()) {
+                // Virtual payment routing
+                Payment virtualPayment = Payment.builder()
+                    .memberId(member.getId())
+                    .amount(claim.getAmount())
+                    .paymentMethod("EXPENSE_REIMBURSEMENT")
+                    .paymentType("INTERNAL_REIMBURSEMENT")
+                    .mpesaRef(claim.getReceiptReference())
+                    .internalRef(journalRef)
+                    .status(PaymentStatus.COMPLETED)
+                    .senderPhoneNumber(member.getPhoneNumber())
+                    .build();
+                virtualPayment = paymentRepository.save(virtualPayment);
+                
+                List<DepositAllocation> depositAllocations = new java.util.ArrayList<>();
+                for (ExpenseAllocationDTO alloc : finalAllocations) {
+                    PaymentProduct product = productRepository.findById(alloc.productId())
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown product: " + alloc.productId()));
+                    depositAllocations.add(DepositAllocation.builder()
+                            .payment(virtualPayment)
+                            .product(product)
+                            .amount(alloc.amount())
+                            .percentage(BigDecimal.ZERO)
+                            .status(AllocationStatus.PENDING)
+                            .build());
+                }
+                depositAllocationRepository.saveAll(depositAllocations);
+                
+                depositAllocationRouterService.routeAllocations(virtualPayment);
+                journalEntryService.postExpenseReimbursementReclassification(member.getId(), claim.getAmount(), claim.getId().toString());
+            } else {
+                // Fallback to legacy single-savings routing
+                savingsService.creditExpenseReimbursement(member.getId(), claim.getAmount(), claim.getId());
+            }
 
             securityAuditService.logEventWithActorAndIp(
                     actorEmail,
@@ -224,6 +300,11 @@ public class ExpenseClaimService {
 
             log.info("SAC-220: Claim {} APPROVED by {}. GL entry posted: {}", claimId, actorEmail, journalRef);
 
+            // Send SMS with Receipt Link
+            String receiptLink = "sacco.app/r/" + journalRef;
+            String msg = String.format("Dear %s, your claim of KES %s is approved. Receipt: %s", 
+                    member.getFirstName(), claim.getAmount(), receiptLink);
+            smsNotificationService.sendNotificationSms(member.getPhoneNumber(), msg);
         } else {
             // ── REJECTED: no GL entry ─────────────────────────────────────────
             claim.setStatus(ExpenseClaimStatus.REJECTED);
@@ -253,6 +334,10 @@ public class ExpenseClaimService {
                 ? member.getFirstName() + " " + member.getLastName()
                 : "Unknown";
 
+        List<ExpenseAllocationDTO> requestedAllocations = allocationRepository.findByExpenseClaimId(claim.getId())
+                .stream().map(a -> new ExpenseAllocationDTO(a.getProductId(), a.getAmount()))
+                .collect(Collectors.toList());
+
         return new ExpenseClaimResponse(
                 claim.getId(),
                 claim.getMemberId(),
@@ -266,7 +351,8 @@ public class ExpenseClaimService {
                 claim.getReviewedByUserId(),
                 claim.getReviewedAt(),
                 claim.getJournalReference(),
-                claim.getCreatedAt()
+                claim.getCreatedAt(),
+                requestedAllocations
         );
     }
 }

@@ -33,7 +33,7 @@ export const MeetingQrModal: React.FC<MeetingQrModalProps> = ({
                 .catch(() => setRegenerating(false))
                 .finally(() => setRegenerating(false));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     const checkInUrl = `${window.location.origin}/meetings/checkin/${token}`;

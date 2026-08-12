@@ -20,6 +20,7 @@ export const SetupProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     useEffect(() => {
+        
         void refresh();
     }, [refresh]);
 

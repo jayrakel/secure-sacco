@@ -1,3 +1,4 @@
+import PublicReceiptPage from "./features/reports/pages/PublicReceiptPage";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SavingsManagementPage from './features/savings/pages/SavingsManagementPage';
 import MemberSavingsPage from './features/savings/pages/MemberSavingsPage';
@@ -59,6 +60,8 @@ import LoanProductsPage from './features/loans/pages/LoanProductsPage';
 import LandingPage from './features/public/pages/LandingPage';
 import SecretaryPortalPage from './features/public/pages/SecretaryPortalPage';
 import { ProductSmartTabPage } from './features/paymentproducts/pages/ProductSmartTabPage';
+import MySharesPage from './features/shares/pages/MySharesPage';
+import DividendManagementPage from './features/dividends/pages/DividendManagementPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -85,6 +88,7 @@ function App() {
                         <Routes>
 
                             <Route path="/" element={<LandingPage />} />
+                            <Route path="/r/:ref" element={<PublicReceiptPage />} />
 
                             {/* Wrap Login in GuestRoute */}
                             <Route path="/login" element={
@@ -433,6 +437,18 @@ function App() {
                                         }>
                                             <SaccoSettingsPage />
                                         </HasPermission>
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/my-shares" element={
+                                    <ProtectedRoute>
+                                        <MySharesPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/admin/dividends" element={
+                                    <ProtectedRoute requiredPermissions={['SETTINGS_EDIT']}>
+                                        <DividendManagementPage />
                                     </ProtectedRoute>
                                 } />
 

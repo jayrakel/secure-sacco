@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     getAllExpenseClaims,
     submitExpenseClaim,
@@ -6,8 +6,10 @@ import {
     type ExpenseClaimResponse,
 } from '../api/expense-api';
 import { memberApi, type Member } from '../../members/api/member-api';
+import { paymentProductsApi, type PaymentProduct, type ProductAllocationContext } from '../../paymentproducts/api/payment-products-api';
+import { AllocationEditor, type SplitLine } from '../../paymentproducts/components/AllocationEditor';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
-import { Search, X, CheckCircle2, User } from 'lucide-react';
+import { Search, X, CheckCircle2, User, Loader2 } from 'lucide-react';
 
 // ── Status Badge ───────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }: { status: string }) => {
@@ -166,12 +168,31 @@ export default function StaffExpenseClaimsPage() {
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [selectedMember, setSelectedMember]   = useState<Member | null>(null);
     const [submitForm, setSubmitForm] = useState({ amount: '', description: '', receiptReference: '' });
+    const [submitLines, setSubmitLines] = useState<SplitLine[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
     const [reviewTarget, setReviewTarget] = useState<ExpenseClaimResponse | null>(null);
     const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [overrideAllocations, setOverrideAllocations] = useState(false);
+    const [reviewLines, setReviewLines] = useState<SplitLine[]>([]);
     const [reviewing, setReviewing] = useState(false);
+
+    const [products, setProducts] = useState<PaymentProduct[]>([]);
+    const [productsLoading, setProductsLoading] = useState(false);
+
+    const allocationContext = useMemo((): ProductAllocationContext[] => {
+        return products.map(p => ({
+            productId: p.id,
+            productCode: p.code,
+            productName: p.name,
+            moduleType: p.moduleType,
+            isCapped: false,
+            outstandingAmount: null,
+            requiredAmount: null,
+            paidAmount: null,
+        }));
+    }, [products]);
 
     const fetchClaims = useCallback(async () => {
         try { setLoading(true); setError(null); setClaims(await getAllExpenseClaims()); }
@@ -179,22 +200,45 @@ export default function StaffExpenseClaimsPage() {
         finally { setLoading(false); }
     }, []);
 
-    useEffect(() => { fetchClaims(); }, [fetchClaims]);
+    const fetchProducts = useCallback(async () => {
+        try { setProductsLoading(true); setProducts(await paymentProductsApi.getActive()); }
+        catch (e) { console.error('Failed to load products', e); }
+        finally { setProductsLoading(false); }
+    }, []);
+
+    useEffect(() => { fetchClaims(); fetchProducts(); }, [fetchClaims, fetchProducts]);
+
+    const submitTotal = parseFloat(submitForm.amount) || 0;
+    const submitAllocated = submitLines.reduce((s, l) => s + (l.amount || 0), 0);
+    const submitRemaining = Math.round((submitTotal - submitAllocated) * 100) / 100;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedMember) { setActionError('Please select a member first.'); return; }
+        
+        if (submitLines.length > 0 && Math.abs(submitRemaining) > 0.01) {
+            setActionError(submitRemaining > 0 
+                ? `KES ${submitRemaining.toLocaleString()} is still unallocated.` 
+                : `You've allocated KES ${Math.abs(submitRemaining).toLocaleString()} more than the claim amount.`);
+            return;
+        }
+
         setSubmitting(true); setActionError(null);
         try {
             await submitExpenseClaim({
                 memberId:         selectedMember.id,
-                amount:           parseFloat(submitForm.amount),
+                amount:           submitTotal,
                 description:      submitForm.description.trim(),
                 receiptReference: submitForm.receiptReference.trim() || undefined,
+                allocations:      submitLines.filter(l => l.amount > 0).map(l => ({
+                    productId: l.productId,
+                    amount: l.amount
+                }))
             });
             setShowSubmitModal(false);
             setSelectedMember(null);
             setSubmitForm({ amount: '', description: '', receiptReference: '' });
+            setSubmitLines([]);
             await fetchClaims();
         } catch (e) { setActionError(getApiErrorMessage(e)); }
         finally { setSubmitting(false); }
@@ -202,15 +246,38 @@ export default function StaffExpenseClaimsPage() {
 
     const openReview = (claim: ExpenseClaimResponse, action: 'approve' | 'reject') => {
         setReviewTarget(claim); setReviewAction(action); setRejectionReason(''); setActionError(null);
+        if (action === 'approve') {
+            setOverrideAllocations(false);
+            if (claim.requestedAllocations && claim.requestedAllocations.length > 0) {
+                setReviewLines(claim.requestedAllocations.map(a => ({ productId: a.productId, amount: a.amount })));
+            } else {
+                setReviewLines(allocationContext.map(p => ({ productId: p.productId, amount: 0 })));
+            }
+        }
     };
+
+    const reviewTotal = reviewTarget ? Number(reviewTarget.amount) : 0;
+    const reviewAllocated = reviewLines.reduce((s, l) => s + (l.amount || 0), 0);
+    const reviewRemaining = Math.round((reviewTotal - reviewAllocated) * 100) / 100;
 
     const handleReview = async () => {
         if (!reviewTarget || !reviewAction) return;
+        
+        if (reviewAction === 'approve' && overrideAllocations) {
+            if (reviewLines.length > 0 && Math.abs(reviewRemaining) > 0.01) {
+                setActionError(reviewRemaining > 0 
+                    ? `KES ${reviewRemaining.toLocaleString()} is still unallocated.` 
+                    : `You've allocated KES ${Math.abs(reviewRemaining).toLocaleString()} more than the claim amount.`);
+                return;
+            }
+        }
+
         setReviewing(true); setActionError(null);
         try {
             await reviewExpenseClaim(reviewTarget.id, {
                 approved:        reviewAction === 'approve',
                 rejectionReason: reviewAction === 'reject' ? rejectionReason : undefined,
+                overrideAllocations: reviewAction === 'approve' && overrideAllocations ? reviewLines.filter(l => l.amount > 0) : undefined,
             });
             setReviewTarget(null); setReviewAction(null);
             await fetchClaims();
@@ -233,7 +300,13 @@ export default function StaffExpenseClaimsPage() {
                     </div>
                     <button
                         id="btn-submit-expense-claim"
-                        onClick={() => { setShowSubmitModal(true); setActionError(null); setSelectedMember(null); setSubmitForm({ amount: '', description: '', receiptReference: '' }); }}
+                        onClick={() => { 
+                            setShowSubmitModal(true); 
+                            setActionError(null); 
+                            setSelectedMember(null); 
+                            setSubmitForm({ amount: '', description: '', receiptReference: '' }); 
+                            setSubmitLines(allocationContext.map(p => ({ productId: p.productId, amount: 0 })));
+                        }}
                         className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
                     >
                         <span className="text-lg leading-none">+</span> Submit Claim
@@ -320,8 +393,8 @@ export default function StaffExpenseClaimsPage() {
 
             {/* ── Submit Modal ── */}
             {showSubmitModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 relative">
                         <div className="p-6 border-b border-slate-100">
                             <h3 className="text-lg font-bold text-slate-900">Submit Expense Claim</h3>
                             <p className="text-sm text-slate-500 mt-1">Record a member expense for verification and approval</p>
@@ -369,6 +442,27 @@ export default function StaffExpenseClaimsPage() {
                                 />
                             </div>
 
+                            <div className="border-t border-slate-100 pt-4">
+                                <h4 className="text-sm font-bold text-slate-800 mb-3">Fund Allocation</h4>
+                                {productsLoading ? (
+                                    <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
+                                        <Loader2 size={16} className="animate-spin" />
+                                        Loading allocation options…
+                                    </div>
+                                ) : submitTotal > 0 ? (
+                                    <AllocationEditor
+                                        totalAmount={submitTotal}
+                                        products={allocationContext}
+                                        lines={submitLines}
+                                        onChange={setSubmitLines}
+                                    />
+                                ) : (
+                                    <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center">
+                                        Enter an amount above to allocate the funds.
+                                    </p>
+                                )}
+                            </div>
+
                             <div className="flex gap-3 pt-2">
                                 <button type="button"
                                     onClick={() => { setShowSubmitModal(false); setSelectedMember(null); }}
@@ -388,8 +482,8 @@ export default function StaffExpenseClaimsPage() {
 
             {/* ── Review Modal ── */}
             {reviewTarget && reviewAction && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 relative">
                         <div className={`p-6 border-b ${reviewAction === 'approve' ? 'border-emerald-100' : 'border-red-100'}`}>
                             <h3 className="text-lg font-bold text-slate-900">
                                 {reviewAction === 'approve' ? '✅ Approve Claim' : '❌ Reject Claim'}
@@ -404,10 +498,52 @@ export default function StaffExpenseClaimsPage() {
                                 <span className="font-semibold text-slate-700">Expense: </span>{reviewTarget.description}
                             </p>
                             {reviewAction === 'approve' && (
-                                <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 p-3 rounded-xl space-y-1">
-                                    <p className="font-semibold text-sm">GL entry on approval:</p>
-                                    <p className="font-mono">DR 5360 Member Expense Reimbursement</p>
-                                    <p className="font-mono">CR 2190 Member Reimbursement Payable</p>
+                                <div className="space-y-4 border-t border-emerald-100 pt-4">
+                                    <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 p-3 rounded-xl space-y-1">
+                                        <p className="font-semibold text-sm">GL entry on approval:</p>
+                                        <p className="font-mono">DR 5360 Member Expense Reimbursement</p>
+                                        <p className="font-mono">CR 2190 Member Reimbursement Payable</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="flex items-center gap-2 cursor-pointer mb-3">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={overrideAllocations} 
+                                                onChange={e => setOverrideAllocations(e.target.checked)}
+                                                className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+                                            />
+                                            <span className="text-sm font-semibold text-slate-700">Override Fund Allocation</span>
+                                        </label>
+                                        
+                                        {!overrideAllocations && reviewTarget.requestedAllocations && reviewTarget.requestedAllocations.length > 0 && (
+                                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1">
+                                                <p className="text-xs font-semibold text-slate-500 mb-2">Member Requested Allocations:</p>
+                                                {reviewTarget.requestedAllocations.map(alloc => {
+                                                    const prod = products.find(p => p.id === alloc.productId);
+                                                    return (
+                                                        <div key={alloc.productId} className="flex justify-between text-sm text-slate-700">
+                                                            <span>{prod?.name || 'Unknown Product'}</span>
+                                                            <span className="font-mono font-semibold">KES {alloc.amount.toLocaleString('en-KE')}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        
+                                        {!overrideAllocations && (!reviewTarget.requestedAllocations || reviewTarget.requestedAllocations.length === 0) && (
+                                            <p className="text-sm text-slate-500 italic">No allocations requested by member.</p>
+                                        )}
+
+                                        {overrideAllocations && (
+                                            <AllocationEditor
+                                                totalAmount={reviewTotal}
+                                                products={allocationContext}
+                                                lines={reviewLines}
+                                                onChange={setReviewLines}
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             {reviewAction === 'reject' && (

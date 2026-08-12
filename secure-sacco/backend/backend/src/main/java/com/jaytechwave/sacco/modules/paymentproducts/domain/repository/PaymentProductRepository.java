@@ -13,5 +13,7 @@ public interface PaymentProductRepository extends JpaRepository<PaymentProduct, 
 
     Optional<PaymentProduct> findByCode(String code);
 
+    List<PaymentProduct> findByModuleType(com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ModuleType moduleType);
+
     boolean existsByCode(String code);
 }

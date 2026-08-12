@@ -4,8 +4,10 @@ import {
     submitMyExpenseClaim,
     type ExpenseClaimResponse,
 } from '../api/expense-api';
+import { splitDepositApi, type ProductAllocationContext } from '../../paymentproducts/api/payment-products-api';
+import { AllocationEditor, type SplitLine } from '../../paymentproducts/components/AllocationEditor';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 
 const StatusBadge = ({ status }: { status: string }) => {
     const styles: Record<string, string> = {
@@ -28,8 +30,31 @@ export default function MyExpenseClaimsPage() {
     // Submit modal state
     const [showModal,    setShowModal]    = useState(false);
     const [form,         setForm]         = useState({ amount: '', description: '', receiptReference: '' });
+    const [products,     setProducts]     = useState<ProductAllocationContext[]>([]);
+    const [lines,        setLines]        = useState<SplitLine[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(false);
     const [submitting,   setSubmitting]   = useState(false);
     const [submitError,  setSubmitError]  = useState<string | null>(null);
+
+    const totalAmount = parseFloat(form.amount) || 0;
+    const totalAllocated = lines.reduce((s, l) => s + (l.amount || 0), 0);
+    const remaining = Math.round((totalAmount - totalAllocated) * 100) / 100;
+
+    const handleOpenModal = async () => {
+        setShowModal(true);
+        setSubmitError(null);
+        setForm({ amount: '', description: '', receiptReference: '' });
+        setLoadingProducts(true);
+        try {
+            const ctx = await splitDepositApi.getContext();
+            setProducts(ctx);
+            setLines(ctx.map(p => ({ productId: p.productId, amount: 0 })));
+        } catch {
+            setSubmitError('Failed to load deposit options.');
+        } finally {
+            setLoadingProducts(false);
+        }
+    };
 
     const fetchClaims = useCallback(async () => {
         try { setLoading(true); setError(null); setClaims(await getMyExpenseClaims()); }
@@ -42,14 +67,30 @@ export default function MyExpenseClaimsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true); setSubmitError(null);
+        
+        if (lines.length > 0 && Math.abs(remaining) > 0.01) {
+            setSubmitError(
+                remaining > 0 
+                    ? `KES ${remaining.toLocaleString()} is still unallocated.` 
+                    : `You've allocated KES ${Math.abs(remaining).toLocaleString()} more than your claim amount.`
+            );
+            setSubmitting(false);
+            return;
+        }
+
         try {
             await submitMyExpenseClaim({
-                amount:           parseFloat(form.amount),
+                amount:           totalAmount,
                 description:      form.description.trim(),
                 receiptReference: form.receiptReference.trim() || undefined,
+                allocations:      lines.filter(l => l.amount > 0).map(l => ({
+                    productId: l.productId,
+                    amount: l.amount
+                }))
             });
             setShowModal(false);
             setForm({ amount: '', description: '', receiptReference: '' });
+            setLines([]);
             await fetchClaims();
         } catch (e) { setSubmitError(getApiErrorMessage(e)); }
         finally { setSubmitting(false); }
@@ -73,7 +114,7 @@ export default function MyExpenseClaimsPage() {
                     </div>
                     <button
                         id="btn-submit-my-expense-claim"
-                        onClick={() => { setShowModal(true); setSubmitError(null); }}
+                        onClick={handleOpenModal}
                         className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md active:scale-95"
                     >
                         <PlusCircle size={16} /> Submit Claim
@@ -169,8 +210,8 @@ export default function MyExpenseClaimsPage() {
 
             {/* Submit Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md my-8 relative">
                         <div className="p-6 border-b border-slate-100">
                             <h3 className="text-lg font-bold text-slate-900">Submit Expense Claim</h3>
                             <p className="text-sm text-slate-500 mt-1">
@@ -222,6 +263,27 @@ export default function MyExpenseClaimsPage() {
                                     onChange={e => setForm(f => ({ ...f, receiptReference: e.target.value }))}
                                     className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
+                            </div>
+
+                            <div className="border-t border-slate-100 pt-4">
+                                <h4 className="text-sm font-bold text-slate-800 mb-3">Fund Allocation</h4>
+                                {loadingProducts ? (
+                                    <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
+                                        <Loader2 size={16} className="animate-spin" />
+                                        Loading allocation options…
+                                    </div>
+                                ) : totalAmount > 0 ? (
+                                    <AllocationEditor
+                                        totalAmount={totalAmount}
+                                        products={products}
+                                        lines={lines}
+                                        onChange={setLines}
+                                    />
+                                ) : (
+                                    <p className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center">
+                                        Enter an amount above to allocate the funds.
+                                    </p>
+                                )}
                             </div>
 
                             <div className="flex gap-3 pt-2">

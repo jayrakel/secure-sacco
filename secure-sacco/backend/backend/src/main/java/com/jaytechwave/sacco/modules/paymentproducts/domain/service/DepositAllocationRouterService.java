@@ -22,6 +22,7 @@ import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRepaymentSta
 import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepaymentRepository;
 import com.jaytechwave.sacco.modules.penalties.domain.service.PenaltyRepaymentService;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
+import com.jaytechwave.sacco.modules.shares.domain.service.ShareService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,7 @@ public class DepositAllocationRouterService {
     private final LoanRepaymentRepository      loanRepaymentRepository;
     private final LoanRepaymentService         loanRepaymentService;
     private final JournalEntryService          journalEntryService;
+    private final ShareService                 shareService;
 
     @Transactional
     public void routeAllocations(Payment payment) {
@@ -89,6 +91,7 @@ public class DepositAllocationRouterService {
                     case SAVINGS -> routeToSavings(memberId, allocation, baseRef, payment);
                     case PENALTY -> routeToPenalty(memberId, allocation, baseRef);
                     case LOAN    -> routeToLoan(memberId, allocation, baseRef);
+                    case SHARE_CAPITAL, DEPOSIT_SHARES -> routeToShares(memberId, allocation, baseRef);
                     default -> { /* unreachable — CUSTOM handled above */ }
                 }
                 allocation.setStatus(AllocationStatus.ROUTED);
@@ -142,6 +145,10 @@ public class DepositAllocationRouterService {
                 .build();
         repayment = loanRepaymentRepository.save(repayment);
         loanRepaymentService.processCompletedRepayment(repayment.getId(), ref);
+    }
+
+    private void routeToShares(UUID memberId, DepositAllocation allocation, String ref) {
+        shareService.deposit(memberId, allocation.getProduct().getId(), allocation.getAmount(), ref);
     }
 
     /**

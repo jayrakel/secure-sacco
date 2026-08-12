@@ -1,5 +1,10 @@
 import apiClient from '../../../shared/api/api-client';
 
+export type ExpenseAllocationDTO = {
+  productId: string;
+  amount: number;
+}
+
 export type ExpenseClaimResponse = {
   id: string;
   memberId: string;
@@ -14,6 +19,7 @@ export type ExpenseClaimResponse = {
   reviewedAt: string | null;
   journalReference: string | null;
   createdAt: string;
+  requestedAllocations?: ExpenseAllocationDTO[];
 }
 
 export type SubmitExpenseClaimRequest = {
@@ -21,6 +27,7 @@ export type SubmitExpenseClaimRequest = {
   amount: number;
   description: string;
   receiptReference?: string;
+  allocations?: ExpenseAllocationDTO[];
 }
 
 /** Member self-submit — no memberId needed; resolved from session. */
@@ -28,11 +35,13 @@ export type MemberSubmitExpenseClaimRequest = {
   amount: number;
   description: string;
   receiptReference?: string;
+  allocations?: ExpenseAllocationDTO[];
 }
 
 export type ReviewExpenseClaimRequest = {
   approved: boolean;
   rejectionReason?: string;
+  overrideAllocations?: ExpenseAllocationDTO[];
 }
 
 /** Staff: submit a new expense claim on behalf of a member. */

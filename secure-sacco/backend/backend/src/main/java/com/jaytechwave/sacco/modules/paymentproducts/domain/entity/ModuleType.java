@@ -4,5 +4,7 @@ public enum ModuleType {
     SAVINGS,
     PENALTY,
     LOAN,
+    SHARE_CAPITAL,
+    DEPOSIT_SHARES,
     CUSTOM
 }

@@ -196,8 +196,15 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingRule, setSavingRule]   = useState(false);
     const [deletingRule, setDeletingRule] = useState<string | null>(null);
 
+    const flash = (ok: boolean, msg: string) => {
+        setToast({ ok, msg });
+        setTimeout(() => setToast(null), 4000);
+    };
+
     // ── Load ────────────────────────────────────────────────────────────────
     useEffect(() => {
+        penaltyApi.getRules(true).catch(e => console.error("Could not load rules for form defaults", e));
+
         settingsApi.getSettings().then(d => {
             setSettings(d);
             if (d.initialized) {
@@ -229,10 +236,7 @@ const SaccoSettingsPage: React.FC = () => {
         return () => clearTimeout(id);
     }, [saccoName, prefixManual]);
 
-    const flash = (ok: boolean, msg: string) => {
-        setToast({ ok, msg });
-        setTimeout(() => setToast(null), 4000);
-    };
+
 
     // Load penalty rules when penalties tab is opened
     const loadRules = useCallback(async () => {
@@ -244,7 +248,7 @@ const SaccoSettingsPage: React.FC = () => {
 
     useEffect(() => {
         if (tab === 'penalties' && rules.length === 0 && !rulesLoading) loadRules();
-    }, [tab]); // eslint-disable-line
+    }, [tab]);  
 
     const openEditRule = (rule: PenaltyRule) => {
         setEditingRule(rule);
