@@ -18,9 +18,13 @@ const MODULE_COLORS: Record<string, string> = {
 
 const STATUS_BADGE: Record<string, { color: string; icon: React.ReactNode }> = {
     PENDING:   { color: 'bg-amber-100 text-amber-700',   icon: <Clock size={12} /> },
+    SUBMITTED: { color: 'bg-amber-100 text-amber-700',   icon: <Clock size={12} /> },
     ROUTED:    { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 size={12} /> },
     FAILED:    { color: 'bg-red-100 text-red-700',       icon: <XCircle size={12} /> },
+    REJECTED:  { color: 'bg-red-100 text-red-700',       icon: <XCircle size={12} /> },
     COMPLETED: { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 size={12} /> },
+    APPROVED:  { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 size={12} /> },
+    PAID:      { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 size={12} /> },
 };
 
 export const PaymentLookupPage: React.FC = () => {
@@ -46,6 +50,8 @@ export const PaymentLookupPage: React.FC = () => {
         }
     };
 
+    const isExpenseClaim = result?.internalRef?.startsWith('EXP-');
+
     return (
         <div className="max-w-3xl mx-auto p-6">
             <div className="flex items-center gap-3 mb-6">
@@ -58,7 +64,7 @@ export const PaymentLookupPage: React.FC = () => {
                 <div>
                     <h1 className="text-xl font-bold text-slate-800">Payment Lookup</h1>
                     <p className="text-sm text-slate-500">
-                        Search by M-Pesa reference — see every route a split deposit was sent to, side by side.
+                        Search by M-Pesa reference — see every route a split deposit or claim was sent to, side by side.
                     </p>
                 </div>
             </div>
@@ -106,7 +112,14 @@ export const PaymentLookupPage: React.FC = () => {
                     <div className="p-5 rounded-xl border border-slate-200 bg-white">
                         <div className="flex items-center justify-between mb-3">
                             <div>
-                                <p className="text-2xl font-bold text-slate-800">KES {fmt(result.totalAmount)}</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-2xl font-bold text-slate-800">KES {fmt(result.totalAmount)}</p>
+                                    {isExpenseClaim && (
+                                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                                            Expense Claim
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-slate-500">{result.memberName} {result.memberNumber && `· ${result.memberNumber}`}</p>
                             </div>
                             <span className={`flex items-center gap-1.5 text-xs font-bold uppercase px-3 py-1.5 rounded-lg ${STATUS_BADGE[result.paymentStatus]?.color ?? 'bg-slate-100 text-slate-600'}`}>

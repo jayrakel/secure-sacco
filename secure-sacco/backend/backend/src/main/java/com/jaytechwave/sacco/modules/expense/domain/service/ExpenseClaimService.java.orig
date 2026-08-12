@@ -2,7 +2,6 @@ package com.jaytechwave.sacco.modules.expense.domain.service;
 
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
-import com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService;
 import com.jaytechwave.sacco.modules.expense.api.dto.ExpenseClaimDTOs.*;
 import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaim;
 import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocation;
@@ -58,7 +57,6 @@ public class ExpenseClaimService {
     private final PaymentProductRepository productRepository;
     private final DepositAllocationRepository depositAllocationRepository;
     private final DepositAllocationRouterService depositAllocationRouterService;
-    private final SmsNotificationService smsNotificationService;
 
     // ── Staff: Submit a claim on behalf of a member ───────────────────────────
 
@@ -299,11 +297,6 @@ public class ExpenseClaimService {
 
             log.info("SAC-220: Claim {} APPROVED by {}. GL entry posted: {}", claimId, actorEmail, journalRef);
 
-            // Send SMS with Receipt Link
-            String receiptLink = "sacco.app/r/" + journalRef;
-            String msg = String.format("Dear %s, your claim of KES %s is approved. Receipt: %s", 
-                    member.getFirstName(), claim.getAmount(), receiptLink);
-            smsNotificationService.sendNotificationSms(member.getPhoneNumber(), msg);
         } else {
             // ── REJECTED: no GL entry ─────────────────────────────────────────
             claim.setStatus(ExpenseClaimStatus.REJECTED);

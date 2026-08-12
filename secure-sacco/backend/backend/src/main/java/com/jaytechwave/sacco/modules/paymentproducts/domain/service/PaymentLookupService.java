@@ -2,11 +2,16 @@ package com.jaytechwave.sacco.modules.paymentproducts.domain.service;
 
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaim;
+import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocation;
+import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimAllocationRepository;
+import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimRepository;
 import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.api.dto.PaymentProductDTOs.*;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAllocation;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +34,9 @@ public class PaymentLookupService {
     private final PaymentRepository           paymentRepository;
     private final DepositAllocationRepository allocationRepository;
     private final MemberRepository            memberRepository;
+    private final ExpenseClaimRepository      expenseClaimRepository;
+    private final ExpenseClaimAllocationRepository expenseAllocationRepository;
+    private final PaymentProductRepository    productRepository;
 
     @Transactional(readOnly = true)
     public Optional<PaymentRouteLookupResponse> lookupByReference(String reference) {
@@ -40,7 +48,45 @@ public class PaymentLookupService {
                 .or(() -> paymentRepository.findByTransactionRef(trimmed))
                 .orElse(null);
 
-        if (payment == null) return Optional.empty();
+        if (payment == null) {
+            // Fallback: search for ExpenseClaim by receiptReference
+            Optional<ExpenseClaim> optClaim = expenseClaimRepository.findFirstByReceiptReferenceOrderByCreatedAtDesc(trimmed);
+            if (optClaim.isEmpty()) {
+                return Optional.empty();
+            }
+            
+            ExpenseClaim claim = optClaim.get();
+            Member member = memberRepository.findById(claim.getMemberId()).orElse(null);
+            
+            List<ExpenseClaimAllocation> allocations = expenseAllocationRepository.findByExpenseClaimId(claim.getId());
+            
+            List<RouteItem> routes = allocations.stream().map(a -> {
+                var product = productRepository.findById(a.getProductId()).orElse(null);
+                return new RouteItem(
+                        product != null ? product.getName() : "Unknown",
+                        product != null ? product.getModuleType() : com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ModuleType.CUSTOM,
+                        a.getAmount(),
+                        claim.getStatus().name(),
+                        claim.getRejectionReason(),
+                        claim.getReviewedAt()
+                );
+            }).collect(java.util.stream.Collectors.toList());
+            
+            return Optional.of(new PaymentRouteLookupResponse(
+                    claim.getId(),
+                    claim.getReceiptReference(),
+                    "EXP-" + claim.getId(),
+                    member != null ? member.getMemberNumber() : null,
+                    member != null ? (member.getFirstName() + " " + member.getLastName()) : "Unknown",
+                    member != null ? member.getPhoneNumber() : null,
+                    claim.getAmount(),
+                    claim.getStatus().name(),
+                    claim.getRejectionReason(),
+                    claim.getCreatedAt(),
+                    !allocations.isEmpty(),
+                    routes
+            ));
+        }
 
         Member member = payment.getMemberId() != null
                 ? memberRepository.findById(payment.getMemberId()).orElse(null)

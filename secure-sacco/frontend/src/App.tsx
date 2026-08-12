@@ -1,3 +1,4 @@
+import PublicReceiptPage from "./features/reports/pages/PublicReceiptPage";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import SavingsManagementPage from './features/savings/pages/SavingsManagementPage';
 import MemberSavingsPage from './features/savings/pages/MemberSavingsPage';
@@ -85,6 +86,7 @@ function App() {
                         <Routes>
 
                             <Route path="/" element={<LandingPage />} />
+                            <Route path="/r/:ref" element={<PublicReceiptPage />} />
 
                             {/* Wrap Login in GuestRoute */}
                             <Route path="/login" element={

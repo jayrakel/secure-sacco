@@ -118,6 +118,9 @@ public class SecurityConfig {
 
                         // --- Public landing page --- no auth required ---
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/public/landing").permitAll()
+                        
+                        // --- Public receipt lookup --- no auth required ---
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/public/receipts/**").permitAll()
 
                         // --- Meeting QR check-in info — public so members can scan without logging in first ---
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/meetings/qr/**").permitAll()

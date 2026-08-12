@@ -450,6 +450,46 @@ public class JournalEntryService {
         log.info("SAC-220: Posted expense reimbursement GL entry {} for member {} amount {}", journalRef, memberId, amount);
     }
 
+    @Transactional
+    public void postExpenseReimbursementReclassification(UUID memberId, BigDecimal amount, String claimId) {
+        String journalRef = "EXPREC-" + claimId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        Account expenseAccount = accountRepository.findByAccountCode("5360")
+                .orElseThrow(() -> new IllegalStateException("System Account 5360 not found."));
+        
+        Account bankReceiptAccount = accountRepository.findByAccountCode("1001")
+                .orElseThrow(() -> new IllegalStateException("System Account 1001 not found."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description("Reclassification of virtual payment for expense reimbursement — claim " + claimId)
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(expenseAccount)
+                .memberId(memberId)
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Reclassify virtual payment — debit expense account 5360")
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(bankReceiptAccount)
+                .memberId(memberId)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Reclassify virtual payment — clear bank receipt 1001")
+                .build());
+
+        journalEntryRepository.save(entry);
+    }
+
     // =========================================================================
     // SAC-221: ASSET ACQUISITION TEMPLATE
     // =========================================================================
