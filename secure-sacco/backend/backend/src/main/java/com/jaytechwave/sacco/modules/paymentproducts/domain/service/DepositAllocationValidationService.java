@@ -182,11 +182,26 @@ public class DepositAllocationValidationService {
         if (createdAt == null || frequency == null || frequency == ProductFrequency.ONE_OFF) {
             return 1;
         }
-        ZonedDateTime now = ZonedDateTime.now();
+        
+        java.time.LocalDate createdDate = createdAt.toLocalDate();
+        java.time.LocalDate today = ZonedDateTime.now().toLocalDate();
+        
         return switch (frequency) {
-            case WEEKLY -> Math.max(1, ChronoUnit.WEEKS.between(createdAt, now) + 1);
-            case MONTHLY -> Math.max(1, ChronoUnit.MONTHS.between(createdAt, now) + 1);
-            case YEARLY -> Math.max(1, ChronoUnit.YEARS.between(createdAt, now) + 1);
+            case WEEKLY -> {
+                java.time.LocalDate createdBoundary = createdDate.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SATURDAY));
+                java.time.LocalDate todayBoundary = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SATURDAY));
+                yield Math.max(1, ChronoUnit.WEEKS.between(createdBoundary, todayBoundary) + 1);
+            }
+            case MONTHLY -> {
+                java.time.LocalDate createdFirst = createdDate.withDayOfMonth(1);
+                java.time.LocalDate todayFirst = today.withDayOfMonth(1);
+                yield Math.max(1, ChronoUnit.MONTHS.between(createdFirst, todayFirst) + 1);
+            }
+            case YEARLY -> {
+                java.time.LocalDate createdFirst = createdDate.withDayOfYear(1);
+                java.time.LocalDate todayFirst = today.withDayOfYear(1);
+                yield Math.max(1, ChronoUnit.YEARS.between(createdFirst, todayFirst) + 1);
+            }
             default -> 1;
         };
     }
