@@ -67,27 +67,30 @@ public class NotificationMeetingListener {
                 firstName = "Member";
             }
 
-            String baseMessage = String.format("Dear %s, %s meeting '' on %s %s. Please attend.", 
-                    firstName, meetingTypeStr, formattedDate, formattedTime);
+            String title = meeting.getTitle();
+            if (title == null || title.isBlank()) {
+                String type = meeting.getMeetingType() != null ? meeting.getMeetingType().name() : "GENERAL";
+                title = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase() + " Meeting";
+                title = title.replace("_", " ");
+            }
+
+            String baseMessage = String.format("Dear %s, you are invited to attend:  on %s at %s. Please plan to attend.", 
+                    firstName, formattedDate, formattedTime);
 
             int allowedTitleLength = 158 - baseMessage.length();
-            String title = meeting.getTitle();
             
             if (allowedTitleLength < 5) {
-                // In an extreme case where firstName is extremely long, fallback to generic
-                baseMessage = String.format("Dear Member, %s meeting '' on %s %s. Please attend.", 
-                        meetingTypeStr, formattedDate, formattedTime);
+                baseMessage = String.format("Dear Member, you are invited to attend:  on %s at %s. Please plan to attend.", 
+                        formattedDate, formattedTime);
                 allowedTitleLength = 158 - baseMessage.length();
             }
 
-            if (title != null && title.length() > allowedTitleLength) {
+            if (title.length() > allowedTitleLength) {
                 title = title.substring(0, allowedTitleLength - 3) + "...";
-            } else if (title == null) {
-                title = "Meeting";
             }
 
-            String finalMessage = String.format("Dear %s, %s meeting '%s' on %s %s. Please attend.", 
-                    firstName, meetingTypeStr, title, formattedDate, formattedTime);
+            String finalMessage = String.format("Dear %s, you are invited to attend: %s on %s at %s. Please plan to attend.", 
+                    firstName, title, formattedDate, formattedTime);
 
             smsNotificationService.sendNotificationSms(member.getPhoneNumber(), finalMessage);
         }
