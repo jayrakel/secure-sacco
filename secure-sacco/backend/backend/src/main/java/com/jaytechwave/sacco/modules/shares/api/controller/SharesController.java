@@ -1,0 +1,40 @@
+package com.jaytechwave.sacco.modules.shares.api.controller;
+
+import com.jaytechwave.sacco.modules.shares.domain.entity.ShareAccount;
+import com.jaytechwave.sacco.modules.shares.domain.entity.ShareTransaction;
+import com.jaytechwave.sacco.modules.shares.domain.service.ShareService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1")
+@RequiredArgsConstructor
+public class SharesController {
+
+    private final ShareService shareService;
+
+    @GetMapping("/me/shares")
+    @PreAuthorize("hasRole('MEMBER')")
+    public ResponseEntity<List<ShareAccount>> getMyShares(
+            @RequestAttribute("userId") UUID userId) {
+        return ResponseEntity.ok(shareService.getMemberAccounts(userId));
+    }
+
+    @GetMapping("/me/shares/{accountId}/transactions")
+    @PreAuthorize("hasRole('MEMBER')")
+    public ResponseEntity<List<ShareTransaction>> getMyShareTransactions(
+            @RequestAttribute("userId") UUID userId,
+            @PathVariable UUID accountId) {
+        // Basic security check: ensure account belongs to member
+        List<ShareAccount> accounts = shareService.getMemberAccounts(userId);
+        if (accounts.stream().noneMatch(a -> a.getId().equals(accountId))) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(shareService.getAccountTransactions(accountId));
+    }
+}
