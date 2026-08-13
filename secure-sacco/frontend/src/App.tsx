@@ -245,7 +245,7 @@ function App() {
                                 } />
 
                                 <Route path="/accounting/balance-sheet" element={
-                                    <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
+                                    <ProtectedRoute requiredPermissions={['GL_BALANCE_SHEET']}>
                                         <BalanceSheetPage />
                                     </ProtectedRoute>
                                 } />
