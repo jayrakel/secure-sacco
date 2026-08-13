@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../../../shared/api/api-client';
 import { RefreshCw, CheckCircle, XCircle, Upload } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -49,10 +49,7 @@ export const ReconciliationPage: React.FC = () => {
     const fetchInternalReconciliation = async () => {
         setInternalLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get<InternalReconciliationResponse>('http://localhost:8080/api/v1/accounting/reconciliation/internal', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await apiClient.get<InternalReconciliationResponse>('/accounting/reconciliation/internal');
             setInternalData(res.data);
         } catch (err) {
             console.error('Failed to fetch internal reconciliation', err);
@@ -80,10 +77,8 @@ export const ReconciliationPage: React.FC = () => {
         formData.append('file', file);
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:8080/api/v1/accounting/reconciliation/bank/upload', formData, {
+            const res = await apiClient.post('/accounting/reconciliation/bank/upload', formData, {
                 headers: { 
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
