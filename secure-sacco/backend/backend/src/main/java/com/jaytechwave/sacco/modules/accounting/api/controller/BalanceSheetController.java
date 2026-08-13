@@ -1,6 +1,8 @@
 package com.jaytechwave.sacco.modules.accounting.api.controller;
 
 import com.jaytechwave.sacco.modules.accounting.api.dto.BalanceSheetDTOs.*;
+import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
+import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.AccountBalanceResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import java.util.List;
 public class BalanceSheetController {
 
     private final JdbcTemplate jdbcTemplate;
+    private final CoopConnectService coopConnectService;
 
     @Operation(summary = "Get Balance Sheet", description = "Returns the Statement of Financial Position.")
     @GetMapping
@@ -124,13 +127,24 @@ public class BalanceSheetController {
         SectionData liabilitiesSection = new SectionData(liabilities, totalLiabilities);
         SectionData equitySection = new SectionData(equity, totalEquity);
 
+        BigDecimal actualBankBalance = null;
+        try {
+            AccountBalanceResponse bankRes = coopConnectService.getAccountBalance();
+            if (bankRes != null && bankRes.getAvailableBalance() != null) {
+                actualBankBalance = new BigDecimal(bankRes.getAvailableBalance());
+            }
+        } catch (Exception e) {
+            // Log but don't fail the balance sheet if bank API is unreachable
+        }
+
         return ResponseEntity.ok(new BalanceSheetResponse(
                 effectiveDate.toString(),
                 assetsSection,
                 liabilitiesSection,
                 equitySection,
                 netIncome,
-                isBalanced
+                isBalanced,
+                actualBankBalance
         ));
     }
 

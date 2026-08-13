@@ -22,6 +22,7 @@ interface BalanceSheetResponse {
     equity: SectionData;
     netIncome: number;
     isBalanced: boolean;
+    actualBankBalance?: number;
 }
 
 export const BalanceSheetPage: React.FC = () => {
@@ -138,6 +139,15 @@ export const BalanceSheetPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column: Assets */}
                 <div>
+                    {data.actualBankBalance !== undefined && data.actualBankBalance !== null && (
+                        <div className="mb-6 bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-center justify-between shadow-sm">
+                            <div>
+                                <h3 className="text-blue-900 font-bold text-lg">Actual Bank Balance</h3>
+                                <p className="text-blue-700 text-sm mt-1">Live from Co-op Bank</p>
+                            </div>
+                            <span className="font-bold text-2xl text-blue-800">{formatMoney(data.actualBankBalance)}</span>
+                        </div>
+                    )}
                     {renderSection("Assets", data.assets, true)}
                 </div>
 
