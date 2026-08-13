@@ -37,7 +37,6 @@ export const BalanceSheetPage: React.FC = () => {
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to fetch balance sheet');
         } finally {
-        } finally {
             setLoading(false);
         }
     };
