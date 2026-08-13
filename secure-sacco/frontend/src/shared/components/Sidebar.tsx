@@ -85,6 +85,8 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Journal Entries',   path: '/accounting/journals',      icon: FileText, requiredPermission: 'ACCOUNTING_READ' },
                 { label: 'Manual GL Posting', path: '/accounting/gl-posting',    icon: PenLine,  requiredPermission: 'ACCOUNTING_JOURNAL_POST' },
                 { label: 'Trial Balance',     path: '/accounting/trial-balance', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
+                { label: 'Balance Sheet',     path: '/accounting/balance-sheet', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
+                { label: 'Reconciliation',    path: '/accounting/reconciliation', icon: ShieldCheck, requiredPermission: 'GL_RECONCILIATION' },
                 { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
             ],
         },

@@ -27,6 +27,8 @@ import ChartOfAccountsPage from './features/accounting/pages/ChartOfAccountsPage
 import JournalEntriesPage from './features/accounting/pages/JournalEntriesPage';
 import TrialBalancePage from './features/accounting/pages/TrialBalancePage';
 import ManualGlPostingPage from './features/accounting/pages/ManualGlPostingPage';
+import { BalanceSheetPage } from './features/accounting/pages/BalanceSheetPage';
+import { ReconciliationPage } from './features/accounting/pages/ReconciliationPage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
 import LoanManagementPage from './features/loans/pages/LoanManagementPage';
 import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
@@ -238,6 +240,18 @@ function App() {
                                 <Route path="/accounting/gl-posting" element={
                                     <ProtectedRoute requiredPermissions={['ACCOUNTING_JOURNAL_POST']}>
                                         <ManualGlPostingPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/accounting/balance-sheet" element={
+                                    <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
+                                        <BalanceSheetPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/accounting/reconciliation" element={
+                                    <ProtectedRoute requiredPermissions={['GL_RECONCILIATION']}>
+                                        <ReconciliationPage />
                                     </ProtectedRoute>
                                 } />
 
