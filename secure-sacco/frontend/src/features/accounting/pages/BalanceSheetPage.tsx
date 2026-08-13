@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, AlertCircle } from 'lucide-react';
 import dayjs from 'dayjs';
 
 interface AccountBalance {
