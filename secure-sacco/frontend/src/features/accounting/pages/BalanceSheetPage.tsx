@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/api-client';
+import axios from 'axios';
 import { Download, RefreshCw, AlertCircle } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -34,8 +35,12 @@ export const BalanceSheetPage: React.FC = () => {
         try {
             const res = await apiClient.get<BalanceSheetResponse>('/accounting/balance-sheet');
             setData(res.data);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to fetch balance sheet');
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.message || 'Failed to fetch balance sheet');
+            } else {
+                setError('Failed to fetch balance sheet');
+            }
         } finally {
             setLoading(false);
         }
