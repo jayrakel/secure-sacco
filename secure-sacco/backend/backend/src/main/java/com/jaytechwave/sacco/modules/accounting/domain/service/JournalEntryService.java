@@ -760,4 +760,36 @@ public class JournalEntryService {
         journalEntryRepository.save(entry);
         log.info("Posted bank debit GL: {} KES {} ref={}", journalRef, amount, reference);
     }
+
+    @Transactional
+    public void postDividendDistribution(UUID memberId, BigDecimal netDividend, String financialYear) {
+        String journalRef = "DIV-" + financialYear + "-" + memberId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        // DR 3100 Retained Earnings (or 3200 if separate dividends payable)
+        // CR 2300 Member Deposit Shares
+        Account retainedEarnings = accountRepository.findByAccountCode("3100")
+                .orElseThrow(() -> new IllegalStateException("Retained Earnings account (3100) not found"));
+        
+        Account depositShares = accountRepository.findByAccountCode("2300")
+                .orElseThrow(() -> new IllegalStateException("Deposit Shares account (2300) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef).description("Dividend Distribution for FY " + financialYear)
+                .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
+
+        entry.addLine(JournalEntryLine.builder().account(retainedEarnings).memberId(memberId)
+                .debitAmount(netDividend).creditAmount(BigDecimal.ZERO)
+                .description("Dividend Distribution Debit (Retained Earnings)").build());
+                
+        entry.addLine(JournalEntryLine.builder().account(depositShares).memberId(memberId)
+                .debitAmount(BigDecimal.ZERO).creditAmount(netDividend)
+                .description("Dividend Distribution Credit (Deposit Shares)").build());
+
+        journalEntryRepository.save(entry);
+        log.info("Posted Dividend Distribution GL: {} KES {}", journalRef, netDividend);
+    }
 }

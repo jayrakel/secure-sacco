@@ -28,6 +28,9 @@ public class DividendDeclaration {
     @Column(name = "total_allocated", nullable = false)
     private BigDecimal totalAllocated = BigDecimal.ZERO;
 
+    @Column(name = "calculation_mode", nullable = false)
+    private String calculationMode = "SHARE_CAPITAL"; // SHARE_CAPITAL, SAVINGS, or BOTH
+
     @Column(nullable = false)
     private String status = "DRAFT";
 

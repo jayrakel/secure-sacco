@@ -49,4 +49,3 @@ spring:
 #    metrics:
 #      export:
 #        password: Michira._2000
-#      password: sacco_redis_pass_2024

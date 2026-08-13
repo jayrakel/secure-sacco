@@ -60,6 +60,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             items: [
                 { label: 'Users', path: '/users', icon: Users, requiredPermission: 'USER_READ' },
                 { label: 'Roles & Permissions', path: '/roles', icon: ShieldCheck, requiredPermission: 'ROLE_READ' },
+                { label: 'Financial Years', path: '/admin/financial-years', icon: CalendarDays, requiredPermission: 'SETTINGS_EDIT' },
                 { label: 'Dividends', path: '/admin/dividends', icon: Coins, requiredPermission: 'SETTINGS_EDIT' },
             ],
         },
@@ -151,6 +152,13 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             }
         };
         fetchProducts();
+
+        const handleProductsUpdated = () => {
+            fetchProducts();
+        };
+
+        window.addEventListener('productsUpdated', handleProductsUpdated);
+        return () => window.removeEventListener('productsUpdated', handleProductsUpdated);
     }, [user, isStaff]);
 
     if (customProducts.length > 0) {

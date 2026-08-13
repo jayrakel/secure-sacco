@@ -23,10 +23,17 @@ public class DividendController {
         return ResponseEntity.ok(dividendService.getAllDeclarations());
     }
 
+    @PostMapping("/preview")
+    @PreAuthorize("hasAuthority('DIVIDENDS_READ')")
+    public ResponseEntity<com.jaytechwave.sacco.modules.dividends.api.dto.DividendDTOs.PreviewDividendResponse> previewDividends(
+            @RequestBody DeclareDividendRequest request) {
+        return ResponseEntity.ok(dividendService.previewDividends(request.getFinancialYear(), request.getRatePercentage(), request.getCalculationMode()));
+    }
+
     @PostMapping("/declare")
     @PreAuthorize("hasAuthority('DIVIDENDS_MANAGE')")
     public ResponseEntity<DividendDeclaration> declareDividend(
             @RequestBody DeclareDividendRequest request) {
-        return ResponseEntity.ok(dividendService.declareDividend(request.getFinancialYear(), request.getRatePercentage()));
+        return ResponseEntity.ok(dividendService.declareDividend(request.getFinancialYear(), request.getRatePercentage(), request.getCalculationMode()));
     }
 }

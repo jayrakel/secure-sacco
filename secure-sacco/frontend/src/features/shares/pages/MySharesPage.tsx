@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
+import { DepositFlowModal } from '../../paymentproducts/components/DepositFlowModal';
 
 interface ShareAccount {
     id: string;
@@ -29,6 +30,7 @@ export default function MySharesPage() {
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [transactions, setTransactions] = useState<ShareTransaction[]>([]);
     const [transactionsLoading, setTransactionsLoading] = useState(false);
+    const [showDepositModal, setShowDepositModal] = useState(false);
 
     const loadAccounts = useCallback(async () => {
         try {
@@ -88,7 +90,17 @@ export default function MySharesPage() {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">My Shares</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">My Shares</h1>
+                {accounts.length > 0 && (
+                    <button 
+                        onClick={() => setShowDepositModal(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center shadow-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2" /> Buy Shares
+                    </button>
+                )}
+            </div>
 
             {accounts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -124,7 +136,7 @@ export default function MySharesPage() {
                     </p>
                     <button 
                         className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-                        onClick={() => alert("Purchasing shares is not yet enabled for this account.")}
+                        onClick={() => setShowDepositModal(true)}
                     >
                         Purchase Shares
                     </button>
@@ -184,6 +196,15 @@ export default function MySharesPage() {
                     )}
                 </div>
             )}
+            <DepositFlowModal 
+                isOpen={showDepositModal}
+                onClose={() => setShowDepositModal(false)}
+                onCompleted={() => {
+                    setShowDepositModal(false);
+                    loadAccounts();
+                    if (selectedAccount) loadTransactions(selectedAccount);
+                }}
+            />
         </div>
     );
 }

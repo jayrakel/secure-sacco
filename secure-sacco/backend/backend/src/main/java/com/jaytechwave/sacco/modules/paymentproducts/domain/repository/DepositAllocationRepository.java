@@ -19,6 +19,8 @@ public interface DepositAllocationRepository extends JpaRepository<DepositAlloca
     List<DepositAllocation> findByPaymentIdAndStatus(UUID paymentId, AllocationStatus status);
 
     boolean existsByPaymentId(UUID paymentId);
+    
+    boolean existsByProductId(UUID productId);
 
     /**
      * Total amount a member has successfully routed toward a given product —
