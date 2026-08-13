@@ -94,6 +94,43 @@ public class AssetService {
     }
 
     /**
+     * Update non-financial fields of an existing asset.
+     *
+     * @param id         UUID of the asset to update
+     * @param req        update request (non-financial fields only)
+     * @param actorEmail email of the staff member making the change
+     * @return updated asset as a response DTO
+     */
+    @Transactional
+    public AssetResponse updateAsset(UUID id, UpdateAssetRequest req, String actorEmail) {
+        SaccoAsset asset = findOrThrow(id);
+
+        if (asset.getStatus().isTerminal()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Asset is " + asset.getStatus() + " and cannot be updated.");
+        }
+
+        asset.setAssetName(req.assetName());
+        asset.setSerialNumber(req.serialNumber());
+        asset.setDescription(req.description());
+        asset.setLocation(req.location());
+        asset.setSupplier(req.supplier());
+        asset.setWarrantyExpiry(req.warrantyExpiry());
+
+        SaccoAsset saved = assetRepository.save(asset);
+
+        securityAuditService.logEvent(
+                "ASSET_UPDATED",
+                "ASSET-" + saved.getId(),
+                String.format("Asset details updated by %s: %s [%s]",
+                        actorEmail, saved.getAssetName(), saved.getId())
+        );
+
+        log.info("SAC-221: Asset {} updated by {}", id, actorEmail);
+        return toResponse(saved);
+    }
+
+    /**
      * Update the status of an existing asset.
      *
      * <p>Validates that:

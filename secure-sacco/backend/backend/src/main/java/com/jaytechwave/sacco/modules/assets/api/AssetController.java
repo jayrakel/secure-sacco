@@ -65,6 +65,18 @@ public class AssetController {
         return assetService.getById(id);
     }
 
+    // ── Update asset details ──────────────────────────────────────────────────
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ASSET_WRITE')")
+    public AssetResponse updateAsset(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateAssetRequest request,
+            Principal principal
+    ) {
+        return assetService.updateAsset(id, request, principal.getName());
+    }
+
     // ── Update asset status ───────────────────────────────────────────────────
 
     @PatchMapping("/{id}/status")

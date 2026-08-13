@@ -36,6 +36,15 @@ export interface RegisterAssetRequest {
   warrantyExpiry?: string;
 }
 
+export interface UpdateAssetRequest {
+  assetName: string;
+  serialNumber?: string;
+  description?: string;
+  location?: string;
+  supplier?: string;
+  warrantyExpiry?: string;
+}
+
 export interface UpdateAssetStatusRequest {
   newStatus: AssetStatus;
   disposalNotes?: string;
@@ -54,6 +63,13 @@ export const getAsset = (id: string): Promise<AssetResponse> =>
 /** Register a new asset. Posts GL entry automatically. */
 export const registerAsset = (data: RegisterAssetRequest): Promise<AssetResponse> =>
   apiClient.post('/assets', data).then((r) => r.data);
+
+/** Update an asset's non-financial details. */
+export const updateAsset = (
+  id: string,
+  data: UpdateAssetRequest
+): Promise<AssetResponse> =>
+  apiClient.put(`/assets/${id}`, data).then((r) => r.data);
 
 /** Change the status of an asset (dispose / maintenance / write off). */
 export const updateAssetStatus = (
