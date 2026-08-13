@@ -64,6 +64,7 @@ import SecretaryPortalPage from './features/public/pages/SecretaryPortalPage';
 import { ProductSmartTabPage } from './features/paymentproducts/pages/ProductSmartTabPage';
 import MySharesPage from './features/shares/pages/MySharesPage';
 import DividendManagementPage from './features/dividends/pages/DividendManagementPage';
+import { FinancialYearsPage } from './features/accounting/pages/FinancialYearsPage';
 
 const SavingsRouteWrapper = () => {
     const { user } = useAuth();
@@ -463,6 +464,12 @@ function App() {
                                 <Route path="/admin/dividends" element={
                                     <ProtectedRoute requiredPermissions={['SETTINGS_EDIT']}>
                                         <DividendManagementPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/admin/financial-years" element={
+                                    <ProtectedRoute requiredPermissions={['SETTINGS_EDIT']}>
+                                        <FinancialYearsPage />
                                     </ProtectedRoute>
                                 } />
 

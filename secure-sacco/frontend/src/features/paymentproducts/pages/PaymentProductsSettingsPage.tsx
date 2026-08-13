@@ -201,6 +201,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                 accountingApi.getAccounts(),
             ]);
             setProducts(prods);
+            window.dispatchEvent(new Event('productsUpdated'));
             setAccounts(accts);
         } catch {
             setError('Could not load payment products.');

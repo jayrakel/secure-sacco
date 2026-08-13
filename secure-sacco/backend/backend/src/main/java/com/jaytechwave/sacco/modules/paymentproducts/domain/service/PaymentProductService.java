@@ -118,6 +118,11 @@ public class PaymentProductService {
         if (product.isSystem()) {
             throw new IllegalStateException("System products (Savings, Penalty, Loan) cannot be deleted");
         }
+        
+        if (allocationRepository.existsByProductId(id)) {
+            throw new IllegalStateException("Cannot delete product because it has associated transactions. Consider deactivating it instead.");
+        }
+        
         productRepository.delete(product);
     }
 

@@ -1,15 +1,31 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
-import { Loader2, Plus, RefreshCw } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Eye } from 'lucide-react';
 
 interface DividendDeclaration {
     id: string;
     financialYear: number;
     ratePercentage: number;
     totalAllocated: number;
+    calculationMode: string;
     status: string;
     createdAt: string;
+}
+
+interface PreviewItem {
+    memberId: string;
+    memberNumber: string;
+    memberName: string;
+    grossDividend: number;
+    arrears: number;
+    netDividend: number;
+    baseAmount: number;
+}
+
+interface PreviewResponse {
+    totalDividend: number;
+    items: PreviewItem[];
 }
 
 export default function DividendManagementPage() {
@@ -21,7 +37,10 @@ export default function DividendManagementPage() {
     const [declareError, setDeclareError] = useState<string | null>(null);
     const [financialYear, setFinancialYear] = useState<number>(new Date().getFullYear() - 1);
     const [ratePercentage, setRatePercentage] = useState<number>(5.0);
+    const [calculationMode, setCalculationMode] = useState<string>('SHARE_CAPITAL');
     const [showDeclareModal, setShowDeclareModal] = useState(false);
+    const [previewData, setPreviewData] = useState<PreviewResponse | null>(null);
+    const [isPreviewing, setIsPreviewing] = useState(false);
 
     const loadDeclarations = useCallback(async () => {
         try {
@@ -40,16 +59,39 @@ export default function DividendManagementPage() {
         loadDeclarations();
     }, [loadDeclarations]);
 
+    const handlePreview = async () => {
+        try {
+            setIsPreviewing(true);
+            setDeclareError(null);
+            const response = await axios.post('/api/v1/admin/dividends/preview', {
+                financialYear,
+                ratePercentage,
+                calculationMode
+            });
+            setPreviewData(response.data);
+        } catch (err) {
+            setDeclareError(getApiErrorMessage(err));
+        } finally {
+            setIsPreviewing(false);
+        }
+    };
+
     const handleDeclare = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!previewData) {
+            await handlePreview();
+            return;
+        }
         try {
             setIsDeclaring(true);
             setDeclareError(null);
             await axios.post('/api/v1/admin/dividends/declare', {
                 financialYear,
-                ratePercentage
+                ratePercentage,
+                calculationMode
             });
             setShowDeclareModal(false);
+            setPreviewData(null);
             loadDeclarations();
         } catch (err) {
             setDeclareError(getApiErrorMessage(err));
@@ -63,7 +105,7 @@ export default function DividendManagementPage() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Dividend Management</h1>
-                    <p className="text-gray-500 mt-1">Manage and distribute end-of-year dividends based on share capital</p>
+                    <p className="text-gray-500 mt-1">Manage and distribute end-of-year dividends based on share capital and savings</p>
                 </div>
                 <div className="flex gap-3">
                     <button 
@@ -73,7 +115,7 @@ export default function DividendManagementPage() {
                         <RefreshCw className="w-4 h-4 mr-2" /> Refresh
                     </button>
                     <button 
-                        onClick={() => setShowDeclareModal(true)}
+                        onClick={() => { setShowDeclareModal(true); setPreviewData(null); }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center shadow-sm"
                     >
                         <Plus className="w-4 h-4 mr-2" /> Declare Dividend
@@ -98,6 +140,7 @@ export default function DividendManagementPage() {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Financial Year</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Allocated</th>
                                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Declared On</th>
@@ -112,8 +155,11 @@ export default function DividendManagementPage() {
                                     <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                                         {decl.ratePercentage}%
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                                        {decl.calculationMode?.replace('_', ' ') || 'SHARE CAPITAL'}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right font-medium text-gray-900">
-                                        KES {decl.totalAllocated.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        KES {decl.totalAllocated?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-center">
                                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -142,12 +188,12 @@ export default function DividendManagementPage() {
 
             {showDeclareModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900 bg-opacity-50 overflow-y-auto">
-                    <div className="relative w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                    <div className={`relative w-full ${previewData ? 'max-w-4xl' : 'max-w-lg'} bg-white rounded-xl shadow-2xl overflow-hidden transition-all duration-300`} role="dialog" aria-modal="true">
                         <form onSubmit={handleDeclare}>
                             <div className="px-6 pt-6 pb-4">
                                 <div className="flex justify-between items-center mb-5">
                                     <h3 className="text-xl font-bold text-gray-900" id="modal-title">
-                                        Declare Dividend
+                                        {previewData ? 'Review Dividend Distribution' : 'Declare Dividend'}
                                     </h3>
                                     <button 
                                         type="button" 
@@ -167,63 +213,162 @@ export default function DividendManagementPage() {
                                     </div>
                                 )}
 
-                                <div className="space-y-5">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Financial Year</label>
-                                        <input 
-                                            type="number" 
-                                            required
-                                            min={2000}
-                                            max={2100}
-                                            value={financialYear}
-                                            onChange={e => setFinancialYear(parseInt(e.target.value))}
-                                            className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border" 
-                                        />
+                                {!previewData ? (
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Financial Year</label>
+                                            <input 
+                                                type="number" 
+                                                required
+                                                min={2000}
+                                                max={2100}
+                                                value={financialYear}
+                                                onChange={e => setFinancialYear(parseInt(e.target.value))}
+                                                className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Dividend Rate (%)</label>
+                                            <input 
+                                                type="number" 
+                                                required
+                                                step="0.01"
+                                                min={0.01}
+                                                max={100}
+                                                value={ratePercentage}
+                                                onChange={e => setRatePercentage(parseFloat(e.target.value))}
+                                                className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1">Calculation Mode</label>
+                                            <select
+                                                value={calculationMode}
+                                                onChange={(e) => setCalculationMode(e.target.value)}
+                                                className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border bg-white"
+                                            >
+                                                <option value="SHARE_CAPITAL">Option 1 - Share Capital (Most Common)</option>
+                                                <option value="SAVINGS">Option 2 - Savings Balance</option>
+                                                <option value="BOTH">Option 3 - Both (Share Capital + Savings)</option>
+                                            </select>
+                                            <p className="text-xs text-gray-500 mt-1.5">
+                                                Determines which member balances the {ratePercentage}% rate is applied against.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Dividend Rate (%)</label>
-                                        <input 
-                                            type="number" 
-                                            required
-                                            step="0.01"
-                                            min={0.01}
-                                            max={100}
-                                            value={ratePercentage}
-                                            onChange={e => setRatePercentage(parseFloat(e.target.value))}
-                                            className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2.5 border" 
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1.5 flex items-center">
-                                            <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            Calculated on members' Share Capital
-                                        </p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="flex gap-4 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                                            <div>
+                                                <p className="text-sm text-blue-600 font-medium">Financial Year</p>
+                                                <p className="text-lg font-bold text-blue-900">{financialYear}</p>
+                                            </div>
+                                            <div className="w-px bg-blue-200"></div>
+                                            <div>
+                                                <p className="text-sm text-blue-600 font-medium">Rate</p>
+                                                <p className="text-lg font-bold text-blue-900">{ratePercentage}%</p>
+                                            </div>
+                                            <div className="w-px bg-blue-200"></div>
+                                            <div>
+                                                <p className="text-sm text-blue-600 font-medium">Mode</p>
+                                                <p className="text-lg font-bold text-blue-900">{calculationMode.replace('_', ' ')}</p>
+                                            </div>
+                                            <div className="w-px bg-blue-200"></div>
+                                            <div>
+                                                <p className="text-sm text-blue-600 font-medium">Total Payout</p>
+                                                <p className="text-lg font-bold text-blue-900">KES {previewData.totalDividend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg">
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50 sticky top-0">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Base Amount</th>
+                                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Div.</th>
+                                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Arrears Ded.</th>
+                                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net Payout</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {previewData.items.map(item => (
+                                                        <tr key={item.memberId} className="hover:bg-gray-50">
+                                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                                <div className="text-sm font-medium text-gray-900">{item.memberName}</div>
+                                                                <div className="text-xs text-gray-500">{item.memberNumber}</div>
+                                                            </td>
+                                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500">
+                                                                {item.baseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                                                                {item.grossDividend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-red-600">
+                                                                {item.arrears > 0 ? `-${item.arrears.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '0.00'}
+                                                            </td>
+                                                            <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-bold text-green-600">
+                                                                {item.netDividend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                    {previewData.items.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                                                                No eligible members found for dividend payout based on current balances.
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="mt-4 bg-yellow-50 p-4 border border-yellow-200 rounded-lg flex items-start">
+                                            <svg className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <p className="text-sm text-yellow-800 leading-relaxed">
+                                                <strong>Warning:</strong> Clicking Confirm will immediately distribute KES {previewData.totalDividend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} to members' Deposit Shares and post corresponding GL entries. This action cannot be undone.
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                                 
-                                <div className="mt-6 bg-yellow-50 p-4 border border-yellow-200 rounded-lg flex items-start">
-                                    <svg className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    <p className="text-sm text-yellow-800 leading-relaxed">
-                                        <strong>Warning:</strong> Declaring a dividend will immediately calculate payouts for all eligible share accounts and credit their Deposit Shares. This action cannot be undone.
-                                    </p>
-                                </div>
                             </div>
                             <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100">
                                 <button
                                     type="button"
-                                    onClick={() => setShowDeclareModal(false)}
+                                    onClick={() => {
+                                        if (previewData) {
+                                            setPreviewData(null);
+                                        } else {
+                                            setShowDeclareModal(false);
+                                        }
+                                    }}
                                     className="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors shadow-sm"
                                 >
-                                    Cancel
+                                    {previewData ? 'Back to settings' : 'Cancel'}
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={isDeclaring}
-                                    className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 border border-transparent rounded-lg text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
-                                >
-                                    {isDeclaring && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                    {isDeclaring ? 'Distributing...' : 'Confirm & Distribute'}
-                                </button>
+                                {!previewData ? (
+                                    <button
+                                        type="submit"
+                                        disabled={isPreviewing}
+                                        className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 border border-transparent rounded-lg text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                                    >
+                                        {isPreviewing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        {isPreviewing ? 'Calculating...' : 'Preview Distribution'}
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="submit"
+                                        disabled={isDeclaring || previewData.items.length === 0}
+                                        className="w-full sm:w-auto px-5 py-2.5 bg-green-600 border border-transparent rounded-lg text-sm font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                                    >
+                                        {isDeclaring && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                        {isDeclaring ? 'Distributing...' : 'Confirm & Distribute'}
+                                    </button>
+                                )}
                             </div>
                         </form>
                     </div>
