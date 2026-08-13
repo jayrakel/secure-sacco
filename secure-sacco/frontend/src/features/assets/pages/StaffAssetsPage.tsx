@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-    getAssets, registerAsset, updateAssetStatus,
+    getAssets, registerAsset, updateAssetStatus, updateAsset,
     type AssetResponse, type AssetCategory, type AssetStatus,
 } from '../api/asset-api';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
@@ -60,6 +60,11 @@ export default function StaffAssetsPage() {
     const [disposalNotes, setDisposalNotes] = useState('');
     const [updatingStatus, setUpdatingStatus] = useState(false);
 
+    // Edit modal
+    const [editTarget, setEditTarget] = useState<AssetResponse | null>(null);
+    const [editForm, setEditForm] = useState({ assetName: '', serialNumber: '', description: '', location: '', supplier: '', warrantyExpiry: '' });
+    const [editing, setEditing] = useState(false);
+
     const fetchAssets = useCallback(async () => {
         try { setLoading(true); setError(null); setAssets(await getAssets()); }
         catch (e) { setError(getApiErrorMessage(e)); }
@@ -109,6 +114,38 @@ export default function StaffAssetsPage() {
             await fetchAssets();
         } catch (e) { setActionError(getApiErrorMessage(e)); }
         finally { setUpdatingStatus(false); }
+    };
+
+    const openEditModal = (asset: AssetResponse) => {
+        setEditTarget(asset);
+        setEditForm({
+            assetName: asset.assetName,
+            serialNumber: asset.serialNumber || '',
+            description: asset.description || '',
+            location: asset.location || '',
+            supplier: asset.supplier || '',
+            warrantyExpiry: asset.warrantyExpiry || '',
+        });
+        setActionError(null);
+    };
+
+    const handleEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editTarget) return;
+        setEditing(true); setActionError(null);
+        try {
+            await updateAsset(editTarget.id, {
+                assetName: editForm.assetName.trim(),
+                serialNumber: editForm.serialNumber.trim() || undefined,
+                description: editForm.description.trim() || undefined,
+                location: editForm.location.trim() || undefined,
+                supplier: editForm.supplier.trim() || undefined,
+                warrantyExpiry: editForm.warrantyExpiry || undefined,
+            });
+            setEditTarget(null);
+            await fetchAssets();
+        } catch (e) { setActionError(getApiErrorMessage(e)); }
+        finally { setEditing(false); }
     };
 
     const isTerminal = (s: AssetStatus) => s === 'DISPOSED' || s === 'WRITTEN_OFF';
@@ -193,10 +230,16 @@ export default function StaffAssetsPage() {
                                         <td className="px-6 py-4 font-mono text-xs text-emerald-600">{asset.journalReference ?? <span className="text-slate-300">—</span>}</td>
                                         <td className="px-6 py-4 text-center">
                                             {!isTerminal(asset.status) ? (
-                                                <button id={`btn-status-${asset.id}`} onClick={() => openStatusModal(asset)}
-                                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
-                                                    Change Status
-                                                </button>
+                                                <div className="flex gap-2 justify-center">
+                                                    <button id={`btn-edit-${asset.id}`} onClick={() => openEditModal(asset)}
+                                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
+                                                        Edit
+                                                    </button>
+                                                    <button id={`btn-status-${asset.id}`} onClick={() => openStatusModal(asset)}
+                                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
+                                                        Change Status
+                                                    </button>
+                                                </div>
                                             ) : <span className="text-slate-300 text-xs">—</span>}
                                         </td>
                                     </tr>
@@ -339,6 +382,69 @@ export default function StaffAssetsPage() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Asset Modal */}
+            {editTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-4">
+                        <div className="p-6 border-b border-slate-100">
+                            <h3 className="text-lg font-bold text-slate-900">Edit Asset Details</h3>
+                            <p className="text-sm text-slate-500 mt-1">Financial fields cannot be edited after registration.</p>
+                        </div>
+                        <form onSubmit={handleEdit} className="p-6 space-y-4">
+                            {actionError && <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">{actionError}</div>}
+
+                            <div>
+                                <label className={lbl}>Asset Name *</label>
+                                <input id="input-edit-asset-name" required value={editForm.assetName}
+                                    onChange={e => setEditForm(f => ({ ...f, assetName: e.target.value }))} className={inp} />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className={lbl}>Serial Number</label>
+                                    <input id="input-edit-serial-number" value={editForm.serialNumber}
+                                        onChange={e => setEditForm(f => ({ ...f, serialNumber: e.target.value }))} className={inp} />
+                                </div>
+                                <div>
+                                    <label className={lbl}>Location</label>
+                                    <input id="input-edit-asset-location" value={editForm.location}
+                                        onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} className={inp} />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className={lbl}>Supplier</label>
+                                    <input id="input-edit-supplier" value={editForm.supplier}
+                                        onChange={e => setEditForm(f => ({ ...f, supplier: e.target.value }))} className={inp} />
+                                </div>
+                                <div>
+                                    <label className={lbl}>Warranty Expiry</label>
+                                    <input id="input-edit-warranty-expiry" type="date" value={editForm.warrantyExpiry}
+                                        onChange={e => setEditForm(f => ({ ...f, warrantyExpiry: e.target.value }))} className={inp} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className={lbl}>Description</label>
+                                <textarea id="input-edit-asset-description" rows={2}
+                                    value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                                    className={`${inp} resize-none`} />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="button" onClick={() => setEditTarget(null)}
+                                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors">Cancel</button>
+                                <button id="btn-confirm-edit" type="submit" disabled={editing}
+                                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors disabled:opacity-50">
+                                    {editing ? 'Saving…' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

@@ -55,6 +55,26 @@ public class AssetDTOs {
             String disposalNotes
     ) {}
 
+    public record UpdateAssetRequest(
+
+            @NotBlank(message = "Asset name is required")
+            @Size(max = 200)
+            String assetName,
+
+            @Size(max = 100)
+            String serialNumber,
+
+            String description,
+
+            @Size(max = 200)
+            String location,
+
+            @Size(max = 200)
+            String supplier,
+
+            LocalDate warrantyExpiry
+    ) {}
+
     // ── Outbound ──────────────────────────────────────────────────────────────
 
     public record AssetResponse(
