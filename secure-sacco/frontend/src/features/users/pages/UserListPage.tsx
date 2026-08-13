@@ -248,9 +248,12 @@ export default function UserListPage() {
                                 <tr key={user.id} className="hover:bg-slate-50 transition group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200">
-                                                {user.firstName[0]}
-                                                {user.lastName[0]}
+                                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden">
+                                                {user.profilePhotoUrl ? (
+                                                    <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <>{user.firstName[0]}{user.lastName[0]}</>
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="font-bold text-slate-800">

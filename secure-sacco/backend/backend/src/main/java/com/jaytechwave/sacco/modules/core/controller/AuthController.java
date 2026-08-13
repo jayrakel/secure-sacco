@@ -305,6 +305,10 @@ public class AuthController {
             responseBody.put("memberId", user.getMember().getId());
         }
 
+        if (user.getProfilePhotoUrl() != null) {
+            responseBody.put("profilePhotoUrl", user.getProfilePhotoUrl());
+        }
+
         return ResponseEntity.ok(responseBody);
     }
 

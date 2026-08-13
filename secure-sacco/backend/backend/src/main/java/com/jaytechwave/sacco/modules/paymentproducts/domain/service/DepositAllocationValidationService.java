@@ -95,12 +95,12 @@ public class DepositAllocationValidationService {
             return new ValidateAllocationResponse(false, "At least one allocation is required", List.of());
         }
 
-        BigDecimal totalPct = request.allocations().stream()
-                .map(AllocationLine::percentage)
+        BigDecimal totalAmount = request.allocations().stream()
+                .map(AllocationLine::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (totalPct.subtract(HUNDRED).abs().compareTo(TOLERANCE) > 0) {
-            errors.add(String.format("Allocations must total 100%% — currently %.2f%%", totalPct));
+        if (totalAmount.compareTo(request.totalAmount()) != 0) {
+            errors.add(String.format("Allocations must exactly match total amount KES %.2f", request.totalAmount()));
         }
 
         for (AllocationLine line : request.allocations()) {
@@ -115,9 +115,7 @@ public class DepositAllocationValidationService {
                 continue;
             }
 
-            BigDecimal lineAmount = request.totalAmount()
-                    .multiply(line.percentage())
-                    .divide(HUNDRED, 2, RoundingMode.HALF_UP);
+            BigDecimal lineAmount = line.amount();
 
             BigDecimal cap = resolveCap(product, memberId);
 

@@ -33,7 +33,7 @@ export interface ProductAllocationContext {
 
 export interface AllocationLine {
     productId: string;
-    percentage: number;
+    amount: number;
 }
 
 export interface ValidateAllocationResponse {

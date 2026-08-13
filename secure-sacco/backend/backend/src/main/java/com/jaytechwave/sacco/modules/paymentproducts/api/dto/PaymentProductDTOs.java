@@ -53,10 +53,10 @@ public class PaymentProductDTOs {
 
     // ── Member: allocation flow ──────────────────────────────────────────────
 
-    /** One line in the member's split — e.g. 60% to Savings. */
+    /** One line in the member's split — e.g. 1500 to Savings. */
     public record AllocationLine(
             @NotNull UUID productId,
-            @NotNull BigDecimal percentage
+            @NotNull BigDecimal amount
     ) {}
 
     public record ValidateAllocationRequest(

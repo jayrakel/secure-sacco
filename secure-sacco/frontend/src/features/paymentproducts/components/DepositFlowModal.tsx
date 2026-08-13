@@ -131,13 +131,12 @@ export const DepositFlowModal: React.FC<Props> = ({ isOpen, onClose, defaultPhon
 
     if (!isOpen) return null;
 
-    // Converts the member's typed KES amounts into the percentage format the API expects.
     const toAllocationLines = () =>
         lines
             .filter(l => l.amount > 0)
             .map(l => ({
                 productId: l.productId,
-                percentage: Math.round((l.amount / totalAmount) * 10000) / 100, // 2 dp
+                amount: l.amount
             }));
 
     const goToAllocation = async () => {
