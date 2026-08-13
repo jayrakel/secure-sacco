@@ -159,14 +159,37 @@ public class AssetService {
                     "Disposal notes are required when marking an asset as " + req.newStatus() + ".");
         }
 
+        if (req.newStatus() == AssetStatus.DISPOSED && req.disposalValue() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Disposal value is required when disposing an asset.");
+        }
+
         AssetStatus previousStatus = asset.getStatus();
         asset.setStatus(req.newStatus());
         asset.setDisposalNotes(req.disposalNotes());
+        
+        if (req.newStatus() == AssetStatus.DISPOSED) {
+            asset.setDisposalValue(req.disposalValue());
+            asset.setProfitOrLoss(req.disposalValue().subtract(asset.getPurchaseCost()));
+        } else if (req.newStatus() == AssetStatus.WRITTEN_OFF) {
+            asset.setDisposalValue(java.math.BigDecimal.ZERO);
+            asset.setProfitOrLoss(asset.getPurchaseCost().negate());
+        }
+
         if (req.newStatus().isTerminal()) {
             asset.setDisposedAt(ZonedDateTime.now());
         }
 
         SaccoAsset saved = assetRepository.save(asset);
+        
+        if (req.newStatus().isTerminal()) {
+             journalEntryService.postAssetDisposal(
+                     saved.getId(), 
+                     saved.getPurchaseCost(), 
+                     saved.getDisposalValue(), 
+                     saved.getGlAccountCode()
+             );
+        }
 
         securityAuditService.logEvent(
                 "ASSET_STATUS_CHANGED",
@@ -221,7 +244,8 @@ public class AssetService {
                 a.getSerialNumber(), a.getDescription(), a.getPurchaseDate(),
                 a.getPurchaseCost(), a.getGlAccountCode(), a.getJournalReference(),
                 a.getLocation(), a.getSupplier(), a.getWarrantyExpiry(),
-                a.getDisposedAt(), a.getDisposalNotes(), a.getCreatedByUserId(),
+                a.getDisposedAt(), a.getDisposalNotes(), a.getDisposalValue(), 
+                a.getProfitOrLoss(), a.getCreatedByUserId(),
                 a.getCreatedAt(), a.getUpdatedAt()
         );
     }

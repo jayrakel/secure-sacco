@@ -52,7 +52,10 @@ public class AssetDTOs {
             @NotNull(message = "New status is required")
             AssetStatus newStatus,
 
-            String disposalNotes
+            String disposalNotes,
+
+            @DecimalMin(value = "0.00", message = "Disposal value cannot be negative")
+            BigDecimal disposalValue
     ) {}
 
     public record UpdateAssetRequest(
@@ -93,6 +96,8 @@ public class AssetDTOs {
             LocalDate       warrantyExpiry,
             ZonedDateTime   disposedAt,
             String          disposalNotes,
+            BigDecimal      disposalValue,
+            BigDecimal      profitOrLoss,
             UUID            createdByUserId,
             ZonedDateTime   createdAt,
             ZonedDateTime   updatedAt

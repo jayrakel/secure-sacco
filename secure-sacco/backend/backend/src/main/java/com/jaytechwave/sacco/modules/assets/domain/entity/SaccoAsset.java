@@ -101,6 +101,14 @@ public class SaccoAsset {
     @Column(name = "disposal_notes", columnDefinition = "text")
     private String disposalNotes;
 
+    /** Value received upon disposal or sale of the asset. */
+    @Column(name = "disposal_value", precision = 19, scale = 4)
+    private BigDecimal disposalValue;
+
+    /** Calculated profit (positive) or loss (negative) on disposal. */
+    @Column(name = "profit_or_loss", precision = 19, scale = 4)
+    private BigDecimal profitOrLoss;
+
     /** User (Treasurer/Admin) who registered this asset. */
     @Column(name = "created_by_user_id", nullable = false)
     private UUID createdByUserId;

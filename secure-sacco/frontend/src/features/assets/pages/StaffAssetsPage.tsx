@@ -58,6 +58,7 @@ export default function StaffAssetsPage() {
     const [statusTarget, setStatusTarget]   = useState<AssetResponse | null>(null);
     const [newStatus, setNewStatus]         = useState<AssetStatus>('UNDER_MAINTENANCE');
     const [disposalNotes, setDisposalNotes] = useState('');
+    const [disposalValue, setDisposalValue] = useState('');
     const [updatingStatus, setUpdatingStatus] = useState(false);
 
     // Edit modal
@@ -99,6 +100,7 @@ export default function StaffAssetsPage() {
         setStatusTarget(asset);
         setNewStatus('UNDER_MAINTENANCE');
         setDisposalNotes('');
+        setDisposalValue('');
         setActionError(null);
     };
 
@@ -109,6 +111,7 @@ export default function StaffAssetsPage() {
             await updateAssetStatus(statusTarget.id, {
                 newStatus,
                 disposalNotes: disposalNotes.trim() || undefined,
+                disposalValue: newStatus === 'DISPOSED' ? parseFloat(disposalValue) : undefined,
             });
             setStatusTarget(null);
             await fetchAssets();
@@ -222,6 +225,11 @@ export default function StaffAssetsPage() {
                                         <td className="px-6 py-4 text-center"><StatusBadge status={asset.status} /></td>
                                         <td className="px-6 py-4 text-right font-semibold text-slate-800">
                                             {Number(asset.purchaseCost).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                                            {asset.profitOrLoss != null && (
+                                                <div className={`text-xs mt-1 ${asset.profitOrLoss > 0 ? 'text-emerald-600' : asset.profitOrLoss < 0 ? 'text-red-600' : 'text-slate-500'}`}>
+                                                    {asset.profitOrLoss > 0 ? '+' : ''}{Number(asset.profitOrLoss).toLocaleString('en-KE', { minimumFractionDigits: 2 })} P&L
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-slate-500 text-xs whitespace-nowrap">
                                             {new Date(asset.purchaseDate).toLocaleDateString('en-KE', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -367,6 +375,14 @@ export default function StaffAssetsPage() {
                                     value={disposalNotes} onChange={e => setDisposalNotes(e.target.value)}
                                     className={`${inp} resize-none`} />
                             </div>
+                            {newStatus === 'DISPOSED' && (
+                                <div>
+                                    <label className={lbl}>Disposal Value (KES) *</label>
+                                    <input id="input-disposal-value" type="number" required min="0" step="0.01"
+                                        placeholder="e.g. 5000" value={disposalValue} 
+                                        onChange={e => setDisposalValue(e.target.value)} className={inp} />
+                                </div>
+                            )}
                             {(newStatus === 'DISPOSED' || newStatus === 'WRITTEN_OFF') && (
                                 <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 p-3 rounded-xl">
                                     ⚠️ This is a <strong>terminal action</strong> — the asset cannot be reactivated. Post the disposal GL entry manually via the Manual GL Posting page.
@@ -376,7 +392,7 @@ export default function StaffAssetsPage() {
                                 <button type="button" onClick={() => setStatusTarget(null)}
                                     className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors">Cancel</button>
                                 <button id="btn-confirm-status" onClick={handleStatusUpdate}
-                                    disabled={updatingStatus || ((newStatus === 'DISPOSED' || newStatus === 'WRITTEN_OFF') && !disposalNotes.trim())}
+                                    disabled={updatingStatus || ((newStatus === 'DISPOSED' || newStatus === 'WRITTEN_OFF') && !disposalNotes.trim()) || (newStatus === 'DISPOSED' && !disposalValue)}
                                     className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold transition-colors disabled:opacity-50">
                                     {updatingStatus ? 'Updating…' : 'Confirm'}
                                 </button>

@@ -19,6 +19,8 @@ export interface AssetResponse {
   warrantyExpiry: string | null;
   disposedAt: string | null;
   disposalNotes: string | null;
+  disposalValue: number | null;
+  profitOrLoss: number | null;
   createdByUserId: string;
   createdAt: string;
   updatedAt: string;
@@ -48,6 +50,7 @@ export interface UpdateAssetRequest {
 export interface UpdateAssetStatusRequest {
   newStatus: AssetStatus;
   disposalNotes?: string;
+  disposalValue?: number;
 }
 
 /** Fetch all assets (optionally filtered by status). */
