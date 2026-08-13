@@ -11,7 +11,8 @@ public class BalanceSheetDTOs {
             SectionData liabilities,
             SectionData equity,
             BigDecimal netIncome,
-            boolean isBalanced
+            boolean isBalanced,
+            BigDecimal actualBankBalance
     ) {}
 
     public record SectionData(
