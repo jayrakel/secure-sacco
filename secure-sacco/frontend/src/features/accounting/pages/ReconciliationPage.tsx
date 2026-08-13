@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { RefreshCw, CheckCircle, XCircle, AlertCircle, Upload } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, Upload } from 'lucide-react';
 import dayjs from 'dayjs';
 
 interface ReconciliationLine {
@@ -20,6 +20,20 @@ interface InternalReconciliationResponse {
     loanReconciliation: ReconciliationLine[];
 }
 
+interface BankReconciliationLine {
+    date: string;
+    description: string;
+    reference: string;
+    amount: number;
+    matchStatus: string;
+}
+
+interface BankReconciliationResult {
+    totalMatched: number;
+    totalUnmatched: number;
+    lines: BankReconciliationLine[];
+}
+
 export const ReconciliationPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'INTERNAL' | 'BANK'>('INTERNAL');
     
@@ -29,7 +43,7 @@ export const ReconciliationPage: React.FC = () => {
     
     // Bank State
     const [file, setFile] = useState<File | null>(null);
-    const [bankResult, setBankResult] = useState<any>(null);
+    const [bankResult, setBankResult] = useState<BankReconciliationResult | null>(null);
     const [bankLoading, setBankLoading] = useState(false);
 
     const fetchInternalReconciliation = async () => {
@@ -40,7 +54,7 @@ export const ReconciliationPage: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setInternalData(res.data);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to fetch internal reconciliation', err);
         } finally {
             setInternalLoading(false);
@@ -228,7 +242,7 @@ export const ReconciliationPage: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
-                                        {bankResult.lines.map((line: any, idx: number) => (
+                                        {bankResult.lines.map((line: BankReconciliationLine, idx: number) => (
                                             <tr key={idx} className="hover:bg-gray-50">
                                                 <td className="p-4">{line.date}</td>
                                                 <td className="p-4">{line.description}</td>

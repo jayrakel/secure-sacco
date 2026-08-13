@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Download, RefreshCw, AlertCircle, FileText } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import dayjs from 'dayjs';
 
 interface AccountBalance {
@@ -37,8 +37,12 @@ export const BalanceSheetPage: React.FC = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setData(res.data);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to fetch balance sheet');
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.message || 'Failed to fetch balance sheet');
+            } else {
+                setError('Failed to fetch balance sheet');
+            }
         } finally {
             setLoading(false);
         }
