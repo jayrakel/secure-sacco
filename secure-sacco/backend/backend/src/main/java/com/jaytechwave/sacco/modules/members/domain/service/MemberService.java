@@ -114,10 +114,12 @@ public class MemberService {
         log.info("Member {} has been activated successfully after fee payment.", member.getMemberNumber());
     }
 
+    @Transactional(readOnly = true)
     public Page<MemberResponse> getMembers(String q, MemberStatus status, Pageable pageable) {
         return memberRepository.searchMembers(q, status, pageable).map(MemberResponse::fromEntity);
     }
 
+    @Transactional(readOnly = true)
     public MemberResponse getMemberById(UUID id) {
         return MemberResponse.fromEntity(findMemberEntity(id));
     }
