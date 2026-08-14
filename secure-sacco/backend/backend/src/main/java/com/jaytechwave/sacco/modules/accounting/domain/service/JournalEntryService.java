@@ -548,7 +548,139 @@ public class JournalEntryService {
         journalEntryRepository.save(entry);
         log.info("SAC-221: Posted asset acquisition GL entry {} for '{}' cost={}", journalRef, assetName, cost);
     }
+    /**
+     * Posts a journal entry for the disposal of an asset.
+     *
+     * <pre>
+     *   DR 1110           Main Bank Account                          ← cash received
+     *   CR {assetGlCode}  Fixed Asset account (from AssetCategory)  ← asset removed
+     *   If profit:
+     *     CR 4340 Profit on Disposal of Assets
+     *   If loss:
+     *     DR 5430 Loss on Disposal of Assets
+     * </pre>
+     *
+     * @param assetId       UUID of the {@code SaccoAsset} being disposed
+     * @param purchaseCost  original acquisition cost
+     * @param disposalValue amount received for the asset
+     * @param glAccountCode the fixed asset GL account code
+     */
+    @Transactional
+    public void postAssetDisposal(UUID assetId, BigDecimal purchaseCost, BigDecimal disposalValue, String glAccountCode) {
+        String journalRef = "DISPOSAL-" + assetId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
 
+        Account assetAccount = accountRepository.findByAccountCode(glAccountCode)
+                .orElseThrow(() -> new IllegalStateException("Asset GL account " + glAccountCode + " not found."));
+        Account bankAccount = accountRepository.findByAccountCode("1110")
+                .orElseThrow(() -> new IllegalStateException("System Account 1110 (Main Bank Account) not found."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description("Asset disposal: " + assetId)
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        // 1. Bank Debit (Disposal Value Received)
+        if (disposalValue.compareTo(BigDecimal.ZERO) > 0) {
+            entry.addLine(JournalEntryLine.builder()
+                    .account(bankAccount)
+                    .debitAmount(disposalValue)
+                    .creditAmount(BigDecimal.ZERO)
+                    .description("Asset disposal (DR Bank)")
+                    .build());
+        }
+
+        // 2. Asset Credit (Original Purchase Cost)
+        entry.addLine(JournalEntryLine.builder()
+                .account(assetAccount)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(purchaseCost)
+                .description("Asset disposal (CR Asset)")
+                .build());
+
+        // 3. Profit or Loss
+        BigDecimal profitOrLoss = disposalValue.subtract(purchaseCost);
+        if (profitOrLoss.compareTo(BigDecimal.ZERO) > 0) {
+            // Profit
+            Account profitAccount = accountRepository.findByAccountCode("4340")
+                    .orElseThrow(() -> new IllegalStateException("Account 4340 (Profit on Disposal) not found."));
+            entry.addLine(JournalEntryLine.builder()
+                    .account(profitAccount)
+                    .debitAmount(BigDecimal.ZERO)
+                    .creditAmount(profitOrLoss)
+                    .description("Asset disposal (CR Profit)")
+                    .build());
+        } else if (profitOrLoss.compareTo(BigDecimal.ZERO) < 0) {
+            // Loss
+            Account lossAccount = accountRepository.findByAccountCode("5430")
+                    .orElseThrow(() -> new IllegalStateException("Account 5430 (Loss on Disposal) not found."));
+            entry.addLine(JournalEntryLine.builder()
+                    .account(lossAccount)
+                    .debitAmount(profitOrLoss.abs())
+                    .creditAmount(BigDecimal.ZERO)
+                    .description("Asset disposal (DR Loss)")
+                    .build());
+        }
+
+        journalEntryRepository.save(entry);
+        log.info("SAC-221: Posted asset disposal GL entry {} cost={} value={}", journalRef, purchaseCost, disposalValue);
+    }
+
+    /**
+     * Posts a journal entry for a direct SACCO expense.
+     *
+     * <pre>
+     *   DR {expenseGlCode}  Expense Account                 ← expense recognized
+     *   CR 1110             Main Bank Account               ← cash paid out
+     * </pre>
+     *
+     * @param expenseId       UUID of the {@code SaccoExpense}
+     * @param amount          Amount of the expense
+     * @param expenseGlCode   GL Code for the expense
+     * @param description     Description of the expense
+     */
+    @Transactional
+    public void postSaccoExpense(UUID expenseId, BigDecimal amount, String expenseGlCode, String description) {
+        String journalRef = "EXPENSE-" + expenseId;
+        if (journalEntryRepository.existsByReferenceNumber(journalRef)) {
+            log.warn("Idempotency: {} already exists, skipping.", journalRef);
+            return;
+        }
+
+        Account expenseAccount = accountRepository.findByAccountCode(expenseGlCode)
+                .orElseThrow(() -> new IllegalStateException("Expense GL account " + expenseGlCode + " not found."));
+        Account bankAccount = accountRepository.findByAccountCode("1110")
+                .orElseThrow(() -> new IllegalStateException("System Account 1110 (Main Bank Account) not found."));
+
+        JournalEntry entry = JournalEntry.builder()
+                .referenceNumber(journalRef)
+                .description(description)
+                .transactionDate(LocalDate.now())
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(expenseAccount)
+                .debitAmount(amount)
+                .creditAmount(BigDecimal.ZERO)
+                .description("Sacco Expense (DR)")
+                .build());
+
+        entry.addLine(JournalEntryLine.builder()
+                .account(bankAccount)
+                .debitAmount(BigDecimal.ZERO)
+                .creditAmount(amount)
+                .description("Sacco Expense (CR Bank)")
+                .build());
+
+        journalEntryRepository.save(entry);
+        log.info("SAC-221: Posted sacco expense GL entry {} amount={}", journalRef, amount);
+    }
 
 
     private JournalEntryResponse postEntryInternal(CreateJournalEntryRequest request) {

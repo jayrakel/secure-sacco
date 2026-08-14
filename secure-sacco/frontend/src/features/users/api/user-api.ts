@@ -7,6 +7,7 @@ export interface User {
     email: string;
     officialEmail: string | null;
     phoneNumber: string | null;
+    profilePhotoUrl?: string | null;
     status: 'ACTIVE' | 'DISABLED' | 'LOCKED';
     roles: string[];
 }

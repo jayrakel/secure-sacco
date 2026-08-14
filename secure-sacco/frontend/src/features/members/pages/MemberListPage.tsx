@@ -152,10 +152,21 @@ const MemberListPage: React.FC = () => {
                                         <span className="font-bold text-emerald-700">{member.memberNumber}</span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="font-semibold text-slate-900">
-                                            {member.firstName} {member.middleName ? member.middleName + ' ' : ''}{member.lastName}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden shrink-0">
+                                                {member.profilePhotoUrl ? (
+                                                    <img src={member.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <>{member.firstName[0]}{member.lastName[0]}</>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-slate-900">
+                                                    {member.firstName} {member.middleName ? member.middleName + ' ' : ''}{member.lastName}
+                                                </div>
+                                                <div className="text-xs text-slate-500 mt-0.5">ID: {member.nationalId || 'N/A'}</div>
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-slate-500 mt-0.5">ID: {member.nationalId || 'N/A'}</div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-sm font-medium text-slate-700">{member.phoneNumber || 'N/A'}</div>
@@ -194,23 +205,32 @@ const MemberListPage: React.FC = () => {
                             {members.map((member) => (
                                 <div key={member.id} className="p-4 hover:bg-slate-50 transition-colors">
                                     <div className="flex items-start justify-between gap-3">
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-bold text-emerald-700 text-sm">{member.memberNumber}</span>
-                                                <span className={`inline-flex px-2 py-0.5 text-[11px] font-bold rounded-full border ${statusStyle(member.status)}`}>
-                                                    {member.status}
-                                                </span>
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden shrink-0">
+                                                {member.profilePhotoUrl ? (
+                                                    <img src={member.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <>{member.firstName[0]}{member.lastName[0]}</>
+                                                )}
                                             </div>
-                                            <p className="font-semibold text-slate-900 text-sm mt-1">
-                                                {member.firstName} {member.middleName ? member.middleName + ' ' : ''}{member.lastName}
-                                            </p>
-                                            <div className="flex flex-col gap-0.5 mt-1">
-                                                {member.phoneNumber && (
-                                                    <span className="text-xs text-slate-500">{member.phoneNumber}</span>
-                                                )}
-                                                {member.email && (
-                                                    <span className="text-xs text-slate-500 truncate">{member.email}</span>
-                                                )}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-bold text-emerald-700 text-sm">{member.memberNumber}</span>
+                                                    <span className={`inline-flex px-2 py-0.5 text-[11px] font-bold rounded-full border ${statusStyle(member.status)}`}>
+                                                        {member.status}
+                                                    </span>
+                                                </div>
+                                                <p className="font-semibold text-slate-900 text-sm mt-1">
+                                                    {member.firstName} {member.middleName ? member.middleName + ' ' : ''}{member.lastName}
+                                                </p>
+                                                <div className="flex flex-col gap-0.5 mt-1">
+                                                    {member.phoneNumber && (
+                                                        <span className="text-xs text-slate-500">{member.phoneNumber}</span>
+                                                    )}
+                                                    {member.email && (
+                                                        <span className="text-xs text-slate-500 truncate">{member.email}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="text-xs text-slate-400 text-right shrink-0">

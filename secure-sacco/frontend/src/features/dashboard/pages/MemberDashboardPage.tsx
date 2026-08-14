@@ -111,8 +111,12 @@ const MemberDashboardPage: React.FC = () => {
                     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                         {/* Avatar strip */}
                         <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-5 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-lg uppercase border-2 border-white/20">
-                                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-lg uppercase border-2 border-white/20 overflow-hidden shrink-0">
+                                {user?.profilePhotoUrl ? (
+                                    <img src={user?.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <>{user?.firstName?.[0]}{user?.lastName?.[0]}</>
+                                )}
                             </div>
                             <div>
                                 <p className="font-bold text-white">{user?.firstName} {user?.lastName}</p>
@@ -169,16 +173,25 @@ const MemberDashboardPage: React.FC = () => {
 
                 {/* ── Header ── */}
                 <div className="flex items-start justify-between">
-                    <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-                            Member <span className="font-mono text-emerald-600">{user?.memberNumber}</span>
-                        </p>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                            {greeting()}, {user?.firstName} 👋
-                        </h1>
-                        <p className="text-sm text-slate-400 mt-1">
-                            {new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                        </p>
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border-2 border-emerald-200 overflow-hidden shrink-0 shadow-sm">
+                            {user?.profilePhotoUrl ? (
+                                <img src={user?.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-xl">{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+                            )}
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+                                Member <span className="font-mono text-emerald-600">{user?.memberNumber}</span>
+                            </p>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                                {greeting()}, {user?.firstName} 👋
+                            </h1>
+                            <p className="text-sm text-slate-400 mt-1">
+                                {new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                        </div>
                     </div>
                     <button onClick={() => { void fetchData(); }} disabled={loading}
                         className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm hover:shadow">

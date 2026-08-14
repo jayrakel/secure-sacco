@@ -68,9 +68,17 @@ public class PendingPaymentPollingJob {
     }
 
     private void processSinglePayment(Payment payment) {
+        if (payment.getCreatedAt() == null) {
+            return;
+        }
+
+        // Delay polling for 1 minute to give the STK callback (which contains the real M-Pesa receipt) time to arrive first.
+        if (payment.getCreatedAt().isAfter(ZonedDateTime.now().minusMinutes(1))) {
+            return;
+        }
+
         // Expire payments older than 10 minutes
-        if (payment.getCreatedAt() != null
-                && payment.getCreatedAt().isBefore(ZonedDateTime.now().minusMinutes(10))) {
+        if (payment.getCreatedAt().isBefore(ZonedDateTime.now().minusMinutes(10))) {
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason("Payment expired — no confirmation received within 10 minutes");
             paymentRepository.save(payment);

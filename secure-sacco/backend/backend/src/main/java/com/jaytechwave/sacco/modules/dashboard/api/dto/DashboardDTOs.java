@@ -20,6 +20,9 @@ public class DashboardDTOs {
         private Integer activeMembers         = 0;
         private Integer pendingActivations    = 0;
 
+        // SACCO Net Worth (Total Equity / Assets - Liabilities)
+        private BigDecimal netWorth           = BigDecimal.ZERO;
+
         // Savings — frontend reads: data.totalSavings
         private BigDecimal totalSavings       = BigDecimal.ZERO;
 

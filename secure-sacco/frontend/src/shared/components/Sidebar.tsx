@@ -88,6 +88,8 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Trial Balance',     path: '/accounting/trial-balance', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
                 { label: 'Balance Sheet',     path: '/accounting/balance-sheet', icon: Scale,    requiredPermission: 'GL_TRIAL_BALANCE' },
                 { label: 'Reconciliation',    path: '/accounting/reconciliation', icon: ShieldCheck, requiredPermission: 'GL_RECONCILIATION' },
+                { label: 'Profit & Loss',     path: '/profit-and-loss',          icon: BarChart3, requiredPermission: 'GL_TRIAL_BALANCE' },
+                { label: 'Sacco Expenses',    path: '/sacco-expenses',           icon: Receipt, requiredPermission: 'ACCOUNTING_READ' },
                 { label: 'Reports', path: '/reports', icon: BarChart3, module: 'reports', requiredPermission: 'REPORTS_READ' },
             ],
         },

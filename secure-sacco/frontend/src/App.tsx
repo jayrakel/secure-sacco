@@ -58,6 +58,8 @@ import SupportPage from './features/legal/pages/SupportPage';
 import StaffExpenseClaimsPage from './features/expense/pages/StaffExpenseClaimsPage';
 import MyExpenseClaimsPage from './features/expense/pages/MyExpenseClaimsPage';
 import StaffAssetsPage from './features/assets/pages/StaffAssetsPage';
+import SaccoExpensesPage from './features/accounting/pages/SaccoExpensesPage';
+import ProfitAndLossPage from './features/accounting/pages/ProfitAndLossPage';
 import LoanProductsPage from './features/loans/pages/LoanProductsPage';
 import LandingPage from './features/public/pages/LandingPage';
 import SecretaryPortalPage from './features/public/pages/SecretaryPortalPage';
@@ -279,6 +281,22 @@ function App() {
                                         <MemberPenaltiesPage />
                                     </ProtectedRoute>
                                 } />
+                                <Route
+                                    path="sacco-expenses"
+                                    element={
+                                        <ProtectedRoute requiredPermissions={['ACCOUNTING_READ']}>
+                                            <SaccoExpensesPage />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="profit-and-loss"
+                                    element={
+                                        <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
+                                            <ProfitAndLossPage />
+                                        </ProtectedRoute>
+                                    }
+                                />
 
                                 {/* --- MEETINGS (STAFF) ROUTE --- */}
                                 <Route path="meetings" element={

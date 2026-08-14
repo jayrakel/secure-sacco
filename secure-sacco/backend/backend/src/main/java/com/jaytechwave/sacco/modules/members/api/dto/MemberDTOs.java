@@ -78,8 +78,14 @@ public class MemberDTOs {
         private MemberStatus status;
         private ZonedDateTime createdAt;
         private ZonedDateTime updatedAt;
+        private String profilePhotoUrl;
 
         public static MemberResponse fromEntity(Member member) {
+            String photoUrl = null;
+            if (member.getUser() != null) {
+                photoUrl = member.getUser().getProfilePhotoUrl();
+            }
+
             return MemberResponse.builder()
                     .id(member.getId())
                     .memberNumber(member.getMemberNumber())
@@ -94,6 +100,7 @@ public class MemberDTOs {
                     .status(member.getStatus())
                     .createdAt(member.getCreatedAt())
                     .updatedAt(member.getUpdatedAt())
+                    .profilePhotoUrl(photoUrl)
                     .build();
         }
     }

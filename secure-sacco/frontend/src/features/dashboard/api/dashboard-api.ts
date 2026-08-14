@@ -4,6 +4,7 @@ export interface StaffDashboardDTO {
     totalMembers: number;
     activeMembers: number;
     pendingActivations: number;
+    netWorth: number;
 
     totalSavings: number; // Matches new Java DTO
 

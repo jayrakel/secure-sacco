@@ -14,6 +14,7 @@ export interface Member {
     status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'DECEASED';
     createdAt: string;
     updatedAt: string;
+    profilePhotoUrl?: string;
 }
 
 export interface CreateMemberRequest {

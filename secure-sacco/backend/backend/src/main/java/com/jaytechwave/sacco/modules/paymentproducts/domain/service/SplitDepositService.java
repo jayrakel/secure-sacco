@@ -86,14 +86,13 @@ public class SplitDepositService {
             PaymentProduct product = productRepository.findById(line.productId())
                     .orElseThrow(() -> new IllegalArgumentException("Unknown product: " + line.productId()));
 
-            BigDecimal lineAmount = request.totalAmount()
-                    .multiply(line.percentage())
-                    .divide(HUNDRED, 2, RoundingMode.HALF_UP);
+            BigDecimal lineAmount = line.amount();
+            BigDecimal percentage = lineAmount.multiply(HUNDRED).divide(request.totalAmount(), 2, RoundingMode.HALF_UP);
 
             allocations.add(DepositAllocation.builder()
                     .payment(payment)
                     .product(product)
-                    .percentage(line.percentage())
+                    .percentage(percentage)
                     .amount(lineAmount)
                     .status(AllocationStatus.PENDING)
                     .build());
