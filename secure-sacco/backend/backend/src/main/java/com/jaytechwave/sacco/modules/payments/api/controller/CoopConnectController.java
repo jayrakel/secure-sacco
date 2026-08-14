@@ -53,7 +53,7 @@ public class CoopConnectController {
     private final ApplicationEventPublisher eventPublisher;
 
     // ── TEMPORARY MANUAL SMS TRIGGER ──────────────────────────────────────────
-    @PostMapping("/trigger-missed-sms/{coopTxId}")
+    @GetMapping("/trigger-missed-sms/{coopTxId}")
     public ResponseEntity<String> triggerMissedSms(@PathVariable String coopTxId) {
         return coopTransactionRepository.findAll().stream()
                 .filter(tx -> tx.getCoopTransactionId() != null && tx.getCoopTransactionId().startsWith(coopTxId))

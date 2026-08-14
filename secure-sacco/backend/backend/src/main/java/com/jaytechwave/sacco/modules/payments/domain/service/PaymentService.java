@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.entity.PaymentStatus;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent;
+import com.jaytechwave.sacco.modules.payments.domain.event.PaymentReceiptUpdatedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -288,6 +289,11 @@ public class PaymentService {
                                     coopEventNormalizer.markSavingsCredited(ct.getId());
                                 }
                             });
+                            
+                            // Emit event to trigger the delayed SMS now that we have the receipt
+                            eventPublisher.publishEvent(new PaymentReceiptUpdatedEvent(
+                                    p.getId(), p.getMemberId(), p.getAmount(), p.getAccountReference(), mpesaRef
+                            ));
                             
                             // Do NOT emit a new PaymentCompletedEvent or continue processing below
                             return;
