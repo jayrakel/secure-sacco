@@ -3,8 +3,10 @@ package com.jaytechwave.sacco.modules.core.notifications;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.domain.event.NonMemberPaymentReceivedEvent;
+import com.jaytechwave.sacco.modules.payments.domain.entity.Payment;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentReceiptUpdatedEvent;
+import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAllocation;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
@@ -42,6 +44,11 @@ public class NotificationPaymentListener {
     private final SavingsTransactionRepository savingsTransactionRepository;
     private final UserRepository userRepository;
     private final DepositAllocationRepository depositAllocationRepository;
+    private final PaymentRepository paymentRepository;
+
+    /** How long to wait (ms) for the IPN to deliver the real M-Pesa ref before sending SMS */
+    private static final long MPESA_REF_WAIT_MS = 60_000L; // 60 seconds
+    private static final int  MPESA_REF_POLL_ATTEMPTS = 6; // check every 10s × 6 = 60s
 
     @Value("${sacco.notifications.admin-alert-roles:CHAIRPERSON,SECRETARY,TREASURER}")
     private List<String> adminAlertRoles;
@@ -59,11 +66,8 @@ public class NotificationPaymentListener {
             }
             Member member = memberOpt.get();
 
-            String sanitizedRef = sanitizeRef(event.receiptNumber());
-            if ("Pending Verification".equals(sanitizedRef)) {
-                log.info("NotificationPaymentListener: Payment {} is Pending Verification. Delaying SMS until IPN provides the receipt.", event.paymentId());
-                return;
-            }
+            // ── Resolve the real M-Pesa ref ─────────────────────────────────────
+            String receiptRef = resolveRealMpesaRef(event.paymentId(), event.receiptNumber());
 
             String phone = member.getPhoneNumber();
             if (phone != null && !phone.isBlank()) {
@@ -78,56 +82,61 @@ public class NotificationPaymentListener {
                 
                 String message = String.format(
                         "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        name, formatAmount(event.amount()), sanitizeRef(event.receiptNumber()), formatAmount(balance)
+                        name, formatAmount(event.amount()), receiptRef, formatAmount(balance)
                 );
 
-                log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {})", member.getMemberNumber(), phone);
+                log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {}) Ref: {}", member.getMemberNumber(), phone, receiptRef);
                 smsNotificationService.sendNotificationSms(phone, message);
             }
 
             String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
-            notifyAdmins(fullName, phone, event.amount(), sanitizeRef(event.receiptNumber()), event.paymentId());
+            notifyAdmins(fullName, phone, event.amount(), receiptRef, event.paymentId());
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentCompletedEvent. {}", e.getMessage(), e);
         }
     }
 
-    @Async
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handlePaymentReceiptUpdated(PaymentReceiptUpdatedEvent event) {
-        try {
-            Optional<Member> memberOpt = memberRepository.findById(event.memberId());
-            if (memberOpt.isEmpty()) return;
-            Member member = memberOpt.get();
+    /**
+     * If the initial receipt looks like a Co-op internal UUID (not a real M-Pesa ref),
+     * polls the Payment record every 10 seconds for up to 60 seconds waiting for the
+     * IPN to write the real mpesaRef. Always returns a usable ref — never blocks forever.
+     */
+    private String resolveRealMpesaRef(UUID paymentId, String initialRef) {
+        String sanitized = sanitizeRef(initialRef);
+        if (!"Processing".equals(sanitized)) {
+            // Already a real ref — no need to wait
+            return sanitized;
+        }
 
-            String phone = member.getPhoneNumber();
-            if (phone != null && !phone.isBlank()) {
-                BigDecimal balance = BigDecimal.ZERO;
-                Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
-                if (accountOpt.isPresent()) {
-                    balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
-                }
+        log.info("NotificationPaymentListener: Ref is internal UUID for payment {}. Waiting up to 60s for real M-Pesa ref from IPN...", paymentId);
 
-                String name = member.getFirstName();
-                if (name == null || name.isBlank()) name = "Member";
-                
-                String message = String.format(
-                        "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        name, formatAmount(event.amount()), sanitizeRef(event.receiptNumber()), formatAmount(balance)
-                );
-
-                log.info("NotificationPaymentListener: Sending Delayed SMS to Member {} (Phone: {})", member.getMemberNumber(), phone);
-                smsNotificationService.sendNotificationSms(phone, message);
+        for (int i = 1; i <= MPESA_REF_POLL_ATTEMPTS; i++) {
+            try {
+                Thread.sleep(10_000L); // 10 seconds per attempt
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                break;
             }
 
-            String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
-            notifyAdmins(fullName, phone, event.amount(), sanitizeRef(event.receiptNumber()), event.paymentId());
-
-        } catch (Exception e) {
-            log.error("NotificationPaymentListener: Failed to send SMS for PaymentReceiptUpdatedEvent. {}", e.getMessage(), e);
+            Optional<Payment> paymentOpt = paymentRepository.findById(paymentId);
+            if (paymentOpt.isPresent()) {
+                Payment p = paymentOpt.get();
+                String latestRef = p.getMpesaRef();
+                String latestSanitized = sanitizeRef(latestRef);
+                if (!"Processing".equals(latestSanitized)) {
+                    log.info("NotificationPaymentListener: ✅ Got real M-Pesa ref '{}' after {}s for payment {}", latestSanitized, i * 10, paymentId);
+                    return latestSanitized;
+                }
+            }
+            log.debug("NotificationPaymentListener: Attempt {}/{} — still waiting for real ref for payment {}", i, MPESA_REF_POLL_ATTEMPTS, paymentId);
         }
+
+        // Fallback: IPN didn't arrive in 60s — send with whatever we have
+        Optional<Payment> fallbackOpt = paymentRepository.findById(paymentId);
+        String fallbackRef = fallbackOpt.map(Payment::getMpesaRef).orElse(initialRef);
+        log.warn("NotificationPaymentListener: ⚠️ IPN did not arrive in 60s for payment {}. Using fallback ref: {}", paymentId, fallbackRef);
+        return sanitizeRef(fallbackRef);
     }
 
     @Async
@@ -270,7 +279,7 @@ public class NotificationPaymentListener {
         // Internal references from Co-op are usually long hex strings or UUIDs.
         // Mpesa references are usually 10 chars (e.g. SLD7Q8D9W2).
         if (ref.length() > 15 && ref.matches("^[a-fA-F0-9\\-]+$")) {
-            return "Pending Verification";
+            return "Processing";
         }
         return ref;
     }

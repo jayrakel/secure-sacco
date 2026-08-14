@@ -82,8 +82,12 @@ public class MemberDTOs {
 
         public static MemberResponse fromEntity(Member member) {
             String photoUrl = null;
-            if (member.getUser() != null) {
-                photoUrl = member.getUser().getProfilePhotoUrl();
+            try {
+                if (member.getUser() != null) {
+                    photoUrl = member.getUser().getProfilePhotoUrl();
+                }
+            } catch (org.hibernate.LazyInitializationException e) {
+                // User proxy not initialized — safe to ignore, photo URL will be null
             }
 
             return MemberResponse.builder()
