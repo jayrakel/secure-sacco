@@ -1,25 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import { accountingApi, type Account } from '../api/accounting-api';
-import { BookOpen, Lock, CheckCircle2, XCircle } from 'lucide-react';
+import { BookOpen, Lock, CheckCircle2, XCircle, Plus, X } from 'lucide-react';
 
 const ChartOfAccountsPage: React.FC = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({ accountCode: '', accountName: '', description: '', accountType: 'ASSET' });
+
+    const fetchAccounts = async () => {
+        try {
+            const data = await accountingApi.getAccounts();
+            const list = Array.isArray(data) ? data : [];
+            setAccounts(list.sort((a, b) => a.accountCode.localeCompare(b.accountCode)));
+        } catch (error) {
+            console.error('Failed to load accounts', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchAccounts = async () => {
-            try {
-                const data = await accountingApi.getAccounts();
-                const list = Array.isArray(data) ? data : [];
-                setAccounts(list.sort((a, b) => a.accountCode.localeCompare(b.accountCode)));
-            } catch (error) {
-                console.error('Failed to load accounts', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchAccounts();
     }, []);
+
+    const handleCreateAccount = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await accountingApi.createAccount({
+                accountCode: formData.accountCode,
+                accountName: formData.accountName,
+                description: formData.description,
+                accountType: formData.accountType as 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE',
+                parentAccountId: null
+            });
+            setIsAddModalOpen(false);
+            setFormData({ accountCode: '', accountName: '', description: '', accountType: 'ASSET' });
+            await fetchAccounts();
+        } catch (error) {
+            console.error('Failed to create account', error);
+            alert('Failed to create account. Please check your inputs.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const getTypeColor = (type: string) => {
         switch (type) {
@@ -42,7 +68,57 @@ const ChartOfAccountsPage: React.FC = () => {
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">Manage the ledger's foundational accounts.</p>
                 </div>
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
+                >
+                    <Plus size={18} />
+                    Add Account
+                </button>
             </div>
+
+            {isAddModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-slate-800">Add GL Account</h2>
+                            <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCreateAccount} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Account Code</label>
+                                <input required type="text" value={formData.accountCode} onChange={e => setFormData({ ...formData, accountCode: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 2195" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Account Name</label>
+                                <input required type="text" value={formData.accountName} onChange={e => setFormData({ ...formData, accountName: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Member Welfare Fund" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Account Type</label>
+                                <select required value={formData.accountType} onChange={e => setFormData({ ...formData, accountType: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                                    <option value="ASSET">ASSET</option>
+                                    <option value="LIABILITY">LIABILITY</option>
+                                    <option value="EQUITY">EQUITY</option>
+                                    <option value="REVENUE">REVENUE</option>
+                                    <option value="EXPENSE">EXPENSE</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optional)</label>
+                                <input type="text" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                                <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50">
+                                    {isSubmitting ? 'Saving...' : 'Save Account'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {isLoading ? (
                 <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
@@ -73,18 +149,15 @@ const ChartOfAccountsPage: React.FC = () => {
                                             </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <td className="px-6 py-4">
-                                            <div className="flex justify-center">
-                                                {account.isSystemAccount ? (
-                                                    /* Move the title to a wrapper span */
-                                                    <span title="System Locked">
-                <Lock size={16} className="text-slate-400" />
-            </span>
-                                                ) : (
-                                                    <span className="text-slate-300">-</span>
-                                                )}
-                                            </div>
-                                        </td>
+                                        <div className="flex justify-center">
+                                            {account.isSystemAccount ? (
+                                                <span title="System Locked">
+                                                    <Lock size={16} className="text-slate-400" />
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-300">-</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-center">

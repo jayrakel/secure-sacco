@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -48,6 +50,23 @@ public class CoopConnectController {
     private final CoopTransactionRepository coopTransactionRepository;
     private final com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer coopEventNormalizer;
     private final com.jaytechwave.sacco.modules.savings.domain.service.SavingsService savingsService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    // ── TEMPORARY MANUAL SMS TRIGGER ──────────────────────────────────────────
+    @PostMapping("/trigger-missed-sms/{coopTxId}")
+    public ResponseEntity<String> triggerMissedSms(@PathVariable String coopTxId) {
+        return coopTransactionRepository.findAll().stream()
+                .filter(tx -> tx.getCoopTransactionId() != null && tx.getCoopTransactionId().startsWith(coopTxId))
+                .findFirst()
+                .map(tx -> {
+                    eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent(
+                            tx.getId(), tx.getAmount(), tx.getRawNarration(),
+                            tx.getMpesaRef() != null ? tx.getMpesaRef() : tx.getCoopTransactionId()
+                    ));
+                    return ResponseEntity.ok("SMS triggered successfully for " + coopTxId);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 
     // ── Member-facing: initiate STK push ─────────────────────────────────────
 

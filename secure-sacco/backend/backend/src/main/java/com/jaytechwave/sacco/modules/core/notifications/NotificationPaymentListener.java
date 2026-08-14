@@ -51,7 +51,6 @@ public class NotificationPaymentListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
-            // Find member
             Optional<Member> memberOpt = memberRepository.findById(event.memberId());
             if (memberOpt.isEmpty()) {
                 log.warn("NotificationPaymentListener: Member {} not found. SMS skipped.", event.memberId());
@@ -59,33 +58,28 @@ public class NotificationPaymentListener {
             }
             Member member = memberOpt.get();
 
-            // Make sure the member has a valid phone number
             String phone = member.getPhoneNumber();
             if (phone != null && !phone.isBlank()) {
-                // Calculate new balance
                 BigDecimal balance = BigDecimal.ZERO;
                 Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
                 if (accountOpt.isPresent()) {
                     balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
                 }
 
-                // Compose message
                 String name = member.getFirstName();
-                if (name == null || name.isBlank()) {
-                    name = "Member";
-                }
+                if (name == null || name.isBlank()) name = "Member";
+                
                 String message = String.format(
                         "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        name, formatAmount(event.amount()), event.receiptNumber() != null ? event.receiptNumber() : "N/A", formatAmount(balance)
+                        name, formatAmount(event.amount()), sanitizeRef(event.receiptNumber()), formatAmount(balance)
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {})", member.getMemberNumber(), phone);
                 smsNotificationService.sendNotificationSms(phone, message);
             }
 
-            // Notify Admins
             String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
-            notifyAdmins(fullName, phone, event.amount(), event.receiptNumber() != null ? event.receiptNumber() : "N/A", event.paymentId());
+            notifyAdmins(fullName, phone, event.amount(), sanitizeRef(event.receiptNumber()), event.paymentId());
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentCompletedEvent. {}", e.getMessage(), e);
@@ -96,28 +90,23 @@ public class NotificationPaymentListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleSavingsTransactionPosted(com.jaytechwave.sacco.modules.savings.domain.event.SavingsTransactionPostedEvent event) {
         try {
-            // We only want to send notifications for withdrawals and deductions (not deposits, because PaymentCompletedEvent already handles paybill/STK deposits)
             if (event.type() != com.jaytechwave.sacco.modules.savings.domain.entity.TransactionType.WITHDRAWAL) {
                 return;
             }
 
             Optional<Member> memberOpt = memberRepository.findById(event.memberId());
-            if (memberOpt.isEmpty()) {
-                return;
-            }
+            if (memberOpt.isEmpty()) return;
             Member member = memberOpt.get();
 
             String phone = member.getPhoneNumber();
             if (phone != null && !phone.isBlank()) {
                 BigDecimal balance = savingsTransactionRepository.calculateBalance(event.savingsAccountId());
                 String name = member.getFirstName();
-                if (name == null || name.isBlank()) {
-                    name = "Member";
-                }
+                if (name == null || name.isBlank()) name = "Member";
 
                 String message = String.format(
                         "Dear %s, a withdrawal of KES %s has been processed from your Savings Account. Ref: %s. New balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        name, formatAmount(event.amount()), event.reference() != null ? event.reference() : "N/A", formatAmount(balance)
+                        name, formatAmount(event.amount()), sanitizeRef(event.reference()), formatAmount(balance)
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS for withdrawal to Member {} (Phone: {})", member.getMemberNumber(), phone);
@@ -135,15 +124,14 @@ public class NotificationPaymentListener {
             if (event.senderPhone() != null && !event.senderPhone().isBlank()) {
                 String message = String.format(
                         "Dear Customer, payment of KES %s received. Ref: %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        formatAmount(event.amount()), event.mpesaRef() != null ? event.mpesaRef() : "N/A"
+                        formatAmount(event.amount()), sanitizeRef(event.mpesaRef())
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS to Non-Member (Phone: {})", event.senderPhone());
                 smsNotificationService.sendNotificationSms(event.senderPhone(), message);
             }
 
-            // Notify Admins
-            notifyAdmins(event.senderName(), event.senderPhone(), event.amount(), event.mpesaRef(), event.paymentId());
+            notifyAdmins(event.senderName(), event.senderPhone(), event.amount(), sanitizeRef(event.mpesaRef()), event.paymentId());
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for NonMemberPaymentReceivedEvent. {}", e.getMessage(), e);
@@ -155,12 +143,12 @@ public class NotificationPaymentListener {
     public void handleBankDebitReceived(com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent event) {
         try {
             String formattedAmount = formatAmount(event.amount());
-            String dateStr = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Nairobi")).format(java.time.format.DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
+            String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
             
             String adminMessage = String.format("Dear BETTER LINK VENTURES LTD, your Co-op Bank account has been debited Ksh. %s on %s. Narration: %s. Ref: %s.",
-                    formattedAmount, dateStr, event.narration() != null ? event.narration() : "N/A", event.reference() != null ? event.reference() : "N/A");
+                    formattedAmount, dateStr, event.narration() != null ? event.narration() : "N/A", sanitizeRef(event.reference()));
 
-            java.util.List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
+            List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
             log.info("NotificationPaymentListener: Sending admin alerts to {} admins for bank debit {}", admins.size(), event.paymentId());
             
             for (User admin : admins) {
@@ -206,8 +194,7 @@ public class NotificationPaymentListener {
 
     private String formatAmount(BigDecimal amount) {
         if (amount == null) return "0";
-        String str = amount.stripTrailingZeros().toPlainString();
-        return str;
+        return amount.stripTrailingZeros().toPlainString();
     }
 
     private String formatName(String fullName, String phone) {
@@ -232,5 +219,15 @@ public class NotificationPaymentListener {
         if (lower.contains("penal")) return "Pen";
         if (lower.contains("share")) return "Shr";
         return productName.length() > 3 ? productName.substring(0, 3) : productName;
+    }
+    
+    private String sanitizeRef(String ref) {
+        if (ref == null || ref.isBlank()) return "N/A";
+        // Internal references from Co-op are usually long hex strings or UUIDs.
+        // Mpesa references are usually 10 chars (e.g. SLD7Q8D9W2).
+        if (ref.length() > 15 && ref.matches("^[a-fA-F0-9\\-]+$")) {
+            return "Pending Verification";
+        }
+        return ref;
     }
 }

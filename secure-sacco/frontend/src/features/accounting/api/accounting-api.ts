@@ -76,10 +76,23 @@ export interface CreateManualJournalRequest {
     lines: ManualJournalLineRequest[];
 }
 
+export interface CreateAccountRequest {
+    accountCode: string;
+    accountName: string;
+    description?: string;
+    accountType: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+    parentAccountId?: string | null;
+}
+
 export const accountingApi = {
     getAccounts: async (): Promise<Account[]> => {
         const response = await apiClient.get<Account[]>('/accounting/accounts');
         return Array.isArray(response.data) ? response.data : [];
+    },
+
+    createAccount: async (request: CreateAccountRequest): Promise<Account> => {
+        const response = await apiClient.post<Account>('/accounting/accounts', request);
+        return response.data;
     },
 
     getJournalEntries: async (page = 0, size = 20): Promise<PagedResponse<JournalEntry>> => {
