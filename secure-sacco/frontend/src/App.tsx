@@ -284,7 +284,7 @@ function App() {
                                 <Route
                                     path="sacco-expenses"
                                     element={
-                                        <ProtectedRoute requireAuthorities={['ACCOUNTING_READ']}>
+                                        <ProtectedRoute requiredPermissions={['ACCOUNTING_READ']}>
                                             <SaccoExpensesPage />
                                         </ProtectedRoute>
                                     }
@@ -292,7 +292,7 @@ function App() {
                                 <Route
                                     path="profit-and-loss"
                                     element={
-                                        <ProtectedRoute requireAuthorities={['GL_TRIAL_BALANCE']}>
+                                        <ProtectedRoute requiredPermissions={['GL_TRIAL_BALANCE']}>
                                             <ProfitAndLossPage />
                                         </ProtectedRoute>
                                     }

@@ -31,6 +31,8 @@ public class DashboardService {
 
                 COALESCE((SELECT SUM(total_savings_balance) FROM v_member_savings_balance), 0) AS total_savings,
 
+                COALESCE((SELECT SUM(CASE WHEN a.account_type = 'ASSET' THEN jel.debit_amount - jel.credit_amount ELSE 0 END) - SUM(CASE WHEN a.account_type = 'LIABILITY' THEN jel.credit_amount - jel.debit_amount ELSE 0 END) FROM journal_entry_lines jel JOIN accounts a ON jel.account_id = a.id JOIN journal_entries je ON je.id = jel.journal_entry_id WHERE je.status = 'POSTED'), 0) AS net_worth,
+
                 (SELECT COUNT(*) FROM loan_applications WHERE status IN ('ACTIVE','IN_GRACE','DEFAULTED'))  AS active_loans,
                 COALESCE((SELECT SUM(outstanding_principal + outstanding_interest) FROM v_member_loan_summary), 0) AS loan_portfolio,
                 (SELECT COUNT(DISTINCT loan_application_id) FROM loan_schedule_items
@@ -56,6 +58,7 @@ public class DashboardService {
             row.setTotalMembers(rs.getInt("total_members"));
             row.setActiveMembers(rs.getInt("active_members"));
             row.setPendingActivations(rs.getInt("pending_activations"));
+            row.setNetWorth(rs.getBigDecimal("net_worth"));
             row.setTotalSavings(rs.getBigDecimal("total_savings"));
             row.setActiveLoans(rs.getInt("active_loans"));
             row.setLoanPortfolio(rs.getBigDecimal("loan_portfolio"));

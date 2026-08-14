@@ -130,10 +130,10 @@ const buildSections = (): DashboardSection[] => [
         requiredPermissions: ['ROLE_SYSTEM_ADMIN'],
         render: (data, loading) => (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label="Sacco Net Worth"       value={fmtKES(data?.netWorth)}              icon={TrendingUp}    color="sky"     loading={loading} highlight />
                 <StatCard label="Total Members"         value={fmtCount(data?.totalMembers)}        icon={Users}         color="blue"    loading={loading} linkTo="/members"        highlight />
                 <StatCard label="Total Savings"         value={fmtKES(data?.totalSavings)}           icon={Wallet}        color="emerald" loading={loading} linkTo="/savings"        highlight />
                 <StatCard label="Loan Portfolio"        value={fmtKES(data?.loanPortfolio)}           icon={Coins}         color="violet"  loading={loading} linkTo="/loans"          highlight />
-                <StatCard label="Outstanding Penalties" value={fmtKES(data?.outstandingPenalties)}    icon={AlertTriangle} color="rose"    loading={loading} badge={data?.openPenalties} badgeColor="red" highlight />
             </div>
         ),
     },
