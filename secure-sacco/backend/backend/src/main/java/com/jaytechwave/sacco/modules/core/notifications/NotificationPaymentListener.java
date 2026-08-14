@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import com.jaytechwave.sacco.modules.payments.domain.event.NonMemberPaymentReceivedEvent;
 import com.jaytechwave.sacco.modules.payments.domain.event.PaymentCompletedEvent;
+import com.jaytechwave.sacco.modules.payments.domain.event.PaymentReceiptUpdatedEvent;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAllocation;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
 import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
@@ -58,6 +59,12 @@ public class NotificationPaymentListener {
             }
             Member member = memberOpt.get();
 
+            String sanitizedRef = sanitizeRef(event.receiptNumber());
+            if ("Pending Verification".equals(sanitizedRef)) {
+                log.info("NotificationPaymentListener: Payment {} is Pending Verification. Delaying SMS until IPN provides the receipt.", event.paymentId());
+                return;
+            }
+
             String phone = member.getPhoneNumber();
             if (phone != null && !phone.isBlank()) {
                 BigDecimal balance = BigDecimal.ZERO;
@@ -83,6 +90,43 @@ public class NotificationPaymentListener {
 
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentCompletedEvent. {}", e.getMessage(), e);
+        }
+    }
+
+    @Async
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePaymentReceiptUpdated(PaymentReceiptUpdatedEvent event) {
+        try {
+            Optional<Member> memberOpt = memberRepository.findById(event.memberId());
+            if (memberOpt.isEmpty()) return;
+            Member member = memberOpt.get();
+
+            String phone = member.getPhoneNumber();
+            if (phone != null && !phone.isBlank()) {
+                BigDecimal balance = BigDecimal.ZERO;
+                Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
+                if (accountOpt.isPresent()) {
+                    balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
+                }
+
+                String name = member.getFirstName();
+                if (name == null || name.isBlank()) name = "Member";
+                
+                String message = String.format(
+                        "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
+                        name, formatAmount(event.amount()), sanitizeRef(event.receiptNumber()), formatAmount(balance)
+                );
+
+                log.info("NotificationPaymentListener: Sending Delayed SMS to Member {} (Phone: {})", member.getMemberNumber(), phone);
+                smsNotificationService.sendNotificationSms(phone, message);
+            }
+
+            String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
+            notifyAdmins(fullName, phone, event.amount(), sanitizeRef(event.receiptNumber()), event.paymentId());
+
+        } catch (Exception e) {
+            log.error("NotificationPaymentListener: Failed to send SMS for PaymentReceiptUpdatedEvent. {}", e.getMessage(), e);
         }
     }
 
@@ -139,7 +183,7 @@ public class NotificationPaymentListener {
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void handleBankDebitReceived(com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent event) {
         try {
             String formattedAmount = formatAmount(event.amount());

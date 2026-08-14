@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Package, Plus, X, Loader2, AlertCircle, Trash2, Lock,
-    ChevronDown, ChevronUp, Download, Receipt
+    ChevronDown, ChevronUp, Download, Receipt, Edit2
 } from 'lucide-react';
 import { paymentProductsApi } from '../api/payment-products-api';
 import type { PaymentProduct, ModuleType, ProductTransactionPage, ProductFrequency } from '../api/payment-products-api';
@@ -192,6 +192,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm]         = useState<FormState>(emptyForm);
     const [saving, setSaving]     = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const load = async () => {
         setLoading(true);
@@ -212,7 +213,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
 
     useEffect(() => { load(); }, []);
 
-    const handleCreate = async () => {
+    const handleSave = async () => {
         if (!form.name || !form.code || !form.glAccountId) {
             setError('Name, code, and GL account are required');
             return;
@@ -220,23 +221,50 @@ export const PaymentProductsSettingsPage: React.FC = () => {
         setSaving(true);
         setError(null);
         try {
-            await paymentProductsApi.create({
-                name: form.name,
-                code: form.code,
-                description: form.description || undefined,
-                moduleType: form.moduleType,
-                glAccountId: form.glAccountId,
-                requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
-                frequency: form.frequency,
-            });
+            if (editingId) {
+                await paymentProductsApi.update(editingId, {
+                    name: form.name,
+                    description: form.description || undefined,
+                    glAccountId: form.glAccountId,
+                    requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
+                    clearRequiredAmount: !form.requiredAmount,
+                    frequency: form.frequency,
+                });
+            } else {
+                await paymentProductsApi.create({
+                    name: form.name,
+                    code: form.code,
+                    description: form.description || undefined,
+                    moduleType: form.moduleType,
+                    glAccountId: form.glAccountId,
+                    requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
+                    frequency: form.frequency,
+                });
+            }
             setShowForm(false);
+            setEditingId(null);
             setForm(emptyForm);
             await load();
         } catch (e) {
-            setError(getApiErrorMessage(e, 'Failed to create product'));
+            setError(getApiErrorMessage(e, `Failed to ${editingId ? 'update' : 'create'} product`));
         } finally {
             setSaving(false);
         }
+    };
+
+    const openEditForm = (p: PaymentProduct) => {
+        setEditingId(p.id);
+        setForm({
+            name: p.name,
+            code: p.code,
+            description: p.description || '',
+            moduleType: p.moduleType,
+            glAccountId: p.glAccountId,
+            requiredAmount: p.requiredAmount ? p.requiredAmount.toString() : '',
+            frequency: p.frequency,
+        });
+        setShowForm(true);
+        setError(null);
     };
 
     const toggleActive = async (p: PaymentProduct) => {
@@ -273,7 +301,7 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                     </div>
                 </div>
                 <button
-                    onClick={() => { setShowForm(true); setError(null); }}
+                    onClick={() => { setEditingId(null); setForm(emptyForm); setShowForm(true); setError(null); }}
                     className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-xl"
                 >
                     <Plus size={18} /> New Product
@@ -291,8 +319,8 @@ export const PaymentProductsSettingsPage: React.FC = () => {
             {showForm && (
                 <div className="mb-6 p-5 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-slate-800">New Custom Product</h3>
-                        <button onClick={() => setShowForm(false)} className="p-1 rounded-md hover:bg-white text-slate-400">
+                        <h3 className="font-bold text-slate-800">{editingId ? 'Edit Product' : 'New Custom Product'}</h3>
+                        <button onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyForm); }} className="p-1 rounded-md hover:bg-white text-slate-400">
                             <X size={16} />
                         </button>
                     </div>
@@ -313,7 +341,8 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                                 value={form.code}
                                 onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })}
                                 placeholder="e.g. MEAT_FUND"
-                                className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm font-mono"
+                                disabled={!!editingId} // cannot change code once created
+                                className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm font-mono disabled:opacity-50 disabled:bg-slate-100"
                             />
                         </div>
                     </div>
@@ -333,7 +362,8 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                         <select
                             value={form.moduleType}
                             onChange={e => setForm({ ...form, moduleType: e.target.value as ModuleType })}
-                            className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm"
+                            disabled={!!editingId} // Cannot change module type after creation
+                            className="mt-1 w-full p-2.5 rounded-lg border border-slate-200 text-sm disabled:opacity-50 disabled:bg-slate-100"
                         >
                             {Object.entries(MODULE_LABELS).map(([key, label]) => (
                                 <option key={key} value={key}>{label}</option>
@@ -394,11 +424,11 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                     </p>
 
                     <button
-                        onClick={handleCreate}
+                        onClick={handleSave}
                         disabled={saving}
                         className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg disabled:opacity-60"
                     >
-                        {saving ? <Loader2 size={16} className="animate-spin" /> : 'Create Product'}
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : (editingId ? 'Save Changes' : 'Create Product')}
                     </button>
                 </div>
             )}
@@ -455,12 +485,20 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                                             {p.isActive ? 'Active' : 'Inactive'}
                                         </span>
                                         {!p.isSystem && (
-                                            <span
-                                                onClick={(e) => { e.stopPropagation(); handleDelete(p); }}
-                                                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                                            >
-                                                <Trash2 size={16} />
-                                            </span>
+                                            <div className="flex items-center">
+                                                <span
+                                                    onClick={(e) => { e.stopPropagation(); openEditForm(p); }}
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 cursor-pointer"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </span>
+                                                <span
+                                                    onClick={(e) => { e.stopPropagation(); handleDelete(p); }}
+                                                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </span>
+                                            </div>
                                         )}
                                         {isExpanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
                                     </div>
