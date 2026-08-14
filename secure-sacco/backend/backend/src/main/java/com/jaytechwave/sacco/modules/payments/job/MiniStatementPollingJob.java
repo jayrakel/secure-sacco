@@ -11,6 +11,7 @@ import com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +49,7 @@ public class MiniStatementPollingJob {
     private final SavingsService             savingsService;
     private final CoopTransactionRepository  coopTransactionRepository;
     private final JournalEntryService        journalEntryService;
+    private final ApplicationEventPublisher  eventPublisher;
 
     /** Timestamp of the last successful poll. Used to detect and alert on outage gaps. */
     private static final AtomicReference<LocalDateTime> lastSuccessfulPoll =
@@ -160,6 +162,12 @@ public class MiniStatementPollingJob {
                     glPosted++;
                     log.info("MiniStatementPollingJob: 📒 Debit GL posted — KES {} narration={}",
                             tx.getAmount(), tx.getRawNarration());
+                            
+                    // Publish event so admins receive SMS alerts for debits (cheques, bank charges, etc)
+                    eventPublisher.publishEvent(new com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent(
+                            tx.getId(), tx.getAmount(), tx.getRawNarration(), 
+                            tx.getMpesaRef() != null ? tx.getMpesaRef() : tx.getCoopTransactionId()
+                    ));
                 } catch (Exception e) {
                     log.error("MiniStatementPollingJob: GL FAILED for debit ref={} — {}",
                             tx.getMpesaRef(), e.getMessage(), e);

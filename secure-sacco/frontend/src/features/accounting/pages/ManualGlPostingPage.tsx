@@ -303,14 +303,14 @@ const ManualGlPostingPage: React.FC = () => {
                     </div>
 
                     {/* ── Journal lines ── */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Journal Lines</h2>
                             <span className="text-xs text-slate-400">{lines.length} line{lines.length !== 1 ? 's' : ''}</span>
                         </div>
 
-                        {/* Column headers */}
-                        <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr_auto] gap-3 px-6 py-2.5 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        {/* Column headers (hidden on mobile) */}
+                        <div className="hidden lg:grid grid-cols-[2fr_1fr_1fr_1.5fr_auto] gap-3 px-6 py-2.5 bg-slate-50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                             <span>Account</span>
                             <span>Side</span>
                             <span>Amount (KES)</span>
@@ -320,63 +320,78 @@ const ManualGlPostingPage: React.FC = () => {
 
                         <div className="divide-y divide-slate-50">
                             {lines.map((line, idx) => (
-                                <div key={line.id} className="grid grid-cols-[2fr_1fr_1fr_1.5fr_auto] gap-3 items-center px-6 py-3">
+                                <div key={line.id} className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1.5fr_auto] gap-4 items-start lg:items-center px-4 sm:px-6 py-4">
 
                                     {/* Account */}
-                                    <AccountSelect
-                                        value={line.accountCode}
-                                        accounts={accounts}
-                                        onChange={code => updateLine(line.id, { accountCode: code })}
-                                    />
+                                    <div className="w-full">
+                                        <label className="lg:hidden text-xs font-medium text-slate-500 uppercase mb-1 block">Account</label>
+                                        <AccountSelect
+                                            value={line.accountCode}
+                                            accounts={accounts}
+                                            onChange={code => updateLine(line.id, { accountCode: code })}
+                                        />
+                                    </div>
 
                                     {/* Debit / Credit toggle */}
-                                    <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-semibold">
-                                        <button
-                                            type="button"
-                                            onClick={() => updateLine(line.id, { side: 'debit' })}
-                                            className={`flex-1 py-2 transition ${line.side === 'debit' ? 'bg-sky-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
-                                        >
-                                            DR
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => updateLine(line.id, { side: 'credit' })}
-                                            className={`flex-1 py-2 transition ${line.side === 'credit' ? 'bg-violet-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
-                                        >
-                                            CR
-                                        </button>
+                                    <div className="w-full">
+                                        <label className="lg:hidden text-xs font-medium text-slate-500 uppercase mb-1 block">Side</label>
+                                        <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-semibold">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateLine(line.id, { side: 'debit' })}
+                                                className={`flex-1 py-2.5 transition ${line.side === 'debit' ? 'bg-sky-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                            >
+                                                DR
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateLine(line.id, { side: 'credit' })}
+                                                className={`flex-1 py-2.5 transition ${line.side === 'credit' ? 'bg-violet-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                                            >
+                                                CR
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Amount */}
-                                    <input
-                                        type="number"
-                                        min="0.01"
-                                        step="0.01"
-                                        value={line.amount}
-                                        onChange={e => updateLine(line.id, { amount: e.target.value })}
-                                        placeholder="0.00"
-                                        className="border border-slate-200 rounded-lg px-3 py-2 text-sm text-right font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 transition w-full"
-                                    />
+                                    <div className="w-full">
+                                        <label className="lg:hidden text-xs font-medium text-slate-500 uppercase mb-1 block">Amount (KES)</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={line.amount}
+                                            onChange={e => updateLine(line.id, { amount: e.target.value })}
+                                            placeholder="0.00"
+                                            className="border border-slate-200 rounded-lg px-3 py-2 text-sm text-right font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 transition w-full"
+                                        />
+                                    </div>
 
                                     {/* Line description */}
-                                    <input
-                                        type="text"
-                                        value={line.description}
-                                        onChange={e => updateLine(line.id, { description: e.target.value })}
-                                        placeholder={`Line ${idx + 1} note (optional)`}
-                                        className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition w-full"
-                                    />
+                                    <div className="w-full">
+                                        <label className="lg:hidden text-xs font-medium text-slate-500 uppercase mb-1 block">Description</label>
+                                        <input
+                                            type="text"
+                                            value={line.description}
+                                            onChange={e => updateLine(line.id, { description: e.target.value })}
+                                            placeholder={`Line ${idx + 1} note (optional)`}
+                                            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition w-full"
+                                        />
+                                    </div>
 
                                     {/* Remove */}
-                                    <button
-                                        type="button"
-                                        onClick={() => removeLine(line.id)}
-                                        disabled={lines.length <= 2}
-                                        title="Remove line"
-                                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 disabled:cursor-not-allowed transition"
-                                    >
-                                        <Trash2 size={15} />
-                                    </button>
+                                    <div className="flex justify-end lg:block mt-2 lg:mt-0 w-full lg:w-auto">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeLine(line.id)}
+                                            disabled={lines.length <= 2}
+                                            title="Remove line"
+                                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 disabled:cursor-not-allowed transition flex items-center justify-center border lg:border-none border-slate-200 w-full lg:w-auto"
+                                        >
+                                            <Trash2 size={16} className="lg:mr-0 mr-2" />
+                                            <span className="lg:hidden text-sm font-medium">Remove Line</span>
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
