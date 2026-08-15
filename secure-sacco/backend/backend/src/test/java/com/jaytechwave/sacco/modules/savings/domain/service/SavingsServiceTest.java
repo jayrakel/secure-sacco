@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -250,5 +251,129 @@ class SavingsServiceTest {
         SavingsBalanceResponse result = service.getMyBalance("new@sacco.com");
 
         assertThat(result.availableBalance()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    // ─── creditExpenseReimbursement ───────────────────────────────────
+
+    @Test
+    @DisplayName("creditExpenseReimbursement: active account creates posted transaction and calls GL service")
+    void creditExpenseReimbursement_activeAccount_createsPostedTransactionAndPostsGL() {
+        UUID claimId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("4500.00");
+        String expectedRef = "EXP-" + claimId.toString().substring(0, 8).toUpperCase();
+
+        when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
+        when(savingsTransactionRepository.existsByReference(expectedRef)).thenReturn(false);
+        when(savingsTransactionRepository.save(any(SavingsTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.creditExpenseReimbursement(memberId, amount, claimId);
+
+        ArgumentCaptor<SavingsTransaction> txCaptor = ArgumentCaptor.forClass(SavingsTransaction.class);
+        verify(savingsTransactionRepository).save(txCaptor.capture());
+
+        SavingsTransaction savedTx = txCaptor.getValue();
+        assertThat(savedTx.getSavingsAccountId()).isEqualTo(activeAccount.getId());
+        assertThat(savedTx.getAmount()).isEqualByComparingTo(amount);
+        assertThat(savedTx.getType()).isEqualTo(TransactionType.EXPENSE_REIMBURSEMENT);
+        assertThat(savedTx.getChannel()).isEqualTo(TransactionChannel.INTERNAL);
+        assertThat(savedTx.getStatus()).isEqualTo(TransactionStatus.POSTED);
+        assertThat(savedTx.getReference()).isEqualTo(expectedRef);
+
+        verify(journalEntryService).postExpenseReimbursementClaim(memberId, amount, claimId.toString());
+    }
+
+    @Test
+    @DisplayName("creditExpenseReimbursement: auto-creates savings account when member has none")
+    void creditExpenseReimbursement_noExistingAccount_autoCreatesAccountAndSucceeds() {
+        UUID claimId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("2500.00");
+        String expectedRef = "EXP-" + claimId.toString().substring(0, 8).toUpperCase();
+
+        when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
+        when(savingsAccountRepository.save(any(SavingsAccount.class))).thenAnswer(inv -> {
+            SavingsAccount acc = inv.getArgument(0);
+            acc.setId(UUID.randomUUID());
+            return acc;
+        });
+        when(savingsTransactionRepository.existsByReference(expectedRef)).thenReturn(false);
+        when(savingsTransactionRepository.save(any(SavingsTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        service.creditExpenseReimbursement(memberId, amount, claimId);
+
+        verify(savingsAccountRepository).save(argThat(acc -> 
+                acc.getMemberId().equals(memberId) && acc.getStatus() == SavingsAccountStatus.ACTIVE
+        ));
+        verify(savingsTransactionRepository).save(any(SavingsTransaction.class));
+        verify(journalEntryService).postExpenseReimbursementClaim(memberId, amount, claimId.toString());
+    }
+
+    @Test
+    @DisplayName("creditExpenseReimbursement: frozen savings account throws IllegalStateException")
+    void creditExpenseReimbursement_frozenAccount_throwsException() {
+        UUID claimId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("1000.00");
+        activeAccount.setStatus(SavingsAccountStatus.FROZEN);
+
+        when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
+
+        assertThatThrownBy(() -> service.creditExpenseReimbursement(memberId, amount, claimId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("frozen");
+
+        verify(savingsTransactionRepository, never()).save(any());
+        verify(journalEntryService, never()).postExpenseReimbursementClaim(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("creditExpenseReimbursement: idempotency skips duplicate reference")
+    void creditExpenseReimbursement_idempotency_duplicateReferenceSkipped() {
+        UUID claimId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("3000.00");
+        String expectedRef = "EXP-" + claimId.toString().substring(0, 8).toUpperCase();
+
+        when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
+        when(savingsTransactionRepository.existsByReference(expectedRef)).thenReturn(true);
+
+        service.creditExpenseReimbursement(memberId, amount, claimId);
+
+        verify(savingsTransactionRepository, never()).save(any());
+        verify(journalEntryService, never()).postExpenseReimbursementClaim(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("getMemberStatement: includes EXPENSE_REIMBURSEMENT in running balance calculation")
+    void getMemberStatement_includesExpenseReimbursementInRunningBalance() {
+        SavingsTransaction dep = SavingsTransaction.builder()
+                .id(UUID.randomUUID())
+                .savingsAccountId(activeAccount.getId())
+                .type(TransactionType.DEPOSIT)
+                .channel(TransactionChannel.MPESA)
+                .amount(new BigDecimal("1000.00"))
+                .reference("DEP-001")
+                .status(TransactionStatus.POSTED)
+                .build();
+
+        SavingsTransaction reimb = SavingsTransaction.builder()
+                .id(UUID.randomUUID())
+                .savingsAccountId(activeAccount.getId())
+                .type(TransactionType.EXPENSE_REIMBURSEMENT)
+                .channel(TransactionChannel.INTERNAL)
+                .amount(new BigDecimal("500.00"))
+                .reference("EXP-ABC12345")
+                .status(TransactionStatus.POSTED)
+                .build();
+
+        when(savingsAccountRepository.findByMemberId(memberId)).thenReturn(Optional.of(activeAccount));
+        when(savingsTransactionRepository.findBySavingsAccountIdOrderByCreatedAtAsc(activeAccount.getId()))
+                .thenReturn(List.of(dep, reimb));
+
+        List<StatementTransactionResponse> statement = service.getMemberStatement(memberId, null, null);
+
+        assertThat(statement).hasSize(2);
+        // Statement is reversed (newest first)
+        assertThat(statement.get(0).reference()).isEqualTo("EXP-ABC12345");
+        assertThat(statement.get(0).runningBalance()).isEqualByComparingTo(new BigDecimal("1500.00"));
+        assertThat(statement.get(1).reference()).isEqualTo("DEP-001");
+        assertThat(statement.get(1).runningBalance()).isEqualByComparingTo(new BigDecimal("1000.00"));
     }
 }

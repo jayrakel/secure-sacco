@@ -75,6 +75,18 @@ public class ExpenseClaimService {
             throw new IllegalStateException("Expense claims can only be submitted for ACTIVE members.");
         }
 
+        if (request.allocations() != null && !request.allocations().isEmpty()) {
+            BigDecimal totalAllocated = request.allocations().stream()
+                    .map(ExpenseAllocationDTO::amount)
+                    .filter(java.util.Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalAllocated.compareTo(request.amount()) != 0) {
+                throw new IllegalArgumentException(
+                        String.format("Total allocation amount (%s) does not match claim amount (%s)",
+                                totalAllocated, request.amount()));
+            }
+        }
+
         ExpenseClaim claim = ExpenseClaim.builder()
                 .memberId(member.getId())
                 .amount(request.amount())
@@ -118,6 +130,18 @@ public class ExpenseClaimService {
 
         if (member.getStatus() != MemberStatus.ACTIVE) {
             throw new IllegalStateException("Expense claims can only be submitted by ACTIVE members.");
+        }
+
+        if (request.allocations() != null && !request.allocations().isEmpty()) {
+            BigDecimal totalAllocated = request.allocations().stream()
+                    .map(ExpenseAllocationDTO::amount)
+                    .filter(java.util.Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalAllocated.compareTo(request.amount()) != 0) {
+                throw new IllegalArgumentException(
+                        String.format("Total allocation amount (%s) does not match claim amount (%s)",
+                                totalAllocated, request.amount()));
+            }
         }
 
         ExpenseClaim claim = ExpenseClaim.builder()
@@ -241,18 +265,39 @@ public class ExpenseClaimService {
 
         if (Boolean.TRUE.equals(request.approved())) {
             String journalRef = "EXP-" + claim.getId();
-            claim.setStatus(ExpenseClaimStatus.APPROVED);
-            claim.setJournalReference(journalRef);
             
             List<ExpenseAllocationDTO> finalAllocations = request.overrideAllocations();
             if (finalAllocations != null && !finalAllocations.isEmpty()) {
+                BigDecimal totalAllocated = finalAllocations.stream()
+                        .map(ExpenseAllocationDTO::amount)
+                        .filter(java.util.Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (totalAllocated.compareTo(claim.getAmount()) != 0) {
+                    throw new IllegalArgumentException(
+                            String.format("Total allocation amount (%s) does not match claim amount (%s)",
+                                    totalAllocated, claim.getAmount()));
+                }
                 saveAllocations(claim.getId(), finalAllocations);
             } else {
                 finalAllocations = allocationRepository.findByExpenseClaimId(claim.getId())
                     .stream()
                     .map(a -> new ExpenseAllocationDTO(a.getProductId(), a.getAmount()))
                     .collect(Collectors.toList());
+                if (!finalAllocations.isEmpty()) {
+                    BigDecimal totalAllocated = finalAllocations.stream()
+                            .map(ExpenseAllocationDTO::amount)
+                            .filter(java.util.Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    if (totalAllocated.compareTo(claim.getAmount()) != 0) {
+                        throw new IllegalArgumentException(
+                                String.format("Total allocation amount (%s) does not match claim amount (%s)",
+                                        totalAllocated, claim.getAmount()));
+                    }
+                }
             }
+
+            claim.setStatus(ExpenseClaimStatus.APPROVED);
+            claim.setJournalReference(journalRef);
             
             if (finalAllocations != null && !finalAllocations.isEmpty()) {
                 // Virtual payment routing

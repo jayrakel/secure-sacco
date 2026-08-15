@@ -6,6 +6,8 @@ import { ManualTransactionModal } from '../components/ManualTransactionModal';
 import { Search, User, ArrowDownCircle, ArrowUpCircle, Download, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
+const CREDIT_TYPES = new Set(['DEPOSIT', 'EXPENSE_REIMBURSEMENT']);
+
 const SavingsManagementPage: React.FC = () => {
     const [members, setMembers] = useState<Member[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -183,14 +185,16 @@ const SavingsManagementPage: React.FC = () => {
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                    {statement.map((tx) => (
+                                    {statement.map((tx) => {
+                                        const isCredit = CREDIT_TYPES.has(tx.type);
+                                        return (
                                         <tr key={tx.transactionId} className="hover:bg-slate-50">
                                             <td className="px-4 py-3 text-slate-600">
                                                 {format(new Date(tx.postedAt), 'MMM dd, yyyy HH:mm')}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-sm ${tx.type === 'DEPOSIT' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded-sm ${isCredit ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                                                             {tx.type}
                                                         </span>
                                                     <span className="text-slate-500 font-mono text-xs">{tx.reference}</span>
@@ -201,14 +205,14 @@ const SavingsManagementPage: React.FC = () => {
                                                         {tx.status}
                                                     </span>
                                             </td>
-                                            <td className={`px-4 py-3 text-right font-medium ${tx.type === 'DEPOSIT' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                                                {tx.type === 'DEPOSIT' ? '+' : '-'}{tx.amount.toLocaleString()}
+                                            <td className={`px-4 py-3 text-right font-medium ${isCredit ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                                {isCredit ? '+' : '-'}{tx.amount.toLocaleString()}
                                             </td>
                                             <td className="px-4 py-3 text-right font-bold text-slate-800">
                                                 {tx.runningBalance.toLocaleString()}
                                             </td>
                                         </tr>
-                                    ))}
+                                    );})}
                                     </tbody>
                                 </table>
                             )}

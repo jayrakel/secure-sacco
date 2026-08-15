@@ -61,6 +61,8 @@ const PENALTY_STATUS: Record<string, string> = {
     OPEN: 'bg-rose-100 text-rose-800',
 };
 
+const CREDIT_TYPES = new Set(['DEPOSIT', 'EXPENSE_REIMBURSEMENT']);
+
 // ─── CSV export helper ────────────────────────────────────────────────────────
 const exportSavingsCSV = (rows: StatementTransactionResponse[]) => {
     const h = 'Date,Type,Reference,Channel,Amount (KES),Running Balance (KES),Status\n';
@@ -157,7 +159,7 @@ const MemberPersonalReportsPage: React.FC = () => {
 
     // ── Savings derived stats ──────────────────────────────────────────────────
     const totalDeposits = useMemo(
-        () => savingsTxns.filter((t) => t.type === 'DEPOSIT').reduce((s, t) => s + t.amount, 0),
+        () => savingsTxns.filter((t) => CREDIT_TYPES.has(t.type)).reduce((s, t) => s + t.amount, 0),
         [savingsTxns]
     );
 
@@ -277,7 +279,7 @@ const MemberPersonalReportsPage: React.FC = () => {
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Deposits</p>
                                 <p className="text-2xl font-bold text-emerald-600 mt-2">KES {fmt(totalDeposits)}</p>
                                 <p className="text-xs text-slate-400 mt-1">
-                                    {savingsTxns.filter((t) => t.type === 'DEPOSIT').length} transactions
+                                    {savingsTxns.filter((t) => CREDIT_TYPES.has(t.type)).length} transactions
                                 </p>
                             </div>
 
@@ -338,7 +340,7 @@ const MemberPersonalReportsPage: React.FC = () => {
 
                                         <tbody className="divide-y divide-slate-50 bg-white">
                                         {savingsTxns.map((tx) => {
-                                            const isDeposit = tx.type === 'DEPOSIT';
+                                            const isDeposit = CREDIT_TYPES.has(tx.type);
                                             return (
                                                 <tr key={tx.transactionId} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-500">
