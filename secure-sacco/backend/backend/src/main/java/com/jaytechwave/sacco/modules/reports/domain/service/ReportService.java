@@ -243,7 +243,7 @@ public class ReportService {
 
         for (StatementItemDTO item : items) {
             if ("SAVINGS".equals(item.getModule())) {
-                if ("DEPOSIT".equals(item.getType())) {
+                if ("DEPOSIT".equals(item.getType()) || "EXPENSE_REIMBURSEMENT".equals(item.getType())) {
                     summary.setSavingsDeposited(summary.getSavingsDeposited().add(item.getAmount()));
                 } else if ("WITHDRAWAL".equals(item.getType())) {
                     summary.setSavingsWithdrawn(summary.getSavingsWithdrawn().add(item.getAmount()));

@@ -415,6 +415,11 @@ public class SavingsService {
 
         String reference = "EXP-" + claimId.toString().substring(0, 8).toUpperCase();
 
+        if (savingsTransactionRepository.existsByReference(reference)) {
+            log.info("creditExpenseReimbursement: transaction {} already exists — skipping duplicate", reference);
+            return;
+        }
+
         SavingsTransaction tx = SavingsTransaction.builder()
                 .savingsAccountId(account.getId())
                 .type(TransactionType.EXPENSE_REIMBURSEMENT)

@@ -417,11 +417,18 @@ public class JournalEntryService {
         Account expenseAccount = accountRepository.findByAccountCode("5360")
                 .orElseThrow(() -> new IllegalStateException(
                         "System Account 5360 (Member Expense Reimbursement) not found. Run V67 migration."));
+        if (!expenseAccount.isActive()) {
+            throw new IllegalStateException("Cannot post to inactive account: 5360");
+        }
+
         // Credit goes to member savings deposits (2100), not to payable (2190).
         // This immediately increases the member's savings balance on approval.
         Account savingsAccount = accountRepository.findByAccountCode("2100")
                 .orElseThrow(() -> new IllegalStateException(
                         "System Account 2100 (Member Savings Deposits) not found."));
+        if (!savingsAccount.isActive()) {
+            throw new IllegalStateException("Cannot post to inactive account: 2100");
+        }
 
         JournalEntry entry = JournalEntry.builder()
                 .referenceNumber(journalRef)
@@ -460,9 +467,15 @@ public class JournalEntryService {
 
         Account expenseAccount = accountRepository.findByAccountCode("5360")
                 .orElseThrow(() -> new IllegalStateException("System Account 5360 not found."));
+        if (!expenseAccount.isActive()) {
+            throw new IllegalStateException("Cannot post to inactive account: 5360");
+        }
         
         Account bankReceiptAccount = accountRepository.findByAccountCode("1001")
                 .orElseThrow(() -> new IllegalStateException("System Account 1001 not found."));
+        if (!bankReceiptAccount.isActive()) {
+            throw new IllegalStateException("Cannot post to inactive account: 1001");
+        }
 
         JournalEntry entry = JournalEntry.builder()
                 .referenceNumber(journalRef)

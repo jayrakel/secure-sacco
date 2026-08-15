@@ -55,8 +55,8 @@ class ExpenseClaimServiceTest {
     @Mock private com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository paymentRepository;
     @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository productRepository;
     @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository depositAllocationRepository;
+    @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.service.DepositAllocationRouterService depositAllocationRouterService;
     @Mock private com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService smsNotificationService;
-
 
     @InjectMocks
     private ExpenseClaimService expenseClaimService;
@@ -261,5 +261,207 @@ class ExpenseClaimServiceTest {
         verify(journalEntryService, never()).postExpenseReimbursementClaim(any(), any(), any());
         verify(savingsService, never()).creditExpenseReimbursement(any(), any(), any());
         verify(expenseClaimRepository, never()).save(any());
+    }
+
+    // ── Allocations & Split Routing Tests ─────────────────────────────────────
+
+    @Test
+    @DisplayName("submitClaim: with valid allocations matching amount saves successfully")
+    void testSubmitClaim_withValidAllocations_success() {
+        UUID prod1 = UUID.randomUUID();
+        UUID prod2 = UUID.randomUUID();
+        var allocations = java.util.List.of(
+                new ExpenseAllocationDTO(prod1, new BigDecimal("300.00")),
+                new ExpenseAllocationDTO(prod2, new BigDecimal("200.00"))
+        );
+        SubmitExpenseClaimRequest request = new SubmitExpenseClaimRequest(
+                memberId, new BigDecimal("500.00"), "Transport & Meals", "RCP-500", allocations
+        );
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
+        when(expenseClaimRepository.save(any(ExpenseClaim.class))).thenAnswer(inv -> {
+            ExpenseClaim c = inv.getArgument(0);
+            c.setId(claimId);
+            return c;
+        });
+
+        ExpenseClaimResponse response = expenseClaimService.submitClaim(request, staffEmail);
+
+        assertThat(response.status()).isEqualTo("PENDING");
+        assertThat(response.amount()).isEqualByComparingTo("500.00");
+        verify(allocationRepository).saveAll(argThat(list -> ((java.util.List<?>) list).size() == 2));
+    }
+
+    @Test
+    @DisplayName("submitClaim: allocations sum mismatch throws IllegalArgumentException")
+    void testSubmitClaim_allocationSumMismatch_throws() {
+        UUID prod1 = UUID.randomUUID();
+        UUID prod2 = UUID.randomUUID();
+        var allocations = java.util.List.of(
+                new ExpenseAllocationDTO(prod1, new BigDecimal("300.00")),
+                new ExpenseAllocationDTO(prod2, new BigDecimal("100.00")) // Sum = 400 != 500
+        );
+        SubmitExpenseClaimRequest request = new SubmitExpenseClaimRequest(
+                memberId, new BigDecimal("500.00"), "Transport & Meals", "RCP-500", allocations
+        );
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
+
+        assertThatThrownBy(() -> expenseClaimService.submitClaim(request, staffEmail))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Total allocation amount");
+
+        verify(expenseClaimRepository, never()).save(any());
+        verify(allocationRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("submitMyClaim: allocations sum mismatch throws IllegalArgumentException")
+    void testSubmitMyClaim_allocationSumMismatch_throws() {
+        User memberUser = User.builder()
+                .id(UUID.randomUUID())
+                .email("jane@sacco.co.ke")
+                .member(activeMember)
+                .build();
+        when(userRepository.findByEmail("jane@sacco.co.ke")).thenReturn(Optional.of(memberUser));
+
+        UUID prod1 = UUID.randomUUID();
+        var allocations = java.util.List.of(
+                new ExpenseAllocationDTO(prod1, new BigDecimal("400.00")) // Sum = 400 != 600
+        );
+        MemberSubmitExpenseClaimRequest request = new MemberSubmitExpenseClaimRequest(
+                new BigDecimal("600.00"), "Self-submitted Stationery", "RCP-600", allocations
+        );
+
+        assertThatThrownBy(() -> expenseClaimService.submitMyClaim(request, "jane@sacco.co.ke"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Total allocation amount");
+
+        verify(expenseClaimRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("reviewClaim: APPROVE with split allocations routes via router and posts reclassification GL")
+    void testReviewClaim_approve_withAllocations_routesViaRouter() {
+        ExpenseClaim pendingClaim = ExpenseClaim.builder()
+                .id(claimId)
+                .memberId(memberId)
+                .amount(new BigDecimal("1000.00"))
+                .description("Workshop Expenses")
+                .receiptReference("RCP-1000")
+                .status(ExpenseClaimStatus.PENDING)
+                .build();
+
+        UUID prod1 = UUID.randomUUID();
+        UUID prod2 = UUID.randomUUID();
+        com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct product1 = 
+                com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct.builder()
+                        .id(prod1).code("SAVINGS").name("Savings").build();
+        com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct product2 = 
+                com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct.builder()
+                        .id(prod2).code("SHARES").name("Shares").build();
+
+        var storedAllocations = java.util.List.of(
+                com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocation.builder()
+                        .expenseClaimId(claimId).productId(prod1).amount(new BigDecimal("600.00")).build(),
+                com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocation.builder()
+                        .expenseClaimId(claimId).productId(prod2).amount(new BigDecimal("400.00")).build()
+        );
+
+        when(expenseClaimRepository.findById(claimId)).thenReturn(Optional.of(pendingClaim));
+        when(userRepository.findByEmail(staffEmail)).thenReturn(Optional.of(reviewerUser));
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
+        when(allocationRepository.findByExpenseClaimId(claimId)).thenReturn(storedAllocations);
+        when(productRepository.findById(prod1)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(prod2)).thenReturn(Optional.of(product2));
+        when(paymentRepository.save(any())).thenAnswer(inv -> {
+            com.jaytechwave.sacco.modules.payments.domain.entity.Payment p = inv.getArgument(0);
+            p.setId(UUID.randomUUID());
+            return p;
+        });
+        when(expenseClaimRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null, null);
+
+        ExpenseClaimResponse response = expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1");
+
+        assertThat(response.status()).isEqualTo("APPROVED");
+        // Virtual payment created and saved
+        verify(paymentRepository).save(argThat(p -> 
+                p.getMemberId().equals(memberId) &&
+                p.getAmount().compareTo(new BigDecimal("1000.00")) == 0 &&
+                p.getPaymentMethod().equals("EXPENSE_REIMBURSEMENT") &&
+                p.getInternalRef().equals("EXP-" + claimId)
+        ));
+        // Deposit allocations saved
+        verify(depositAllocationRepository).saveAll(argThat(list -> ((java.util.List<?>) list).size() == 2));
+        // Router called
+        verify(depositAllocationRouterService).routeAllocations(any(com.jaytechwave.sacco.modules.payments.domain.entity.Payment.class));
+        // Reclassification GL entry posted
+        verify(journalEntryService).postExpenseReimbursementReclassification(memberId, new BigDecimal("1000.00"), claimId.toString());
+        // Direct savings service reimbursement must NOT be called when allocations exist
+        verify(savingsService, never()).creditExpenseReimbursement(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reviewClaim: APPROVE with override allocations sum mismatch throws IllegalArgumentException")
+    void testReviewClaim_approve_overrideAllocationsMismatch_throws() {
+        ExpenseClaim pendingClaim = ExpenseClaim.builder()
+                .id(claimId)
+                .memberId(memberId)
+                .amount(new BigDecimal("1000.00"))
+                .description("Workshop Expenses")
+                .status(ExpenseClaimStatus.PENDING)
+                .build();
+
+        when(expenseClaimRepository.findById(claimId)).thenReturn(Optional.of(pendingClaim));
+        when(userRepository.findByEmail(staffEmail)).thenReturn(Optional.of(reviewerUser));
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
+
+        UUID prod1 = UUID.randomUUID();
+        var overrideAllocations = java.util.List.of(
+                new ExpenseAllocationDTO(prod1, new BigDecimal("800.00")) // 800 != 1000
+        );
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null, overrideAllocations);
+
+        assertThatThrownBy(() -> expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Total allocation amount");
+
+        verify(paymentRepository, never()).save(any());
+        verify(depositAllocationRouterService, never()).routeAllocations(any());
+        verify(journalEntryService, never()).postExpenseReimbursementReclassification(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("reviewClaim: APPROVE with stored allocations sum mismatch throws IllegalArgumentException")
+    void testReviewClaim_approve_storedAllocationsMismatch_throws() {
+        ExpenseClaim pendingClaim = ExpenseClaim.builder()
+                .id(claimId)
+                .memberId(memberId)
+                .amount(new BigDecimal("1000.00"))
+                .description("Workshop Expenses")
+                .status(ExpenseClaimStatus.PENDING)
+                .build();
+
+        UUID prod1 = UUID.randomUUID();
+        var storedAllocations = java.util.List.of(
+                com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocation.builder()
+                        .expenseClaimId(claimId).productId(prod1).amount(new BigDecimal("700.00")).build() // 700 != 1000
+        );
+
+        when(expenseClaimRepository.findById(claimId)).thenReturn(Optional.of(pendingClaim));
+        when(userRepository.findByEmail(staffEmail)).thenReturn(Optional.of(reviewerUser));
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(activeMember));
+        when(allocationRepository.findByExpenseClaimId(claimId)).thenReturn(storedAllocations);
+
+        ReviewExpenseClaimRequest request = new ReviewExpenseClaimRequest(true, null, null);
+
+        assertThatThrownBy(() -> expenseClaimService.reviewClaim(claimId, request, staffEmail, "127.0.0.1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Total allocation amount");
+
+        verify(paymentRepository, never()).save(any());
+        verify(depositAllocationRouterService, never()).routeAllocations(any());
     }
 }

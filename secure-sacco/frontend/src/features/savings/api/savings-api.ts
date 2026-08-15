@@ -2,8 +2,8 @@ import apiClient from '../../../shared/api/api-client';
 
 export interface StatementTransactionResponse {
     transactionId: string;
-    type: 'DEPOSIT' | 'WITHDRAWAL';
-    channel: 'CASH' | 'MPESA';
+    type: 'DEPOSIT' | 'WITHDRAWAL' | 'EXPENSE_REIMBURSEMENT' | string;
+    channel: 'CASH' | 'MPESA' | 'INTERNAL' | string;
     amount: number;
     reference: string;
     status: 'PENDING' | 'POSTED' | 'FAILED' | 'REVERSED';

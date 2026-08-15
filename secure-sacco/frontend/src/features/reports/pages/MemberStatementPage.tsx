@@ -31,7 +31,7 @@ interface EnrichedRow extends StatementItemDTO {
 
 const TODAY = new Date().toISOString().split('T')[0];
 
-const CREDIT_TYPES = new Set(['DEPOSIT', 'REPAYMENT', 'WAIVER']);
+const CREDIT_TYPES = new Set(['DEPOSIT', 'EXPENSE_REIMBURSEMENT', 'REPAYMENT', 'WAIVER']);
 
 const QUICK_RANGES = [
     { label: 'This month',    getDates: () => { const d = new Date(); return { from: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`, to: TODAY }; } },

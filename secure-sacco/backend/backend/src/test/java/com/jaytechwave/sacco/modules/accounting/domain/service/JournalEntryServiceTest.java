@@ -241,4 +241,198 @@ class JournalEntryServiceTest {
 
         assertThatNoException().isThrownBy(() -> service.postEntry(request));
     }
+
+    // ─── Expense Reimbursement GL Entries (SAC-220) ──────────────────
+
+    @Test
+    @DisplayName("postExpenseReimbursementClaim: creates balanced DR 5360 / CR 2100 entry")
+    void postExpenseReimbursementClaim_balancedEntry_success() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("1250.00");
+        String journalRef = "EXP-" + claimId;
+
+        Account expense5360 = Account.builder()
+                .id(UUID.randomUUID())
+                .accountCode("5360")
+                .accountName("Member Expense Reimbursement")
+                .isActive(true)
+                .build();
+
+        when(accountRepository.findByAccountCode("5360")).thenReturn(Optional.of(expense5360));
+        when(accountRepository.findByAccountCode("2100")).thenReturn(Optional.of(creditAccount));
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(false);
+
+        service.postExpenseReimbursementClaim(memberId, amount, claimId.toString());
+
+        ArgumentCaptor<JournalEntry> captor = ArgumentCaptor.forClass(JournalEntry.class);
+        verify(journalEntryRepository).save(captor.capture());
+
+        JournalEntry saved = captor.getValue();
+        assertThat(saved.getReferenceNumber()).isEqualTo(journalRef);
+        assertThat(saved.getStatus()).isEqualTo(JournalEntryStatus.POSTED);
+        assertThat(saved.getLines()).hasSize(2);
+
+        JournalEntryLine drLine = saved.getLines().get(0);
+        assertThat(drLine.getAccount().getAccountCode()).isEqualTo("5360");
+        assertThat(drLine.getDebitAmount()).isEqualByComparingTo(amount);
+        assertThat(drLine.getCreditAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(drLine.getMemberId()).isEqualTo(memberId);
+
+        JournalEntryLine crLine = saved.getLines().get(1);
+        assertThat(crLine.getAccount().getAccountCode()).isEqualTo("2100");
+        assertThat(crLine.getDebitAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(crLine.getCreditAmount()).isEqualByComparingTo(amount);
+        assertThat(crLine.getMemberId()).isEqualTo(memberId);
+    }
+
+    @Test
+    @DisplayName("postExpenseReimbursementClaim: skips duplicate entry (idempotency)")
+    void postExpenseReimbursementClaim_idempotent_duplicateSkipped() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        String journalRef = "EXP-" + claimId;
+
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(true);
+
+        service.postExpenseReimbursementClaim(memberId, new BigDecimal("500.00"), claimId.toString());
+
+        verify(accountRepository, never()).findByAccountCode(anyString());
+        verify(journalEntryRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("postExpenseReimbursementClaim: throws if account 5360 is missing")
+    void postExpenseReimbursementClaim_missingAccount5360_throws() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        String journalRef = "EXP-" + claimId;
+
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(false);
+        when(accountRepository.findByAccountCode("5360")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.postExpenseReimbursementClaim(memberId, new BigDecimal("500.00"), claimId.toString()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("5360");
+
+        verify(journalEntryRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("postExpenseReimbursementClaim: throws if account is inactive")
+    void postExpenseReimbursementClaim_inactiveAccount_throws() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        String journalRef = "EXP-" + claimId;
+
+        Account inactiveExpense = Account.builder()
+                .id(UUID.randomUUID())
+                .accountCode("5360")
+                .accountName("Member Expense Reimbursement")
+                .isActive(false)
+                .build();
+
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(false);
+        when(accountRepository.findByAccountCode("5360")).thenReturn(Optional.of(inactiveExpense));
+
+        assertThatThrownBy(() -> service.postExpenseReimbursementClaim(memberId, new BigDecimal("500.00"), claimId.toString()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("inactive");
+
+        verify(journalEntryRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("postExpenseReimbursementReclassification: creates balanced DR 5360 / CR 1001 entry")
+    void postExpenseReimbursementReclassification_balancedEntry_success() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("2000.00");
+        String journalRef = "EXPREC-" + claimId;
+
+        Account expense5360 = Account.builder()
+                .id(UUID.randomUUID())
+                .accountCode("5360")
+                .accountName("Member Expense Reimbursement")
+                .isActive(true)
+                .build();
+
+        Account clearing1001 = Account.builder()
+                .id(UUID.randomUUID())
+                .accountCode("1001")
+                .accountName("M-Pesa System Clearing")
+                .isActive(true)
+                .build();
+
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(false);
+        when(accountRepository.findByAccountCode("5360")).thenReturn(Optional.of(expense5360));
+        when(accountRepository.findByAccountCode("1001")).thenReturn(Optional.of(clearing1001));
+
+        service.postExpenseReimbursementReclassification(memberId, amount, claimId.toString());
+
+        ArgumentCaptor<JournalEntry> captor = ArgumentCaptor.forClass(JournalEntry.class);
+        verify(journalEntryRepository).save(captor.capture());
+
+        JournalEntry saved = captor.getValue();
+        assertThat(saved.getReferenceNumber()).isEqualTo(journalRef);
+        assertThat(saved.getStatus()).isEqualTo(JournalEntryStatus.POSTED);
+        assertThat(saved.getLines()).hasSize(2);
+
+        JournalEntryLine drLine = saved.getLines().get(0);
+        assertThat(drLine.getAccount().getAccountCode()).isEqualTo("5360");
+        assertThat(drLine.getDebitAmount()).isEqualByComparingTo(amount);
+        assertThat(drLine.getCreditAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+
+        JournalEntryLine crLine = saved.getLines().get(1);
+        assertThat(crLine.getAccount().getAccountCode()).isEqualTo("1001");
+        assertThat(crLine.getDebitAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(crLine.getCreditAmount()).isEqualByComparingTo(amount);
+    }
+
+    @Test
+    @DisplayName("postExpenseReimbursementReclassification: skips duplicate entry (idempotency)")
+    void postExpenseReimbursementReclassification_idempotent_duplicateSkipped() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        String journalRef = "EXPREC-" + claimId;
+
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(true);
+
+        service.postExpenseReimbursementReclassification(memberId, new BigDecimal("800.00"), claimId.toString());
+
+        verify(accountRepository, never()).findByAccountCode(anyString());
+        verify(journalEntryRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("postExpenseReimbursementReclassification: throws if account 1001 is inactive")
+    void postExpenseReimbursementReclassification_inactiveAccount1001_throws() {
+        UUID memberId = UUID.randomUUID();
+        UUID claimId = UUID.randomUUID();
+        String journalRef = "EXPREC-" + claimId;
+
+        Account expense5360 = Account.builder()
+                .id(UUID.randomUUID())
+                .accountCode("5360")
+                .accountName("Member Expense Reimbursement")
+                .isActive(true)
+                .build();
+
+        Account inactiveClearing = Account.builder()
+                .id(UUID.randomUUID())
+                .accountCode("1001")
+                .accountName("M-Pesa System Clearing")
+                .isActive(false)
+                .build();
+
+        when(journalEntryRepository.existsByReferenceNumber(journalRef)).thenReturn(false);
+        when(accountRepository.findByAccountCode("5360")).thenReturn(Optional.of(expense5360));
+        when(accountRepository.findByAccountCode("1001")).thenReturn(Optional.of(inactiveClearing));
+
+        assertThatThrownBy(() -> service.postExpenseReimbursementReclassification(memberId, new BigDecimal("800.00"), claimId.toString()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("inactive");
+
+        verify(journalEntryRepository, never()).save(any());
+    }
 }
