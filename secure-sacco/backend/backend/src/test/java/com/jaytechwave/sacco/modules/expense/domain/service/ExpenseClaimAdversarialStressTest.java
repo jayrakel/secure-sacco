@@ -9,6 +9,7 @@ import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryServi
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService;
 import com.jaytechwave.sacco.modules.expense.api.dto.ExpenseClaimDTOs.ExpenseAllocationDTO;
+import com.jaytechwave.sacco.modules.expense.api.dto.ExpenseClaimDTOs.ExpenseClaimResponse;
 import com.jaytechwave.sacco.modules.expense.api.dto.ExpenseClaimDTOs.ReviewExpenseClaimRequest;
 import com.jaytechwave.sacco.modules.expense.api.dto.ExpenseClaimDTOs.SubmitExpenseClaimRequest;
 import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaim;
