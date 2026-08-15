@@ -4,7 +4,10 @@ import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRepayment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface PenaltyRepaymentRepository extends JpaRepository<PenaltyRepayment, UUID> {}
+public interface PenaltyRepaymentRepository extends JpaRepository<PenaltyRepayment, UUID> {
+    Optional<PenaltyRepayment> findFirstByReceiptNumber(String receiptNumber);
+}

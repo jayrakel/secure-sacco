@@ -3,6 +3,7 @@ import axios from 'axios';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 import { Loader2, Plus } from 'lucide-react';
 import { DepositFlowModal } from '../../paymentproducts/components/DepositFlowModal';
+import { paymentProductsApi } from '../../paymentproducts/api/payment-products-api';
 
 interface ShareAccount {
     id: string;
@@ -31,6 +32,8 @@ export default function MySharesPage() {
     const [transactions, setTransactions] = useState<ShareTransaction[]>([]);
     const [transactionsLoading, setTransactionsLoading] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
+    const [productsLoading, setProductsLoading] = useState(true);
+    const [canPurchaseShares, setCanPurchaseShares] = useState(true);
 
     const loadAccounts = useCallback(async () => {
         try {
@@ -60,9 +63,22 @@ export default function MySharesPage() {
         }
     }, []);
 
+    const checkProducts = useCallback(async () => {
+        try {
+            const activeProducts = await paymentProductsApi.getActive();
+            const hasShareProducts = activeProducts.some(p => p.moduleType === 'SHARE_CAPITAL' || p.moduleType === 'DEPOSIT_SHARES');
+            setCanPurchaseShares(hasShareProducts);
+        } catch (err) {
+            console.error('Failed to check share products', err);
+        } finally {
+            setProductsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         loadAccounts();
-    }, [loadAccounts]);
+        checkProducts();
+    }, [loadAccounts, checkProducts]);
 
     useEffect(() => {
         if (selectedAccount) {
@@ -93,12 +109,18 @@ export default function MySharesPage() {
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">My Shares</h1>
                 {accounts.length > 0 && (
-                    <button 
-                        onClick={() => setShowDepositModal(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center shadow-sm"
-                    >
-                        <Plus className="w-4 h-4 mr-2" /> Buy Shares
-                    </button>
+                    <div className="flex flex-col items-end">
+                        <button 
+                            onClick={() => setShowDepositModal(true)}
+                            disabled={!canPurchaseShares || productsLoading}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Plus className="w-4 h-4 mr-2" /> Buy Shares
+                        </button>
+                        {!canPurchaseShares && !productsLoading && (
+                            <span className="text-xs text-red-500 mt-1">Share purchases are currently disabled</span>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -131,15 +153,21 @@ export default function MySharesPage() {
                         </svg>
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No Share Accounts Found</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto">
+                    <p className="text-gray-500 max-w-sm mx-auto mb-6">
                         You currently do not own any shares in the Sacco. Share accounts are automatically created when you make your first share purchase or when dividends are distributed.
                     </p>
-                    <button 
-                        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-                        onClick={() => setShowDepositModal(true)}
-                    >
-                        Purchase Shares
-                    </button>
+                    <div className="flex flex-col items-center">
+                        <button 
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setShowDepositModal(true)}
+                            disabled={!canPurchaseShares || productsLoading}
+                        >
+                            Purchase Shares
+                        </button>
+                        {!canPurchaseShares && !productsLoading && (
+                            <span className="text-xs text-red-500 mt-2">Share purchases are currently disabled</span>
+                        )}
+                    </div>
                 </div>
             )}
 
