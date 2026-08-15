@@ -80,8 +80,8 @@ public class ProfileController {
 
         user.setFirstName(request.firstName().trim());
         user.setLastName(request.lastName().trim());
-        if (request.phoneNumber() != null && !request.phoneNumber().isBlank()) {
-            user.setPhoneNumber(request.phoneNumber().trim());
+        if (request.phoneNumber() != null) {
+            user.setPhoneNumber(request.phoneNumber().trim().isEmpty() ? null : request.phoneNumber().trim());
         }
 
         userRepository.save(user);
