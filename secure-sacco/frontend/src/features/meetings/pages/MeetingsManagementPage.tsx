@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { meetingsApi } from '../api/meetings-api';
 import { MeetingQrModal } from '../components/MeetingQrModal';
 import type { Meeting, MeetingType, AttendanceStatus, AttendanceRecord } from '../api/meetings-api';
-import { Calendar, Clock, Plus, CheckCircle, XCircle, Users, X, Loader2, ChevronLeft, QrCode} from 'lucide-react';
+import { Calendar, Clock, Plus, CheckCircle, XCircle, Users, X, Loader2, ChevronLeft, QrCode, Edit2} from 'lucide-react';
 import { format } from 'date-fns';
 import axios from "axios";
 
@@ -42,6 +42,18 @@ export default function MeetingsManagementPage() {
         lateAfterMinutes: 15,
     });
     const [formSaving, setFormSaving] = useState(false);
+
+    const [showEdit, setShowEdit] = useState<Meeting | null>(null);
+    const [editForm, setEditForm] = useState({
+        title: '',
+        description: '',
+        meetingType: 'GENERAL' as MeetingType,
+        startAt: '',
+        endAt: '',
+        lateAfterMinutes: 15,
+        notifyMembers: false,
+    });
+    const [editSaving, setEditSaving] = useState(false);
 
     const load = () => {
         setLoading(true);
@@ -148,6 +160,38 @@ export default function MeetingsManagementPage() {
         }
     };
 
+    const handleEditClick = (m: Meeting) => {
+        setEditForm({
+            title: m.title,
+            description: m.description || '',
+            meetingType: m.meetingType,
+            startAt: m.startAt ? m.startAt.slice(0, 16) : '',
+            endAt: m.endAt ? m.endAt.slice(0, 16) : '',
+            lateAfterMinutes: m.lateAfterMinutes || 15,
+            notifyMembers: false,
+        });
+        setShowEdit(m);
+    };
+
+    const handleEditSave = async () => {
+        if (!showEdit || !editForm.title || !editForm.startAt) return;
+        setEditSaving(true);
+        try {
+            await meetingsApi.update(showEdit.id, editForm);
+            setShowEdit(null);
+            load();
+            if (selected?.id === showEdit.id) {
+                setSelected(null);
+            }
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                setActionMsg(err.response?.data?.message || 'Failed to update meeting.');
+            }
+        } finally {
+            setEditSaving(false);
+        }
+    };
+
     return (
         <>
             {qrMeeting && (
@@ -212,6 +256,12 @@ export default function MeetingsManagementPage() {
 
                         {selected.status === 'SCHEDULED' && (
                             <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleEditClick(selected)}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 disabled:opacity-50"
+                                >
+                                    <Edit2 size={14} /> Edit
+                                </button>
                                 <button
                                     onClick={handleComplete}
                                     disabled={saving}
@@ -382,6 +432,10 @@ export default function MeetingsManagementPage() {
 
                                 {selected.status === 'SCHEDULED' && (
                                     <div className="flex gap-2 mb-5">
+                                        <button onClick={() => handleEditClick(selected)}
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100 disabled:opacity-50">
+                                            <Edit2 size={13} /> Edit
+                                        </button>
                                         <button onClick={handleComplete} disabled={saving}
                                                 className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-50">
                                             {saving ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />} Complete
@@ -507,6 +561,74 @@ export default function MeetingsManagementPage() {
                                 <button onClick={handleCreate} disabled={formSaving || !form.title || !form.startAt}
                                         className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
                                     {formSaving ? 'Creating…' : 'Create Meeting'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit modal */}
+                {showEdit && (
+                    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+                        <div className="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+                            <div className="flex justify-between items-center mb-5">
+                                <h2 className="text-lg font-bold text-slate-900">Edit Meeting</h2>
+                                <button onClick={() => setShowEdit(null)} className="text-slate-400 hover:text-slate-600">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Title *</label>
+                                    <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Type</label>
+                                    <select value={editForm.meetingType} onChange={e => setEditForm(f => ({ ...f, meetingType: e.target.value as MeetingType }))}
+                                            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        {['GENERAL', 'AGM', 'SPECIAL', 'EMERGENCY'].map(t => <option key={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Start Date & Time *</label>
+                                    <input type="datetime-local" value={editForm.startAt} onChange={e => setEditForm(f => ({ ...f, startAt: e.target.value }))}
+                                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">End Date & Time</label>
+                                    <input type="datetime-local" value={editForm.endAt} onChange={e => setEditForm(f => ({ ...f, endAt: e.target.value }))}
+                                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Late After (minutes)</label>
+                                    <input type="number" value={editForm.lateAfterMinutes} onChange={e => setEditForm(f => ({ ...f, lateAfterMinutes: parseInt(e.target.value) || 15 }))}
+                                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">Description</label>
+                                    <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} rows={2}
+                                              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                
+                                <div className="pt-2 border-t border-slate-100">
+                                    <label className="flex items-start gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={editForm.notifyMembers} onChange={e => setEditForm(f => ({ ...f, notifyMembers: e.target.checked }))} 
+                                               className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
+                                        <div>
+                                            <span className="text-sm font-medium text-slate-800">Notify members of update</span>
+                                            <p className="text-xs text-slate-500">Send an immediate SMS to all active members about these changes.</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-3 mt-6">
+                                <button onClick={() => setShowEdit(null)}
+                                        className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
+                                <button onClick={handleEditSave} disabled={editSaving || !editForm.title || !editForm.startAt}
+                                        className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+                                    {editSaving ? 'Saving…' : 'Save Changes'}
                                 </button>
                             </div>
                         </div>

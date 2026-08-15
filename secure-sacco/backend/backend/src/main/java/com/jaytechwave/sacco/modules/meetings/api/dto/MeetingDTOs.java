@@ -25,7 +25,8 @@ public class MeetingDTOs {
             MeetingType meetingType,
             LocalDateTime startAt,
             LocalDateTime endAt,
-            Integer lateAfterMinutes
+            Integer lateAfterMinutes,
+            Boolean notifyMembers
     ) {}
 
     /**

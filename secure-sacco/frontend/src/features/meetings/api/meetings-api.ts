@@ -48,8 +48,8 @@ export const meetingsApi = {
     create: (data: Partial<Meeting>): Promise<Meeting> =>
         apiClient.post(API, data).then(r => r.data),
 
-    update: (id: string, data: Partial<Meeting>): Promise<Meeting> =>
-        apiClient.put(`${API}/${id}`, data).then(r => r.data),
+    update: (id: string, data: Partial<Meeting> & { notifyMembers?: boolean }): Promise<Meeting> =>
+        apiClient.put(`${API}/${id}`, data).then(res => res.data),
 
     cancel: (id: string): Promise<Meeting> =>
         apiClient.post(`${API}/${id}/cancel`).then(r => r.data),

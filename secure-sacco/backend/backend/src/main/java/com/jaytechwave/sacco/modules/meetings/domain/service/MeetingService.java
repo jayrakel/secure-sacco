@@ -39,6 +39,7 @@ public class MeetingService {
     private final SecurityAuditService securityAuditService;
     private final MeetingPenaltyService meetingPenaltyService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MeetingNotificationService meetingNotificationService;
 
     @Transactional(readOnly = true)
     public Page<MeetingSummaryResponse> listAllMeetings(Pageable pageable) {
@@ -130,7 +131,16 @@ public class MeetingService {
         if (req.endAt() != null)            meeting.setEndAt(req.endAt());
         if (req.lateAfterMinutes() != null) meeting.setLateAfterMinutes(req.lateAfterMinutes());
 
-        MeetingSummaryResponse response = toSummary(meetingRepository.save(meeting));
+        Meeting savedMeeting = meetingRepository.save(meeting);
+        MeetingSummaryResponse response = toSummary(savedMeeting);
+
+        if (Boolean.TRUE.equals(req.notifyMembers())) {
+            List<Member> activeMembers = memberRepository.findByStatus(com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus.ACTIVE);
+            if (!activeMembers.isEmpty()) {
+                meetingNotificationService.sendMeetingUpdateNotification(savedMeeting, activeMembers);
+                log.info("Update notifications sent for meeting {}", savedMeeting.getId());
+            }
+        }
 
         securityAuditService.logEvent(
                 "MEETING_UPDATED",

@@ -298,6 +298,8 @@ public class AuthController {
         responseBody.put("mustChangePassword", user.isMustChangePassword());
         responseBody.put("emailVerified", user.isEmailVerified());
         responseBody.put("phoneVerified", user.isPhoneVerified());
+        responseBody.put("phoneNumber", user.getPhoneNumber());
+        responseBody.put("officialEmail", user.getOfficialEmail());
 
         if (user.getMember() != null) {
             responseBody.put("memberNumber", user.getMember().getMemberNumber());
