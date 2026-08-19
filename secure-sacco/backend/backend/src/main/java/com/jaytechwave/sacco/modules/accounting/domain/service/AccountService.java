@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.accounting.domain.service;
 import com.jaytechwave.sacco.modules.accounting.api.dto.AccountDTOs.*;
 import com.jaytechwave.sacco.modules.accounting.domain.entity.Account;
 import com.jaytechwave.sacco.modules.accounting.domain.repository.AccountRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
@@ -36,8 +38,9 @@ public class AccountService {
                 .isActive(true)
                 .isSystemAccount(false) // Only seeded accounts should be system accounts
                 .build();
-
-        return mapToResponse(accountRepository.save(account));
+        account = accountRepository.save(account);
+        securityAuditService.logEvent("ACCOUNT_CREATED", account.getId().toString(), "Account created: " + account.getAccountCode());
+        return mapToResponse(account);
     }
 
     public List<AccountResponse> getAllAccounts() {
@@ -58,8 +61,9 @@ public class AccountService {
         account.setAccountName(request.accountName());
         account.setDescription(request.description());
         account.setActive(request.isActive());
-
-        return mapToResponse(accountRepository.save(account));
+        account = accountRepository.save(account);
+        securityAuditService.logEvent("ACCOUNT_UPDATED", account.getId().toString(), "Account updated: " + account.getAccountCode());
+        return mapToResponse(account);
     }
 
     private AccountResponse mapToResponse(Account account) {

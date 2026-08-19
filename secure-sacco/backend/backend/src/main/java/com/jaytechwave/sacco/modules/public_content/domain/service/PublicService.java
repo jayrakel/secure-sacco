@@ -18,6 +18,7 @@ import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.repository.SaccoSettingsRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class PublicService {
     private final UserRepository               userRepository;
     private final PublicMemberSpotlightRepository spotlightRepository;
     private final CloudinaryUploadService          cloudinaryUploadService;
+    private final SecurityAuditService              securityAuditService;
 
     // ── Public: full landing page data ───────────────────────────────────
 
@@ -105,7 +107,9 @@ public class PublicService {
                 .isPublished(true)
                 .publishedBy(user.getId())
                 .build();
-        return toAnnouncementDTO(announcementRepository.save(a));
+        a = announcementRepository.save(a);
+        securityAuditService.logEvent("PUBLIC_ANNOUNCEMENT_CREATED", a.getId().toString(), "Public announcement created: " + a.getTitle());
+        return toAnnouncementDTO(a);
     }
 
     @Transactional
@@ -114,19 +118,23 @@ public class PublicService {
         a.setTitle(req.title());
         a.setBody(req.body());
         a.setPinned(req.isPinned());
-        return toAnnouncementDTO(announcementRepository.save(a));
+        a = announcementRepository.save(a);
+        securityAuditService.logEvent("PUBLIC_ANNOUNCEMENT_UPDATED", a.getId().toString(), "Public announcement updated: " + a.getTitle());
+        return toAnnouncementDTO(a);
     }
 
     @Transactional
     public void toggleAnnouncement(UUID id) {
         PublicAnnouncement a = announcementRepository.findById(id).orElseThrow();
         a.setPublished(!a.isPublished());
-        announcementRepository.save(a);
+        a = announcementRepository.save(a);
+        securityAuditService.logEvent("PUBLIC_ANNOUNCEMENT_TOGGLED", a.getId().toString(), "Public announcement toggled: " + a.getTitle());
     }
 
     @Transactional
     public void deleteAnnouncement(UUID id) {
         announcementRepository.deleteById(id);
+        securityAuditService.logEvent("PUBLIC_ANNOUNCEMENT_DELETED", id.toString(), "Public announcement deleted");
     }
 
     // ── Secretary: documents CRUD ─────────────────────────────────────────
@@ -150,7 +158,9 @@ public class PublicService {
                 .isPublished(true)
                 .uploadedBy(user.getId())
                 .build();
-        return toDocumentDTO(documentRepository.save(d));
+        d = documentRepository.save(d);
+        securityAuditService.logEvent("PUBLIC_DOCUMENT_CREATED", d.getId().toString(), "Public document created: " + d.getTitle());
+        return toDocumentDTO(d);
     }
 
     @Transactional
@@ -162,19 +172,23 @@ public class PublicService {
         d.setFileUrl(req.fileUrl());
         d.setFileName(req.fileName() != null ? req.fileName() : "");
         d.setMeetingDate(req.meetingDate());
-        return toDocumentDTO(documentRepository.save(d));
+        d = documentRepository.save(d);
+        securityAuditService.logEvent("PUBLIC_DOCUMENT_UPDATED", d.getId().toString(), "Public document updated: " + d.getTitle());
+        return toDocumentDTO(d);
     }
 
     @Transactional
     public void toggleDocument(UUID id) {
         PublicDocument d = documentRepository.findById(id).orElseThrow();
         d.setPublished(!d.isPublished());
-        documentRepository.save(d);
+        d = documentRepository.save(d);
+        securityAuditService.logEvent("PUBLIC_DOCUMENT_TOGGLED", d.getId().toString(), "Public document toggled: " + d.getTitle());
     }
 
     @Transactional
     public void deleteDocument(UUID id) {
         documentRepository.deleteById(id);
+        securityAuditService.logEvent("PUBLIC_DOCUMENT_DELETED", id.toString(), "Public document deleted");
     }
 
     // ── Secretary: update public SACCO profile ────────────────────────────
@@ -190,7 +204,8 @@ public class PublicService {
         s.setContactPhone(req.contactPhone());
         s.setContactEmail(req.contactEmail());
         s.setContactAddress(req.contactAddress());
-        settingsRepository.save(s);
+        s = settingsRepository.save(s);
+        securityAuditService.logEvent("PUBLIC_PROFILE_UPDATED", s.getId().toString(), "Public profile updated");
     }
 
     // ── Mappers ───────────────────────────────────────────────────────────
@@ -245,7 +260,9 @@ public class PublicService {
                 .isPublished(true)
                 .createdBy(user.getId())
                 .build();
-        return toSpotlightDTO(spotlightRepository.save(s));
+        s = spotlightRepository.save(s);
+        securityAuditService.logEvent("PUBLIC_SPOTLIGHT_CREATED", s.getId().toString(), "Public spotlight created: " + s.getDisplayName());
+        return toSpotlightDTO(s);
     }
 
     // ── Secretary: get members for picker dropdown ────────────────────────────
@@ -279,19 +296,23 @@ public class PublicService {
         s.setRoleTitle(req.roleTitle() != null ? req.roleTitle() : "");
         s.setPhotoUrl(req.photoUrl());
         s.setDisplayOrder(req.displayOrder());
-        return toSpotlightDTO(spotlightRepository.save(s));
+        s = spotlightRepository.save(s);
+        securityAuditService.logEvent("PUBLIC_SPOTLIGHT_UPDATED", s.getId().toString(), "Public spotlight updated: " + s.getDisplayName());
+        return toSpotlightDTO(s);
     }
 
     @Transactional
     public void toggleSpotlight(UUID id) {
         PublicMemberSpotlight s = spotlightRepository.findById(id).orElseThrow();
         s.setPublished(!s.isPublished());
-        spotlightRepository.save(s);
+        s = spotlightRepository.save(s);
+        securityAuditService.logEvent("PUBLIC_SPOTLIGHT_TOGGLED", s.getId().toString(), "Public spotlight toggled: " + s.getDisplayName());
     }
 
     @Transactional
     public void deleteSpotlight(UUID id) {
         spotlightRepository.deleteById(id);
+        securityAuditService.logEvent("PUBLIC_SPOTLIGHT_DELETED", id.toString(), "Public spotlight deleted");
     }
 
     // ── Mapper ────────────────────────────────────────────────────────────

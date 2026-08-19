@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -39,6 +40,7 @@ public class ObligationService {
     private final ObligationPeriodService           periodService;
     private final PenaltyRepository                 penaltyRepository;
     private final SaccoSettingsService              settingsService;
+    private final SecurityAuditService              securityAuditService;
 
     // ── Staff: create ────────────────────────────────────────────────────────
 
@@ -76,6 +78,7 @@ public class ObligationService {
         SavingsObligation saved = obligationRepository.save(obligation);
         log.info("Created savings obligation {} for member {} ({} @ {})",
                 saved.getId(), saved.getMemberId(), saved.getFrequency(), saved.getAmountDue());
+        securityAuditService.logEvent("OBLIGATION_CREATED", saved.getId().toString(), "Obligation created for member " + saved.getMemberId());
         return ObligationResponse.from(saved);
     }
 
@@ -108,6 +111,7 @@ public class ObligationService {
         SavingsObligation saved = obligationRepository.save(obligation);
         log.info("Updated obligation {} — amountDue={}, startDate={}, graceDays={}",
                 id, obligation.getAmountDue(), obligation.getStartDate(), obligation.getGraceDays());
+        securityAuditService.logEvent("OBLIGATION_UPDATED", saved.getId().toString(), "Obligation updated for member " + saved.getMemberId());
         return ObligationResponse.from(saved);
     }
 
@@ -118,7 +122,9 @@ public class ObligationService {
         SavingsObligation obligation = obligationRepository.findById(obligationId)
                 .orElseThrow(() -> new IllegalArgumentException("Obligation not found: " + obligationId));
         obligation.setStatus(request.getStatus());
-        return ObligationResponse.from(obligationRepository.save(obligation));
+        SavingsObligation saved = obligationRepository.save(obligation);
+        securityAuditService.logEvent("OBLIGATION_STATUS_UPDATED", saved.getId().toString(), "Obligation status updated to " + saved.getStatus() + " for member " + saved.getMemberId());
+        return ObligationResponse.from(saved);
     }
 
     // ── Staff: lookup by member ───────────────────────────────────────────────

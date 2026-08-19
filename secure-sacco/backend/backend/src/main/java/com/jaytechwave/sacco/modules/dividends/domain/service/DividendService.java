@@ -18,6 +18,7 @@ import com.jaytechwave.sacco.modules.savings.domain.entity.SavingsAccount;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRepository;
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsTransactionRepository;
 import com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class DividendService {
     private final SavingsTransactionRepository savingsTransactionRepository;
     private final MemberRepository memberRepository;
     private final JournalEntryService journalEntryService;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional(readOnly = true)
     public PreviewDividendResponse previewDividends(Integer financialYear, BigDecimal ratePercentage, String calculationMode) {
@@ -121,7 +123,16 @@ public class DividendService {
         
         declaration.setTotalAllocated(preview.getTotalDividend());
         declaration.setStatus("DISTRIBUTED");
-        return declarationRepository.save(declaration);
+        
+        DividendDeclaration saved = declarationRepository.save(declaration);
+        
+        securityAuditService.logEvent(
+                "DIVIDEND_DECLARED",
+                "FY " + financialYear,
+                "Declared dividend at " + ratePercentage + "%. Total distributed: KES " + preview.getTotalDividend()
+        );
+        
+        return saved;
     }
     
     private BigDecimal getBaseAmountForMember(Member member, String mode) {

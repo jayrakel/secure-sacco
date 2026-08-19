@@ -71,6 +71,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Loans', path: '/loans', icon: Coins, module: 'loans', requiredPermission: 'LOANS_READ' },
                 { label: 'Loan Products', path: '/loans/products', icon: BookOpen, module: 'loans', requiredPermission: 'LOANS_READ' },
                 { label: 'Savings', path: '/savings', icon: PiggyBank, module: 'savings', requiredPermission: 'SAVINGS_READ' },
+                { label: 'Shares', path: '/admin/shares', icon: Coins, requiredPermission: 'REPORTS_READ' },
                 { label: 'Savings Compliance', path: '/savings/obligations', icon: ShieldCheck, module: 'savings', requiredPermission: 'SAVINGS_OBLIGATIONS_MANAGE' },
                 { label: 'Meetings', path: '/meetings', icon: CalendarDays, requiredPermission: 'MEETINGS_READ' },
                 { label: 'Penalties', path: '/staff/penalties', icon: AlertCircle, requiredPermission: 'PENALTIES_WAIVE_ADJUST' },

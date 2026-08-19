@@ -34,6 +34,7 @@ import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsAccountRep
 import com.jaytechwave.sacco.modules.savings.domain.repository.SavingsTransactionRepository;
 import com.jaytechwave.sacco.modules.savings.domain.service.SavingsService;
 import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,7 @@ public class ManualPaymentService {
 
     private final PaymentProductRepository   paymentProductRepository;
     private final JournalEntryService        journalEntryService;
+    private final SecurityAuditService       securityAuditService;
 
     /** Step 2/3 of the wizard — what can this specific member pay toward right now? */
     @Transactional(readOnly = true)
@@ -160,6 +162,8 @@ public class ManualPaymentService {
             }
             reduceHistoricalTransaction(member, request.sourceTransactionId(), request.amount(), ref);
         }
+
+        securityAuditService.logEvent("MANUAL_PAYMENT_RECORDED", member.getId().toString(), "Manual payment recorded: " + request.paymentType() + " amount: " + request.amount() + " ref: " + ref);
 
         return switch (request.paymentType()) {
             case SAVINGS -> recordSavings(member, request, ref);
