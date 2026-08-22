@@ -124,6 +124,8 @@ public class AuthController {
             // Establish Session (Normal Flow)
             establishSession(request, authentication);
 
+            securityAuditService.logEventWithActorAndIp(identifier, "LOGIN_SUCCESS", "Account: " + identifier, clientIp, "Login successful");
+
             return ResponseEntity.ok(buildLoginResponse(userDetails));
 
         } catch (AuthenticationException e) {
@@ -268,6 +270,11 @@ public class AuthController {
         csrfCookie.setPath("/");
         csrfCookie.setMaxAge(0);
         response.addCookie(csrfCookie);
+        
+        // Use SecurityContextHolder if available, else anonymous for logout actor
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String actor = (auth != null && auth.getName() != null) ? auth.getName() : "Unknown";
+        securityAuditService.logEventWithActorAndIp(actor, "LOGOUT", "Session", getClientIP(request), "User logged out manually");
 
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }

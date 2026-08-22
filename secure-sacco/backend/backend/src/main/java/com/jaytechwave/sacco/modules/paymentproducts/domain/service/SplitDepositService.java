@@ -12,6 +12,7 @@ import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAlloca
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,7 @@ public class SplitDepositService {
     private final PaymentProductRepository                productRepository;
     private final DepositAllocationRepository             allocationRepository;
     private final DepositAllocationValidationService      validationService;
+    private final SecurityAuditService                    securityAuditService;
 
     @Transactional
     public InitiateStkResponse initiateSplitDeposit(InitiateSplitDepositRequest request, UUID memberId) {
@@ -101,6 +103,8 @@ public class SplitDepositService {
 
         log.info("Split deposit initiated: member={} total={} ref={} allocations={}",
                 memberId, request.totalAmount(), splitRef, allocations.size());
+
+        securityAuditService.logEvent("SPLIT_DEPOSIT_INITIATED", splitRef, "Split deposit STK push initiated for member " + memberId + " amount: " + request.totalAmount());
 
         return new InitiateStkResponse(
                 "STK Push initiated. Please check your phone.",

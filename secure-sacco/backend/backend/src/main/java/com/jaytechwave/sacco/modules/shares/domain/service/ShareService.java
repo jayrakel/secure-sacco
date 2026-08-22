@@ -8,6 +8,7 @@ import com.jaytechwave.sacco.modules.shares.domain.entity.ShareAccount;
 import com.jaytechwave.sacco.modules.shares.domain.entity.ShareTransaction;
 import com.jaytechwave.sacco.modules.shares.domain.repository.ShareAccountRepository;
 import com.jaytechwave.sacco.modules.shares.domain.repository.ShareTransactionRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ public class ShareService {
     private final ShareTransactionRepository shareTransactionRepository;
     private final MemberRepository memberRepository;
     private final PaymentProductRepository paymentProductRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public ShareAccount getOrCreateAccount(UUID memberId, UUID productId) {
@@ -54,7 +56,10 @@ public class ShareService {
         transaction.setAmount(amount);
         transaction.setType("DEPOSIT");
         transaction.setReference(reference);
-        return shareTransactionRepository.save(transaction);
+        ShareTransaction savedTransaction = shareTransactionRepository.save(transaction);
+        
+        securityAuditService.logEvent("SHARE_DEPOSITED", account.getId().toString(), "Share deposited: " + amount + " for member: " + memberId);
+        return savedTransaction;
     }
     
     @Transactional
@@ -73,7 +78,10 @@ public class ShareService {
         transaction.setAmount(amount.negate());
         transaction.setType("WITHDRAWAL");
         transaction.setReference(reference);
-        return shareTransactionRepository.save(transaction);
+        ShareTransaction savedTransaction = shareTransactionRepository.save(transaction);
+        
+        securityAuditService.logEvent("SHARE_WITHDRAWN", account.getId().toString(), "Share withdrawn: " + amount + " for member: " + memberId);
+        return savedTransaction;
     }
     
     @Transactional
@@ -88,14 +96,69 @@ public class ShareService {
         transaction.setAmount(amount);
         transaction.setType("DIVIDEND");
         transaction.setReference(reference);
-        return shareTransactionRepository.save(transaction);
+        ShareTransaction savedTransaction = shareTransactionRepository.save(transaction);
+        
+        securityAuditService.logEvent("SHARE_DIVIDEND_RECORDED", account.getId().toString(), "Share dividend recorded: " + amount + " for member: " + memberId);
+        return savedTransaction;
     }
 
-    public List<ShareAccount> getMemberAccounts(UUID memberId) {
-        return shareAccountRepository.findByMemberId(memberId);
+    @Transactional(readOnly = true)
+    public List<com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareAccountDTO> getMemberAccounts(UUID memberId) {
+        return shareAccountRepository.findByMemberId(memberId).stream()
+                .map(this::toShareAccountDTO)
+                .toList();
     }
 
-    public List<ShareTransaction> getAccountTransactions(UUID accountId) {
-        return shareTransactionRepository.findByAccountIdOrderByCreatedAtDesc(accountId);
+    @Transactional(readOnly = true)
+    public List<com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareTransactionDTO> getAccountTransactions(UUID accountId) {
+        return shareTransactionRepository.findByAccountIdOrderByCreatedAtDesc(accountId).stream()
+                .map(this::toShareTransactionDTO)
+                .toList();
+    }
+    
+    @Transactional(readOnly = true)
+    public List<com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.AdminShareAccountDTO> getAllAccounts() {
+        return shareAccountRepository.findAll().stream()
+                .map(this::toAdminShareAccountDTO)
+                .toList();
+    }
+    
+    private com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareAccountDTO toShareAccountDTO(ShareAccount account) {
+        return new com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareAccountDTO(
+                account.getId(),
+                account.getBalance(),
+                account.getStatus(),
+                new com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareProductDTO(
+                        account.getProduct().getName(),
+                        account.getProduct().getCode()
+                ),
+                account.getCreatedAt()
+        );
+    }
+    
+    private com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.AdminShareAccountDTO toAdminShareAccountDTO(ShareAccount account) {
+        return new com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.AdminShareAccountDTO(
+                account.getId(),
+                account.getMember().getId(),
+                account.getMember().getFirstName() + " " + account.getMember().getLastName(),
+                account.getMember().getMemberNumber(),
+                account.getBalance(),
+                account.getStatus(),
+                new com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareProductDTO(
+                        account.getProduct().getName(),
+                        account.getProduct().getCode()
+                ),
+                account.getCreatedAt()
+        );
+    }
+
+    private com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareTransactionDTO toShareTransactionDTO(ShareTransaction transaction) {
+        return new com.jaytechwave.sacco.modules.shares.api.dto.ShareDTOs.ShareTransactionDTO(
+                transaction.getId(),
+                transaction.getAmount(),
+                transaction.getType(),
+                transaction.getReference(),
+                transaction.getCreatedAt()
+        );
     }
 }

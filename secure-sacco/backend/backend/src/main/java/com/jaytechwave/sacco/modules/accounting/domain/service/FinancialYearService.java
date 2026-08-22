@@ -4,6 +4,7 @@ import com.jaytechwave.sacco.modules.accounting.api.dto.CreateFinancialYearReque
 import com.jaytechwave.sacco.modules.accounting.api.dto.FinancialYearResponse;
 import com.jaytechwave.sacco.modules.accounting.domain.model.FinancialYear;
 import com.jaytechwave.sacco.modules.accounting.domain.repository.FinancialYearRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class FinancialYearService {
 
     private final FinancialYearRepository financialYearRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public FinancialYearResponse createFinancialYear(CreateFinancialYearRequest request) {
@@ -37,7 +39,9 @@ public class FinancialYearService {
             fy.setCurrent(true);
         }
 
-        return toResponse(financialYearRepository.save(fy));
+        fy = financialYearRepository.save(fy);
+        securityAuditService.logEvent("FINANCIAL_YEAR_CREATED", fy.getId().toString(), "Financial year created: " + fy.getYearName());
+        return toResponse(fy);
     }
 
     @Transactional(readOnly = true)
@@ -54,7 +58,9 @@ public class FinancialYearService {
                 
         fy.setStatus(FinancialYear.FinancialYearStatus.CLOSED);
         fy.setCurrent(false);
-        return toResponse(financialYearRepository.save(fy));
+        fy = financialYearRepository.save(fy);
+        securityAuditService.logEvent("FINANCIAL_YEAR_CLOSED", fy.getId().toString(), "Financial year closed: " + fy.getYearName());
+        return toResponse(fy);
     }
     
     @Transactional
@@ -72,7 +78,9 @@ public class FinancialYearService {
         });
         
         fy.setCurrent(true);
-        return toResponse(financialYearRepository.save(fy));
+        fy = financialYearRepository.save(fy);
+        securityAuditService.logEvent("FINANCIAL_YEAR_SET_CURRENT", fy.getId().toString(), "Financial year set as current: " + fy.getYearName());
+        return toResponse(fy);
     }
 
     private FinancialYearResponse toResponse(FinancialYear fy) {

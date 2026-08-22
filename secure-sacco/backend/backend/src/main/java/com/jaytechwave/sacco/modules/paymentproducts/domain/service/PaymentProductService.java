@@ -10,6 +10,7 @@ import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAlloca
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,7 @@ public class PaymentProductService {
     private final AccountRepository           accountRepository;
     private final DepositAllocationRepository allocationRepository;
     private final MemberRepository            memberRepository;
+    private final SecurityAuditService        securityAuditService;
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
@@ -72,6 +74,8 @@ public class PaymentProductService {
         product = productRepository.save(product);
         log.info("Created payment product '{}' ({}) → GL {}", product.getName(), product.getCode(),
                 glAccount.getAccountCode());
+                
+        securityAuditService.logEvent("PAYMENT_PRODUCT_CREATED", product.getId().toString(), "Payment product created: " + product.getName());
         return toResponse(product);
     }
 
@@ -108,6 +112,9 @@ public class PaymentProductService {
         }
 
         product = productRepository.save(product);
+        
+        securityAuditService.logEvent("PAYMENT_PRODUCT_UPDATED", product.getId().toString(), "Payment product updated: " + product.getName());
+        
         return toResponse(product);
     }
 
@@ -124,6 +131,7 @@ public class PaymentProductService {
         }
         
         productRepository.delete(product);
+        securityAuditService.logEvent("PAYMENT_PRODUCT_DELETED", id.toString(), "Payment product deleted: " + product.getName());
     }
 
     private int nextDisplayOrder() {

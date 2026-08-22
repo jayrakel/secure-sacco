@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.loans.domain.entity.InterestModel;
 import com.jaytechwave.sacco.modules.loans.domain.entity.LoanProduct;
 import com.jaytechwave.sacco.modules.loans.domain.entity.RepaymentFrequency;
 import com.jaytechwave.sacco.modules.loans.domain.repository.LoanProductRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class LoanProductService {
 
     private final LoanProductRepository loanProductRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public LoanProductResponse createLoanProduct(LoanProductRequest request) {
@@ -35,6 +37,9 @@ public class LoanProductService {
                 .build();
 
         product = loanProductRepository.save(product);
+        
+        securityAuditService.logEvent("LOAN_PRODUCT_CREATED", product.getId().toString(), "Loan product created: " + product.getName());
+        
         return mapToResponse(product);
     }
 
@@ -57,6 +62,9 @@ public class LoanProductService {
         }
 
         product = loanProductRepository.save(product);
+        
+        securityAuditService.logEvent("LOAN_PRODUCT_UPDATED", product.getId().toString(), "Loan product updated: " + product.getName());
+        
         return mapToResponse(product);
     }
 

@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.penalties.domain.entity.AmountType;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.InterestMode;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRule;
 import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRuleRepository;
+import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class PenaltyRuleService {
 
     private final PenaltyRuleRepository penaltyRuleRepository;
+    private final SecurityAuditService securityAuditService;
 
     @Transactional
     public PenaltyRuleResponse createRule(PenaltyRuleRequest request) {
@@ -39,7 +41,9 @@ public class PenaltyRuleService {
                 .isActive(request.isActive() != null ? request.isActive() : true)
                 .build();
 
-        return mapToResponse(penaltyRuleRepository.save(rule));
+        rule = penaltyRuleRepository.save(rule);
+        securityAuditService.logEvent("PENALTY_RULE_CREATED", rule.getId().toString(), "Penalty rule created: " + rule.getName());
+        return mapToResponse(rule);
     }
 
     @Transactional
@@ -60,7 +64,9 @@ public class PenaltyRuleService {
             rule.setIsActive(request.isActive());
         }
 
-        return mapToResponse(penaltyRuleRepository.save(rule));
+        rule = penaltyRuleRepository.save(rule);
+        securityAuditService.logEvent("PENALTY_RULE_UPDATED", rule.getId().toString(), "Penalty rule updated: " + rule.getName());
+        return mapToResponse(rule);
     }
 
     @Transactional(readOnly = true)
@@ -83,6 +89,7 @@ public class PenaltyRuleService {
             );
         }
         penaltyRuleRepository.deleteById(id);
+        securityAuditService.logEvent("PENALTY_RULE_DELETED", id.toString(), "Penalty rule deleted: " + rule.getName());
     }
 
     private PenaltyRuleResponse mapToResponse(PenaltyRule rule) {
