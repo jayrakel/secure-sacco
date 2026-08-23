@@ -8,5 +8,6 @@ public record PaymentReceiptUpdatedEvent(
         UUID memberId,
         BigDecimal amount,
         String accountReference,
+        String internalRef,
         String receiptNumber
 ) {}

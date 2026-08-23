@@ -275,7 +275,7 @@ public class PaymentService {
                             p.getAmount().compareTo(amount) == 0 &&
                             p.getMpesaRef() != null &&
                             p.getMpesaRef().equals(p.getInternalRef()) &&
-                            p.getCreatedAt().isAfter(java.time.ZonedDateTime.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI).minusMinutes(15))) {
+                            p.getCreatedAt().isAfter(java.time.ZonedDateTime.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI).minusDays(7))) {
 
                             log.info("Co-op IPN: Matched completed STK push (id={}) that has a MessageReference instead of M-Pesa receipt. Updating mpesaRef to {}. Skipping IPN duplicate.", p.getId(), mpesaRef);
                             
@@ -292,7 +292,7 @@ public class PaymentService {
                             
                             // Emit event to trigger the delayed SMS now that we have the receipt
                             eventPublisher.publishEvent(new PaymentReceiptUpdatedEvent(
-                                    p.getId(), p.getMemberId(), p.getAmount(), p.getAccountReference(), mpesaRef
+                                    p.getId(), p.getMemberId(), p.getAmount(), p.getAccountReference(), p.getInternalRef(), mpesaRef
                             ));
                             
                             // Do NOT emit a new PaymentCompletedEvent or continue processing below
