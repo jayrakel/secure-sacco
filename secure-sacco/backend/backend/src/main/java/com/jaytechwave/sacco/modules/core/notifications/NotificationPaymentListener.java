@@ -64,79 +64,61 @@ public class NotificationPaymentListener {
                 log.warn("NotificationPaymentListener: Member {} not found. SMS skipped.", event.memberId());
                 return;
             }
-            Member member = memberOpt.get();
 
-            // ── Resolve the real M-Pesa ref ─────────────────────────────────────
-            String receiptRef = resolveRealMpesaRef(event.paymentId(), event.receiptNumber());
-
-            String phone = member.getPhoneNumber();
-            if (phone != null && !phone.isBlank()) {
-                BigDecimal balance = BigDecimal.ZERO;
-                Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
-                if (accountOpt.isPresent()) {
-                    balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
-                }
-
-                String name = member.getFirstName();
-                if (name == null || name.isBlank()) name = "Member";
-                
-                String message = String.format(
-                        "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        name, formatAmount(event.amount()), receiptRef, formatAmount(balance)
-                );
-
-                log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {}) Ref: {}", member.getMemberNumber(), phone, receiptRef);
-                smsNotificationService.sendNotificationSms(phone, message);
+            String sanitized = sanitizeRef(event.receiptNumber());
+            if ("Processing".equals(sanitized)) {
+                log.info("NotificationPaymentListener: Ref is internal for payment {}. SMS will be delayed until IPN arrives.", event.paymentId());
+                return;
             }
 
-            String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
-            notifyAdmins(fullName, phone, event.amount(), receiptRef, event.paymentId());
-
+            sendDepositSms(memberOpt.get(), event.amount(), sanitized, event.paymentId());
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentCompletedEvent. {}", e.getMessage(), e);
         }
     }
 
-    /**
-     * If the initial receipt looks like a Co-op internal UUID (not a real M-Pesa ref),
-     * polls the Payment record every 10 seconds for up to 60 seconds waiting for the
-     * IPN to write the real mpesaRef. Always returns a usable ref — never blocks forever.
-     */
-    private String resolveRealMpesaRef(UUID paymentId, String initialRef) {
-        String sanitized = sanitizeRef(initialRef);
-        if (!"Processing".equals(sanitized)) {
-            // Already a real ref — no need to wait
-            return sanitized;
+    @Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE)
+    @Async
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handlePaymentReceiptUpdated(PaymentReceiptUpdatedEvent event) {
+        try {
+            Optional<Member> memberOpt = memberRepository.findById(event.memberId());
+            if (memberOpt.isEmpty()) {
+                log.warn("NotificationPaymentListener: Member {} not found. SMS skipped.", event.memberId());
+                return;
+            }
+            
+            String sanitized = sanitizeRef(event.receiptNumber());
+            sendDepositSms(memberOpt.get(), event.amount(), sanitized, event.paymentId());
+        } catch (Exception e) {
+            log.error("NotificationPaymentListener: Failed to send SMS for PaymentReceiptUpdatedEvent. {}", e.getMessage(), e);
         }
+    }
 
-        log.info("NotificationPaymentListener: Ref is internal UUID for payment {}. Waiting up to 60s for real M-Pesa ref from IPN...", paymentId);
-
-        for (int i = 1; i <= MPESA_REF_POLL_ATTEMPTS; i++) {
-            try {
-                Thread.sleep(10_000L); // 10 seconds per attempt
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                break;
+    private void sendDepositSms(Member member, BigDecimal amount, String receiptRef, UUID paymentId) {
+        String phone = member.getPhoneNumber();
+        if (phone != null && !phone.isBlank()) {
+            BigDecimal balance = BigDecimal.ZERO;
+            Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
+            if (accountOpt.isPresent()) {
+                balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
             }
 
-            Optional<Payment> paymentOpt = paymentRepository.findById(paymentId);
-            if (paymentOpt.isPresent()) {
-                Payment p = paymentOpt.get();
-                String latestRef = p.getMpesaRef();
-                String latestSanitized = sanitizeRef(latestRef);
-                if (!"Processing".equals(latestSanitized)) {
-                    log.info("NotificationPaymentListener: ✅ Got real M-Pesa ref '{}' after {}s for payment {}", latestSanitized, i * 10, paymentId);
-                    return latestSanitized;
-                }
-            }
-            log.debug("NotificationPaymentListener: Attempt {}/{} — still waiting for real ref for payment {}", i, MPESA_REF_POLL_ATTEMPTS, paymentId);
+            String name = member.getFirstName();
+            if (name == null || name.isBlank()) name = "Member";
+            
+            String message = String.format(
+                    "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
+                    name, formatAmount(amount), receiptRef, formatAmount(balance)
+            );
+
+            log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {}) Ref: {}", member.getMemberNumber(), phone, receiptRef);
+            smsNotificationService.sendNotificationSms(phone, message);
         }
 
-        // Fallback: IPN didn't arrive in 60s — send with whatever we have
-        Optional<Payment> fallbackOpt = paymentRepository.findById(paymentId);
-        String fallbackRef = fallbackOpt.map(Payment::getMpesaRef).orElse(initialRef);
-        log.warn("NotificationPaymentListener: ⚠️ IPN did not arrive in 60s for payment {}. Using fallback ref: {}", paymentId, fallbackRef);
-        return sanitizeRef(fallbackRef);
+        String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
+        notifyAdmins(fullName, phone, amount, receiptRef, paymentId);
     }
 
     @Async

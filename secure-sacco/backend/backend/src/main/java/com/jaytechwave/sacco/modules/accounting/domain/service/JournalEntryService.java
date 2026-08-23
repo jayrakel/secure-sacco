@@ -177,10 +177,10 @@ public class JournalEntryService {
 
         if ("DEPOSIT".equalsIgnoreCase(type)) {
             creditAccountCode = "2100";
-            debitAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1000";
+            debitAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1111";
         } else if ("WITHDRAWAL".equalsIgnoreCase(type)) {
             debitAccountCode  = "2100";
-            creditAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1000";
+            creditAccountCode = channel != null && channel.toUpperCase().contains("MPESA") ? "1001" : "1111";
         } else {
             throw new IllegalArgumentException("Unsupported savings transaction type: " + type);
         }

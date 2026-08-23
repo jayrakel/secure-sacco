@@ -298,7 +298,7 @@ public class ManualPaymentService {
                 "MANUAL-" + product.getCode() + "-" + ref,
                 product.getName() + " — manual cash payment",
                 List.of(
-                        new JournalEntryLineRequest("1001", member.getId(), request.amount(),
+                        new JournalEntryLineRequest("1111", member.getId(), request.amount(),
                                 BigDecimal.ZERO, "Cash receipt — " + product.getName()),
                         new JournalEntryLineRequest(product.getGlAccount().getAccountCode(), member.getId(),
                                 BigDecimal.ZERO, request.amount(), product.getName() + " contribution")

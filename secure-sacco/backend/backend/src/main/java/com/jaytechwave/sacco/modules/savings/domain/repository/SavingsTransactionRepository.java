@@ -11,8 +11,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 @Repository
 public interface SavingsTransactionRepository extends JpaRepository<SavingsTransaction, UUID> {
+    
+    @Modifying
+    @Query("UPDATE SavingsTransaction st SET st.reference = :newRef WHERE st.reference = :oldRef")
+    int updateReference(@Param("oldRef") String oldRef, @Param("newRef") String newRef);
     List<SavingsTransaction> findBySavingsAccountIdOrderByCreatedAtDesc(UUID savingsAccountId);
 
     List<SavingsTransaction> findBySavingsAccountIdOrderByCreatedAtAsc(UUID savingsAccountId);
