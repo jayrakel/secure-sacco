@@ -61,22 +61,41 @@ public class DepositAllocationValidationService {
         for (PaymentProduct p : products) {
             BigDecimal paidSoFar = null;
             BigDecimal outstanding;
+            boolean skipProduct = false;
 
             switch (p.getModuleType()) {
-                case PENALTY -> outstanding = sumOpenPenalties(memberId);
-                case LOAN    -> outstanding = sumOutstandingLoan(memberId).orElse(null);
-                case CUSTOM  -> {
+                case PENALTY -> {
+                    outstanding = sumOpenPenalties(memberId);
+                    if (outstanding.compareTo(BigDecimal.ZERO) == 0) skipProduct = true;
+                }
+                case LOAN -> {
+                    Optional<BigDecimal> loanOutstanding = sumOutstandingLoan(memberId);
+                    if (loanOutstanding.isEmpty()) {
+                        skipProduct = true;
+                        outstanding = BigDecimal.ZERO;
+                    } else {
+                        outstanding = loanOutstanding.get();
+                        if (outstanding.compareTo(BigDecimal.ZERO) == 0) skipProduct = true;
+                    }
+                }
+                case CUSTOM, SHARE_CAPITAL, DEPOSIT_SHARES -> {
                     if (p.getRequiredAmount() != null) {
                         paidSoFar = allocationRepository.sumRoutedAmountByProductAndMember(p.getId(), memberId);
                         long periods = calculatePeriods(p.getCreatedAt(), p.getFrequency());
                         BigDecimal target = p.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
                         outstanding = target.subtract(paidSoFar).max(BigDecimal.ZERO);
+                        
+                        if (outstanding.compareTo(BigDecimal.ZERO) == 0) {
+                            skipProduct = true;
+                        }
                     } else {
                         outstanding = null;
                     }
                 }
                 default -> outstanding = null; // SAVINGS — uncapped
             }
+
+            if (skipProduct) continue;
 
             boolean capped = outstanding != null;
             result.add(new ProductAllocationContext(
@@ -138,15 +157,15 @@ public class DepositAllocationValidationService {
     private BigDecimal resolveCap(PaymentProduct product, UUID memberId) {
         return switch (product.getModuleType()) {
             case PENALTY -> sumOpenPenalties(memberId);
-            case LOAN    -> sumOutstandingLoan(memberId).orElse(null);
-            case CUSTOM  -> {
+            case LOAN    -> sumOutstandingLoan(memberId).orElse(BigDecimal.ZERO);
+            case CUSTOM, SHARE_CAPITAL, DEPOSIT_SHARES -> {
                 if (product.getRequiredAmount() == null) yield null;
                 BigDecimal paid = allocationRepository.sumRoutedAmountByProductAndMember(product.getId(), memberId);
                 long periods = calculatePeriods(product.getCreatedAt(), product.getFrequency());
                 BigDecimal target = product.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
                 yield target.subtract(paid).max(BigDecimal.ZERO);
             }
-            default -> null;
+            default -> null; // SAVINGS is uncapped
         };
     }
 
