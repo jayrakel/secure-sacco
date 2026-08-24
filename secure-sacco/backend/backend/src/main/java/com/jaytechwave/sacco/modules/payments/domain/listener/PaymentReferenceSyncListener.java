@@ -47,17 +47,21 @@ public class PaymentReferenceSyncListener {
             // 1. Synchronize standard savings deposits (reference = internalRef)
             int savingsUpdated = savingsTransactionRepository.updateReference(internalRef, mpesaRef);
             
-            // 2. Synchronize split deposits (reference = PRODUCT-{internalRef})
+            // 2. Synchronize split savings deposits (reference = PRODUCT-{internalRef})
             int splitSavingsUpdated = savingsTransactionRepository.updateReference("PRODUCT-" + internalRef, "PRODUCT-" + mpesaRef);
 
-            // 3. Synchronize standard journal entries (referenceNumber = internalRef)
+            // 3. Synchronize journal entries with NO prefix (referenceNumber = internalRef)
             int journalsUpdated = journalEntryRepository.updateReferenceNumber(internalRef, mpesaRef);
             
-            // 4. Synchronize split journal entries (referenceNumber = PRODUCT-{internalRef})
-            int splitJournalsUpdated = journalEntryRepository.updateReferenceNumber("PRODUCT-" + internalRef, "PRODUCT-" + mpesaRef);
+            // 4. Synchronize journal entries with known prefixes
+            String[] prefixes = {"PRODUCT-", "FEE-", "LNREP-", "PENREP-", "REG-", "DEP-"};
+            int prefixedJournalsUpdated = 0;
+            for (String prefix : prefixes) {
+                prefixedJournalsUpdated += journalEntryRepository.updateReferenceNumber(prefix + internalRef, prefix + mpesaRef);
+            }
 
-            log.info("PaymentReferenceSyncListener: Synchronization complete. Updated {} standard savings, {} split savings, {} standard journals, {} split journals.",
-                    savingsUpdated, splitSavingsUpdated, journalsUpdated, splitJournalsUpdated);
+            log.info("PaymentReferenceSyncListener: Synchronization complete. Updated {} standard savings, {} split savings, {} standard journals, {} prefixed journals.",
+                    savingsUpdated, splitSavingsUpdated, journalsUpdated, prefixedJournalsUpdated);
 
         } catch (Exception e) {
             log.error("PaymentReferenceSyncListener: Failed to synchronize ledger references for payment {}. Error: {}", 

@@ -115,6 +115,26 @@ public class DepositAllocationRouterService {
         }
     }
 
+    @Transactional
+    public void failAllocations(Payment payment, String failureReason) {
+        List<DepositAllocation> allocations = allocationRepository.findByPaymentId(payment.getId());
+        if (allocations.isEmpty()) return; // not a split deposit
+
+        boolean updated = false;
+        for (DepositAllocation allocation : allocations) {
+            if (allocation.getStatus() == AllocationStatus.PENDING) {
+                allocation.setStatus(AllocationStatus.FAILED);
+                allocation.setFailureReason(failureReason != null ? failureReason : "Payment failed");
+                updated = true;
+            }
+        }
+        
+        if (updated) {
+            allocationRepository.saveAll(allocations);
+            log.info("Marked {} pending allocation(s) as FAILED for payment {}", allocations.size(), payment.getId());
+        }
+    }
+
     // ── Module handlers ───────────────────────────────────────────────────────
 
     private void routeToSavings(UUID memberId, DepositAllocation allocation, String ref, Payment payment) {

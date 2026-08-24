@@ -29,6 +29,7 @@ public class JournalEntryService {
     private final JournalEntryRepository journalEntryRepository;
     private final AccountRepository accountRepository;
     private final SecurityAuditService securityAuditService;
+    private final com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository memberRepository;
 
     /**
      * THE GATEKEEPER: Processes all journal entries and enforces double-entry rules.
@@ -190,10 +191,20 @@ public class JournalEntryService {
         Account creditAccount = accountRepository.findByAccountCode(creditAccountCode)
                 .orElseThrow(() -> new IllegalStateException("System Account " + creditAccountCode + " not found"));
 
+        String memberDetails = memberId.toString();
+        try {
+            com.jaytechwave.sacco.modules.members.domain.entity.Member member = memberRepository.findById(memberId).orElse(null);
+            if (member != null) {
+                memberDetails = member.getMemberNumber() + " - " + member.getFirstName() + " " + member.getLastName();
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch member details for journal entry: {}", e.getMessage());
+        }
+
         JournalEntry entry = JournalEntry.builder()
                 .transactionDate(transactionDate)
                 .referenceNumber(journalRef)
-                .description("Savings " + type + " via " + channel + " for Member: " + memberId)
+                .description("Savings " + type + " via " + channel + " for Member: " + memberDetails)
                 .status(JournalEntryStatus.POSTED)
                 .build();
 

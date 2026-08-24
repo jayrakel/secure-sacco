@@ -46,4 +46,20 @@ public class SplitDepositListener {
 
         routerService.routeAllocations(payment);
     }
+
+    @EventListener
+    public void handlePaymentFailed(com.jaytechwave.sacco.modules.payments.domain.event.PaymentFailedEvent event) {
+        if (event.accountReference() == null || !event.accountReference().startsWith("SPLIT-")) return;
+
+        log.warn("Split deposit failed for member={} paymentId={} ref={}. Reason: {}",
+                event.memberId(), event.paymentId(), event.accountReference(), event.failureReason());
+
+        Payment payment = paymentRepository.findById(event.paymentId()).orElse(null);
+        if (payment == null) {
+            log.error("Split deposit failure routing: payment {} not found", event.paymentId());
+            return;
+        }
+
+        routerService.failAllocations(payment, event.failureReason());
+    }
 }
