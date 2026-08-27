@@ -65,10 +65,32 @@ public class NotificationPaymentListener {
                 return;
             }
 
-            String sanitized = sanitizeRef(event.receiptNumber());
+            String receiptRef = event.receiptNumber();
+            String sanitized = sanitizeRef(receiptRef);
+            boolean ipnArrived = false;
+
             if ("Processing".equals(sanitized)) {
-                log.info("NotificationPaymentListener: Ref is internal for payment {}. SMS will be delayed until IPN arrives.", event.paymentId());
-                return;
+                log.info("NotificationPaymentListener: Ref is internal for payment {}. Waiting up to 60s for IPN.", event.paymentId());
+                for (int i = 0; i < MPESA_REF_POLL_ATTEMPTS; i++) {
+                    Thread.sleep(10_000);
+                    Optional<Payment> p = paymentRepository.findById(event.paymentId());
+                    if (p.isPresent() && !"Processing".equals(sanitizeRef(p.get().getMpesaRef()))) {
+                        receiptRef = p.get().getMpesaRef();
+                        sanitized = receiptRef;
+                        ipnArrived = true;
+                        log.info("NotificationPaymentListener: IPN arrived with ref {} for payment {}", receiptRef, event.paymentId());
+                        break;
+                    }
+                }
+                if (!ipnArrived) {
+                    log.warn("NotificationPaymentListener: IPN wait timeout for payment {}. Using truncated internal ref.", event.paymentId());
+                    sanitized = receiptRef != null && receiptRef.length() > 8 ? receiptRef.substring(0, 8).toUpperCase() : "N/A";
+                } else {
+                    // SAC-301: If the IPN arrived, PaymentReceiptUpdatedEvent was already fired by PaymentService!
+                    // To prevent duplicate SMS, we abort here.
+                    log.info("NotificationPaymentListener: Aborting duplicate SMS since PaymentReceiptUpdatedEvent will handle it.");
+                    return;
+                }
             }
 
             sendDepositSms(memberOpt.get(), event.amount(), sanitized, event.paymentId());
