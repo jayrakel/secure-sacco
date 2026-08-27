@@ -18,6 +18,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByInternalRef(String internalRef);
     Optional<Payment> findByTransactionRef(String transactionRef);
     Optional<Payment> findByMpesaRef(String mpesaRef);
+    Optional<Payment> findByEquityRef(String equityRef);
 
     /** Secondary idempotency — same M-Pesa receipt = same payment regardless of Co-op's txId */
     boolean existsByMpesaRef(String mpesaRef);

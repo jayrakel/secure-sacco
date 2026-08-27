@@ -172,16 +172,6 @@ public class PaymentService {
         }
         // ─────────────────────────────────────────────────────────────────────
         
-        // SAC-301: If CBS IPN includes our STK push MessageReference, skip it!
-        // We must wait for the STK Callback to get the actual M-Pesa receipt.
-        if (ipn.getMessageReference() != null) {
-            Optional<Payment> stkOpt = paymentRepository.findByInternalRef(ipn.getMessageReference());
-            if (stkOpt.isPresent() && "STK_PUSH".equals(stkOpt.get().getPaymentType())) {
-                log.info("Co-op IPN: Skipping CBS IPN for STK push (MessageRef={}). Waiting for STK Callback.", ipn.getMessageReference());
-                return;
-            }
-        }
-
         if (txId != null && paymentRepository.findByTransactionRef(txId).isPresent()) {
             log.info("Co-op IPN: duplicate TransactionId={} — skipping", txId);
             return;
@@ -251,55 +241,63 @@ public class PaymentService {
                 txType, amount, senderName, phone, ipn.getPaymentRef(), txId, mpesaRef, resolvedMemberId);
 
         if (isCredit) {
-            // ── Try to match to a pending STK push payment ─────────────────
+            // ── Try to match to a pending or recently completed STK push payment ─────────────────
             Payment payment = null;
-            if (phone != null) {
+            
+            // SAC-301 Fixed: USE the IPN to match STK push if it contains the MessageReference!
+            if (ipn.getMessageReference() != null) {
+                Optional<Payment> stkOpt = paymentRepository.findByInternalRef(ipn.getMessageReference());
+                if (stkOpt.isPresent() && "STK_PUSH".equals(stkOpt.get().getPaymentType())) {
+                    payment = stkOpt.get();
+                }
+            }
+
+            if (payment == null && phone != null) {
                 List<Payment> pending = paymentRepository
                         .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.PENDING);
                 if (!pending.isEmpty()) {
                     payment = pending.get(0);
-                    if ("STK_PUSH".equals(payment.getPaymentType())) {
-                        log.info("Co-op IPN: Matched pending STK push via phone={}. Skipping CBS IPN to wait for STK Callback.", phone);
-                        return; // Let the stk-callback endpoint handle it to get the real M-Pesa ref
-                    }
-                    log.info("Co-op IPN: matched to pending payment id={} ref={}",
+                    log.info("Co-op IPN: matched to pending payment id={} ref={} via phone",
                             payment.getId(), payment.getInternalRef());
                 } else {
-                    // SAC-266: PendingPaymentPollingJob may have already marked the STK push as COMPLETED
-                    // before the IPN arrives, but it set the mpesaRef to the internal MessageReference (20 chars).
-                    // We must match it here and update the real M-Pesa receipt to prevent a duplicate PAYBILL_DEPOSIT.
+                    // Match a STK push marked COMPLETED by the polling job (but missing the true mpesaRef)
                     List<Payment> completed = paymentRepository
                             .findBySenderPhoneNumberAndStatus(phone, PaymentStatus.COMPLETED);
                     for (Payment p : completed) {
                         if ("STK_PUSH".equals(p.getPaymentType()) &&
                             p.getAmount().compareTo(amount) == 0 &&
-                            p.getMpesaRef() != null &&
-                            p.getMpesaRef().equals(p.getInternalRef()) &&
+                            p.getMpesaRef() != null && p.getMpesaRef().length() > 15 &&
                             p.getCreatedAt().isAfter(java.time.ZonedDateTime.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI).minusDays(7))) {
-
-                            log.info("Co-op IPN: Matched completed STK push (id={}) that has a MessageReference instead of M-Pesa receipt. Updating mpesaRef to {}. Skipping IPN duplicate.", p.getId(), mpesaRef);
-                            
-                            p.setMpesaRef(mpesaRef);
-                            p.setTransactionRef(txId);
-                            paymentRepository.save(p);
-                            
-                            // Mark the CoopTransaction as credited so it doesn't get picked up by re-enrich
-                            coopTxOpt.ifPresent(ct -> {
-                                if (!ct.isSavingsCredited()) {
-                                    coopEventNormalizer.markSavingsCredited(ct.getId());
-                                }
-                            });
-                            
-                            // Emit event to trigger the delayed SMS now that we have the receipt
-                            eventPublisher.publishEvent(new PaymentReceiptUpdatedEvent(
-                                    p.getId(), p.getMemberId(), p.getAmount(), p.getAccountReference(), p.getInternalRef(), mpesaRef
-                            ));
-                            
-                            // Do NOT emit a new PaymentCompletedEvent or continue processing below
-                            return;
+                            payment = p;
+                            break;
                         }
                     }
                 }
+            }
+            
+            if (payment != null && payment.getStatus() == PaymentStatus.COMPLETED) {
+                // It was marked COMPLETED by Polling Job, but we need to update the real M-Pesa receipt!
+                if (payment.getMpesaRef() != null && payment.getMpesaRef().length() > 15 && mpesaRef != null) {
+                    log.info("Co-op IPN: Matched completed STK push (id={}) missing real M-Pesa receipt. Updating to {}.", payment.getId(), mpesaRef);
+                    
+                    payment.setMpesaRef(mpesaRef);
+                    payment.setTransactionRef(txId);
+                    paymentRepository.save(payment);
+                    
+                    coopTxOpt.ifPresent(ct -> {
+                        if (!ct.isSavingsCredited()) {
+                            coopEventNormalizer.markSavingsCredited(ct.getId());
+                        }
+                    });
+                    
+                    // Emit event to trigger the delayed SMS now that we have the receipt
+                    eventPublisher.publishEvent(new PaymentReceiptUpdatedEvent(
+                            payment.getId(), payment.getMemberId(), payment.getAmount(), payment.getAccountReference(), payment.getInternalRef(), mpesaRef
+                    ));
+                    return;
+                }
+                log.info("Co-op IPN: Matched STK push already has a real M-Pesa receipt. Skipping.");
+                return;
             }
 
             if (payment != null) {

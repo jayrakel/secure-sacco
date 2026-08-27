@@ -69,7 +69,8 @@ public class DepositAllocationRouterService {
         // for loan) — only same-module repeats would collide, and only CUSTOM can have
         // more than one allocation of the same module type per payment, handled below
         // by batching into a single journal entry instead of one per product.
-        String baseRef = payment.getMpesaRef() != null ? payment.getMpesaRef() : payment.getInternalRef();
+        String baseRef = payment.getMpesaRef() != null ? payment.getMpesaRef() : 
+                         (payment.getEquityRef() != null ? payment.getEquityRef() : payment.getInternalRef());
 
         List<DepositAllocation> customAllocations = new java.util.ArrayList<>();
 

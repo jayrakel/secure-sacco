@@ -152,6 +152,19 @@ sacco:
     # When empty the filter allows all IPs (bypass mode) with a warning.
     allowed-callback-ips: ${COOP_ALLOWED_CALLBACK_IPS:}
 
+  jenga:
+    # Jenga API credentials
+    merchant-code:     ${JENGA_MERCHANT_CODE:}
+    consumer-key:      ${JENGA_CONSUMER_KEY:}
+    consumer-secret:   ${JENGA_CONSUMER_SECRET:}
+    private-key:       ${JENGA_PRIVATE_KEY:}
+
+    # Jenga API base URL
+    base-url:          ${JENGA_BASE_URL:https://uat.jengahq.io}
+    
+    # Callback Base URL
+    callback-base-url: ${JENGA_CALLBACK_BASE_URL:https://api.betterlinkventureslimited.co.ke}
+
 management:
   endpoints:
     web:
