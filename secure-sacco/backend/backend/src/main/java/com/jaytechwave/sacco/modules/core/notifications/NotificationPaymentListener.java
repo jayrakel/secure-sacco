@@ -119,28 +119,63 @@ public class NotificationPaymentListener {
     }
 
     private void sendDepositSms(Member member, BigDecimal amount, String receiptRef, UUID paymentId) {
-        String phone = member.getPhoneNumber();
-        if (phone != null && !phone.isBlank()) {
-            BigDecimal balance = BigDecimal.ZERO;
-            Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
-            if (accountOpt.isPresent()) {
-                balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
-            }
-
-            String name = member.getFirstName();
-            if (name == null || name.isBlank()) name = "Member";
-            
-            String message = String.format(
-                    "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
-                    name, formatAmount(amount), receiptRef, formatAmount(balance)
-            );
-
-            log.info("NotificationPaymentListener: Sending SMS to Member {} (Phone: {}) Ref: {}", member.getMemberNumber(), phone, receiptRef);
-            smsNotificationService.sendNotificationSms(phone, message);
+        String memberPhone = member.getPhoneNumber();
+        String senderPhone = null;
+        
+        Optional<com.jaytechwave.sacco.modules.payments.domain.entity.Payment> paymentOpt = paymentRepository.findById(paymentId);
+        if (paymentOpt.isPresent()) {
+            senderPhone = paymentOpt.get().getSenderPhoneNumber();
         }
 
-        String fullName = member.getFirstName() + (member.getLastName() != null ? " " + member.getLastName() : "");
-        notifyAdmins(fullName, phone, amount, receiptRef, paymentId);
+        BigDecimal balance = BigDecimal.ZERO;
+        Optional<SavingsAccount> accountOpt = savingsAccountRepository.findByMemberId(member.getId());
+        if (accountOpt.isPresent()) {
+            balance = savingsTransactionRepository.calculateBalance(accountOpt.get().getId());
+        }
+
+        String name = member.getFirstName();
+        if (name == null || name.isBlank()) name = "Member";
+        
+        String message = String.format(
+                "Dear %s, deposit of KES %s received. Ref: %s. New savings balance is KES %s. Thank you for choosing Betterlink Ventures SACCO.",
+                name, formatAmount(amount), receiptRef, formatAmount(balance)
+        );
+
+        // Normalize phones for comparison
+        String normalizedMemberPhone = memberPhone != null ? memberPhone.replaceAll("[^0-9]", "") : "";
+        String normalizedSenderPhone = senderPhone != null ? senderPhone.replaceAll("[^0-9]", "") : "";
+
+        // Send to member's registered profile phone if valid
+        if (!normalizedMemberPhone.isBlank()) {
+            log.info("NotificationPaymentListener: Sending SMS to Member {} (Profile Phone: {}) Ref: {}", member.getMemberNumber(), memberPhone, receiptRef);
+            smsNotificationService.sendNotificationSms(memberPhone, message);
+        }
+
+        // Send to the actual person who made the payment if different
+        if (!normalizedSenderPhone.isBlank() && !normalizedSenderPhone.equals(normalizedMemberPhone)) {
+            String senderMessage = String.format(
+                    "Dear Customer, payment of KES %s received. Ref: %s. Thank you for choosing Betterlink Ventures SACCO.",
+                    formatAmount(amount), receiptRef
+            );
+            log.info("NotificationPaymentListener: Sending SMS to Payment Sender (Sender Phone: {}) Ref: {}", senderPhone, receiptRef);
+            smsNotificationService.sendNotificationSms(senderPhone, senderMessage);
+        }
+
+        String fullName = "";
+        if (member.getFirstName() != null && !member.getFirstName().trim().isEmpty()) {
+            fullName = member.getFirstName().trim();
+            if (member.getLastName() != null && !member.getLastName().trim().isEmpty()) {
+                fullName += " " + member.getLastName().trim();
+            }
+        } else if (member.getMemberNumber() != null && !member.getMemberNumber().trim().isEmpty()) {
+            fullName = "Member " + member.getMemberNumber().trim();
+        } else {
+            fullName = "Customer"; // Fallback only if everything is completely blank
+        }
+        
+        // notifyAdmins prefers sender phone for logs, fallback to member phone
+        String notifyPhone = (senderPhone != null && !senderPhone.isBlank()) ? senderPhone : memberPhone;
+        notifyAdmins(fullName, notifyPhone, amount, receiptRef, paymentId);
     }
 
     @Async
