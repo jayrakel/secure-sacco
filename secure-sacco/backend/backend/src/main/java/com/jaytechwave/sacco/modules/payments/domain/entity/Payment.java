@@ -60,6 +60,9 @@ public class Payment {
     @Column(name = "mpesa_ref", length = 50)
     private String mpesaRef;
 
+    @Column(name = "equity_ref", length = 100)
+    private String equityRef;
+
     @Column(name = "sender_phone_number", length = 20)
     private String senderPhoneNumber;
 

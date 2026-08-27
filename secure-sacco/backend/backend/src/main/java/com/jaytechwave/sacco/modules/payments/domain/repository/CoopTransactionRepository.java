@@ -23,6 +23,8 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
     boolean existsByMpesaRefAndSavingsCreditedIsTrue(String mpesaRef);
 
     Optional<CoopTransaction> findByMpesaRef(String mpesaRef);
+    
+    Optional<CoopTransaction> findByCoopTransactionId(String coopTransactionId);
 
     /**
      * Checks for a Co-op transaction whose ID starts with the given prefix.
