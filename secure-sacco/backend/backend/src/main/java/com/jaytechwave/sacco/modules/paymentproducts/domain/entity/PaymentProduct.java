@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRule;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -59,6 +60,22 @@ public class PaymentProduct {
     @Column(name = "display_order", nullable = false)
     @Builder.Default
     private int displayOrder = 0;
+
+    @Column(name = "has_deadlines", nullable = false)
+    @Builder.Default
+    private boolean hasDeadlines = false;
+
+    @Column(name = "grace_days")
+    @Builder.Default
+    private Integer graceDays = 0;
+
+    @Column(name = "attracts_penalties", nullable = false)
+    @Builder.Default
+    private boolean attractsPenalties = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "penalty_rule_id")
+    private PenaltyRule penaltyRule;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

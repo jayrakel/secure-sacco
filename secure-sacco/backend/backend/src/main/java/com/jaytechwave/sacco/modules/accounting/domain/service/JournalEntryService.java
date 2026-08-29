@@ -336,6 +336,32 @@ public class JournalEntryService {
     }
 
     @Transactional
+    public void updatePenaltyCreationJournalEntry(String referenceNumber, BigDecimal newAmount) {
+        JournalEntry entry = journalEntryRepository.findByReferenceNumber(referenceNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Journal Entry not found: " + referenceNumber));
+
+        for (JournalEntryLine line : entry.getLines()) {
+            if (line.getDebitAmount().compareTo(BigDecimal.ZERO) > 0) {
+                line.setDebitAmount(newAmount);
+            }
+            if (line.getCreditAmount().compareTo(BigDecimal.ZERO) > 0) {
+                line.setCreditAmount(newAmount);
+            }
+        }
+        journalEntryRepository.save(entry);
+        log.info("Updated Journal Entry {}: new amount {}", referenceNumber, newAmount);
+    }
+
+    @Transactional
+    public void deleteJournalEntry(String referenceNumber) {
+        journalEntryRepository.findByReferenceNumber(referenceNumber)
+                .ifPresent(entry -> {
+                    journalEntryRepository.delete(entry);
+                    log.info("Deleted Journal Entry {}", referenceNumber);
+                });
+    }
+
+    @Transactional
     public void postPenaltyInterestAccrual(UUID memberId, BigDecimal amount, String reference) {
         Account interestReceivable = accountRepository.findByAccountCode("1310").orElseThrow();
         Account interestIncome = accountRepository.findByAccountCode("4130").orElseThrow();

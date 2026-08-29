@@ -7,6 +7,8 @@ import { paymentProductsApi } from '../api/payment-products-api';
 import type { PaymentProduct, ModuleType, ProductTransactionPage, ProductFrequency } from '../api/payment-products-api';
 import { accountingApi } from '../../accounting/api/accounting-api';
 import type { Account } from '../../accounting/api/accounting-api';
+import { penaltyApi } from '../../penalties/api/penalty-api';
+import type { PenaltyRule } from '../../penalties/api/penalty-api';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
 const MODULE_LABELS: Record<ModuleType, string> = {
@@ -50,9 +52,13 @@ interface FormState {
     glAccountId: string;
     requiredAmount: string; // kept as string for the input; parsed to number on submit
     frequency: ProductFrequency;
+    hasDeadlines: boolean;
+    graceDays: string;
+    attractsPenalties: boolean;
+    penaltyRuleId: string;
 }
 
-const emptyForm: FormState = { name: '', code: '', description: '', moduleType: 'CUSTOM', glAccountId: '', requiredAmount: '', frequency: 'ONE_OFF' };
+const emptyForm: FormState = { name: '', code: '', description: '', moduleType: 'CUSTOM', glAccountId: '', requiredAmount: '', frequency: 'ONE_OFF', hasDeadlines: false, graceDays: '0', attractsPenalties: false, penaltyRuleId: '' };
 
 /**
  * SAC-263: the "smart tab" — for ANY product (including a brand-new custom one an
@@ -185,6 +191,7 @@ const ProductTransactionsTab: React.FC<{ product: PaymentProduct }> = ({ product
 export const PaymentProductsSettingsPage: React.FC = () => {
     const [products, setProducts] = useState<PaymentProduct[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [penaltyRules, setPenaltyRules] = useState<PenaltyRule[]>([]);
     const [loading, setLoading]   = useState(true);
     const [error, setError]       = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -197,13 +204,15 @@ export const PaymentProductsSettingsPage: React.FC = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const [prods, accts] = await Promise.all([
+            const [prods, accts, rules] = await Promise.all([
                 paymentProductsApi.getAll(),
                 accountingApi.getAccounts(),
+                penaltyApi.getRules(true) // active only
             ]);
             setProducts(prods);
             window.dispatchEvent(new Event('productsUpdated'));
             setAccounts(accts);
+            setPenaltyRules(rules);
         } catch {
             setError('Could not load payment products.');
         } finally {
@@ -229,6 +238,10 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                     requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
                     clearRequiredAmount: !form.requiredAmount,
                     frequency: form.frequency,
+                    hasDeadlines: form.hasDeadlines,
+                    graceDays: parseInt(form.graceDays) || 0,
+                    attractsPenalties: form.attractsPenalties,
+                    penaltyRuleId: form.penaltyRuleId || null,
                 });
             } else {
                 await paymentProductsApi.create({
@@ -239,6 +252,10 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                     glAccountId: form.glAccountId,
                     requiredAmount: form.requiredAmount ? parseFloat(form.requiredAmount) : undefined,
                     frequency: form.frequency,
+                    hasDeadlines: form.hasDeadlines,
+                    graceDays: parseInt(form.graceDays) || 0,
+                    attractsPenalties: form.attractsPenalties,
+                    penaltyRuleId: form.penaltyRuleId || null,
                 });
             }
             setShowForm(false);
@@ -262,6 +279,10 @@ export const PaymentProductsSettingsPage: React.FC = () => {
             glAccountId: p.glAccountId,
             requiredAmount: p.requiredAmount ? p.requiredAmount.toString() : '',
             frequency: p.frequency,
+            hasDeadlines: p.hasDeadlines || false,
+            graceDays: (p.graceDays || 0).toString(),
+            attractsPenalties: p.attractsPenalties || false,
+            penaltyRuleId: p.penaltyRuleId || '',
         });
         setShowForm(true);
         setError(null);
@@ -423,6 +444,67 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                         Leave amount blank for open-ended contributions.
                     </p>
 
+                    <div className="mt-4 pt-4 border-t border-slate-200/60">
+                        <h4 className="text-sm font-semibold text-slate-800 mb-3">Compliance & Penalties</h4>
+                        <div className="space-y-4">
+                            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.hasDeadlines}
+                                    onChange={(e) => setForm({ ...form, hasDeadlines: e.target.checked })}
+                                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                Payment has deadlines (enforces expected amount at the end of each period)
+                            </label>
+
+                            {form.hasDeadlines && (
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500">Grace Period (Days)</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={form.graceDays}
+                                        onChange={(e) => setForm({ ...form, graceDays: e.target.value })}
+                                        placeholder="e.g. 1"
+                                        className="mt-1 w-full sm:w-1/2 p-2.5 rounded-lg border border-slate-200 text-sm"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        Days allowed after a period ends before the payment is considered missed.
+                                    </p>
+                                </div>
+                            )}
+
+                            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.attractsPenalties}
+                                    onChange={(e) => setForm({ ...form, attractsPenalties: e.target.checked })}
+                                    className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                Missed payments attract a penalty
+                            </label>
+
+                            {form.attractsPenalties && (
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500">Penalty Rule to Apply</label>
+                                    <select
+                                        value={form.penaltyRuleId}
+                                        onChange={(e) => setForm({ ...form, penaltyRuleId: e.target.value })}
+                                        className="mt-1 w-full sm:w-1/2 p-2.5 rounded-lg border border-slate-200 text-sm"
+                                    >
+                                        <option value="">Select penalty rule...</option>
+                                        {penaltyRules.map(rule => (
+                                            <option key={rule.id} value={rule.id}>{rule.name} ({rule.code})</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        The rule that defines how much penalty to apply when a payment is missed.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <button
                         onClick={handleSave}
                         disabled={saving}
@@ -472,6 +554,18 @@ export const PaymentProductsSettingsPage: React.FC = () => {
                                                     Target: KES {fmt(p.requiredAmount)} {FREQUENCY_LABELS[p.frequency]} per member
                                                 </p>
                                             )}
+                                            <div className="flex items-center gap-2 mt-1">
+                                                {p.hasDeadlines && (
+                                                    <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded border border-amber-200 text-amber-700 bg-amber-50">
+                                                        Deadlines
+                                                    </span>
+                                                )}
+                                                {p.attractsPenalties && (
+                                                    <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded border border-red-200 text-red-700 bg-red-50">
+                                                        Penalizes
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 

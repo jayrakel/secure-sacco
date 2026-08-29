@@ -10,6 +10,8 @@ import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.DepositAlloca
 import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.PaymentProduct;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository;
 import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRule;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRuleRepository;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ public class PaymentProductService {
     private final DepositAllocationRepository allocationRepository;
     private final MemberRepository            memberRepository;
     private final SecurityAuditService        securityAuditService;
+    private final PenaltyRuleRepository       penaltyRuleRepository;
 
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
@@ -58,6 +61,12 @@ public class PaymentProductService {
         Account glAccount = accountRepository.findById(request.glAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("GL account not found: " + request.glAccountId()));
 
+        PenaltyRule penaltyRule = null;
+        if (request.penaltyRuleId() != null) {
+            penaltyRule = penaltyRuleRepository.findById(request.penaltyRuleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Penalty rule not found: " + request.penaltyRuleId()));
+        }
+
         PaymentProduct product = PaymentProduct.builder()
                 .name(request.name())
                 .code(request.code().toUpperCase().replace(" ", "_"))
@@ -69,6 +78,10 @@ public class PaymentProductService {
                 .requiredAmount(request.requiredAmount())
                 .frequency(request.frequency() != null ? request.frequency() : com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductFrequency.ONE_OFF)
                 .displayOrder(request.displayOrder() != null ? request.displayOrder() : nextDisplayOrder())
+                .hasDeadlines(request.hasDeadlines() != null ? request.hasDeadlines() : false)
+                .graceDays(request.graceDays() != null ? request.graceDays() : 0)
+                .attractsPenalties(request.attractsPenalties() != null ? request.attractsPenalties() : false)
+                .penaltyRule(penaltyRule)
                 .build();
 
         product = productRepository.save(product);
@@ -109,6 +122,16 @@ public class PaymentProductService {
         
         if (request.frequency() != null) {
             product.setFrequency(request.frequency());
+        }
+
+        if (request.hasDeadlines() != null) product.setHasDeadlines(request.hasDeadlines());
+        if (request.graceDays() != null) product.setGraceDays(request.graceDays());
+        if (request.attractsPenalties() != null) product.setAttractsPenalties(request.attractsPenalties());
+        
+        if (request.penaltyRuleId() != null) {
+            PenaltyRule penaltyRule = penaltyRuleRepository.findById(request.penaltyRuleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Penalty rule not found: " + request.penaltyRuleId()));
+            product.setPenaltyRule(penaltyRule);
         }
 
         product = productRepository.save(product);
@@ -219,7 +242,9 @@ public class PaymentProductService {
         return new ProductResponse(
                 p.getId(), p.getName(), p.getCode(), p.getDescription(), p.getModuleType(),
                 p.getGlAccount().getId(), p.getGlAccount().getAccountCode(), p.getGlAccount().getAccountName(),
-                p.isActive(), p.isSystem(), p.getDisplayOrder(), p.getRequiredAmount(), p.getFrequency(), p.getCreatedAt()
+                p.isActive(), p.isSystem(), p.getDisplayOrder(), p.getRequiredAmount(), p.getFrequency(),
+                p.isHasDeadlines(), p.getGraceDays(), p.isAttractsPenalties(), p.getPenaltyRule() != null ? p.getPenaltyRule().getId() : null,
+                p.getCreatedAt()
         );
     }
 }

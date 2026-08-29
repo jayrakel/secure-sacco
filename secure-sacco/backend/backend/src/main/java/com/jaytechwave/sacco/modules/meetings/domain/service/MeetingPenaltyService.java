@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -160,5 +161,99 @@ public class MeetingPenaltyService {
         );
 
         log.info("createPenalty: {} — KES {} for member {}", ruleCode, amount, memberId);
+    }
+
+    /**
+     * Reconciles a member's penalty when their attendance is modified after the meeting
+     * has already been COMPLETED (meaning penalties were already generated).
+     */
+    @Transactional
+    public void reconcilePenaltyForMember(Meeting meeting, UUID memberId, AttendanceStatus newStatus, LocalDateTime arrivedAt) {
+        Optional<Penalty> existingPenaltyOpt = penaltyRepository.findByMemberIdAndReferenceTypeAndReferenceId(memberId, "MEETING", meeting.getId());
+
+        // Determine what the penalty SHOULD be now
+        PenaltyRule expectedRule = null;
+        String expectedRuleCode = null;
+
+        if (newStatus == AttendanceStatus.ABSENT) {
+            expectedRule = penaltyRuleRepository.findByCode("MEETING_ABSENT").filter(PenaltyRule::getIsActive).orElse(null);
+            expectedRuleCode = "MEETING_ABSENT";
+        } else if (newStatus == AttendanceStatus.LATE) {
+            PenaltyRule late30Rule = penaltyRuleRepository.findByCode("MEETING_LATE_30").filter(PenaltyRule::getIsActive).orElse(null);
+            PenaltyRule late120Rule = penaltyRuleRepository.findByCode("MEETING_LATE_120").filter(PenaltyRule::getIsActive).orElse(null);
+
+            if (arrivedAt == null) {
+                expectedRule = late30Rule;
+                expectedRuleCode = "MEETING_LATE_30";
+            } else {
+                long minutesLate = java.time.Duration.between(meeting.getStartAt(), arrivedAt).toMinutes();
+                if (minutesLate >= 120 && late120Rule != null) {
+                    expectedRule = late120Rule;
+                    expectedRuleCode = "MEETING_LATE_120";
+                } else if (late30Rule != null) {
+                    expectedRule = late30Rule;
+                    expectedRuleCode = "MEETING_LATE_30";
+                }
+            }
+        }
+
+        if (existingPenaltyOpt.isEmpty()) {
+            // No existing penalty. If we now need one, create it.
+            if (expectedRule != null) {
+                createPenalty(meeting, memberId, expectedRule, expectedRuleCode);
+                log.info("reconcilePenaltyForMember: Created new penalty {} for member {} after attendance update.", expectedRuleCode, memberId);
+            }
+            return;
+        }
+
+        Penalty existingPenalty = existingPenaltyOpt.get();
+
+        if (existingPenalty.getStatus() == PenaltyStatus.PAID || existingPenalty.getStatus() == PenaltyStatus.WAIVED) {
+            throw new IllegalStateException("Cannot modify attendance because the existing penalty is already " + existingPenalty.getStatus());
+        }
+
+        if (expectedRule == null) {
+            // Member was updated to PRESENT (or rule was deactivated). We must DELETE the old penalty.
+            log.info("reconcilePenaltyForMember: Member {} is now {}, deleting old penalty {}.", memberId, newStatus, existingPenalty.getId());
+
+            for (PenaltyAccrual accrual : existingPenalty.getAccruals()) {
+                if (accrual.getJournalReference() != null) {
+                    journalEntryService.deleteJournalEntry(accrual.getJournalReference());
+                }
+            }
+
+            penaltyRepository.delete(existingPenalty);
+            securityAuditService.logEvent("PENALTY_DELETED", "PENALTY-" + existingPenalty.getId(), "Meeting penalty removed due to attendance update to " + newStatus);
+            return;
+        }
+
+        // We have an existing penalty AND an expected penalty.
+        if (existingPenalty.getPenaltyRule().getId().equals(expectedRule.getId())) {
+            // Same rule, no changes needed
+            return;
+        }
+
+        // Rule has changed! We do an in-place update.
+        log.info("reconcilePenaltyForMember: Updating penalty {} for member {} to new rule {}.", existingPenalty.getId(), memberId, expectedRuleCode);
+
+        BigDecimal newAmount = expectedRule.getBaseAmountValue();
+        existingPenalty.setPenaltyRule(expectedRule);
+        existingPenalty.setOriginalAmount(newAmount);
+        existingPenalty.setOutstandingAmount(newAmount);
+
+        String newIdempotencyKey = expectedRuleCode + "-" + meeting.getId() + "-" + memberId;
+
+        for (PenaltyAccrual accrual : existingPenalty.getAccruals()) {
+            if (accrual.getAccrualKind() == AccrualKind.PRINCIPAL) {
+                accrual.setAmount(newAmount);
+                accrual.setIdempotencyKey(newIdempotencyKey);
+                if (accrual.getJournalReference() != null) {
+                    journalEntryService.updatePenaltyCreationJournalEntry(accrual.getJournalReference(), newAmount);
+                }
+            }
+        }
+
+        penaltyRepository.save(existingPenalty);
+        securityAuditService.logEvent("PENALTY_UPDATED", "PENALTY-" + existingPenalty.getId(), "Meeting penalty updated in-place to " + expectedRuleCode + " due to attendance change");
     }
 }
