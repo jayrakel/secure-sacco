@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,6 +45,17 @@ public interface DepositAllocationRepository extends JpaRepository<DepositAlloca
               AND da.status = 'ROUTED'
            """)
     BigDecimal sumRoutedAmountByProduct(@Param("productId") UUID productId);
+
+    @Query("""
+            SELECT COALESCE(SUM(da.amount), 0)
+            FROM DepositAllocation da
+            WHERE da.product.id = :productId
+              AND da.payment.memberId = :memberId
+              AND da.status = 'ROUTED'
+              AND da.routedAt >= :from
+              AND da.routedAt < :to
+           """)
+    BigDecimal sumRoutedAmountByProductAndMemberBetween(@Param("productId") UUID productId, @Param("memberId") UUID memberId, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to);
 
     /**
      * SAC-263: powers the "smart tab" — every product (especially CUSTOM ones like

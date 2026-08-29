@@ -12,6 +12,11 @@ import com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentPr
 import com.jaytechwave.sacco.modules.penalties.domain.entity.Penalty;
 import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyStatus;
 import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository;
+import com.jaytechwave.sacco.modules.members.domain.entity.Member;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ProductAllocationPeriod;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.service.PaymentProductComplianceService;
+import com.jaytechwave.sacco.modules.core.util.SaccoDateUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +57,8 @@ public class DepositAllocationValidationService {
     private final LoanApplicationRepository   loanApplicationRepository;
     private final LoanScheduleItemRepository  loanScheduleItemRepository;
     private final DepositAllocationRepository allocationRepository;
+    private final MemberRepository            memberRepository;
+    private final PaymentProductComplianceService complianceService;
 
     @Transactional(readOnly = true)
     public List<ProductAllocationContext> getAllocationContext(UUID memberId) {
@@ -80,10 +87,18 @@ public class DepositAllocationValidationService {
                 }
                 case CUSTOM, SHARE_CAPITAL, DEPOSIT_SHARES -> {
                     if (p.getRequiredAmount() != null) {
-                        paidSoFar = allocationRepository.sumRoutedAmountByProductAndMember(p.getId(), memberId);
-                        long periods = calculatePeriods(p.getCreatedAt(), p.getFrequency());
-                        BigDecimal target = p.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
-                        outstanding = target.subtract(paidSoFar).max(BigDecimal.ZERO);
+                        if (p.isHasDeadlines()) {
+                            Member member = memberRepository.findById(memberId).orElseThrow();
+                            java.time.LocalDate today = java.time.LocalDate.now(SaccoDateUtils.NAIROBI);
+                            ProductAllocationPeriod currentPeriod = complianceService.getOrCreateCurrentPeriod(p, member, today);
+                            paidSoFar = currentPeriod.getPaidAmount();
+                            outstanding = currentPeriod.getRequiredAmount().subtract(paidSoFar).max(BigDecimal.ZERO);
+                        } else {
+                            paidSoFar = allocationRepository.sumRoutedAmountByProductAndMember(p.getId(), memberId);
+                            long periods = calculatePeriods(p.getCreatedAt(), p.getFrequency());
+                            BigDecimal target = p.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
+                            outstanding = target.subtract(paidSoFar).max(BigDecimal.ZERO);
+                        }
                         
                         if (outstanding.compareTo(BigDecimal.ZERO) == 0) {
                             skipProduct = true;
@@ -160,10 +175,18 @@ public class DepositAllocationValidationService {
             case LOAN    -> sumOutstandingLoan(memberId).orElse(BigDecimal.ZERO);
             case CUSTOM, SHARE_CAPITAL, DEPOSIT_SHARES -> {
                 if (product.getRequiredAmount() == null) yield null;
-                BigDecimal paid = allocationRepository.sumRoutedAmountByProductAndMember(product.getId(), memberId);
-                long periods = calculatePeriods(product.getCreatedAt(), product.getFrequency());
-                BigDecimal target = product.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
-                yield target.subtract(paid).max(BigDecimal.ZERO);
+                
+                if (product.isHasDeadlines()) {
+                    Member member = memberRepository.findById(memberId).orElseThrow();
+                    java.time.LocalDate today = java.time.LocalDate.now(SaccoDateUtils.NAIROBI);
+                    ProductAllocationPeriod currentPeriod = complianceService.getOrCreateCurrentPeriod(product, member, today);
+                    yield currentPeriod.getRequiredAmount().subtract(currentPeriod.getPaidAmount()).max(BigDecimal.ZERO);
+                } else {
+                    BigDecimal paid = allocationRepository.sumRoutedAmountByProductAndMember(product.getId(), memberId);
+                    long periods = calculatePeriods(product.getCreatedAt(), product.getFrequency());
+                    BigDecimal target = product.getRequiredAmount().multiply(BigDecimal.valueOf(periods));
+                    yield target.subtract(paid).max(BigDecimal.ZERO);
+                }
             }
             default -> null; // SAVINGS is uncapped
         };

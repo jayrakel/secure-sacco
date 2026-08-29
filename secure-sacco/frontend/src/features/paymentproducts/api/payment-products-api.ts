@@ -17,6 +17,10 @@ export interface PaymentProduct {
     displayOrder: number;
     requiredAmount: number | null; // per-member target, e.g. "KES 2,000 each". Null = uncapped.
     frequency: ProductFrequency;
+    hasDeadlines: boolean;
+    graceDays: number;
+    attractsPenalties: boolean;
+    penaltyRuleId: string | null;
     createdAt: string;
 }
 
@@ -105,6 +109,10 @@ export const paymentProductsApi = {
         displayOrder?: number;
         requiredAmount?: number;
         frequency?: ProductFrequency;
+        hasDeadlines?: boolean;
+        graceDays?: number;
+        attractsPenalties?: boolean;
+        penaltyRuleId?: string | null;
     }): Promise<PaymentProduct> => {
         const res = await apiClient.post('/payment-products', data);
         return res.data;
@@ -119,6 +127,10 @@ export const paymentProductsApi = {
         requiredAmount?: number;
         clearRequiredAmount?: boolean;
         frequency?: ProductFrequency;
+        hasDeadlines?: boolean;
+        graceDays?: number;
+        attractsPenalties?: boolean;
+        penaltyRuleId?: string | null;
     }): Promise<PaymentProduct> => {
         const res = await apiClient.put(`/payment-products/${id}`, data);
         return res.data;

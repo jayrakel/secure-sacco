@@ -187,8 +187,15 @@ public class MeetingService {
             // recordedAt is managed by Hibernate (@CreationTimestamp) and is NOT used for lateness.
             if (entry.arrivedAt() != null && entry.status() == AttendanceStatus.LATE) {
                 attendance.setArrivedAt(entry.arrivedAt());
+            } else if (entry.status() != AttendanceStatus.LATE) {
+                attendance.setArrivedAt(null);
             }
             attendanceRepository.save(attendance);
+
+            // Dynamically update fines if the meeting was already completed
+            if (meeting.getStatus() == MeetingStatus.COMPLETED) {
+                meetingPenaltyService.reconcilePenaltyForMember(meeting, entry.memberId(), entry.status(), attendance.getArrivedAt());
+            }
         }
 
         securityAuditService.logEvent(

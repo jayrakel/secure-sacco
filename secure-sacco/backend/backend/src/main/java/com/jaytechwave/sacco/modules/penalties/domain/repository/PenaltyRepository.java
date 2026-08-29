@@ -26,6 +26,9 @@ public interface PenaltyRepository extends JpaRepository<Penalty, UUID> {
     /** Find the penalty raised for a specific obligation period. */
     Optional<Penalty> findByReferenceTypeAndReferenceId(String referenceType, UUID referenceId);
 
+    /** Find penalty for a specific member and reference (e.g. MEETING). */
+    Optional<Penalty> findByMemberIdAndReferenceTypeAndReferenceId(UUID memberId, String referenceType, UUID referenceId);
+
     /** All open penalties for a member — used in compliance view. */
     List<Penalty> findByMemberIdAndStatus(UUID memberId, PenaltyStatus status);
 
