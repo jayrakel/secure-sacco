@@ -208,29 +208,32 @@ public class MeetingPenaltyService {
 
         Penalty existingPenalty = existingPenaltyOpt.get();
 
-        if (existingPenalty.getStatus() == PenaltyStatus.PAID || existingPenalty.getStatus() == PenaltyStatus.WAIVED) {
-            throw new IllegalStateException("Cannot modify attendance because the existing penalty is already " + existingPenalty.getStatus());
-        }
-
+        // 1. If we don't expect a penalty anymore (e.g. updated to PRESENT)
         if (expectedRule == null) {
-            // Member was updated to PRESENT (or rule was deactivated). We must DELETE the old penalty.
-            log.info("reconcilePenaltyForMember: Member {} is now {}, deleting old penalty {}.", memberId, newStatus, existingPenalty.getId());
+            if (existingPenalty.getStatus() == PenaltyStatus.PAID || existingPenalty.getStatus() == PenaltyStatus.WAIVED) {
+                throw new IllegalStateException("Cannot modify attendance to PRESENT because the existing penalty is already " + existingPenalty.getStatus());
+            }
 
+            log.info("reconcilePenaltyForMember: Member {} is now {}, deleting old penalty {}.", memberId, newStatus, existingPenalty.getId());
             for (PenaltyAccrual accrual : existingPenalty.getAccruals()) {
                 if (accrual.getJournalReference() != null) {
                     journalEntryService.deleteJournalEntry(accrual.getJournalReference());
                 }
             }
-
             penaltyRepository.delete(existingPenalty);
             securityAuditService.logEvent("PENALTY_DELETED", "PENALTY-" + existingPenalty.getId(), "Meeting penalty removed due to attendance update to " + newStatus);
             return;
         }
 
-        // We have an existing penalty AND an expected penalty.
+        // 2. We have an existing penalty AND an expected penalty.
         if (existingPenalty.getPenaltyRule().getId().equals(expectedRule.getId())) {
-            // Same rule, no changes needed
+            // Same rule, no changes needed, it doesn't matter if it's paid or open
             return;
+        }
+
+        // 3. Rule has changed! We do an in-place update.
+        if (existingPenalty.getStatus() == PenaltyStatus.PAID || existingPenalty.getStatus() == PenaltyStatus.WAIVED) {
+            throw new IllegalStateException("Cannot modify attendance because the existing penalty is already " + existingPenalty.getStatus() + ". Please manually refund or adjust the penalty first.");
         }
 
         // Rule has changed! We do an in-place update.

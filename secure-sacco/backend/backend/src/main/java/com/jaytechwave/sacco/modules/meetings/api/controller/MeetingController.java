@@ -160,4 +160,12 @@ public class MeetingController {
     public ResponseEntity<QrMeetingInfoResponse> regenerateQrToken(@PathVariable UUID id) {
         return ResponseEntity.ok(meetingService.regenerateQrToken(id));
     }
+
+    @Operation(summary = "Dev Tool: Reconcile all past penalties", description = "One-off script to sync historical attendance updates with fines.")
+    @PostMapping("/dev/reconcile-all-penalties")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<String> reconcileAllPastPenalties() {
+        meetingService.reconcileAllPastPenalties();
+        return ResponseEntity.ok("Reconciliation completed successfully.");
+    }
 }
