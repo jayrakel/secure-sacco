@@ -367,4 +367,30 @@ public class MeetingService {
                 m.getCreatedAt(), m.getQrToken()
         );
     }
+
+    @Transactional
+    public void reconcileAllPastPenalties() {
+        log.info("Starting bulk reconciliation of all past meeting penalties...");
+        List<Meeting> completedMeetings = meetingRepository.findAll().stream()
+                .filter(m -> m.getStatus() == MeetingStatus.COMPLETED)
+                .collect(Collectors.toList());
+
+        for (Meeting meeting : completedMeetings) {
+            List<MeetingAttendance> attendances = attendanceRepository.findByMeetingId(meeting.getId());
+            for (MeetingAttendance attendance : attendances) {
+                try {
+                    meetingPenaltyService.reconcilePenaltyForMember(
+                            meeting,
+                            attendance.getMemberId(),
+                            attendance.getStatus(),
+                            attendance.getArrivedAt()
+                    );
+                } catch (Exception e) {
+                    log.error("Failed to reconcile penalty for member {} in meeting {}: {}",
+                            attendance.getMemberId(), meeting.getId(), e.getMessage());
+                }
+            }
+        }
+        log.info("Finished bulk reconciliation.");
+    }
 }
