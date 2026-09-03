@@ -14,6 +14,7 @@ import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -51,6 +52,7 @@ public class CoopConnectController {
     private final com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer coopEventNormalizer;
     private final com.jaytechwave.sacco.modules.savings.domain.service.SavingsService savingsService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MemberRepository memberRepository;
 
     // ── TEMPORARY MANUAL SMS TRIGGER ──────────────────────────────────────────
     @GetMapping("/trigger-missed-sms/{coopTxId}")
@@ -475,6 +477,50 @@ public class CoopConnectController {
         } catch (Exception e) {
             log.error("Re-enrichment failed: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of("error", "Re-enrichment failed: " + e.getMessage()));
+        }
+    }
+
+    // ── Manual assignment ──────────────────────────────────────────────────────
+
+    @Operation(summary = "Manually assign a member to an unmatched Co-op transaction and credit savings")
+    @PostMapping("/coop/transactions/{id}/assign-member")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER') or hasAuthority('BANKING_WRITE')")
+    public ResponseEntity<?> assignMemberToTransaction(
+            @PathVariable UUID id,
+            @RequestParam UUID memberId) {
+        try {
+            var txOpt = coopTransactionRepository.findById(id);
+            if (txOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Transaction not found"));
+            }
+            var tx = txOpt.get();
+            if (tx.getMemberId() != null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Transaction is already assigned to a member"));
+            }
+
+            var memberOpt = memberRepository.findById(memberId);
+            if (memberOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Member not found"));
+            }
+            var member = memberOpt.get();
+
+            tx.setMemberId(memberId);
+            tx.setSenderName(member.getFirstName() + " " + member.getLastName());
+
+            if ("CR".equals(tx.getTransactionType()) && !tx.isSavingsCredited()) {
+                java.time.LocalDateTime valueDate = tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
+                savingsService.processMpesaPaybillDeposit(
+                        memberId, tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
+                tx.setSavingsCredited(true);
+                tx.setSavingsCreditedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
+            }
+
+            coopTransactionRepository.save(tx);
+
+            return ResponseEntity.ok(Map.of("message", "Member assigned and savings credited successfully."));
+        } catch (Exception e) {
+            log.error("Failed to assign member: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 
