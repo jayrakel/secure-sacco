@@ -186,6 +186,12 @@ public class LoanApplicationService {
                 .stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<LoanApplicationResponse> getActiveLoansForMember(UUID memberId) {
+        return loanApplicationRepository.findAllByMemberIdAndStatus(memberId, LoanStatus.ACTIVE)
+                .stream().map(this::mapToResponse).collect(Collectors.toList());
+    }
+
     @Transactional
     public LoanApplicationResponse verifyApplication(UUID applicationId, ReviewLoanRequest request, String email) {
         User officer = userRepository.findByEmail(email).orElseThrow();

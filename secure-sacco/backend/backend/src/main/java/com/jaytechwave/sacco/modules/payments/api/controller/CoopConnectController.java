@@ -12,6 +12,17 @@ import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionR
 import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.payments.domain.service.CoopConnectService;
 import com.jaytechwave.sacco.modules.payments.domain.service.PaymentService;
+import com.jaytechwave.sacco.modules.paymentproducts.domain.entity.ModuleType;
+import com.jaytechwave.sacco.modules.loans.domain.entity.LoanApplication;
+import com.jaytechwave.sacco.modules.loans.domain.entity.LoanRepayment;
+import com.jaytechwave.sacco.modules.loans.domain.entity.LoanRepaymentStatus;
+import com.jaytechwave.sacco.modules.loans.domain.repository.LoanApplicationRepository;
+import com.jaytechwave.sacco.modules.loans.domain.repository.LoanRepaymentRepository;
+import com.jaytechwave.sacco.modules.loans.domain.service.LoanRepaymentService;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRepayment;
+import com.jaytechwave.sacco.modules.penalties.domain.entity.PenaltyRepaymentStatus;
+import com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepaymentRepository;
+import com.jaytechwave.sacco.modules.penalties.domain.service.PenaltyRepaymentService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
@@ -53,6 +64,11 @@ public class CoopConnectController {
     private final com.jaytechwave.sacco.modules.savings.domain.service.SavingsService savingsService;
     private final ApplicationEventPublisher eventPublisher;
     private final MemberRepository memberRepository;
+    private final LoanApplicationRepository loanApplicationRepository;
+    private final LoanRepaymentRepository loanRepaymentRepository;
+    private final LoanRepaymentService loanRepaymentService;
+    private final PenaltyRepaymentRepository penaltyRepaymentRepository;
+    private final PenaltyRepaymentService penaltyRepaymentService;
 
     // ── TEMPORARY MANUAL SMS TRIGGER ──────────────────────────────────────────
     @GetMapping("/trigger-missed-sms/{coopTxId}")
@@ -482,12 +498,14 @@ public class CoopConnectController {
 
     // ── Manual assignment ──────────────────────────────────────────────────────
 
-    @Operation(summary = "Manually assign a member to an unmatched Co-op transaction and credit savings")
+    @Operation(summary = "Manually assign a member to an unmatched Co-op transaction and route funds")
     @PostMapping("/coop/transactions/{id}/assign-member")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER') or hasAuthority('BANKING_WRITE')")
     public ResponseEntity<?> assignMemberToTransaction(
             @PathVariable UUID id,
-            @RequestParam UUID memberId) {
+            @RequestParam UUID memberId,
+            @RequestParam(required = false, defaultValue = "SAVINGS") ModuleType destination,
+            @RequestParam(required = false) UUID loanId) {
         try {
             var txOpt = coopTransactionRepository.findById(id);
             if (txOpt.isEmpty()) {
@@ -509,15 +527,51 @@ public class CoopConnectController {
 
             if ("CR".equals(tx.getTransactionType()) && !tx.isSavingsCredited()) {
                 java.time.LocalDateTime valueDate = tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
-                savingsService.processMpesaPaybillDeposit(
-                        memberId, tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
+                String ref = tx.getMpesaRef() != null ? tx.getMpesaRef() : tx.getCoopTransactionId();
+                
+                switch (destination) {
+                    case SAVINGS -> {
+                        savingsService.processMpesaPaybillDeposit(
+                                memberId, tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
+                    }
+                    case LOAN -> {
+                        if (loanId == null) {
+                            return ResponseEntity.badRequest().body(Map.of("error", "loanId is required for LOAN destination"));
+                        }
+                        LoanApplication activeLoan = loanApplicationRepository.findById(loanId)
+                                .orElseThrow(() -> new IllegalStateException("Loan application not found"));
+                        if (!activeLoan.getMemberId().equals(memberId)) {
+                            return ResponseEntity.badRequest().body(Map.of("error", "Loan does not belong to the selected member"));
+                        }
+                        LoanRepayment repayment = LoanRepayment.builder()
+                                .loanApplication(activeLoan)
+                                .amount(tx.getAmount())
+                                .status(LoanRepaymentStatus.PENDING)
+                                .build();
+                        repayment = loanRepaymentRepository.save(repayment);
+                        loanRepaymentService.processCompletedRepayment(repayment.getId(), ref);
+                    }
+                    case PENALTY -> {
+                        PenaltyRepayment repayment = PenaltyRepayment.builder()
+                                .memberId(memberId)
+                                .amount(tx.getAmount())
+                                .status(PenaltyRepaymentStatus.PENDING)
+                                .build();
+                        repayment = penaltyRepaymentRepository.save(repayment);
+                        penaltyRepaymentService.processCompletedRepayment(repayment.getId(), ref);
+                    }
+                    default -> {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Unsupported destination: " + destination));
+                    }
+                }
+                
                 tx.setSavingsCredited(true);
                 tx.setSavingsCreditedAt(java.time.LocalDateTime.now(SaccoDateUtils.NAIROBI));
             }
 
             coopTransactionRepository.save(tx);
 
-            return ResponseEntity.ok(Map.of("message", "Member assigned and savings credited successfully."));
+            return ResponseEntity.ok(Map.of("message", "Member assigned and funds routed successfully."));
         } catch (Exception e) {
             log.error("Failed to assign member: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
