@@ -96,6 +96,13 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.getMyApplications(authentication.getName()));
     }
 
+    @Operation(summary = "Get active loans for member", description = "Returns all active loans for a specific member.")
+    @GetMapping("/member/{memberId}/active")
+    @PreAuthorize("hasAnyAuthority('BANKING_READ', 'LOANS_READ')")
+    public ResponseEntity<List<LoanApplicationResponse>> getActiveLoansForMember(@PathVariable UUID memberId) {
+        return ResponseEntity.ok(loanApplicationService.getActiveLoansForMember(memberId));
+    }
+
     @Operation(summary = "Get all loan applications", description = "Returns all applications. Requires loan officer or approver permission.")
     @GetMapping("/all")
     @PreAuthorize("hasAnyAuthority('LOANS_READ', 'LOANS_APPROVE', 'LOANS_COMMITTEE_APPROVE', 'LOANS_DISBURSE')")

@@ -313,6 +313,17 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
     const [matching, setMatching] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    interface ActiveLoan {
+        id: string;
+        loanProduct?: { name: string };
+        balance: number;
+    }
+    const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
+    const [loadingLoans, setLoadingLoans] = useState(false);
+    const [destination, setDestination] = useState<'SAVINGS' | 'PENALTY' | 'LOAN'>('SAVINGS');
+    const [selectedLoanId, setSelectedLoanId] = useState<string>('');
+
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (q.trim().length < 2) {
@@ -332,11 +343,38 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
         return () => clearTimeout(timer);
     }, [q]);
 
-    const handleMatch = async (memberId: string) => {
+    const handleSelectMember = async (member: Member) => {
+        setSelectedMember(member);
+        setLoadingLoans(true);
+        setError(null);
+        try {
+            const res = await apiClient.get(`/loans/applications/member/${member.id}/active`);
+            setActiveLoans(res.data || []);
+            setDestination('SAVINGS');
+            setSelectedLoanId('');
+        } catch (e: unknown) {
+            console.error(e);
+            setError('Failed to fetch active loans for this member.');
+        } finally {
+            setLoadingLoans(false);
+        }
+    };
+
+    const handleMatch = async () => {
+        if (!selectedMember) return;
+        if (destination === 'LOAN' && !selectedLoanId) {
+            setError('Please select a specific loan to repay.');
+            return;
+        }
+
         setMatching(true);
         setError(null);
         try {
-            await apiClient.post(`/payments/coop/transactions/${tx.id}/assign-member?memberId=${memberId}`);
+            let url = `/payments/coop/transactions/${tx.id}/assign-member?memberId=${selectedMember.id}&destination=${destination}`;
+            if (destination === 'LOAN') {
+                url += `&loanId=${selectedLoanId}`;
+            }
+            await apiClient.post(url);
             onSuccess();
         } catch (e: unknown) {
             const err = e as { response?: { data?: { error?: string } } };
@@ -368,43 +406,129 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
                         </div>
                     )}
                     
-                    <div className="relative mb-4 shrink-0">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input 
-                            autoFocus
-                            type="text" 
-                            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                            placeholder="Search member by name, ID, or phone..."
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto space-y-2 border border-slate-100 rounded-lg p-2 bg-slate-50 min-h-[200px]">
-                        {loading ? (
-                            <div className="p-4 text-center text-xs text-slate-400">Searching...</div>
-                        ) : members.length === 0 ? (
-                            <div className="p-4 text-center text-xs text-slate-400">
-                                {q.length < 2 ? 'Type at least 2 characters to search' : 'No members found'}
+                    {!selectedMember ? (
+                        <>
+                            <div className="relative mb-4 shrink-0">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input 
+                                    autoFocus
+                                    type="text" 
+                                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                    placeholder="Search member by name, ID, or phone..."
+                                    value={q}
+                                    onChange={(e) => setQ(e.target.value)}
+                                />
                             </div>
-                        ) : (
-                            members.map(m => (
-                                <div key={m.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-800">{m.firstName} {m.lastName}</p>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">{m.memberNumber} · {m.phoneNumber || 'No phone'}</p>
+
+                            <div className="flex-1 overflow-y-auto space-y-2 border border-slate-100 rounded-lg p-2 bg-slate-50 min-h-[200px]">
+                                {loading ? (
+                                    <div className="p-4 text-center text-xs text-slate-400">Searching...</div>
+                                ) : members.length === 0 ? (
+                                    <div className="p-4 text-center text-xs text-slate-400">
+                                        {q.length < 2 ? 'Type at least 2 characters to search' : 'No members found'}
                                     </div>
+                                ) : (
+                                    members.map(m => (
+                                        <div key={m.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-800">{m.firstName} {m.lastName}</p>
+                                                <p className="text-[11px] text-slate-500 mt-0.5">{m.memberNumber} · {m.phoneNumber || 'No phone'}</p>
+                                            </div>
+                                            <button 
+                                                disabled={matching}
+                                                onClick={() => handleSelectMember(m)}
+                                                className="px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
+                                            >
+                                                Select
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 overflow-y-auto space-y-4">
+                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                <div className="flex justify-between items-start mb-2">
+                                    <p className="text-xs font-semibold text-slate-500 uppercase">Selected Member</p>
                                     <button 
-                                        disabled={matching}
-                                        onClick={() => handleMatch(m.id)}
-                                        className="px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
+                                        onClick={() => setSelectedMember(null)}
+                                        className="text-xs text-blue-600 hover:underline"
                                     >
-                                        Select
+                                        Change
                                     </button>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                                <p className="text-sm font-bold text-slate-800">{selectedMember.firstName} {selectedMember.lastName}</p>
+                                <p className="text-xs text-slate-500 mt-1">{selectedMember.memberNumber} · {selectedMember.phoneNumber}</p>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="block text-sm font-semibold text-slate-700">Route funds to</label>
+                                
+                                {loadingLoans ? (
+                                    <p className="text-xs text-slate-500">Checking for active loans...</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${destination === 'SAVINGS' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <input 
+                                                type="radio" 
+                                                name="destination" 
+                                                value="SAVINGS" 
+                                                checked={destination === 'SAVINGS'}
+                                                onChange={() => setDestination('SAVINGS')}
+                                                className="w-4 h-4 text-slate-900"
+                                            />
+                                            <span className="text-sm font-medium text-slate-800">Savings Account</span>
+                                        </label>
+                                        
+                                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${destination === 'PENALTY' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <input 
+                                                type="radio" 
+                                                name="destination" 
+                                                value="PENALTY" 
+                                                checked={destination === 'PENALTY'}
+                                                onChange={() => setDestination('PENALTY')}
+                                                className="w-4 h-4 text-slate-900"
+                                            />
+                                            <span className="text-sm font-medium text-slate-800">Penalty Repayment</span>
+                                        </label>
+
+                                        {activeLoans.map(loan => (
+                                            <label key={loan.id} className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'LOAN' && selectedLoanId === loan.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <input 
+                                                        type="radio" 
+                                                        name="destination" 
+                                                        value="LOAN" 
+                                                        checked={destination === 'LOAN' && selectedLoanId === loan.id}
+                                                        onChange={() => {
+                                                            setDestination('LOAN');
+                                                            setSelectedLoanId(loan.id);
+                                                        }}
+                                                        className="w-4 h-4 text-slate-900"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <span className="text-sm font-medium text-slate-800">Loan Repayment</span>
+                                                        <span className="text-xs text-slate-500 block">
+                                                            {loan.loanProduct?.name || 'Loan'} · Bal KES {loan.balance?.toLocaleString('en-KE')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button 
+                                disabled={matching || loadingLoans || (destination === 'LOAN' && !selectedLoanId)}
+                                onClick={handleMatch}
+                                className="w-full mt-4 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
+                            >
+                                {matching ? 'Processing...' : 'Confirm Match'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
