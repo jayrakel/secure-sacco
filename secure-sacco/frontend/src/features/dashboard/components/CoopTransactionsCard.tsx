@@ -314,7 +314,12 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
     const [error, setError] = useState<string | null>(null);
 
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-    const [activeLoans, setActiveLoans] = useState<any[]>([]);
+    interface ActiveLoan {
+        id: string;
+        loanProduct?: { name: string };
+        balance: number;
+    }
+    const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
     const [loadingLoans, setLoadingLoans] = useState(false);
     const [destination, setDestination] = useState<'SAVINGS' | 'PENALTY' | 'LOAN'>('SAVINGS');
     const [selectedLoanId, setSelectedLoanId] = useState<string>('');
