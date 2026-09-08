@@ -80,7 +80,7 @@ const HistoricalEditPage: React.FC = () => {
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [lastResult, setLastResult] = useState<any>(null);
+    const [lastResult, setLastResult] = useState<Record<string, unknown> | null>(null);
 
     const searchMembers = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -92,8 +92,8 @@ const HistoricalEditPage: React.FC = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) setMemberResults(await res.json());
-        } catch (err) {
-            console.error(err);
+        } catch {
+            // Ignored network error for search
         } finally {
             setSearching(false);
         }
@@ -127,7 +127,7 @@ const HistoricalEditPage: React.FC = () => {
                 const err = await res.json();
                 setError(err.message || 'Failed to load transactions');
             }
-        } catch (err) {
+        } catch {
             setError('Network error');
         } finally {
             setLoading(false);
@@ -263,7 +263,7 @@ const HistoricalEditPage: React.FC = () => {
                 const err = await res.json();
                 setError(err.message || 'Edit failed');
             }
-        } catch (err) {
+        } catch {
             setError('Network error');
         } finally {
             setSaving(false);

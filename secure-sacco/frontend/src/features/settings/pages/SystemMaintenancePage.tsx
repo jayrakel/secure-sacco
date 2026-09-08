@@ -66,8 +66,9 @@ export default function SystemMaintenancePage() {
                 notifyMembersEmail: false,
             });
             loadEvents();
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'An error occurred while scheduling.');
+        } catch (err) {
+            const error = err as { response?: { data?: { error?: string } } };
+            setError(error.response?.data?.error || 'An error occurred while scheduling.');
         } finally {
             setIsSubmitting(false);
         }
