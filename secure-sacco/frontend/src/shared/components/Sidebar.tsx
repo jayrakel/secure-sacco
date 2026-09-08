@@ -100,6 +100,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Audit Log', path: '/audit/logs', icon: Shield, requiredPermission: 'AUDIT_LOG_READ' },
                 { label: 'SMS Logs',  path: '/audit/sms-logs', icon: ShieldCheck, requiredPermission: 'AUDIT_LOG_READ' },
                 { label: 'Settings',  path: '/settings',   icon: Settings, requiredPermission: 'PENALTIES_MANAGE_RULES' },
+                { label: 'System Maintenance', path: '/admin/maintenance', icon: AlertCircle, requiredPermission: 'SETTINGS_EDIT' },
                 { label: 'Migration',             path: '/migration',             icon: Database, requiredPermission: 'DATA_MIGRATION' },
                 { label: 'Permissions Registry', path: '/permissions-registry', icon: Shield,   adminOnly: true },
             ],

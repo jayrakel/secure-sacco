@@ -82,6 +82,8 @@ public class CoopConnectService {
             org.springframework.http.client.SimpleClientHttpRequestFactory factory =
                     new org.springframework.http.client.SimpleClientHttpRequestFactory();
             factory.setProxy(proxy);
+            factory.setConnectTimeout(15000); // 15 seconds
+            factory.setReadTimeout(30000);    // 30 seconds
             builder.requestFactory(factory);
 
             log.info("Co-op Connect: routing via proxy {}:{}", props.getProxyHost(), props.getProxyPort());

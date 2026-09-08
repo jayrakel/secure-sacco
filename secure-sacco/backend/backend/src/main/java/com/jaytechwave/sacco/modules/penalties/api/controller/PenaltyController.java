@@ -56,6 +56,18 @@ public class PenaltyController {
 
     // ── Staff endpoints ───────────────────────────────────────────────────────
 
+    @Operation(summary = "Get open penalties for a specific member")
+    @GetMapping("/member/{memberId}/open")
+    @PreAuthorize("hasAuthority('PENALTIES_WAIVE_ADJUST') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<PenaltySummaryResponse>> getMemberOpenPenaltiesByAdmin(@PathVariable UUID memberId) {
+        return ResponseEntity.ok(penaltyRepository.findByMemberIdAndStatusOrderByCreatedAtAsc(memberId, PenaltyStatus.OPEN)
+                .stream().map(p -> new PenaltySummaryResponse(
+                        p.getId(), p.getPenaltyRule().getCode(), p.getPenaltyRule().getName(),
+                        p.getOriginalAmount(), p.getOutstandingAmount(), p.getPrincipalPaid(),
+                        p.getInterestPaid(), p.getAmountWaived(), p.getStatus().name(), p.getCreatedAt()
+                )).collect(Collectors.toList()));
+    }
+
     /**
      * Staff view of all open penalties — used by the Penalty Waiver UI.
      * Returns open penalties enriched with member number and name for display.

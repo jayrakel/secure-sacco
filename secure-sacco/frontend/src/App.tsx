@@ -15,6 +15,7 @@ import SetupGuard from "./shared/components/SetupGuard";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
 import { ProfilePage } from "./features/auth/pages/ProfilePage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
+import SystemMaintenancePage from './features/settings/pages/SystemMaintenancePage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
 import MemberListPage from "./features/members/pages/MemberListPage";
@@ -40,7 +41,7 @@ import { IncomeReportPage } from './features/reports/pages/IncomeReportPage';
 import { GeneralStatementPage } from './features/reports/pages/GeneralStatementPage';
 import { FinancialsDashboardPage } from './features/dashboard/pages/FinancialsDashboardPage';
 import { ManualPaymentWizard } from './features/manualpayments/components/ManualPaymentWizard';
-import { HistoricalEditPage } from './features/historicaledit/pages/HistoricalEditPage';
+import HistoricalEditPage from './features/historicaledit/pages/HistoricalEditPage';
 import { PaymentLookupPage } from './features/reports/pages/PaymentLookupPage';
 import MemberPersonalReportsPage from './features/reports/pages/MemberPersonalReportsPage';
 import MeetingsManagementPage from './features/meetings/pages/MeetingsManagementPage';
@@ -471,6 +472,12 @@ function App() {
                                         }>
                                             <SaccoSettingsPage />
                                         </HasPermission>
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/admin/maintenance" element={
+                                    <ProtectedRoute requiredPermissions={['SETTINGS_EDIT']}>
+                                        <SystemMaintenancePage />
                                     </ProtectedRoute>
                                 } />
 

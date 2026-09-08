@@ -66,6 +66,8 @@ public class SaccoSettingsController {
                     Map.entry("savingsDeadlineNextDay",  s.getSavingsDeadlineNextDay() != null ? s.getSavingsDeadlineNextDay() : true),
                     Map.entry("savingsDeadlineHour",     s.getSavingsDeadlineHour()    != null ? s.getSavingsDeadlineHour()    : 23),
                     Map.entry("savingsDeadlineMinute",   s.getSavingsDeadlineMinute()  != null ? s.getSavingsDeadlineMinute()  : 59),
+                    // Meetings
+                    Map.entry("meetingNotificationLeadHours", s.getMeetingNotificationLeadHours() != null ? s.getMeetingNotificationLeadHours() : 48),
                     // Modules
                     Map.entry("enabledModules", s.getEnabledModules())
             ));
@@ -185,6 +187,23 @@ public class SaccoSettingsController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    // ── Meetings ──────────────────────────────────────────────────────────────
+
+    @Operation(summary = "Update meeting settings", description = "Configure how early meeting notifications are sent")
+    @PutMapping("/meetings")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
+    public ResponseEntity<?> updateMeetingSettings(
+            @Valid @RequestBody UpdateMeetingsRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
+        SaccoSettings settings = settingsService.updateMeetingSettings(req);
+        auditService.logEventWithActorAndIp(auth.getName(), "MEETING_SETTINGS_UPDATED",
+                "Global Settings", getClientIP(httpReq), "Meeting settings updated.");
+        return ResponseEntity.ok(Map.of(
+                "message", "Meeting settings updated successfully.",
+                "meetingNotificationLeadHours", settings.getMeetingNotificationLeadHours()
+        ));
     }
 
 }

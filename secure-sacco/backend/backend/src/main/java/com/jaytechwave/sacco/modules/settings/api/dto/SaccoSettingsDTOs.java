@@ -151,4 +151,14 @@ public class SaccoSettingsDTOs {
         @Max(value = 59, message = "Minute must be 0-59")
         private Integer savingsDeadlineMinute;
     }
+
+    // ── Meetings update ──────────────────────────────────────────────────────
+
+    @Data
+    public static class UpdateMeetingsRequest {
+        @NotNull(message = "Meeting notification lead hours is required")
+        @Min(value = 1, message = "Lead time must be at least 1 hour")
+        @Max(value = 168, message = "Lead time cannot exceed 7 days (168 hours)")
+        private Integer meetingNotificationLeadHours;
+    }
 }

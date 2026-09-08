@@ -258,4 +258,27 @@ public class SaccoSettingsService {
         try { Integer m = getSettings().getSavingsDeadlineMinute(); return m != null ? m : 59; }
         catch (Exception e) { return 59; }
     }
+
+    // ── Meetings ──────────────────────────────────────────────────────────────
+
+    @Transactional
+    public SaccoSettings updateMeetingSettings(UpdateMeetingsRequest req) {
+        SaccoSettings s = getSettings();
+        s.setMeetingNotificationLeadHours(req.getMeetingNotificationLeadHours());
+        SaccoSettings saved = settingsRepository.save(s);
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
+                "Meeting settings updated — notificationLeadHours: " + req.getMeetingNotificationLeadHours()
+        );
+        return saved;
+    }
+
+    public int getMeetingNotificationLeadHours() {
+        try {
+            Integer hours = getSettings().getMeetingNotificationLeadHours();
+            return hours != null ? hours : 48;
+        } catch (Exception e) {
+            return 48; // Default if uninitialized
+        }
+    }
 }

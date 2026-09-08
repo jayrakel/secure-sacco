@@ -319,10 +319,24 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
         loanProduct?: { name: string };
         balance: number;
     }
+    interface OpenPenalty {
+        id: string;
+        ruleName: string;
+        outstandingAmount: number;
+    }
+    interface PaymentProduct {
+        id: string;
+        name: string;
+        moduleType: string;
+    }
     const [activeLoans, setActiveLoans] = useState<ActiveLoan[]>([]);
-    const [loadingLoans, setLoadingLoans] = useState(false);
-    const [destination, setDestination] = useState<'SAVINGS' | 'PENALTY' | 'LOAN'>('SAVINGS');
+    const [openPenalties, setOpenPenalties] = useState<OpenPenalty[]>([]);
+    const [products, setProducts] = useState<PaymentProduct[]>([]);
+    const [loadingExtras, setLoadingExtras] = useState(false);
+    const [destination, setDestination] = useState<'SAVINGS' | 'PENALTY' | 'LOAN' | 'PRODUCT'>('SAVINGS');
     const [selectedLoanId, setSelectedLoanId] = useState<string>('');
+    const [selectedPenaltyId, setSelectedPenaltyId] = useState<string>('');
+    const [selectedProductId, setSelectedProductId] = useState<string>('');
 
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -345,18 +359,30 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
 
     const handleSelectMember = async (member: Member) => {
         setSelectedMember(member);
-        setLoadingLoans(true);
+        setLoadingExtras(true);
         setError(null);
         try {
-            const res = await apiClient.get(`/loans/applications/member/${member.id}/active`);
-            setActiveLoans(res.data || []);
+            const [loansRes, penRes, prodRes] = await Promise.all([
+                apiClient.get(`/loans/applications/member/${member.id}/active`),
+                apiClient.get(`/penalties/member/${member.id}/open`),
+                apiClient.get(`/payment-products/active`)
+            ]);
+            setActiveLoans(loansRes.data || []);
+            setOpenPenalties(penRes.data || []);
+            const customProducts = (prodRes.data || []).filter((p: PaymentProduct) => 
+                ['CUSTOM', 'SHARE_CAPITAL', 'DEPOSIT_SHARES'].includes(p.moduleType)
+            );
+            setProducts(customProducts);
+
             setDestination('SAVINGS');
             setSelectedLoanId('');
+            setSelectedPenaltyId('');
+            setSelectedProductId('');
         } catch (e: unknown) {
             console.error(e);
-            setError('Failed to fetch active loans for this member.');
+            setError('Failed to fetch extras for this member.');
         } finally {
-            setLoadingLoans(false);
+            setLoadingExtras(false);
         }
     };
 
@@ -366,6 +392,14 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
             setError('Please select a specific loan to repay.');
             return;
         }
+        if (destination === 'PENALTY' && !selectedPenaltyId) {
+            setError('Please select an open penalty.');
+            return;
+        }
+        if (destination === 'PRODUCT' && !selectedProductId) {
+            setError('Please select a custom or share product.');
+            return;
+        }
 
         setMatching(true);
         setError(null);
@@ -373,6 +407,10 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
             let url = `/payments/coop/transactions/${tx.id}/assign-member?memberId=${selectedMember.id}&destination=${destination}`;
             if (destination === 'LOAN') {
                 url += `&loanId=${selectedLoanId}`;
+            } else if (destination === 'PENALTY') {
+                url += `&penaltyId=${selectedPenaltyId}`;
+            } else if (destination === 'PRODUCT') {
+                url += `&productId=${selectedProductId}`;
             }
             await apiClient.post(url);
             onSuccess();
@@ -465,8 +503,8 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
                             <div className="space-y-3">
                                 <label className="block text-sm font-semibold text-slate-700">Route funds to</label>
                                 
-                                {loadingLoans ? (
-                                    <p className="text-xs text-slate-500">Checking for active loans...</p>
+                                {loadingExtras ? (
+                                    <p className="text-xs text-slate-500">Checking for active accounts...</p>
                                 ) : (
                                     <div className="space-y-2">
                                         <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${destination === 'SAVINGS' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
@@ -481,47 +519,121 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
                                             <span className="text-sm font-medium text-slate-800">Savings Account</span>
                                         </label>
                                         
-                                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${destination === 'PENALTY' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                            <input 
-                                                type="radio" 
-                                                name="destination" 
-                                                value="PENALTY" 
-                                                checked={destination === 'PENALTY'}
-                                                onChange={() => setDestination('PENALTY')}
-                                                className="w-4 h-4 text-slate-900"
-                                            />
-                                            <span className="text-sm font-medium text-slate-800">Penalty Repayment</span>
+                                        {/* Products Dropdown */}
+                                        <label className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'PRODUCT' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <input 
+                                                    type="radio" 
+                                                    name="destination" 
+                                                    value="PRODUCT" 
+                                                    checked={destination === 'PRODUCT'}
+                                                    onChange={() => setDestination('PRODUCT')}
+                                                    className="w-4 h-4 text-slate-900"
+                                                />
+                                                <span className="text-sm font-medium text-slate-800">Custom/Share Product</span>
+                                            </div>
+                                            {destination === 'PRODUCT' && (
+                                                <div className="ml-7">
+                                                    {products.length > 0 ? (
+                                                        <select
+                                                            value={selectedProductId}
+                                                            onChange={e => setSelectedProductId(e.target.value)}
+                                                            className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                        >
+                                                            <option value="">Select a product...</option>
+                                                            {products.map(p => (
+                                                                <option key={p.id} value={p.id}>
+                                                                    {p.name} ({p.moduleType.replace('_', ' ')})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <p className="text-xs text-amber-600 mt-1">No active custom or share products found.</p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </label>
 
-                                        {activeLoans.map(loan => (
-                                            <label key={loan.id} className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'LOAN' && selectedLoanId === loan.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <input 
-                                                        type="radio" 
-                                                        name="destination" 
-                                                        value="LOAN" 
-                                                        checked={destination === 'LOAN' && selectedLoanId === loan.id}
-                                                        onChange={() => {
-                                                            setDestination('LOAN');
-                                                            setSelectedLoanId(loan.id);
-                                                        }}
-                                                        className="w-4 h-4 text-slate-900"
-                                                    />
-                                                    <div className="flex-1">
-                                                        <span className="text-sm font-medium text-slate-800">Loan Repayment</span>
-                                                        <span className="text-xs text-slate-500 block">
-                                                            {loan.loanProduct?.name || 'Loan'} · Bal KES {loan.balance?.toLocaleString('en-KE')}
-                                                        </span>
-                                                    </div>
+                                        {/* Penalties Dropdown */}
+                                        <label className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'PENALTY' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <input 
+                                                    type="radio" 
+                                                    name="destination" 
+                                                    value="PENALTY" 
+                                                    checked={destination === 'PENALTY'}
+                                                    onChange={() => setDestination('PENALTY')}
+                                                    className="w-4 h-4 text-slate-900"
+                                                />
+                                                <span className="text-sm font-medium text-slate-800">Penalty Repayment</span>
+                                            </div>
+                                            {destination === 'PENALTY' && (
+                                                <div className="ml-7">
+                                                    {openPenalties.length > 0 ? (
+                                                        <select
+                                                            value={selectedPenaltyId}
+                                                            onChange={e => setSelectedPenaltyId(e.target.value)}
+                                                            className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                        >
+                                                            <option value="">Select an open penalty...</option>
+                                                            {openPenalties.map(p => (
+                                                                <option key={p.id} value={p.id}>
+                                                                    {p.ruleName} (Owes: KES {p.outstandingAmount?.toLocaleString('en-KE')})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <p className="text-xs text-amber-600 mt-1">No open penalties found.</p>
+                                                    )}
                                                 </div>
-                                            </label>
-                                        ))}
+                                            )}
+                                        </label>
+
+                                        {/* Loans Dropdown */}
+                                        <label className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'LOAN' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <input 
+                                                    type="radio" 
+                                                    name="destination" 
+                                                    value="LOAN" 
+                                                    checked={destination === 'LOAN'}
+                                                    onChange={() => setDestination('LOAN')}
+                                                    className="w-4 h-4 text-slate-900"
+                                                />
+                                                <span className="text-sm font-medium text-slate-800">Loan Repayment</span>
+                                            </div>
+                                            {destination === 'LOAN' && (
+                                                <div className="ml-7">
+                                                    {activeLoans.length > 0 ? (
+                                                        <select
+                                                            value={selectedLoanId}
+                                                            onChange={e => setSelectedLoanId(e.target.value)}
+                                                            className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                        >
+                                                            <option value="">Select a specific loan...</option>
+                                                            {activeLoans.map(l => (
+                                                                <option key={l.id} value={l.id}>
+                                                                    {l.loanProduct?.name || 'Loan'} · Bal KES {l.balance?.toLocaleString('en-KE')}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <p className="text-xs text-amber-600 mt-1">No active loans found.</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </label>
                                     </div>
                                 )}
                             </div>
 
                             <button 
-                                disabled={matching || loadingLoans || (destination === 'LOAN' && !selectedLoanId)}
+                                disabled={
+                                    matching || loadingExtras || 
+                                    (destination === 'LOAN' && !selectedLoanId) ||
+                                    (destination === 'PENALTY' && !selectedPenaltyId) ||
+                                    (destination === 'PRODUCT' && !selectedProductId)
+                                }
                                 onClick={handleMatch}
                                 className="w-full mt-4 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
                             >

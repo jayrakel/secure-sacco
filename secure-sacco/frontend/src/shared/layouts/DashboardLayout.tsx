@@ -2,8 +2,10 @@ import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSettings } from '../../features/settings/context/useSettings';
-import { LogOut, ChevronRight, Menu, UserCircle } from 'lucide-react';
-import { useState } from 'react';
+import { LogOut, ChevronRight, Menu, UserCircle, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { maintenanceApi } from '../../features/settings/api/maintenanceApi';
+import type { MaintenanceEvent } from '../../features/settings/api/maintenanceApi';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,6 +14,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import { format } from 'date-fns';
 
 const PAGE_LABELS: Record<string, string> = {
     '/dashboard':                  'Dashboard',
@@ -38,7 +41,8 @@ const PAGE_LABELS: Record<string, string> = {
     '/audit/sms-logs':             'SMS Delivery Logs',
     '/security':                   'Security Settings',
     '/settings':                   'Platform Settings',
-    '/admin/time-machine':            'System Time Machine',
+    '/admin/maintenance':          'System Maintenance',
+    '/admin/time-machine':         'System Time Machine',
     '/profile':                    'My Profile',
     '/my-shares':                  'My Shares',
     '/admin/dividends':            'Dividend Management',
@@ -49,6 +53,17 @@ export const DashboardLayout = () => {
     const { isLoading: settingsLoading } = useSettings();
     const location = useLocation();
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [activeMaintenance, setActiveMaintenance] = useState<MaintenanceEvent | null>(null);
+
+    useEffect(() => {
+        maintenanceApi.getActiveOrUpcoming()
+            .then(data => {
+                if (data && data.length > 0) {
+                    setActiveMaintenance(data[0]);
+                }
+            })
+            .catch(err => console.error("Failed to load maintenance events", err));
+    }, []);
 
     // Gate: hold the entire dashboard until settings (branding) have resolved.
     // This prevents the sidebar from flashing the default logo/name even for a frame.
@@ -75,14 +90,33 @@ export const DashboardLayout = () => {
     const roleName = user?.roles?.[0]?.replace('ROLE_', '').replace(/_/g, ' ') ?? 'User';
 
     return (
-        <div className="flex h-screen print:h-auto print:overflow-visible bg-slate-50 font-sans overflow-hidden print:bg-white">
-            <Sidebar
-                mobileOpen={mobileSidebarOpen}
-                onMobileClose={() => setMobileSidebarOpen(false)}
-            />
+        <div className="flex flex-col h-screen overflow-hidden bg-slate-50 font-sans print:bg-white">
+            
+            {/* Global Maintenance Banner */}
+            {activeMaintenance && (
+                <div className="bg-amber-100 text-amber-900 px-4 py-3 border-b border-amber-200 flex items-start sm:items-center justify-between shrink-0 z-50">
+                    <div className="flex items-start sm:items-center gap-3">
+                        <AlertTriangle className="text-amber-600 mt-0.5 sm:mt-0 shrink-0" size={20} />
+                        <div>
+                            <p className="font-semibold text-sm">
+                                {activeMaintenance.title}
+                            </p>
+                            <p className="text-xs text-amber-800 mt-0.5 sm:mt-0">
+                                {activeMaintenance.description} — Scheduled for {format(new Date(activeMaintenance.maintenanceStartTime), 'MMM dd, yyyy HH:mm')} to {format(new Date(activeMaintenance.maintenanceEndTime), 'MMM dd, yyyy HH:mm')}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            {/* Main content — add left margin on desktop to account for fixed sidebar space */}
-            <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
+            <div className="flex flex-1 h-full min-h-0 relative">
+                <Sidebar
+                    mobileOpen={mobileSidebarOpen}
+                    onMobileClose={() => setMobileSidebarOpen(false)}
+                />
+
+                {/* Main content — add left margin on desktop to account for fixed sidebar space */}
+                <div className="flex-1 flex flex-col min-w-0 lg:ml-0 h-full">
 
                 {/* ── Top Header ── */}
                 <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 shrink-0 shadow-sm z-10">
@@ -163,6 +197,7 @@ export const DashboardLayout = () => {
                     <Outlet />
                 </main>
             </div>
+        </div>
         </div>
     );
 };
