@@ -80,7 +80,7 @@ const HistoricalEditPage: React.FC = () => {
 
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [lastResult, setLastResult] = useState<Record<string, unknown> | null>(null);
+    const [lastResult, setLastResult] = useState<{ message?: string; [key: string]: unknown } | null>(null);
 
     const searchMembers = async (e: React.FormEvent) => {
         e.preventDefault();
