@@ -7,6 +7,7 @@ import com.jaytechwave.sacco.modules.meetings.domain.service.MeetingNotification
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
+import com.jaytechwave.sacco.modules.settings.domain.service.SaccoSettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,18 +24,20 @@ public class MeetingNotificationJob {
     private final MeetingRepository meetingRepository;
     private final MemberRepository memberRepository;
     private final MeetingNotificationService meetingNotificationService;
+    private final SaccoSettingsService saccoSettingsService;
 
     // Run every 15 minutes
     @Scheduled(cron = "0 0/15 * * * ?")
     public void sendScheduledMeetingNotifications() {
-        LocalDateTime cutoff = LocalDateTime.now().plusHours(24);
+        int leadHours = saccoSettingsService.getMeetingNotificationLeadHours();
+        LocalDateTime cutoff = LocalDateTime.now().plusHours(leadHours);
         List<Meeting> meetings = meetingRepository.findMeetingsForNotification(MeetingStatus.SCHEDULED, cutoff);
 
         if (meetings.isEmpty()) {
             return;
         }
 
-        log.info("Found {} meetings starting within 24 hours that need notifications", meetings.size());
+        log.info("Found {} meetings starting within {} hours that need notifications", meetings.size(), leadHours);
 
         List<Member> activeMembers = memberRepository.findByStatus(MemberStatus.ACTIVE);
         if (activeMembers.isEmpty()) {

@@ -158,6 +158,13 @@ public class SaccoSettings {
     @Builder.Default
     private Integer savingsDeadlineMinute = 59;
 
+    // ── Meetings ─────────────────────────────────────────────────────────────
+
+    /** Hours before a meeting to trigger notifications */
+    @Column(name = "meeting_notification_lead_hours", nullable = false)
+    @Builder.Default
+    private Integer meetingNotificationLeadHours = 48;
+
     // ── Audit ────────────────────────────────────────────────────────────────
 
     @CreationTimestamp

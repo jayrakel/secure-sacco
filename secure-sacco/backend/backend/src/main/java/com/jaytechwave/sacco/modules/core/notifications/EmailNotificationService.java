@@ -57,6 +57,11 @@ public class EmailNotificationService {
     send(toEmail, "Reset Your Password", buildPasswordResetBody(resetUrl));
   }
 
+  @Async
+  public void sendSystemAlertEmail(String toEmail, String title, String message) {
+    send(toEmail, title, buildSystemAlertBody(title, message));
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   private void send(String to, String subject, String htmlBody) {
@@ -132,5 +137,18 @@ public class EmailNotificationService {
         </div>
         """
         .formatted(resetUrl);
+  }
+
+  private String buildSystemAlertBody(String title, String message) {
+    return """
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;">
+          <h2 style="color:#059669;">%s</h2>
+          <p style="white-space: pre-wrap;">%s</p>
+          <p style="color:#64748b;font-size:12px;margin-top:24px;">
+            This is an automated system notification from the SACCO Portal.
+          </p>
+        </div>
+        """
+        .formatted(title, message);
   }
 }

@@ -148,4 +148,21 @@ public class PenaltyRepaymentService {
             }
         });
     }
+
+    @Transactional
+    public PenaltyRepayment processHistoricalRepayment(UUID memberId, UUID penaltyId, BigDecimal amount, String receiptNumber, java.time.LocalDate transactionDate, String email) {
+        User admin = userRepository.findByEmail(email).orElseThrow(() -> new IllegalStateException("Admin user not found"));
+        
+        PenaltyRepayment repayment = PenaltyRepayment.builder()
+                .memberId(memberId)
+                .targetPenaltyId(penaltyId)
+                .amount(amount)
+                .status(PenaltyRepaymentStatus.PENDING)
+                .build();
+        repayment = penaltyRepaymentRepository.save(repayment);
+        
+        processCompletedRepayment(repayment.getId(), receiptNumber);
+        
+        return penaltyRepaymentRepository.findById(repayment.getId()).orElseThrow();
+    }
 }

@@ -33,7 +33,11 @@ public class HistoricalEditDTOs {
             BigDecimal newAmount,   // null = leave unchanged
             LocalDateTime newPostedAt, // null = leave unchanged
             String newReference,    // null = leave unchanged
-            String reason           // required — written to the audit log, not optional
+            String reason,          // required — written to the audit log, not optional
+            String destination,     // SAVINGS | LOAN | PENALTY | PRODUCT (null = SAVINGS)
+            UUID loanId,            // required if destination = LOAN
+            UUID penaltyId,         // required if destination = PENALTY
+            UUID productId          // required if destination = PRODUCT
     ) {}
 
     public record EditTransactionResponse(

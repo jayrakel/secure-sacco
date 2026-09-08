@@ -69,6 +69,10 @@ public class CoopConnectController {
     private final LoanRepaymentService loanRepaymentService;
     private final PenaltyRepaymentRepository penaltyRepaymentRepository;
     private final PenaltyRepaymentService penaltyRepaymentService;
+    private final com.jaytechwave.sacco.modules.paymentproducts.domain.repository.PaymentProductRepository paymentProductRepository;
+    private final com.jaytechwave.sacco.modules.shares.domain.service.ShareService shareService;
+    private final com.jaytechwave.sacco.modules.accounting.domain.service.JournalEntryService journalEntryService;
+    private final com.jaytechwave.sacco.modules.penalties.domain.repository.PenaltyRepository penaltyRepository;
 
     // ── TEMPORARY MANUAL SMS TRIGGER ──────────────────────────────────────────
     @GetMapping("/trigger-missed-sms/{coopTxId}")
@@ -504,8 +508,10 @@ public class CoopConnectController {
     public ResponseEntity<?> assignMemberToTransaction(
             @PathVariable UUID id,
             @RequestParam UUID memberId,
-            @RequestParam(required = false, defaultValue = "SAVINGS") ModuleType destination,
-            @RequestParam(required = false) UUID loanId) {
+            @RequestParam(required = false, defaultValue = "SAVINGS") String destination,
+            @RequestParam(required = false) UUID loanId,
+            @RequestParam(required = false) UUID penaltyId,
+            @RequestParam(required = false) UUID productId) {
         try {
             var txOpt = coopTransactionRepository.findById(id);
             if (txOpt.isEmpty()) {
@@ -529,12 +535,12 @@ public class CoopConnectController {
                 java.time.LocalDateTime valueDate = tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
                 String ref = tx.getMpesaRef() != null ? tx.getMpesaRef() : tx.getCoopTransactionId();
                 
-                switch (destination) {
-                    case SAVINGS -> {
+                switch (destination.toUpperCase()) {
+                    case "SAVINGS" -> {
                         savingsService.processMpesaPaybillDeposit(
                                 memberId, tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
                     }
-                    case LOAN -> {
+                    case "LOAN" -> {
                         if (loanId == null) {
                             return ResponseEntity.badRequest().body(Map.of("error", "loanId is required for LOAN destination"));
                         }
@@ -551,14 +557,50 @@ public class CoopConnectController {
                         repayment = loanRepaymentRepository.save(repayment);
                         loanRepaymentService.processCompletedRepayment(repayment.getId(), ref);
                     }
-                    case PENALTY -> {
+                    case "PENALTY" -> {
+                        if (penaltyId != null) {
+                            var penalty = penaltyRepository.findById(penaltyId)
+                                    .orElseThrow(() -> new IllegalStateException("Penalty not found"));
+                            if (!penalty.getMemberId().equals(memberId)) {
+                                return ResponseEntity.badRequest().body(Map.of("error", "Penalty does not belong to member"));
+                            }
+                        }
                         PenaltyRepayment repayment = PenaltyRepayment.builder()
                                 .memberId(memberId)
+                                .targetPenaltyId(penaltyId)
                                 .amount(tx.getAmount())
                                 .status(PenaltyRepaymentStatus.PENDING)
                                 .build();
                         repayment = penaltyRepaymentRepository.save(repayment);
                         penaltyRepaymentService.processCompletedRepayment(repayment.getId(), ref);
+                    }
+                    case "PRODUCT" -> {
+                        if (productId == null) {
+                            return ResponseEntity.badRequest().body(Map.of("error", "productId is required for PRODUCT destination"));
+                        }
+                        var product = paymentProductRepository.findById(productId)
+                                .orElseThrow(() -> new IllegalStateException("Payment product not found"));
+                        
+                        if (product.getModuleType() == ModuleType.SHARE_CAPITAL || product.getModuleType() == ModuleType.DEPOSIT_SHARES) {
+                            shareService.deposit(memberId, product.getId(), tx.getAmount(), ref);
+                        }
+                        
+                        // Journal Entry for the custom/share product
+                        java.util.List<com.jaytechwave.sacco.modules.accounting.api.dto.JournalEntryDTOs.JournalEntryLineRequest> lines = new java.util.ArrayList<>();
+                        // 1001 is Bank/MPesa account
+                        lines.add(new com.jaytechwave.sacco.modules.accounting.api.dto.JournalEntryDTOs.JournalEntryLineRequest(
+                                "1001", memberId, tx.getAmount(), java.math.BigDecimal.ZERO, "M-Pesa deposit for " + product.getName()
+                        ));
+                        lines.add(new com.jaytechwave.sacco.modules.accounting.api.dto.JournalEntryDTOs.JournalEntryLineRequest(
+                                product.getGlAccount().getAccountCode(), memberId, java.math.BigDecimal.ZERO, tx.getAmount(), "M-Pesa deposit for " + product.getName()
+                        ));
+                        
+                        journalEntryService.postEntry(new com.jaytechwave.sacco.modules.accounting.api.dto.JournalEntryDTOs.CreateJournalEntryRequest(
+                                valueDate.toLocalDate(),
+                                ref,
+                                "M-Pesa deposit to custom product",
+                                lines
+                        ));
                     }
                     default -> {
                         return ResponseEntity.badRequest().body(Map.of("error", "Unsupported destination: " + destination));
