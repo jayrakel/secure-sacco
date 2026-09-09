@@ -25,17 +25,17 @@ export interface CreateMaintenanceRequest {
 
 export const maintenanceApi = {
     getAll: async () => {
-        const response = await api.get<MaintenanceEvent[]>('/api/v1/maintenance');
+        const response = await api.get<MaintenanceEvent[]>('/maintenance');
         return response.data;
     },
 
     getActiveOrUpcoming: async () => {
-        const response = await api.get<MaintenanceEvent[]>('/api/v1/maintenance/active');
+        const response = await api.get<MaintenanceEvent[]>('/maintenance/active');
         return response.data;
     },
 
     schedule: async (data: CreateMaintenanceRequest) => {
-        const response = await api.post<MaintenanceEvent>('/api/v1/maintenance', data);
+        const response = await api.post<MaintenanceEvent>('/maintenance', data);
         return response.data;
     }
 };

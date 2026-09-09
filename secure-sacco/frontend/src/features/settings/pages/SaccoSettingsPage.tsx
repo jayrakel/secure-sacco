@@ -16,7 +16,7 @@ import { PaymentProductsSettingsPage } from '../../paymentproducts/pages/Payment
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'modules' | 'penalties' | 'products';
+type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'meetings' | 'modules' | 'penalties' | 'products';
 
 interface SecurityPolicy {
     maxLoginAttempts: number;
@@ -38,6 +38,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] 
     { id: 'security',      label: 'Security',      icon: <Shield size={15} />,    desc: 'Auth, passwords & limits' },
     { id: 'communication', label: 'Communication', icon: <Bell size={15} />,      desc: 'Email sender settings'    },
     { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
+    { id: 'meetings',       label: 'Meetings',       icon: <CalendarClock size={15} />, desc: 'Meeting notifications'    },
     { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
     { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
     { id: 'products',      label: 'Payment Products', icon: <Package size={15} />, desc: 'Deposit allocation categories' },
@@ -183,6 +184,11 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingSched,        setSavingSched]        = useState(false);
     const [dirtySched,         setDirtySched]         = useState(false);
 
+    // ── Meetings ─────────────────────────────────────────────────────────────
+    const [meetingNotificationLeadHours, setMeetingNotificationLeadHours] = useState(48);
+    const [savingMeetings, setSavingMeetings] = useState(false);
+    const [dirtyMeetings, setDirtyMeetings] = useState(false);
+
     // ── Modules ─────────────────────────────────────────────────────────────
     const [mods, setMods]         = useState<Record<string, boolean>>({ members: true, loans: false, savings: false, reports: false });
     const [savingMods, setSavingMods] = useState(false);
@@ -223,6 +229,7 @@ const SaccoSettingsPage: React.FC = () => {
                 if (d.savingsDeadlineNextDay !== undefined) setDeadlineNextDay(d.savingsDeadlineNextDay);
                 if (d.savingsDeadlineHour  !== undefined) setDeadlineHour(d.savingsDeadlineHour);
                 if (d.savingsDeadlineMinute !== undefined) setDeadlineMinute(d.savingsDeadlineMinute);
+                if (d.meetingNotificationLeadHours !== undefined) setMeetingNotificationLeadHours(d.meetingNotificationLeadHours);
             }
         }).catch(() => flash(false, 'Failed to load settings.')).finally(() => setLoading(false));
     }, []);
@@ -359,6 +366,16 @@ const SaccoSettingsPage: React.FC = () => {
         finally { setSavingSched(false); }
     };
 
+    const handleMeetings = async (e: React.FormEvent) => {
+        e.preventDefault(); setSavingMeetings(true);
+        try {
+            await settingsApi.updateMeetingSettings({ meetingNotificationLeadHours });
+            setDirtyMeetings(false);
+            flash(true, 'Meeting settings saved.');
+        } catch { flash(false, 'Failed to save meeting settings.'); }
+        finally { setSavingMeetings(false); }
+    };
+
     const handleComm = async (e: React.FormEvent) => {
         e.preventDefault(); setSavingComm(true);
         try { await settingsApi.updateCommunication({ smtpFromName: fromName, supportEmail: suppEmail }); setDirtyComm(false); flash(true, 'Communication settings saved.'); }
@@ -404,7 +421,7 @@ const SaccoSettingsPage: React.FC = () => {
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                         {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
                             const active = tab === t.id;
-                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched);
+                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched) || (t.id === 'meetings' && dirtyMeetings);
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
                                         className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-all
@@ -691,6 +708,29 @@ const SaccoSettingsPage: React.FC = () => {
 
                             <div className="flex justify-end">
                                 <SaveBtn loading={savingSched} dirty={dirtySched} label="Save Schedule" />
+                            </div>
+                        </form>
+                    )}
+
+                    {/* MEETINGS */}
+                    {tab === 'meetings' && (
+                        <form onSubmit={handleMeetings} className="space-y-5">
+                            <Section
+                                title="Meeting Settings"
+                                desc="Configure notification lead times and meeting behavior."
+                            >
+                                <div className="space-y-5">
+                                    <NumberField
+                                        label="Meeting Notification Lead Time"
+                                        value={meetingNotificationLeadHours}
+                                        min={1} max={168} suffix="hours"
+                                        hint="How many hours before a meeting starts should a reminder be sent out?"
+                                        onChange={v => { setMeetingNotificationLeadHours(v); setDirtyMeetings(true); }}
+                                    />
+                                </div>
+                            </Section>
+                            <div className="flex justify-end">
+                                <SaveBtn loading={savingMeetings} dirty={dirtyMeetings} label="Save Meeting Settings" />
                             </div>
                         </form>
                     )}

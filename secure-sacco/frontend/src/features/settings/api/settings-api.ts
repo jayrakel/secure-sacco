@@ -37,6 +37,9 @@ export interface SaccoSettings {
 
     // Feature flags
     enabledModules?: Record<string, boolean>;
+
+    // Meetings
+    meetingNotificationLeadHours?: number;
 }
 
 // ─── Request payloads ─────────────────────────────────────────────────────────
@@ -82,6 +85,11 @@ export interface SavingsSchedulePayload {
     /** Minute 0-59 */
     savingsDeadlineMinute: number;
 }
+
+export interface UpdateMeetingsRequest {
+    meetingNotificationLeadHours: number;
+}
+
 
 // ─── API calls ────────────────────────────────────────────────────────────────
 
@@ -134,6 +142,12 @@ export const settingsApi = {
         const res = await apiClient.get<{ prefix: string }>(
             `/settings/sacco/generate-prefix?name=${encodeURIComponent(name)}`
         );
+        return res.data;
+    },
+
+    /** Update meeting settings */
+    updateMeetingSettings: async (payload: UpdateMeetingsRequest) => {
+        const res = await apiClient.put('/settings/sacco/meetings', payload);
         return res.data;
     },
 };
