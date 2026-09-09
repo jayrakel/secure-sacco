@@ -158,7 +158,7 @@ export default function SystemMaintenancePage() {
                                         </div>
                                         <input 
                                             type="checkbox"
-                                            className="w-5 h-5 accent-emerald-600 rounded border-slate-300"
+                                            className="w-5 h-5 accent-indigo-600 rounded border-slate-300"
                                             checked={formData.notifyMembersApp} 
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, notifyMembersApp: e.target.checked})} 
                                         />
@@ -171,7 +171,7 @@ export default function SystemMaintenancePage() {
                                         </div>
                                         <input 
                                             type="checkbox"
-                                            className="w-5 h-5 accent-emerald-600 rounded border-slate-300"
+                                            className="w-5 h-5 accent-indigo-600 rounded border-slate-300"
                                             checked={formData.notifyMembersSms} 
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, notifyMembersSms: e.target.checked})} 
                                         />
@@ -184,7 +184,7 @@ export default function SystemMaintenancePage() {
                                         </div>
                                         <input 
                                             type="checkbox"
-                                            className="w-5 h-5 accent-emerald-600 rounded border-slate-300"
+                                            className="w-5 h-5 accent-indigo-600 rounded border-slate-300"
                                             checked={formData.notifyMembersEmail} 
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, notifyMembersEmail: e.target.checked})} 
                                         />
@@ -195,7 +195,7 @@ export default function SystemMaintenancePage() {
                         
                         <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50">
                             <Button type="button" variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
-                            <Button form="maintenance-form" type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
+                            <Button form="maintenance-form" type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 size={16} className="mr-2 animate-spin" />}
                                 {isSubmitting ? 'Scheduling...' : 'Schedule'}
                             </Button>

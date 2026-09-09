@@ -91,14 +91,14 @@ export const SmsLogPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowSendModal(true)}
-                        className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm font-medium"
+                        className="flex items-center gap-2 bg-slate-900 text-slate-50 px-4 py-2 rounded-lg hover:bg-slate-900/90 transition-colors shadow-sm font-medium"
                     >
                         <Send size={16} />
                         Send Custom SMS
                     </button>
                     <button
                         onClick={() => fetchLogs(page, search, status)}
-                        className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors shadow-sm font-medium"
+                        className="flex items-center gap-2 bg-white border border-slate-200 text-slate-900 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors shadow-sm font-medium"
                     >
                         <RefreshCw size={16} />
                         Refresh
@@ -122,7 +122,7 @@ export const SmsLogPage: React.FC = () => {
                                         setSearch(e.target.value);
                                         setPage(0);
                                     }}
-                                    className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                                    className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white"
                                 />
                             </div>
                             <select
@@ -131,7 +131,7 @@ export const SmsLogPage: React.FC = () => {
                                     setStatus(e.target.value);
                                     setPage(0);
                                 }}
-                                className="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white"
+                                className="px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white cursor-pointer hover:border-slate-300 transition-colors"
                             >
                                 <option value="">All Statuses</option>
                                 <option value="SENT">Sent</option>
