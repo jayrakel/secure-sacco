@@ -55,6 +55,10 @@ export default function MeetingsManagementPage() {
     });
     const [editSaving, setEditSaving] = useState(false);
 
+    // Inline form validation errors
+    const [formError, setFormError] = useState('');
+    const [editFormError, setEditFormError] = useState('');
+
     const load = () => {
         setLoading(true);
         meetingsApi.list()
@@ -145,6 +149,13 @@ export default function MeetingsManagementPage() {
 
     const handleCreate = async () => {
         if (!form.title || !form.startAt) return;
+
+        // Guard: end time must be after start time
+        if (form.endAt && form.endAt <= form.startAt) {
+            setFormError('End date & time must be after the start date & time.');
+            return;
+        }
+        setFormError('');
         setFormSaving(true);
         try {
             await meetingsApi.create(form);
@@ -153,7 +164,7 @@ export default function MeetingsManagementPage() {
             load();
         } catch (err) {
             if (axios.isAxiosError(err)) {
-                setActionMsg(err.response?.data?.message || 'Failed to create meeting.');
+                setFormError(err.response?.data?.message || 'Failed to create meeting.');
             }
         } finally {
             setFormSaving(false);
@@ -175,6 +186,13 @@ export default function MeetingsManagementPage() {
 
     const handleEditSave = async () => {
         if (!showEdit || !editForm.title || !editForm.startAt) return;
+
+        // Guard: end time must be after start time
+        if (editForm.endAt && editForm.endAt <= editForm.startAt) {
+            setEditFormError('End date & time must be after the start date & time.');
+            return;
+        }
+        setEditFormError('');
         setEditSaving(true);
         try {
             await meetingsApi.update(showEdit.id, editForm);
@@ -185,7 +203,7 @@ export default function MeetingsManagementPage() {
             }
         } catch (err) {
             if (axios.isAxiosError(err)) {
-                setActionMsg(err.response?.data?.message || 'Failed to update meeting.');
+                setEditFormError(err.response?.data?.message || 'Failed to update meeting.');
             }
         } finally {
             setEditSaving(false);
@@ -540,9 +558,26 @@ export default function MeetingsManagementPage() {
                                            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-medium text-slate-600 block mb-1">End Date & Time</label>
-                                    <input type="datetime-local" value={form.endAt} onChange={e => setForm(f => ({ ...f, endAt: e.target.value }))}
-                                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">End Date &amp; Time
+                                        <span className="text-slate-400 font-normal ml-1">(must be after start)</span>
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={form.endAt}
+                                        min={form.startAt || undefined}
+                                        onChange={e => {
+                                            setForm(f => ({ ...f, endAt: e.target.value }));
+                                            setFormError('');
+                                        }}
+                                        className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            form.endAt && form.endAt <= form.startAt
+                                                ? 'border-red-400 bg-red-50'
+                                                : 'border-slate-200'
+                                        }`}
+                                    />
+                                    {form.endAt && form.endAt <= form.startAt && (
+                                        <p className="text-xs text-red-600 mt-1">End time must be after start time.</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-slate-600 block mb-1">Late After (minutes)</label>
@@ -555,11 +590,16 @@ export default function MeetingsManagementPage() {
                                               className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                             </div>
+                            {formError && (
+                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{formError}</div>
+                            )}
                             <div className="flex gap-3 mt-6">
-                                <button onClick={() => setShowCreate(false)}
+                                <button onClick={() => { setShowCreate(false); setFormError(''); }}
                                         className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                                <button onClick={handleCreate} disabled={formSaving || !form.title || !form.startAt}
-                                        className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+                                <button
+                                    onClick={handleCreate}
+                                    disabled={formSaving || !form.title || !form.startAt || !!(form.endAt && form.endAt <= form.startAt)}
+                                    className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
                                     {formSaving ? 'Creating…' : 'Create Meeting'}
                                 </button>
                             </div>
@@ -596,9 +636,26 @@ export default function MeetingsManagementPage() {
                                            className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-medium text-slate-600 block mb-1">End Date & Time</label>
-                                    <input type="datetime-local" value={editForm.endAt} onChange={e => setEditForm(f => ({ ...f, endAt: e.target.value }))}
-                                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <label className="text-xs font-medium text-slate-600 block mb-1">End Date &amp; Time
+                                        <span className="text-slate-400 font-normal ml-1">(must be after start)</span>
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        value={editForm.endAt}
+                                        min={editForm.startAt || undefined}
+                                        onChange={e => {
+                                            setEditForm(f => ({ ...f, endAt: e.target.value }));
+                                            setEditFormError('');
+                                        }}
+                                        className={`w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            editForm.endAt && editForm.endAt <= editForm.startAt
+                                                ? 'border-red-400 bg-red-50'
+                                                : 'border-slate-200'
+                                        }`}
+                                    />
+                                    {editForm.endAt && editForm.endAt <= editForm.startAt && (
+                                        <p className="text-xs text-red-600 mt-1">End time must be after start time.</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-slate-600 block mb-1">Late After (minutes)</label>
@@ -623,11 +680,16 @@ export default function MeetingsManagementPage() {
                                 </div>
                             </div>
                             
+                            {editFormError && (
+                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{editFormError}</div>
+                            )}
                             <div className="flex gap-3 mt-6">
-                                <button onClick={() => setShowEdit(null)}
+                                <button onClick={() => { setShowEdit(null); setEditFormError(''); }}
                                         className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancel</button>
-                                <button onClick={handleEditSave} disabled={editSaving || !editForm.title || !editForm.startAt}
-                                        className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+                                <button
+                                    onClick={handleEditSave}
+                                    disabled={editSaving || !editForm.title || !editForm.startAt || !!(editForm.endAt && editForm.endAt <= editForm.startAt)}
+                                    className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
                                     {editSaving ? 'Saving…' : 'Save Changes'}
                                 </button>
                             </div>

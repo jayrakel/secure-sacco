@@ -30,7 +30,11 @@ public class AccountDTOs {
             String accountName,
 
             String description,
-            boolean isActive
+
+            boolean isActive,
+
+            /** Reassign parent account. Pass null to make it a top-level account. */
+            UUID parentAccountId
     ) {}
 
     public record AccountResponse(
