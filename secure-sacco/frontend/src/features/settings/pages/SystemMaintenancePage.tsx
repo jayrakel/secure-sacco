@@ -47,14 +47,7 @@ export default function SystemMaintenancePage() {
         setIsSubmitting(true);
         
         try {
-            // Convert datetime-local to full ISO string before sending
-            const payload = {
-                ...formData,
-                maintenanceStartTime: new Date(formData.maintenanceStartTime).toISOString(),
-                maintenanceEndTime: new Date(formData.maintenanceEndTime).toISOString()
-            };
-            
-            await maintenanceApi.schedule(payload);
+            await maintenanceApi.schedule(formData);
             setOpenDialog(false);
             setFormData({
                 title: '',

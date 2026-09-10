@@ -44,17 +44,28 @@ public interface MeetingRepository extends JpaRepository<Meeting, UUID> {
 
     /**
      * Finds SCHEDULED meetings that have an explicit endAt and whose
-     * end time has passed.
+     * end time has passed, AND whose start time has also passed.
+     * The startAt guard prevents auto-completing a meeting that hasn't
+     * started yet (e.g. endAt set incorrectly to before startAt).
      */
     Optional<Meeting> findByQrToken(String qrToken);
 
-    List<Meeting> findByStatusAndEndAtLessThanEqual(
-            MeetingStatus status, LocalDateTime now);
+    @Query("""
+            SELECT m FROM Meeting m
+            WHERE m.status = :status
+              AND m.endAt IS NOT NULL
+              AND m.endAt <= :now
+              AND m.startAt <= :now
+            """)
+    List<Meeting> findByStatusAndEndAtLessThanEqualAndStarted(
+            @Param("status") MeetingStatus status,
+            @Param("now") LocalDateTime now);
 
     /**
      * Finds SCHEDULED meetings with NO explicit endAt (null) where the
      * startAt was more than defaultDurationHours hours ago.
      * Safety net so meetings never stay open indefinitely.
+     * startAt <= cutoff already implies the meeting has started.
      */
     @Query("""
             SELECT m FROM Meeting m

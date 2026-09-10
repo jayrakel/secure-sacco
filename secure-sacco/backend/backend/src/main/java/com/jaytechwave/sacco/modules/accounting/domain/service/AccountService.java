@@ -49,6 +49,12 @@ public class AccountService {
                 .collect(Collectors.toList());
     }
 
+    public AccountResponse getAccount(UUID id) {
+        return accountRepository.findById(id)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found."));
+    }
+
     @Transactional
     public AccountResponse updateAccount(UUID id, UpdateAccountRequest request) {
         Account account = accountRepository.findById(id)
@@ -58,9 +64,20 @@ public class AccountService {
             throw new IllegalStateException("Cannot deactivate a system account.");
         }
 
+        // Validate parent account if provided
+        if (request.parentAccountId() != null) {
+            if (request.parentAccountId().equals(id)) {
+                throw new IllegalArgumentException("An account cannot be its own parent.");
+            }
+            if (!accountRepository.existsById(request.parentAccountId())) {
+                throw new IllegalArgumentException("Parent account does not exist.");
+            }
+        }
+
         account.setAccountName(request.accountName());
         account.setDescription(request.description());
         account.setActive(request.isActive());
+        account.setParentAccountId(request.parentAccountId());
         account = accountRepository.save(account);
         securityAuditService.logEvent("ACCOUNT_UPDATED", account.getId().toString(), "Account updated: " + account.getAccountCode());
         return mapToResponse(account);

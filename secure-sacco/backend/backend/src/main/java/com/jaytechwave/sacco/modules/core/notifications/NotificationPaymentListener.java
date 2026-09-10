@@ -59,6 +59,18 @@ public class NotificationPaymentListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentCompleted(PaymentCompletedEvent event) {
         try {
+            // ROUTE: Loan Application Fee — skip generic deposit SMS, send fee-specific confirmation
+            if (event.accountReference() != null && event.accountReference().startsWith("LNFEE-")) {
+                Optional<Member> memberOpt = memberRepository.findById(event.memberId());
+                if (memberOpt.isEmpty()) {
+                    log.warn("NotificationPaymentListener: Member {} not found. Loan fee SMS skipped.", event.memberId());
+                    return;
+                }
+                String sanitized = sanitizeRef(event.receiptNumber());
+                sendLoanFeeSms(memberOpt.get(), event.amount(), sanitized, event.accountReference());
+                return;
+            }
+
             Optional<Member> memberOpt = memberRepository.findById(event.memberId());
             if (memberOpt.isEmpty()) {
                 log.warn("NotificationPaymentListener: Member {} not found. SMS skipped.", event.memberId());
@@ -110,12 +122,73 @@ public class NotificationPaymentListener {
                 log.warn("NotificationPaymentListener: Member {} not found. SMS skipped.", event.memberId());
                 return;
             }
-            
+
             String sanitized = sanitizeRef(event.receiptNumber());
+
+            // ROUTE: Loan Application Fee — skip generic deposit SMS, send fee-specific confirmation
+            if (event.accountReference() != null && event.accountReference().startsWith("LNFEE-")) {
+                sendLoanFeeSms(memberOpt.get(), event.amount(), sanitized, event.accountReference());
+                return;
+            }
+
             sendDepositSms(memberOpt.get(), event.amount(), sanitized, event.paymentId());
         } catch (Exception e) {
             log.error("NotificationPaymentListener: Failed to send SMS for PaymentReceiptUpdatedEvent. {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Sends the correct SMS for a loan application fee payment.
+     * Member receives a fee-received confirmation (not a savings deposit message).
+     * Admins are alerted with the deposit purpose clearly stated as "Loan Application Fee".
+     */
+    private void sendLoanFeeSms(Member member, BigDecimal amount, String receiptRef, String accountReference) {
+        String name = member.getFirstName();
+        if (name == null || name.isBlank()) name = "Member";
+
+        // Member SMS: fee confirmation (NOT savings balance)
+        String memberMessage = String.format(
+                "Dear %s, your loan application fee of KES %s has been received. Ref: %s. Your application is being processed. Thank you for choosing Betterlink Ventures SACCO.",
+                name, formatAmount(amount), receiptRef
+        );
+
+        String memberPhone = member.getPhoneNumber();
+        if (memberPhone != null && !memberPhone.isBlank()) {
+            log.info("NotificationPaymentListener: Sending loan fee confirmation SMS to Member {} (Phone: {}) Ref: {}",
+                    member.getMemberNumber(), memberPhone, receiptRef);
+            smsNotificationService.sendNotificationSms(memberPhone, memberMessage);
+        }
+
+        // Admin SMS: notify with purpose = Loan Application Fee
+        String fullName = buildFullName(member);
+        String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
+        String adminMessage = String.format(
+                "Dear BETTER LINK VENTURES LTD, you have received Ksh. %s from %s on %s for Loan Application Fee. MPESA Ref: %s.",
+                formatAmount(amount), fullName, dateStr, receiptRef
+        );
+
+        List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
+        log.info("NotificationPaymentListener: Sending admin loan-fee alerts to {} admins. Ref: {}", admins.size(), receiptRef);
+        for (User admin : admins) {
+            String adminPhone = admin.getPhoneNumber();
+            if (adminPhone != null && !adminPhone.isBlank()) {
+                smsNotificationService.sendNotificationSms(adminPhone, adminMessage);
+            }
+        }
+    }
+
+    private String buildFullName(Member member) {
+        if (member.getFirstName() != null && !member.getFirstName().trim().isEmpty()) {
+            String fullName = member.getFirstName().trim();
+            if (member.getLastName() != null && !member.getLastName().trim().isEmpty()) {
+                fullName += " " + member.getLastName().trim();
+            }
+            return fullName;
+        }
+        if (member.getMemberNumber() != null && !member.getMemberNumber().trim().isEmpty()) {
+            return "Member " + member.getMemberNumber().trim();
+        }
+        return "Customer";
     }
 
     private void sendDepositSms(Member member, BigDecimal amount, String receiptRef, UUID paymentId) {

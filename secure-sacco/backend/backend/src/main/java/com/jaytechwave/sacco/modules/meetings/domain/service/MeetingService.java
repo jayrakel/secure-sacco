@@ -92,6 +92,12 @@ public class MeetingService {
     @Transactional
     public MeetingSummaryResponse createMeeting(CreateMeetingRequest req, String creatorEmail) {
         User creator = userRepository.findByEmail(creatorEmail).orElseThrow();
+
+        // Guard: endAt must be after startAt if both are provided
+        if (req.startAt() != null && req.endAt() != null && !req.endAt().isAfter(req.startAt())) {
+            throw new IllegalArgumentException("End time must be after start time.");
+        }
+
         Meeting meeting = Meeting.builder()
                 .title(req.title())
                 .description(req.description())
@@ -130,6 +136,13 @@ public class MeetingService {
         if (req.startAt() != null)          meeting.setStartAt(req.startAt());
         if (req.endAt() != null)            meeting.setEndAt(req.endAt());
         if (req.lateAfterMinutes() != null) meeting.setLateAfterMinutes(req.lateAfterMinutes());
+
+        // Guard: endAt must be after the effective startAt
+        LocalDateTime effectiveStartAt = meeting.getStartAt();
+        LocalDateTime effectiveEndAt   = meeting.getEndAt();
+        if (effectiveStartAt != null && effectiveEndAt != null && !effectiveEndAt.isAfter(effectiveStartAt)) {
+            throw new IllegalArgumentException("End time must be after start time.");
+        }
 
         Meeting savedMeeting = meetingRepository.save(meeting);
         MeetingSummaryResponse response = toSummary(savedMeeting);

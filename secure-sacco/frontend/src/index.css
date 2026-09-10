@@ -4,6 +4,9 @@
 /* 2. Import the animation plugin used by your modal */
 @plugin "tailwindcss-animate";
 
+/* Disable automatic dark mode (use class strategy) to fix UI inconsistencies */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* 3. Define the custom animation theme variable */
 @theme {
   --animate-blob: blob 7s infinite;

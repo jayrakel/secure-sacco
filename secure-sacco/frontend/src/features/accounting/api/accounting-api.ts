@@ -84,6 +84,13 @@ export interface CreateAccountRequest {
     parentAccountId?: string | null;
 }
 
+export interface UpdateAccountRequest {
+    accountName: string;
+    description?: string;
+    isActive: boolean;
+    parentAccountId?: string | null;
+}
+
 export const accountingApi = {
     getAccounts: async (): Promise<Account[]> => {
         const response = await apiClient.get<Account[]>('/accounting/accounts');
@@ -92,6 +99,11 @@ export const accountingApi = {
 
     createAccount: async (request: CreateAccountRequest): Promise<Account> => {
         const response = await apiClient.post<Account>('/accounting/accounts', request);
+        return response.data;
+    },
+
+    updateAccount: async (id: string, request: UpdateAccountRequest): Promise<Account> => {
+        const response = await apiClient.put<Account>(`/accounting/accounts/${id}`, request);
         return response.data;
     },
 

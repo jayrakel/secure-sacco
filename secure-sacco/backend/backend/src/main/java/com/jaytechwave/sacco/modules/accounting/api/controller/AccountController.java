@@ -32,6 +32,13 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAllAccounts());
     }
 
+    /** Get a single GL account by ID. Requires ACCOUNTING_READ. */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ACCOUNTING_READ')")
+    public ResponseEntity<AccountResponse> getAccount(@PathVariable UUID id) {
+        return ResponseEntity.ok(accountService.getAccount(id));
+    }
+
     /** Edit a GL account. Requires ACCOUNTING_WRITE. */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ACCOUNTING_WRITE')")

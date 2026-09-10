@@ -51,8 +51,8 @@ public class MeetingAutoCompleteJob {
 
         List<Meeting> toComplete = new ArrayList<>();
 
-        // Case 1: meetings with explicit endAt that has passed
-        toComplete.addAll(meetingRepository.findByStatusAndEndAtLessThanEqual(
+        // Case 1: meetings with explicit endAt that has passed (AND the meeting has started)
+        toComplete.addAll(meetingRepository.findByStatusAndEndAtLessThanEqualAndStarted(
                 MeetingStatus.SCHEDULED, now));
 
         // Case 2: meetings with no endAt, started more than DEFAULT_DURATION_HOURS ago
