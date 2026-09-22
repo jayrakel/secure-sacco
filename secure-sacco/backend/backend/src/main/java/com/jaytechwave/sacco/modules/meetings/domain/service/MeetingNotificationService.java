@@ -85,7 +85,7 @@ public class MeetingNotificationService {
                 baseMessage = String.format("%s %s, please note the updated details for the  meeting: it will now be held %s at %s. Regards, %s", 
                         timeOfDayGreeting, firstName, datePhrase, formattedTime, signature);
             } else {
-                baseMessage = String.format("%s %s, we will be holding a  %s, at %s, make an effort to attend. Regards, %s", 
+                baseMessage = String.format("%s %s, we will be holding our  %s, at %s, make an effort to attend. Regards, %s",
                         timeOfDayGreeting, firstName, datePhrase, formattedTime, signature);
             }
 
@@ -98,7 +98,7 @@ public class MeetingNotificationService {
                     baseMessage = String.format("%s Member, please note the updated details for the  meeting: it will now be held %s at %s. Regards, %s", 
                             timeOfDayGreeting, datePhrase, formattedTime, signature);
                 } else {
-                    baseMessage = String.format("%s Member, we will be holding a  %s, at %s, make an effort to attend. Regards, %s", 
+                    baseMessage = String.format("%s Member, we will be holding our  %s, at %s, make an effort to attend. Regards, %s",
                             timeOfDayGreeting, datePhrase, formattedTime, signature);
                 }
                 allowedTitleLength = 158 - baseMessage.length();
@@ -115,7 +115,7 @@ public class MeetingNotificationService {
                 finalMessage = String.format("%s %s, please note the updated details for the %s meeting: it will now be held %s at %s. Regards, %s", 
                         timeOfDayGreeting, firstName.length() + safeTitle.length() > allowedTitleLength + firstName.length() ? "Member" : firstName, safeTitle, datePhrase, formattedTime, signature);
             } else {
-                finalMessage = String.format("%s %s, we will be holding a %s %s, at %s, make an effort to attend. Regards, %s", 
+                finalMessage = String.format("%s %s, we will be holding our  %s %s, at %s, make an effort to attend. Regards, %s",
                         timeOfDayGreeting, firstName.length() + safeTitle.length() > allowedTitleLength + firstName.length() ? "Member" : firstName, safeTitle, datePhrase, formattedTime, signature);
             }
 

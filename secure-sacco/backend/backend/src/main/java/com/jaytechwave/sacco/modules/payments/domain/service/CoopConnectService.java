@@ -74,23 +74,23 @@ public class CoopConnectService {
         RestClient.Builder builder = RestClient.builder()
                 .requestInterceptor(new CoopHttpLogger());
 
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(15000); // 15 seconds
+        factory.setReadTimeout(60000);    // 60 seconds
+
         if (props.getProxyHost() != null && !props.getProxyHost().isBlank()) {
             java.net.InetSocketAddress proxyAddress =
                     new java.net.InetSocketAddress(props.getProxyHost(), props.getProxyPort());
             java.net.Proxy proxy = new java.net.Proxy(java.net.Proxy.Type.HTTP, proxyAddress);
-
-            org.springframework.http.client.SimpleClientHttpRequestFactory factory =
-                    new org.springframework.http.client.SimpleClientHttpRequestFactory();
             factory.setProxy(proxy);
-            factory.setConnectTimeout(15000); // 15 seconds
-            factory.setReadTimeout(30000);    // 30 seconds
-            builder.requestFactory(factory);
 
             log.info("Co-op Connect: routing via proxy {}:{}", props.getProxyHost(), props.getProxyPort());
         } else {
             log.info("Co-op Connect: no proxy configured — connecting directly");
         }
 
+        builder.requestFactory(factory);
         this.restClient = builder.build();
     }
 
