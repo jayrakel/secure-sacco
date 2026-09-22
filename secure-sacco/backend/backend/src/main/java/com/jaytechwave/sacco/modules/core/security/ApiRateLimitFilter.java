@@ -113,9 +113,9 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ── 1. Endpoint-specific limits (wins on first prefix match) ──────────
+        // ── 1. Endpoint-specific limits (exact match) ──────────
         for (Map.Entry<String, RateLimit> entry : ENDPOINT_LIMITS.entrySet()) {
-            if (path.startsWith(entry.getKey())) {
+            if (path.equals(entry.getKey())) {
                 RateLimit limit = entry.getValue();
                 String key = "rl:endpoint:" + userIdentifier + ":" + entry.getKey();
                 if (isRateLimited(key, limit.maxRequests(), limit.window(), response)) return;
