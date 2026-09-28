@@ -6,9 +6,9 @@ import { dashboardApi, type MemberDashboardDTO } from '../api/dashboard-api';
 import { meetingsApi } from '../../meetings/api/meetings-api';
 import { PaymentModal } from '../../payments/components/PaymentModal';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
+import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';
 import {
-
-import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';    PiggyBank, Coins, AlertCircle, CalendarClock, CreditCard,
+    PiggyBank, Coins, AlertCircle, CalendarClock, CreditCard,
     ChevronRight, CheckCircle2, Clock, ArrowUpRight, TrendingUp,
     RefreshCw, ShieldCheck, ArrowDownCircle, UserCheck, FileText,
     ShieldAlert, Banknote, BarChart3,
