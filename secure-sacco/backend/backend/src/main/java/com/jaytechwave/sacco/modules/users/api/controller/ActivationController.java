@@ -26,8 +26,8 @@ public class ActivationController {
     @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmailLink(@RequestBody Map<String, String> payload) {
         // Just ensures the token exists and isn't expired when the React page loads
-        activationService.verifyActivationLink(payload.get("token"));
-        return ResponseEntity.ok(Map.of("message", "Activation link is valid."));
+        String email = activationService.verifyActivationLink(payload.get("token"));
+        return ResponseEntity.ok(Map.of("message", "Activation link is valid.", "email", email));
     }
 
     @Operation(summary = "Complete account activation", description = "Sets the user's password using a valid email token + OTP pair.")

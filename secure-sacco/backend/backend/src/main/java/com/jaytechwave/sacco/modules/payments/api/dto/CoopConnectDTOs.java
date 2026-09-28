@@ -41,7 +41,7 @@ public class CoopConnectDTOs {
         private String narration;
 
         @JsonProperty("Amount")
-        private BigDecimal amount;
+        private Integer amount;
 
         @JsonProperty("MessageDateTime")
         private String messageDateTime;

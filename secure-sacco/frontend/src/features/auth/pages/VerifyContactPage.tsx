@@ -41,6 +41,10 @@ const VerifyContactPage: React.FC = () => {
     const [emailToken, setEmailToken] = useState('');
     const [emailDone, setEmailDone] = useState(user?.emailVerified ?? false);
 
+    const [phoneSent, setPhoneSent] = useState(false);
+    const [phoneToken, setPhoneToken] = useState('');
+    const [phoneDone, setPhoneDone] = useState(user?.phoneVerified ?? false);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
@@ -90,6 +94,19 @@ const VerifyContactPage: React.FC = () => {
         setSuccessMsg('Email verified ✓');
     });
 
+    const sendPhone = () => act(async () => {
+        await setupApi.sendPhoneOtp();
+        setPhoneSent(true);
+        setSuccessMsg('Verification code sent — check your phone SMS.');
+    });
+
+    const confirmPhone = () => act(async () => {
+        await setupApi.confirmPhone(phoneToken.trim());
+        setPhoneDone(true);
+        await refreshUser();
+        setSuccessMsg('Phone verified ✓');
+    });
+
     const handleContinue = async () => {
         await refreshUser();
         navigate('/dashboard', { replace: true });
@@ -106,7 +123,7 @@ const VerifyContactPage: React.FC = () => {
                     </div>
                     <h1 className="text-4xl font-bold mb-4 tracking-tight">One Last Step</h1>
                     <p className="text-slate-400 text-lg max-w-md mx-auto leading-relaxed">
-                        Verify your email address to secure your account and complete your setup.
+                        Verify your email address and phone number to secure your account and complete your setup.
                     </p>
                 </div>
                 <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -125,7 +142,7 @@ const VerifyContactPage: React.FC = () => {
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800">Verify Your Contacts</h2>
                         <p className="text-slate-500 text-sm mt-1">
-                            Confirm your email address to access the portal.
+                            Confirm your email address and phone number to access the portal.
                         </p>
                     </div>
 
@@ -196,22 +213,63 @@ const VerifyContactPage: React.FC = () => {
                             )}
                         </div>
 
-                        {/* ── Phone card — disabled until Africa's Talking is configured ── */}
-                        <div className="rounded-2xl border-2 border-slate-100 bg-slate-50 p-5">
-                            <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-slate-300" />
-                                <span className="font-semibold text-slate-400 text-sm">Phone Number</span>
-                                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-lg">
-                                    Coming soon
-                                </span>
+                        {/* ── Phone card ──────────────────────────────────── */}
+                        <div className={`rounded-2xl border-2 p-5 transition-all ${
+                            phoneDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 bg-white'
+                        }`}>
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <Phone className={`w-4 h-4 ${phoneDone ? 'text-emerald-500' : 'text-slate-400'}`} />
+                                    <span className="font-semibold text-slate-900 text-sm">Phone Number</span>
+                                    {user?.phoneNumber && (
+                                        <code className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
+                                            {user.phoneNumber}
+                                        </code>
+                                    )}
+                                </div>
+                                {phoneDone && (
+                                    <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
+                                        Verified ✓
+                                    </span>
+                                )}
                             </div>
-                            <p className="text-xs text-slate-400 mt-2">
-                                SMS verification will be enabled in a future update.
-                            </p>
+
+                            {!phoneDone && (
+                                <div className="space-y-3">
+                                    {!phoneSent ? (
+                                        <button onClick={sendPhone} disabled={loading} className={btnPrimary}>
+                                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
+                                            Send Verification SMS
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <input
+                                                value={phoneToken}
+                                                onChange={e => setPhoneToken(e.target.value)}
+                                                className={inp}
+                                                placeholder="Enter the 6-digit OTP..."
+                                                maxLength={6}
+                                            />
+                                            <button
+                                                onClick={confirmPhone}
+                                                disabled={loading || !phoneToken.trim()}
+                                                className={btnPrimary}
+                                            >
+                                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {phoneSent && (
+                                        <button onClick={sendPhone} disabled={loading} className={btnGhost}>
+                                            <RefreshCw className="w-3 h-3" /> Resend SMS
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
-                        {/* ── Continue — shown once email is verified ──────── */}
-                        {emailDone && (
+                        {/* ── Continue — shown once email and phone are verified ──────── */}
+                        {emailDone && phoneDone && (
                             <button
                                 onClick={handleContinue}
                                 className="w-full flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-sm bg-slate-900 text-white hover:bg-emerald-600 transition-colors"

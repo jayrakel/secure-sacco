@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 
+import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';
 export default function UserListPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
@@ -250,7 +251,7 @@ export default function UserListPage() {
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden">
                                                 {user.profilePhotoUrl ? (
-                                                    <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                    <AuthenticatedImage src={user.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <>{user.firstName[0]}{user.lastName[0]}</>
                                                 )}

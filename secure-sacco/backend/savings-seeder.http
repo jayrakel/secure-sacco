@@ -3,12 +3,12 @@
 ### ============================================================
 
 # @no-cookie-jar
-POST https://betterlinkventureslimited.co.ke/api/v1/auth/login
+POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "identifier": "admin@betterlinkventureslimited.co.ke",
-  "password": "Michira._2000"
+  "identifier": "jaytechwavesolutions@gmail.com",
+  "password": "S@cc0_.Adm!n123"
 }
 
 > {%
@@ -23,7 +23,7 @@ Content-Type: application/json
     }
     if (xsrf) client.global.set("csrf_token", xsrf);
     if (session) client.global.set("sacco_cookie", "XSRF-TOKEN=" + xsrf + "; SACCO_SESSION=" + session);
-    client.global.set("api_url", "https://betterlinkventureslimited.co.ke");
+    client.global.set("api_url", "http://localhost:8080");
 %}
 
 ### ============================================================

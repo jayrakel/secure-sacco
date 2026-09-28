@@ -1,6 +1,7 @@
 package com.jaytechwave.sacco.modules.users.domain.service;
 
 import com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService;
+import com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.entity.UserStatus;
 import com.jaytechwave.sacco.modules.users.domain.entity.VerificationToken;
@@ -27,6 +28,7 @@ public class UserActivationService {
     private final VerificationTokenRepository tokenRepository;
     private final PasswordEncoder             passwordEncoder;
     private final EmailNotificationService    emailNotificationService;
+    private final SmsNotificationService      smsNotificationService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -47,13 +49,15 @@ public class UserActivationService {
      * Validates the email token when the user first clicks the link from their email.
      */
     @Transactional(readOnly = true)
-    public void verifyActivationLink(String tokenString) {
+    public String verifyActivationLink(String tokenString) {
         VerificationToken token = tokenRepository.findByTokenAndTokenTypeAndIsUsedFalse(tokenString, VerificationTokenType.EMAIL_ACTIVATION)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired activation link."));
 
         if (token.getExpiryDate().isBefore(ZonedDateTime.now())) {
             throw new IllegalArgumentException("Activation link has expired. Please contact support.");
         }
+        
+        return token.getUser().getEmail();
     }
 
     /**
@@ -113,10 +117,12 @@ public class UserActivationService {
                 .expiryDate(ZonedDateTime.now().plusMinutes(10)).build();
         tokenRepository.save(token);
 
-        // 📱 SMS delivery deferred to v2 — integrate Africa's Talking / Twilio here.
-        // OTP is included in the activation email (sendActivationEmail) as a fallback for v1.
-        log.info("📢 [SMS-PENDING] OTP generated for {} — delivered via activation email until SMS provider is configured.",
-                user.getEmail());
+        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+            smsNotificationService.sendOtp(user.getPhoneNumber(), code);
+            log.info("📢 OTP generated and dispatched via SMS for {}", user.getEmail());
+        } else {
+            log.warn("📢 Cannot send OTP SMS for {} — no phone number registered.", user.getEmail());
+        }
     }
 
     private void generateEmailToken(User user) {

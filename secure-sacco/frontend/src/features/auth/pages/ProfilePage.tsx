@@ -8,6 +8,7 @@ import {
     AlertTriangle, Key, XCircle, Loader2, Clock, Trash2,
     Edit3, Save, X, RefreshCw, Eye, EyeOff, Camera, Upload
 } from 'lucide-react';
+import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';
 
 const errMsg = (err: unknown, fallback: string): string =>
     (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback;
@@ -100,10 +101,11 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
                 <div className="relative group shrink-0">
                     <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-slate-100 shadow-md">
                         {user?.profilePhotoUrl ? (
-                            <img
+                            <AuthenticatedImage
                                 src={`${user.profilePhotoUrl}?t=${photoTimestamp}`}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
+                                fallback={`${(user?.firstName?.[0] ?? '?').toUpperCase()}${(user?.lastName?.[0] ?? '').toUpperCase()}`}
                             />
                         ) : (
                             `${(user?.firstName?.[0] ?? '?').toUpperCase()}${(user?.lastName?.[0] ?? '').toUpperCase()}`
