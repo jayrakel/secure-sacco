@@ -24,6 +24,17 @@ export default function LoginPage() {
     const [showResend, setShowResend] = useState(false);
     const [resendStatus, setResendStatus] = useState('');
 
+    // Saved Accounts for Dropdown
+    const [savedAccounts, setSavedAccounts] = useState<string[]>([]);
+    const [showAccountsDropdown, setShowAccountsDropdown] = useState(false);
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem('recent_accounts');
+            if (stored) setSavedAccounts(JSON.parse(stored));
+        } catch { /* ignore */ }
+    }, []);
+
     // SACCO branding — seeded from localStorage cache (same key SettingsProvider writes)
     // so returning users see the real branding instantly, with no hardcoded placeholder flash.
     const [saccoName, setSaccoName] = useState<string>(() => {
@@ -111,6 +122,12 @@ export default function LoginPage() {
 
             // 3. Normal Login Success Flow — use returned user to decide where to go
             const userData = await refreshUser();
+
+            // Save the account identifier to local storage
+            const updatedAccounts = Array.from(new Set([identifier.trim(), ...savedAccounts])).slice(0, 5);
+            setSavedAccounts(updatedAccounts);
+            localStorage.setItem('recent_accounts', JSON.stringify(updatedAccounts));
+
             navigate(userData?.mustChangePassword ? '/change-password' : redirectTo);
 
         } catch (err: unknown) {
@@ -334,9 +351,34 @@ export default function LoginPage() {
                                             required
                                             className="w-full border border-slate-300 p-3 pl-10 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none transition"
                                             value={identifier}
-                                            onChange={e => setIdentifier(e.target.value)}
+                                            onFocus={() => setShowAccountsDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowAccountsDropdown(false), 200)}
+                                            onChange={e => {
+                                                setIdentifier(e.target.value);
+                                                setShowAccountsDropdown(true);
+                                            }}
                                             placeholder="admin@jaytechwave.org or +254..."
+                                            autoComplete="off"
                                         />
+                                        {showAccountsDropdown && savedAccounts.filter(acc => acc.toLowerCase().includes(identifier.toLowerCase())).length > 0 && (
+                                            <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                                                {savedAccounts
+                                                    .filter(acc => acc.toLowerCase().includes(identifier.toLowerCase()))
+                                                    .map((acc, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 border-b last:border-0 border-slate-100 flex items-center gap-2"
+                                                        onClick={() => {
+                                                            setIdentifier(acc);
+                                                            setShowAccountsDropdown(false);
+                                                        }}
+                                                    >
+                                                        <Mail className="w-4 h-4 text-slate-400" />
+                                                        {acc}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div>

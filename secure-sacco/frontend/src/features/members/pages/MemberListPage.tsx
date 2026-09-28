@@ -5,6 +5,7 @@ import HasPermission from '../../../shared/components/HasPermission';
 import CreateMemberModal from '../components/CreateMemberModal';
 import { Search, UserPlus, Filter } from 'lucide-react';
 
+import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';
 const statusStyle = (status: string) => {
     if (status === 'ACTIVE')    return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (status === 'INACTIVE')  return 'bg-slate-100 text-slate-700 border-slate-200';
@@ -155,7 +156,7 @@ const MemberListPage: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden shrink-0">
                                                 {member.profilePhotoUrl ? (
-                                                    <img src={member.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                    <AuthenticatedImage src={member.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <>{member.firstName[0]}{member.lastName[0]}</>
                                                 )}
@@ -208,7 +209,7 @@ const MemberListPage: React.FC = () => {
                                         <div className="flex items-center gap-3 min-w-0 flex-1">
                                             <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border border-emerald-200 overflow-hidden shrink-0">
                                                 {member.profilePhotoUrl ? (
-                                                    <img src={member.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                    <AuthenticatedImage src={member.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <>{member.firstName[0]}{member.lastName[0]}</>
                                                 )}

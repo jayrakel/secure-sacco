@@ -47,7 +47,10 @@ const ActivationPage: React.FC = () => {
 
         const verifyToken = async () => {
             try {
-                await authApi.verifyActivationEmail(token);
+                const response = await authApi.verifyActivationEmail(token);
+                if (response.email) {
+                    setOtpEmail(response.email);
+                }
                 setStep('OTP_ENTRY');
             } catch (err: unknown) {
                 const msg: string = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || 'Token is invalid or has expired.';

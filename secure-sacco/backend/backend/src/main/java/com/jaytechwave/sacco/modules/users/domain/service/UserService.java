@@ -175,11 +175,8 @@ public class UserService {
     public void uploadProfilePhoto(UUID id, MultipartFile photo) throws IOException {
         User user = getUserEntityById(id);
         user.setProfilePhoto(photo.getBytes());
-        String profilePhotoUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/v1/users/")
-                .path(id.toString())
-                .path("/profile-photo")
-                .toUriString();
+        // Save relative path so it works across localhost, mobile, and prod environments
+        String profilePhotoUrl = "/api/v1/users/" + id.toString() + "/profile-photo";
         user.setProfilePhotoUrl(profilePhotoUrl);
         userRepository.save(user);
 

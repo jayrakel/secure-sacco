@@ -16,6 +16,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { format } from 'date-fns';
 
+import { AuthenticatedImage } from '../../shared/components/AuthenticatedImage';
 const PAGE_LABELS: Record<string, string> = {
     '/dashboard':                  'Dashboard',
     '/users':                      'User Management',
@@ -155,7 +156,7 @@ export const DashboardLayout = () => {
                                         </div>
                                         <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold border border-emerald-200 uppercase shrink-0">
                                             {user.profilePhotoUrl ? (
-                                                <img src={user.profilePhotoUrl} alt="profile" className="w-full h-full rounded-full object-cover" />
+                                                <AuthenticatedImage src={user.profilePhotoUrl} alt="profile" className="w-full h-full rounded-full object-cover" />
                                             ) : (
                                                 `${user.firstName?.[0]}${user.lastName?.[0]}`
                                             )}

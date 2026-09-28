@@ -112,7 +112,7 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
 
         // Phone verification is currently disabled in the system.
         // Once Africa's Talking is integrated, we will uncomment the block below.
-        /*
+        
         if (!user.isPhoneVerified()) {
             log.warn("User {} accessed {} before phone verification (phoneVerified={}).",
                     auth.getName(), path, user.isPhoneVerified());
@@ -124,7 +124,7 @@ public class ContactVerificationFilter extends OncePerRequestFilter {
             );
             return;
         }
-        */
+        
 
         chain.doFilter(request, response);
     }

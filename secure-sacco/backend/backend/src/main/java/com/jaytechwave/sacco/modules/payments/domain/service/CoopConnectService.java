@@ -271,7 +271,7 @@ public class CoopConnectService {
                     .transactionCurrency("KES")
                     .mobileNumber(phoneNumber)
                     .narration(narration)
-                    .amount(amount)
+                    .amount(amount.intValue())
                     .messageDateTime(messageDateTime)
                     // SAC-257: AccountRef must be the member's account reference (member number),
                     // not the transaction message reference.

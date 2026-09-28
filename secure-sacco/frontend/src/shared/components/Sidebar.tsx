@@ -9,6 +9,7 @@ import {
 import { useState, useMemo, useEffect } from 'react';
 import { paymentProductsApi } from '../../features/paymentproducts/api/payment-products-api';
 
+import { AuthenticatedImage } from '../../shared/components/AuthenticatedImage';
 interface NavItem {
     label: string;
     path?: string;
@@ -337,7 +338,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                         <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg bg-slate-800/50">
                             <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-xs font-bold shrink-0 uppercase overflow-hidden">
                                 {user?.profilePhotoUrl ? (
-                                    <img src={user.profilePhotoUrl} alt="profile" className="w-full h-full object-cover" />
+                                    <AuthenticatedImage src={user.profilePhotoUrl} alt="profile" className="w-full h-full object-cover" />
                                 ) : (
                                     `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`
                                 )}

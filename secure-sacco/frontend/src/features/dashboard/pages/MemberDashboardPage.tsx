@@ -6,6 +6,7 @@ import { dashboardApi, type MemberDashboardDTO } from '../api/dashboard-api';
 import { meetingsApi } from '../../meetings/api/meetings-api';
 import { PaymentModal } from '../../payments/components/PaymentModal';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
+import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';
 import {
     PiggyBank, Coins, AlertCircle, CalendarClock, CreditCard,
     ChevronRight, CheckCircle2, Clock, ArrowUpRight, TrendingUp,
@@ -113,7 +114,7 @@ const MemberDashboardPage: React.FC = () => {
                         <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-5 flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-lg uppercase border-2 border-white/20 overflow-hidden shrink-0">
                                 {user?.profilePhotoUrl ? (
-                                    <img src={user?.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                    <AuthenticatedImage src={user?.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
                                     <>{user?.firstName?.[0]}{user?.lastName?.[0]}</>
                                 )}
@@ -176,7 +177,7 @@ const MemberDashboardPage: React.FC = () => {
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold border-2 border-emerald-200 overflow-hidden shrink-0 shadow-sm">
                             {user?.profilePhotoUrl ? (
-                                <img src={user?.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                <AuthenticatedImage src={user?.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
                                 <span className="text-xl">{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
                             )}
