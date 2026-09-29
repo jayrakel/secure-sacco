@@ -20,7 +20,7 @@ export default function MyGuarantorRequestsPage() {
             const data = await loanApi.getMyGuarantorRequests();
             setRequests(data);
             setError('');
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to fetch guarantor requests:', err);
             setError('Failed to load guarantor requests. Please try again.');
         } finally {
@@ -38,9 +38,10 @@ export default function MyGuarantorRequestsPage() {
             await loanApi.respondToGuarantorRequest(applicationId, guarantorId, status);
             showToast(true, `Request ${status.toLowerCase()} successfully`);
             fetchRequests();
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to respond to request:', err);
-            showToast(false, err.response?.data?.message || 'Failed to respond to request');
+            const axiosError = err as { response?: { data?: { message?: string } } };
+            showToast(false, axiosError.response?.data?.message || 'Failed to respond to request');
         } finally {
             setProcessingId(null);
         }
