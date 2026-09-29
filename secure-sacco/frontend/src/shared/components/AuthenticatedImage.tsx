@@ -28,6 +28,11 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({ src, fal
             }
         }
 
+        // Prevent double /api/v1 prefix since apiClient baseURL is already /api/v1
+        if (fetchUrl.startsWith('/api/v1')) {
+            fetchUrl = fetchUrl.replace(/^\/api\/v1/, '');
+        }
+
         apiClient.get(fetchUrl, { responseType: 'blob' })
             .then(response => {
                 if (isMounted) {

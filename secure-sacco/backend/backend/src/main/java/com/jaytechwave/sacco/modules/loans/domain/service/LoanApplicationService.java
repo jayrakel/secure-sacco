@@ -921,6 +921,16 @@ public class LoanApplicationService {
         String memberNumber = member != null ? member.getMemberNumber() : "";
         String memberName = member != null ? member.getFirstName() + " " + member.getLastName() : "";
 
+        // Fetch guarantors
+        List<LoanGuarantor> guarantors = loanGuarantorRepository.findByLoanApplicationId(application.getId());
+        List<GuarantorResponse> guarantorResponses = guarantors.stream()
+                .map(g -> {
+                    Member gMember = memberRepository.findById(g.getGuarantorMemberId()).orElse(null);
+                    return gMember != null ? mapToGuarantorResponse(g, gMember) : null;
+                })
+                .filter(g -> g != null)
+                .toList();
+
         return new LoanApplicationResponse(
                 application.getId(),
                 application.getMemberId(),
@@ -938,7 +948,7 @@ public class LoanApplicationService {
                 application.getPurpose(),
                 application.getReferenceNotes(),
                 application.getCreatedAt(),
-                List.of() // Remove getGuarantors() call, or implement if needed
+                guarantorResponses
         );
     }
 
