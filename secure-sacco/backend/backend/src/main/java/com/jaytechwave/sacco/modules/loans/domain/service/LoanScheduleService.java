@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -29,8 +30,10 @@ public class LoanScheduleService {
         int termWeeks = application.getTermWeeks();
         int gracePeriod = application.getLoanProduct().getGracePeriodDays();
 
-        // Schedule starts ticking after grace period
-        LocalDate scheduleStartDate = application.getDisbursedAt().toLocalDate().plusDays(gracePeriod);
+        // Schedule starts ticking after grace period, starting from cheque cleared date (if cheque was issued)
+        // or disbursedAt (if cash/other transfer)
+        LocalDateTime startDate = application.getChequeClearedDate() != null ? application.getChequeClearedDate() : application.getDisbursedAt();
+        LocalDate scheduleStartDate = startDate.toLocalDate().plusDays(gracePeriod);
 
         BigDecimal principal = application.getPrincipalAmount();
 

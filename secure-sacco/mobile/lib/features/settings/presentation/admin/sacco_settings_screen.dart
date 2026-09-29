@@ -8,6 +8,7 @@ import 'tabs/security_settings_tab.dart';
 import 'tabs/communication_settings_tab.dart';
 import 'tabs/feature_flags_tab.dart';
 import 'tabs/schedules_settings_tab.dart';
+import 'tabs/loans_settings_tab.dart';
 
 class SaccoSettingsScreen extends ConsumerWidget {
   const SaccoSettingsScreen({super.key});
@@ -17,7 +18,7 @@ class SaccoSettingsScreen extends ConsumerWidget {
     final settingsAsync = ref.watch(saccoSettingsProvider);
 
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -35,6 +36,7 @@ class SaccoSettingsScreen extends ConsumerWidget {
               Tab(text: 'Security & Access'),
               Tab(text: 'Communication'),
               Tab(text: 'Schedules & Meetings'),
+              Tab(text: 'Loans'),
               Tab(text: 'Feature Flags'),
             ],
           ),
@@ -47,6 +49,7 @@ class SaccoSettingsScreen extends ConsumerWidget {
                 SecuritySettingsTab(settings: settings),
                 CommunicationSettingsTab(settings: settings),
                 SchedulesSettingsTab(settings: settings),
+                LoansSettingsTab(settings: settings),
                 FeatureFlagsTab(settings: settings),
               ],
             );

@@ -161,4 +161,44 @@ public class SaccoSettingsDTOs {
         @Max(value = 168, message = "Lead time cannot exceed 7 days (168 hours)")
         private Integer meetingNotificationLeadHours;
     }
+
+    // ── Loans update ─────────────────────────────────────────────────────────
+
+    @Data
+    public static class UpdateLoansRequest {
+        @NotNull(message = "Minimum savings to borrow is required")
+        @DecimalMin(value = "0.0", message = "Cannot be negative")
+        private BigDecimal minSavingsToBorrow;
+
+        @NotNull(message = "Minimum membership months is required")
+        @Min(value = 0)
+        private Integer minMembershipMonths;
+
+        @NotNull(message = "Borrowing multiplier is required")
+        @Min(value = 0)
+        private Double borrowingMultiplier;
+
+        @NotNull(message = "Max credit score multiplier is required")
+        @Min(value = 0)
+        private Double maxCreditScoreMultiplier;
+
+        @NotNull(message = "Minimum guarantors count is required")
+        @Min(value = 0)
+        private Integer minGuarantorsCount;
+
+        @NotNull(message = "Guarantor capacity percentage is required")
+        @Min(value = 0)
+        @Max(value = 100)
+        private Double guarantorCapacityPct;
+
+        @NotNull(message = "Processing fee is required")
+        @DecimalMin(value = "0.0", message = "Cannot be negative")
+        private BigDecimal processingFee;
+
+        @NotNull(message = "Shares count towards borrowing toggle is required")
+        private Boolean sharesCountBorrowing;
+
+        @NotNull(message = "Shares count towards guarantor capacity toggle is required")
+        private Boolean sharesCountGuarantor;
+    }
 }

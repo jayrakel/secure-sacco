@@ -103,6 +103,16 @@ public class LoanDTOs {
             BigDecimal guaranteedAmount
     ) {}
 
+    public record RespondGuarantorRequest(
+            @NotBlank(message = "Response status is required")
+            String status
+    ) {}
+    
+    public record NominateDisburserRequest(
+            @NotNull(message = "Nominated member ID is required")
+            UUID nominatedMemberId
+    ) {}
+
     public record GuarantorResponse(
             UUID id,
             UUID guarantorMemberId,
@@ -170,8 +180,15 @@ public class LoanDTOs {
             @NotNull(message = "New term weeks is required")
             @Min(value = 1, message = "New term weeks must be at least 1")
             Integer newTermWeeks,
-            @NotBlank(message = "Reference number is required")
             String referenceNumber,
             java.time.LocalDate historicalDateOverride
+    ) {}
+
+    public record LoanEligibilityResponse(
+            boolean isEligible,
+            String ineligibilityReason,
+            int creditScore,
+            int starRating,
+            BigDecimal maxBorrowingLimit
     ) {}
 }

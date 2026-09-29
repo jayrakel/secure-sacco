@@ -44,4 +44,27 @@ public class CloudinaryUploadService {
             throw new RuntimeException("Failed to upload photo: " + e.getMessage(), e);
         }
     }
+
+    public PhotoUploadResponse uploadChequePhoto(MultipartFile file) {
+        if (cloudinary == null) {
+            throw new UnsupportedOperationException(
+                    "Cloudinary is not configured. Set CLOUDINARY_URL in Doppler/environment.");
+        }
+        try {
+            var result = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder",          "sacco/cheques",
+                            "resource_type",   "image"
+                    )
+            );
+            String url      = (String) result.get("secure_url");
+            String publicId = (String) result.get("public_id");
+            log.info("Cloudinary cheque upload success: publicId={}", publicId);
+            return new PhotoUploadResponse(url, publicId);
+        } catch (Exception e) {
+            log.error("Cloudinary cheque upload failed: {}", e.getMessage());
+            throw new RuntimeException("Failed to upload cheque photo: " + e.getMessage(), e);
+        }
+    }
 }

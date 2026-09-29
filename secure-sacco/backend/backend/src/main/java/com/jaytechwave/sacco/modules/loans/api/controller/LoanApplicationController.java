@@ -45,6 +45,13 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.createApplication(request, authentication.getName()));
     }
 
+    @Operation(summary = "Check loan eligibility", description = "Checks if the logged-in member is eligible to apply for a loan and returns their dynamic maximum borrowing limit.")
+    @GetMapping("/eligibility")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<LoanEligibilityResponse> checkEligibility(Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.checkEligibility(authentication.getName()));
+    }
+
     @PostMapping("/{id}/pay-fee")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<InitiateStkResponse> payApplicationFee(
@@ -71,6 +78,17 @@ public class LoanApplicationController {
             Authentication authentication) {
         loanApplicationService.removeGuarantor(id, guarantorId, authentication.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Respond to guarantor request", description = "Allows a guarantor to ACCEPT or REJECT a guarantorship request.")
+    @PatchMapping("/{id}/guarantors/{guarantorId}/respond")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<GuarantorResponse> respondToGuarantorRequest(
+            @PathVariable UUID id,
+            @PathVariable UUID guarantorId,
+            @Valid @RequestBody RespondGuarantorRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.respondToGuarantorRequest(id, guarantorId, request, authentication.getName()));
     }
 
     @GetMapping("/{id}/guarantors")
@@ -179,5 +197,35 @@ public class LoanApplicationController {
             @Valid @RequestBody LoanDTOs.RefinanceRequest request,
             Authentication authentication) {
         return ResponseEntity.ok(loanApplicationService.refinanceLoan(request, authentication.getName()));
+    }
+
+    @Operation(summary = "Nominate member for disbursement", description = "Chairman nominates a member to sign the cheque.")
+    @PatchMapping("/{id}/nominate-disburser")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_CHAIRMAN')")
+    public ResponseEntity<LoanApplicationResponse> nominateDisburser(
+            @PathVariable UUID id,
+            @Valid @RequestBody NominateDisburserRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.nominateDisburser(id, request, authentication.getName()));
+    }
+
+    @Operation(summary = "Approve disbursement", description = "Chairman, Treasurer, or Nominated Member approves the disbursement.")
+    @PatchMapping("/{id}/approve-disbursement")
+    @PreAuthorize("isAuthenticated()") // Service method checks roles/IDs
+    public ResponseEntity<LoanApplicationResponse> approveDisbursement(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.approveDisbursement(id, authentication.getName()));
+    }
+
+    @Operation(summary = "Issue Cheque", description = "Treasurer issues a cheque after 3-party approval.")
+    @PostMapping("/{id}/issue-cheque")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_TREASURER')")
+    public ResponseEntity<LoanApplicationResponse> issueCheque(
+            @PathVariable UUID id,
+            @RequestParam("chequeNumber") String chequeNumber,
+            @RequestParam(value = "chequeImage", required = false) org.springframework.web.multipart.MultipartFile chequeImage,
+            Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.issueCheque(id, chequeNumber, chequeImage, authentication.getName()));
     }
 }

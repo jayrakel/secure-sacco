@@ -161,10 +161,9 @@ public class NotificationPaymentListener {
 
         // Admin SMS: notify with purpose = Loan Application Fee
         String fullName = buildFullName(member);
-        String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
         String adminMessage = String.format(
-                "Dear BETTER LINK VENTURES LTD, you have received Ksh. %s from %s on %s for Loan Application Fee. MPESA Ref: %s.",
-                formatAmount(amount), fullName, dateStr, receiptRef
+                "Fee Received: Ksh %s from %s. Ref: %s.",
+                formatAmount(amount), fullName, receiptRef
         );
 
         List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
@@ -308,10 +307,8 @@ public class NotificationPaymentListener {
     public void handleBankDebitReceived(com.jaytechwave.sacco.modules.payments.domain.event.BankDebitReceivedEvent event) {
         try {
             String formattedAmount = formatAmount(event.amount());
-            String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
-            
-            String adminMessage = String.format("Dear BETTER LINK VENTURES LTD, your Co-op Bank account has been debited Ksh. %s on %s. Narration: %s. Ref: %s.",
-                    formattedAmount, dateStr, event.narration() != null ? event.narration() : "N/A", sanitizeRef(event.reference()));
+            String adminMessage = String.format("Bank Debit: Ksh %s. Narr: %s. Ref: %s.",
+                    formattedAmount, event.narration() != null ? event.narration() : "N/A", sanitizeRef(event.reference()));
 
             List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
             log.info("NotificationPaymentListener: Sending admin alerts to {} admins for bank debit {}", admins.size(), event.paymentId());
@@ -343,8 +340,8 @@ public class NotificationPaymentListener {
             }
         }
 
-        String adminMessage = String.format("Dear BETTER LINK VENTURES LTD, you have received Ksh. %s from %s on %s. MPESA Ref: %s.%s",
-                formattedAmount, name, dateStr, mpesaRef, allocationsStr);
+        String adminMessage = String.format("Payment: Ksh %s from %s. Ref: %s.%s",
+                formattedAmount, name, mpesaRef, allocationsStr);
 
         List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
         log.info("NotificationPaymentListener: Sending admin alerts to {} admins for payment {}", admins.size(), paymentId);

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../settings/data/settings_providers.dart';
 import '../data/loan_dto.dart';
 import '../data/loan_providers.dart';
 
@@ -162,6 +163,85 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
             SnackBar(content: Text('Error: $e')),
           );
         }
+      }
+    }
+  }
+
+  Future<void> _removeGuarantor(LoanApplication app, String guarantorId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Guarantor'),
+        content: const Text('Are you sure you want to remove this guarantor?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.negative),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      final repo = ref.read(loanRepositoryProvider);
+      await repo.removeGuarantor(app.id, guarantorId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Guarantor removed')),
+        );
+        ref.invalidate(myLoanApplicationsProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _submitApplication(LoanApplication app) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit Application'),
+        content: const Text('Are you sure you want to submit this application for approval?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    try {
+      final repo = ref.read(loanRepositoryProvider);
+      await repo.submitApplication(app.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Application submitted successfully!')),
+        );
+        ref.invalidate(myLoanApplicationsProvider);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
       }
     }
   }
@@ -457,7 +537,9 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
         const SizedBox(height: 8),
         if (app.guarantors.isEmpty)
           const Text('No guarantors added yet.')
-        else
+        else ...[
+          _buildGuarantorProgress(app),
+          const SizedBox(height: 16),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -484,27 +566,75 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (app.status.toUpperCase() == 'PENDING')
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: AppColors.negative, size: 20),
+                          onPressed: () => _removeGuarantor(app, g.id),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                        ),
                     ],
                   ),
                 ),
               );
             },
           ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGuarantorProgress(LoanApplication app) {
+    final settingsAsync = ref.watch(saccoSettingsProvider);
+    final capacityPct = settingsAsync.valueOrNull?.guarantorCapacityPct ?? 50.0;
+    
+    final requiredAmount = app.principalAmount * (capacityPct / 100);
+    final currentAmount = app.guarantors.fold<double>(0, (sum, g) => sum + g.guaranteedAmount);
+    final progress = (currentAmount / requiredAmount).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Capacity: ${_currencyFormat.format(currentAmount)} / ${_currencyFormat.format(requiredAmount)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('${(progress * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: progress,
+          backgroundColor: Colors.grey.shade300,
+          color: progress >= 1.0 ? AppColors.positive : AppColors.primary,
+        ),
       ],
     );
   }
 
   Widget _buildActionButtons(LoanApplication app) {
-    if (app.status.toUpperCase() == 'PENDING' && !app.applicationFeePaid) {
-      return ElevatedButton(
-        onPressed: () => _payApplicationFee(app),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-        ),
-        child: const Text('Pay Application Fee'),
-      );
+    if (app.status.toUpperCase() == 'PENDING') {
+      if (!app.applicationFeePaid) {
+        return ElevatedButton(
+          onPressed: () => _payApplicationFee(app),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Pay Application Fee'),
+        );
+      } else {
+        return ElevatedButton(
+          onPressed: () => _submitApplication(app),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: AppColors.positive,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Submit Application for Approval'),
+        );
+      }
     }
     return const SizedBox.shrink();
   }

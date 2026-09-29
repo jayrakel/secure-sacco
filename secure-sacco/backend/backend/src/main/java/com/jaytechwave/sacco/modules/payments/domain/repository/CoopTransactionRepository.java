@@ -128,4 +128,10 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
      * who registered after the transaction was stored.
      */
     List<CoopTransaction> findByMemberIdIsNullAndSenderPhoneIsNotNull();
+
+    /**
+     * Find debit transactions containing a specific cheque number in the narration.
+     */
+    @Query("SELECT ct FROM CoopTransaction ct WHERE ct.transactionType = 'DR' AND ct.rawNarration LIKE %:chequeNumber%")
+    List<CoopTransaction> findDebitByChequeNumber(@Param("chequeNumber") String chequeNumber);
 }

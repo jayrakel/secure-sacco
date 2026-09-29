@@ -40,6 +40,17 @@ export interface SaccoSettings {
 
     // Meetings
     meetingNotificationLeadHours?: number;
+
+    // Loans
+    minSavingsToBorrow?: number;
+    minMembershipMonths?: number;
+    borrowingMultiplier?: number;
+    maxCreditScoreMultiplier?: number;
+    minGuarantorsCount?: number;
+    guarantorCapacityPct?: number;
+    processingFee?: number;
+    sharesCountBorrowing?: boolean;
+    sharesCountGuarantor?: boolean;
 }
 
 // ─── Request payloads ─────────────────────────────────────────────────────────
@@ -88,6 +99,18 @@ export interface SavingsSchedulePayload {
 
 export interface UpdateMeetingsRequest {
     meetingNotificationLeadHours: number;
+}
+
+export interface UpdateLoanSettingsRequest {
+    minSavingsToBorrow: number;
+    minMembershipMonths: number;
+    borrowingMultiplier: number;
+    maxCreditScoreMultiplier: number;
+    minGuarantorsCount: number;
+    guarantorCapacityPct: number;
+    processingFee: number;
+    sharesCountBorrowing: boolean;
+    sharesCountGuarantor: boolean;
 }
 
 
@@ -148,6 +171,12 @@ export const settingsApi = {
     /** Update meeting settings */
     updateMeetingSettings: async (payload: UpdateMeetingsRequest) => {
         const res = await apiClient.put('/settings/sacco/meetings', payload);
+        return res.data;
+    },
+
+    /** Update loan settings */
+    updateLoanSettings: async (payload: UpdateLoanSettingsRequest) => {
+        const res = await apiClient.put('/settings/sacco/loans', payload);
         return res.data;
     },
 };

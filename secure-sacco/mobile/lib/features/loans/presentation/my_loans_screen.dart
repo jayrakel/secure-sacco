@@ -13,6 +13,7 @@ class MyLoansScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final applicationsAsync = ref.watch(myLoanApplicationsProvider);
+    final eligibilityAsync = ref.watch(loanEligibilityProvider);
     final currencyFormat = NumberFormat.currency(symbol: 'KES ');
     final dateFormat = DateFormat('MMM dd, yyyy');
 
@@ -22,11 +23,58 @@ class MyLoansScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(myLoanApplicationsProvider),
+            onPressed: () {
+              ref.refresh(myLoanApplicationsProvider);
+              ref.refresh(loanEligibilityProvider);
+            },
           ),
         ],
       ),
-      body: applicationsAsync.when(
+      body: Column(
+        children: [
+          eligibilityAsync.when(
+            data: (eligibility) {
+              if (eligibility.eligible) return const SizedBox.shrink();
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                color: Colors.orange.shade100,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Colors.orange.shade800),
+                        const SizedBox(width: 8),
+                        Text(
+                          'You are not eligible for a loan at this time.',
+                          style: TextStyle(
+                            color: Colors.orange.shade900,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...eligibility.reasons.map((reason) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Expanded(child: Text(reason, style: TextStyle(color: Colors.orange.shade900))),
+                            ],
+                          ),
+                        )),
+                  ],
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          Expanded(
+            child: applicationsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(
           child: Padding(
@@ -63,10 +111,18 @@ class MyLoansScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/member/loans/apply'),
-        icon: const Icon(Icons.add),
-        label: const Text('Apply for Loan'),
+      ),
+      floatingActionButton: eligibilityAsync.when(
+        data: (eligibility) {
+          if (!eligibility.eligible) return const SizedBox.shrink();
+          return FloatingActionButton.extended(
+            onPressed: () => context.push('/member/loans/apply'),
+            icon: const Icon(Icons.add),
+            label: const Text('Apply for Loan'),
+          );
+        },
+        loading: () => const SizedBox.shrink(),
+        error: (_, __) => const SizedBox.shrink(),
       ),
     );
   }
