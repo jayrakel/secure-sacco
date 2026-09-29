@@ -112,6 +112,8 @@ class MyLoansScreen extends ConsumerWidget {
         },
       ),
       ),
+      ],
+      ),
       floatingActionButton: eligibilityAsync.when(
         data: (eligibility) {
           if (!eligibility.eligible) return const SizedBox.shrink();

@@ -138,7 +138,7 @@ class _ApplyLoanScreenState extends ConsumerState<ApplyLoanScreen> {
                         if (amount == null || amount <= 0) return 'Invalid amount';
 
                         // Check dynamic max borrowing limit from eligibility
-                        final currentEligibility = eligibilityAsync.valueOrNull;
+                        final currentEligibility = eligibilityAsync.asData?.value;
                         if (currentEligibility != null && amount > currentEligibility.maxBorrowingLimit) {
                           return 'Exceeds max borrowing limit of ${NumberFormat.currency(symbol: '').format(currentEligibility.maxBorrowingLimit)}';
                         }

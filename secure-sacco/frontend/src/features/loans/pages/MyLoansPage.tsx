@@ -96,12 +96,12 @@ export default function MyLoansPage() {
                 {eligibility && (
                     <div className="flex flex-col items-end">
                         <button 
-                            disabled={!eligibility.eligible}
+                            disabled={!eligibility.isEligible}
                             onClick={() => setShowApplyModal(true)} 
                             className="bg-blue-600 text-white px-5 py-2.5 rounded-lg shadow-sm hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors font-medium text-sm">
                             Apply for a New Loan
                         </button>
-                        {eligibility.eligible && (
+                        {eligibility.isEligible && (
                             <div className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
                                 Max Limit: {eligibility.maxBorrowingLimit.toLocaleString()} KES
                                 <div className="flex ml-2">
@@ -117,14 +117,16 @@ export default function MyLoansPage() {
 
             {error && <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-100">{error}</div>}
 
-            {eligibility && !eligibility.eligible && (
+            {eligibility && !eligibility.isEligible && (
                 <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
                     <AlertCircle className="text-orange-500 shrink-0 mt-0.5" size={20} />
                     <div>
                         <h4 className="font-semibold text-orange-800">You are not currently eligible for a new loan</h4>
-                        <ul className="list-disc list-inside text-sm text-orange-700 mt-1">
-                            {eligibility.reasons.map((r, i) => <li key={i}>{r}</li>)}
-                        </ul>
+                        {eligibility.ineligibilityReason && (
+                            <p className="text-sm text-orange-700 mt-1">
+                                {eligibility.ineligibilityReason}
+                            </p>
+                        )}
                     </div>
                 </div>
             )}
