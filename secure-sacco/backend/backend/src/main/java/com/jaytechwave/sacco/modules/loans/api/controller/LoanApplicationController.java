@@ -97,6 +97,13 @@ public class LoanApplicationController {
         return ResponseEntity.ok(loanApplicationService.getGuarantors(id));
     }
 
+    @Operation(summary = "Get my guarantor requests", description = "Get all guarantor requests sent to the currently logged in member.")
+    @GetMapping("/guarantor-requests/my-requests")
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
+    public ResponseEntity<List<LoanDTOs.MyGuarantorRequestResponse>> getMyGuarantorRequests(Authentication authentication) {
+        return ResponseEntity.ok(loanApplicationService.getMyGuarantorRequests(authentication.getName()));
+    }
+
     @Operation(summary = "Submit application for review", description = "Transitions application from DRAFT to PENDING_APPROVAL.")
     @PostMapping("/{id}/submit")
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")

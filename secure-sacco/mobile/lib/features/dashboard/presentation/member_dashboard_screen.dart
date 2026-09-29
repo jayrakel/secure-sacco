@@ -100,6 +100,14 @@ class DashboardScreen extends ConsumerWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.handshake_outlined, color: AppColors.textPrimary),
+              title: const Text('Guarantor Requests', style: AppTextStyles.bodyMedium),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/member/guarantor-requests');
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.payment, color: AppColors.textPrimary),
               title: const Text('My Deposits', style: AppTextStyles.bodyMedium),
               onTap: () {
@@ -274,6 +282,38 @@ class DashboardScreen extends ConsumerWidget {
                                 : 'None',
                               icon: Icons.event_available_outlined,
                               color: AppColors.info,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildOverviewCard(
+                              context,
+                              title: 'Upcoming Meeting',
+                              value: metrics.upcomingMeetingTitle ?? 'None Scheduled',
+                              icon: Icons.event,
+                              color: AppColors.primary,
+                              subtitle: metrics.upcomingMeetingStartAt != null
+                                  ? _formatDate(metrics.upcomingMeetingStartAt!)
+                                  : null,
+                              onTap: metrics.upcomingMeetingId != null
+                                  ? () => context.push('/member/meetings')
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: _buildOverviewCard(
+                              context,
+                              title: 'Attendance',
+                              value: metrics.attendanceRate != null 
+                                ? '${metrics.attendanceRate}%' 
+                                : 'N/A',
+                              icon: Icons.check_circle_outline,
+                              color: (metrics.attendanceRate ?? 0) >= 75 ? AppColors.positive : AppColors.warning,
                             ),
                           ),
                         ],
@@ -468,23 +508,42 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOverviewCard(BuildContext context, {required String title, required String value, required IconData icon, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: AppSpacing.sm),
-          Text(title, style: AppTextStyles.bodySmall),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        ],
+  Widget _buildOverviewCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+    String? subtitle,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: AppSpacing.sm),
+            Text(title, style: AppTextStyles.bodySmall),
+            const SizedBox(height: 2),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            if (subtitle != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textSecondary),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

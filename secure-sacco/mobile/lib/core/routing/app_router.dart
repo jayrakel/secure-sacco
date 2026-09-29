@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/public/presentation/screens/landing_screen.dart';
+import '../../features/public/presentation/screens/public_receipt_screen.dart';
+import '../../features/public/presentation/screens/privacy_policy_screen.dart';
+import '../../features/public/presentation/screens/terms_of_service_screen.dart';
+import '../../features/public/presentation/screens/support_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/data/auth_state.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -41,6 +46,7 @@ import '../../features/expense_claims/presentation/submit_expense_claim_screen.d
 import '../../features/expense_claims/presentation/admin_expense_claims_screen.dart';
 import '../../features/loans/presentation/my_loans_screen.dart';
 import '../../features/loans/presentation/apply_loan_screen.dart';
+import '../../features/loans/presentation/my_guarantor_requests_screen.dart';
 import '../../features/loans/presentation/my_loan_detail_screen.dart';
 import '../../features/loans/presentation/admin/loan_products_screen.dart';
 import '../../features/loans/presentation/admin/create_edit_loan_product_screen.dart';
@@ -74,14 +80,17 @@ import '../../features/roles/presentation/admin/roles_management_screen.dart';
 import '../../features/settings/presentation/admin/sacco_settings_screen.dart';
 import '../../features/savings/presentation/member/my_savings_screen.dart';
 import '../../features/savings/presentation/admin/savings_management_screen.dart';
+import '../../features/shares/presentation/screens/my_shares_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
   final setupStateAsync = ref.watch(setupControllerProvider);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     redirect: (context, state) {
+      final isLanding = state.uri.path == '/';
+      final isReceipt = state.uri.path.startsWith('/receipt/');
       final isLoggingIn = state.uri.path == '/login';
       final isOtp = state.uri.path == '/otp';
       final isAuthFlow = state.uri.path.startsWith('/auth/');
@@ -89,7 +98,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       switch (authState.status) {
         case AuthStatus.initial:
         case AuthStatus.unauthenticated:
-          return (isLoggingIn || isOtp || isAuthFlow) ? null : '/login';
+          // Landing page is disabled, so we don't allow it in the unauthenticated bypass anymore.
+          return (isLoggingIn || isOtp || isAuthFlow || /* isLanding || */ isReceipt) ? null : '/login';
 
         case AuthStatus.requiresMfa:
           return isOtp ? null : '/otp';
@@ -130,7 +140,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             targetDashboard = '/staff-dashboard';
           }
 
-          // If still on login/otp, redirect right away — don't wait for setup state
+          // If still on login/otp/landing, redirect right away — don't wait for setup state
           if (isOnAuthPage || state.uri.path == '/unauthorized') {
             return targetDashboard;
           }
@@ -178,14 +188,36 @@ final routerProvider = Provider<GoRouter>((ref) {
           return null;
       }
     },
+
     routes: [
       ShellRoute(
         builder: (context, state, child) => SelectionArea(child: child),
         routes: [
+          /* GoRoute(
+            path: '/',
+            builder: (context, state) => const LandingScreen(),
+          ), */
+          GoRoute(
+            path: '/receipt/:ref',
+            builder: (context, state) => PublicReceiptScreen(reference: state.pathParameters['ref']!),
+          ),
           GoRoute(
             path: '/login',
             builder: (context, state) => const LoginScreen(),
           ),
+          GoRoute(
+            path: '/privacy-policy',
+            builder: (context, state) => const PrivacyPolicyScreen(),
+          ),
+          GoRoute(
+            path: '/terms-of-service',
+            builder: (context, state) => const TermsOfServiceScreen(),
+          ),
+          GoRoute(
+            path: '/support',
+            builder: (context, state) => const SupportScreen(),
+          ),
+
           GoRoute(
             path: '/setup',
             builder: (context, state) => const SetupWizardScreen(),
@@ -302,6 +334,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
       GoRoute(
+        path: '/member/guarantor-requests',
+        builder: (context, state) => const MyGuarantorRequestsScreen(),
+      ),
+      GoRoute(
         path: '/member/meetings',
         builder: (context, state) => const MyMeetingsScreen(),
         routes: [
@@ -325,6 +361,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/member/savings',
         builder: (context, state) => const MySavingsScreen(),
       ),
+      GoRoute(
+        path: '/member/shares',
+        builder: (context, state) => const MySharesScreen(),
+      ),
+
       GoRoute(
         path: '/staff-dashboard',
         builder: (context, state) => const UnifiedStaffDashboardScreen(),

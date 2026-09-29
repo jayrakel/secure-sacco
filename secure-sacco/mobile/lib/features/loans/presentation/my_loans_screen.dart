@@ -34,7 +34,7 @@ class MyLoansScreen extends ConsumerWidget {
         children: [
           eligibilityAsync.when(
             data: (eligibility) {
-              if (eligibility.eligible) return const SizedBox.shrink();
+              if (eligibility.isEligible) return const SizedBox.shrink();
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -55,17 +55,19 @@ class MyLoansScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    ...eligibility.reasons.map((reason) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Expanded(child: Text(reason, style: TextStyle(color: Colors.orange.shade900))),
-                            ],
-                          ),
-                        )),
+                    if (eligibility.ineligibilityReason != null) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Expanded(child: Text(eligibility.ineligibilityReason!, style: TextStyle(color: Colors.orange.shade900))),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               );
@@ -116,7 +118,7 @@ class MyLoansScreen extends ConsumerWidget {
       ),
       floatingActionButton: eligibilityAsync.when(
         data: (eligibility) {
-          if (!eligibility.eligible) return const SizedBox.shrink();
+          if (!eligibility.isEligible) return const SizedBox.shrink();
           return FloatingActionButton.extended(
             onPressed: () => context.push('/member/loans/apply'),
             icon: const Icon(Icons.add),
