@@ -25,6 +25,7 @@ const PAGE_LABELS: Record<string, string> = {
     '/savings':                    'Savings Management',
     '/loans':                      'Loan Management',
     '/my-loans':                   'My Loans',
+    '/my-guarantor-requests':      'Guarantor Requests',
     '/my-savings':                 'My Savings',
     '/my-penalties':               'My Penalties',
     '/my-reports':                 'My Reports',

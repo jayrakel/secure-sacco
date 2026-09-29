@@ -141,6 +141,15 @@ public class LoanApplicationService {
                 .build();
 
         guarantor = loanGuarantorRepository.save(guarantor);
+        
+        User guarantorUser = userRepository.findByMemberId(guarantorMember.getId()).orElse(null);
+        if (guarantorUser != null && guarantorUser.getPhoneNumber() != null) {
+            String message = "Hello " + guarantorMember.getFirstName() + ", you have been requested to guarantee a loan of KES " 
+                    + request.guaranteedAmount() + " by " + user.getMember().getFirstName() + " " + user.getMember().getLastName() 
+                    + ". Please login to Secure Sacco to accept or reject.";
+            smsNotificationService.sendNotificationSms(guarantorUser.getPhoneNumber(), message);
+        }
+
         return mapToGuarantorResponse(guarantor, guarantorMember);
     }
 
@@ -166,6 +175,29 @@ public class LoanApplicationService {
                 .map(g -> {
                     Member m = memberRepository.findById(g.getGuarantorMemberId()).orElseThrow();
                     return mapToGuarantorResponse(g, m);
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyGuarantorRequestResponse> getMyGuarantorRequests(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        if (user.getMember() == null) throw new IllegalStateException("Only members can be guarantors.");
+        
+        return loanGuarantorRepository.findByGuarantorMemberId(user.getMember().getId()).stream()
+                .map(g -> {
+                    LoanApplication app = g.getLoanApplication();
+                    Member applicant = memberRepository.findById(app.getMemberId()).orElseThrow();
+                    return new MyGuarantorRequestResponse(
+                            g.getId(),
+                            app.getId(),
+                            applicant.getFirstName() + " " + applicant.getLastName(),
+                            applicant.getMemberNumber(),
+                            app.getPrincipalAmount(),
+                            g.getGuaranteedAmount(),
+                            g.getStatus().name(),
+                            g.getCreatedAt()
+                    );
                 })
                 .collect(Collectors.toList());
     }

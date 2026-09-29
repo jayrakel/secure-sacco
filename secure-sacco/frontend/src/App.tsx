@@ -31,6 +31,7 @@ import ManualGlPostingPage from './features/accounting/pages/ManualGlPostingPage
 import { BalanceSheetPage } from './features/accounting/pages/BalanceSheetPage';
 import { ReconciliationPage } from './features/accounting/pages/ReconciliationPage';
 import MyLoansPage from './features/loans/pages/MyLoansPage';
+import MyGuarantorRequestsPage from './features/loans/pages/MyGuarantorRequestsPage';
 import LoanManagementPage from './features/loans/pages/LoanManagementPage';
 import MemberPenaltiesPage from './features/penalties/pages/MemberPenaltiesPage';
 import { ReportsHubPage } from './features/reports/pages/ReportsHubPage';
@@ -274,6 +275,13 @@ function App() {
                                 <Route path="my-loans" element={
                                     <ProtectedRoute>
                                         <MyLoansPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* --- MEMBER GUARANTOR REQUESTS ROUTE --- */}
+                                <Route path="my-guarantor-requests" element={
+                                    <ProtectedRoute>
+                                        <MyGuarantorRequestsPage />
                                     </ProtectedRoute>
                                 } />
 

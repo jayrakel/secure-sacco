@@ -121,6 +121,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Savings Vault', path: '/savings',           icon: PiggyBank,  module: 'savings' },
                 { label: 'My Shares',     path: '/my-shares',         icon: Coins },
                 { label: 'My Loans',      path: '/my-loans',          icon: Coins,      module: 'loans' },
+                { label: 'Guarantor Requests', path: '/my-guarantor-requests', icon: Users, module: 'loans' },
                 { label: 'Penalties',     path: '/my-penalties',      icon: AlertCircle },
                 { label: 'My Meetings',   path: '/my-meetings',       icon: CalendarDays },
                 { label: 'Expense Claims', path: '/my-expense-claims', icon: Receipt },

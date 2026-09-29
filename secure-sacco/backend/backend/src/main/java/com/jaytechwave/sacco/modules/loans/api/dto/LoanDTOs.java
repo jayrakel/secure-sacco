@@ -113,6 +113,16 @@ public class LoanDTOs {
             UUID nominatedMemberId
     ) {}
 
+    public record MyGuarantorRequestResponse(
+            UUID id,
+            UUID loanApplicationId,
+            String applicantName,
+            String applicantMemberNumber,
+            BigDecimal loanAmount,
+            BigDecimal guaranteedAmount,
+            String status,
+            java.time.LocalDateTime requestedAt
+    ) {}
     public record GuarantorResponse(
             UUID id,
             UUID guarantorMemberId,

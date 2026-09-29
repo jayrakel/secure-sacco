@@ -82,6 +82,17 @@ export interface LoanEligibility {
     maxBorrowingLimit: number;
 }
 
+export interface MyGuarantorRequestResponse {
+    id: string;
+    loanApplicationId: string;
+    applicantName: string;
+    applicantMemberNumber: string;
+    loanAmount: number;
+    guaranteedAmount: number;
+    status: string;
+    requestedAt: string;
+}
+
 export const loanApi = {
     // ── Member endpoints ──────────────────────────────────────────
     getProducts: () =>
@@ -92,6 +103,12 @@ export const loanApi = {
 
     getMyApplications: () =>
         apiClient.get<LoanApplication[]>('/loans/applications/my').then(r => r.data),
+
+    getMyGuarantorRequests: () =>
+        apiClient.get<MyGuarantorRequestResponse[]>('/loans/guarantor-requests/my-requests').then(r => r.data),
+
+    respondToGuarantorRequest: (applicationId: string, guarantorId: string, status: 'ACCEPTED' | 'REJECTED') =>
+        apiClient.patch(`/loans/applications/${applicationId}/guarantors/${guarantorId}/respond`, { status }).then(r => r.data),
 
     createApplication: (data: { productId: string; principalAmount: number; purpose: string }) =>
         apiClient.post<LoanApplication>('/loans/applications', data).then(r => r.data),

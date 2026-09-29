@@ -526,7 +526,7 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
               'Guarantors',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            if (app.status.toUpperCase() == 'PENDING')
+            if (app.status.toUpperCase() == 'PENDING_GUARANTORS')
               TextButton.icon(
                 onPressed: () => _addGuarantor(app),
                 icon: const Icon(Icons.add),
@@ -566,7 +566,7 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (app.status.toUpperCase() == 'PENDING')
+                      if (app.status.toUpperCase() == 'PENDING_GUARANTORS')
                         IconButton(
                           icon: const Icon(Icons.delete, color: AppColors.negative, size: 20),
                           onPressed: () => _removeGuarantor(app, g.id),
@@ -613,30 +613,44 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
   }
 
   Widget _buildActionButtons(LoanApplication app) {
-    if (app.status.toUpperCase() == 'PENDING') {
-      if (!app.applicationFeePaid) {
-        return ElevatedButton(
-          onPressed: () => _payApplicationFee(app),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (app.status.toUpperCase() == 'PENDING_FEE')
+          ElevatedButton(
+            onPressed: () => _payApplicationFee(app),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Pay Application Fee'),
           ),
-          child: const Text('Pay Application Fee'),
-        );
-      } else {
-        return ElevatedButton(
-          onPressed: () => _submitApplication(app),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: AppColors.positive,
-            foregroundColor: Colors.white,
+        if (app.status.toUpperCase() == 'PENDING_GUARANTORS')
+          ElevatedButton(
+            onPressed: () => _submitApplication(app),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: AppColors.positive,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Submit Application for Approval'),
           ),
-          child: const Text('Submit Application for Approval'),
-        );
-      }
-    }
-    return const SizedBox.shrink();
+        if (['PENDING_APPROVAL', 'VERIFIED', 'APPROVED'].contains(app.status.toUpperCase()))
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              'Under Review by Sacco Committee',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Color _getStatusColor(String status) {
