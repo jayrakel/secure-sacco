@@ -105,7 +105,7 @@ export const loanApi = {
         apiClient.get<LoanApplication[]>('/loans/applications/my').then(r => r.data),
 
     getMyGuarantorRequests: () =>
-        apiClient.get<MyGuarantorRequestResponse[]>('/loans/guarantor-requests/my-requests').then(r => r.data),
+        apiClient.get<MyGuarantorRequestResponse[]>('/loans/applications/guarantor-requests/my-requests').then(r => r.data),
 
     respondToGuarantorRequest: (applicationId: string, guarantorId: string, status: 'ACCEPTED' | 'REJECTED') =>
         apiClient.patch(`/loans/applications/${applicationId}/guarantors/${guarantorId}/respond`, { status }).then(r => r.data),
