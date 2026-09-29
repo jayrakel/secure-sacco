@@ -16,7 +16,7 @@ import { PaymentProductsSettingsPage } from '../../paymentproducts/pages/Payment
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'meetings' | 'modules' | 'penalties' | 'products';
+type TabId = 'identity' | 'security' | 'communication' | 'schedule' | 'meetings' | 'modules' | 'loans' | 'penalties' | 'products';
 
 interface SecurityPolicy {
     maxLoginAttempts: number;
@@ -40,6 +40,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode; desc: string }[] 
     { id: 'schedule',       label: 'Schedule',       icon: <CalendarClock size={15} />, desc: 'Savings day & deadline'   },
     { id: 'meetings',       label: 'Meetings',       icon: <CalendarClock size={15} />, desc: 'Meeting notifications'    },
     { id: 'modules',       label: 'Modules',       icon: <Zap size={15} />,       desc: 'Feature flags'            },
+    { id: 'loans',         label: 'Loans',         icon: <BookOpen size={15} />,  desc: 'Borrowing limits & guarantors' },
     { id: 'penalties',     label: 'Penalties',     icon: <Gavel size={15} />,     desc: 'Fine rules & thresholds'  },
     { id: 'products',      label: 'Payment Products', icon: <Package size={15} />, desc: 'Deposit allocation categories' },
 ];
@@ -69,12 +70,15 @@ const Field: React.FC<{ label: string; hint?: string; warn?: string; children: R
 
 const NumberField: React.FC<{
     label: string; value: number; onChange: (v: number) => void;
-    min?: number; max?: number; suffix?: string; hint?: string; warn?: string;
-}> = ({ label, value, onChange, min = 0, max, suffix, hint, warn }) => (
+    min?: number; max?: number; step?: number | string; suffix?: string; hint?: string; warn?: string;
+}> = ({ label, value, onChange, min = 0, max, step, suffix, hint, warn }) => (
     <Field label={label} hint={hint} warn={warn}>
         <div className="relative">
-            <input type="number" min={min} max={max} value={value}
-                   onChange={e => onChange(parseInt(e.target.value) || min)}
+            <input type="number" min={min} max={max} step={step} value={value}
+                   onChange={e => {
+                       const v = parseFloat(e.target.value);
+                       onChange(isNaN(v) ? min : v);
+                   }}
                    className={inputCls + (suffix ? ' pr-20' : '')} />
             {suffix && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium pointer-events-none select-none">
@@ -189,9 +193,27 @@ const SaccoSettingsPage: React.FC = () => {
     const [savingMeetings, setSavingMeetings] = useState(false);
     const [dirtyMeetings, setDirtyMeetings] = useState(false);
 
-    // ── Modules ─────────────────────────────────────────────────────────────
     const [mods, setMods]         = useState<Record<string, boolean>>({ members: true, loans: false, savings: false, reports: false });
     const [savingMods, setSavingMods] = useState(false);
+
+    // ── Loans ───────────────────────────────────────────────────────────────
+    const [loanSets, setLoanSets] = useState({
+        minSavingsToBorrow: 5000,
+        minMembershipMonths: 6,
+        borrowingMultiplier: 3.0,
+        maxCreditScoreMultiplier: 1.0,
+        minGuarantorsCount: 3,
+        guarantorCapacityPct: 50.0,
+        processingFee: 0,
+        sharesCountBorrowing: false,
+        sharesCountGuarantor: false,
+    });
+    const [savingLoans, setSavingLoans] = useState(false);
+    const [dirtyLoans, setDirtyLoans] = useState(false);
+    const setLS = useCallback(<K extends keyof typeof loanSets>(k: K, v: (typeof loanSets)[K]) => {
+        setLoanSets(p => ({ ...p, [k]: v }));
+        setDirtyLoans(true);
+    }, []);
 
     // ── Penalties state ─────────────────────────────────────────────────────
     const [rules, setRules]             = useState<PenaltyRule[]>([]);
@@ -230,6 +252,18 @@ const SaccoSettingsPage: React.FC = () => {
                 if (d.savingsDeadlineHour  !== undefined) setDeadlineHour(d.savingsDeadlineHour);
                 if (d.savingsDeadlineMinute !== undefined) setDeadlineMinute(d.savingsDeadlineMinute);
                 if (d.meetingNotificationLeadHours !== undefined) setMeetingNotificationLeadHours(d.meetingNotificationLeadHours);
+
+                setLoanSets({
+                    minSavingsToBorrow: d.minSavingsToBorrow ?? 5000,
+                    minMembershipMonths: d.minMembershipMonths ?? 6,
+                    borrowingMultiplier: d.borrowingMultiplier ?? 3.0,
+                    maxCreditScoreMultiplier: d.maxCreditScoreMultiplier ?? 1.0,
+                    minGuarantorsCount: d.minGuarantorsCount ?? 3,
+                    guarantorCapacityPct: d.guarantorCapacityPct ?? 50.0,
+                    processingFee: d.processingFee ?? 0,
+                    sharesCountBorrowing: d.sharesCountBorrowing ?? false,
+                    sharesCountGuarantor: d.sharesCountGuarantor ?? false,
+                });
             }
         }).catch(() => flash(false, 'Failed to load settings.')).finally(() => setLoading(false));
     }, []);
@@ -390,6 +424,16 @@ const SaccoSettingsPage: React.FC = () => {
         finally { setSavingMods(false); }
     };
 
+    const handleLoans = async (e: React.FormEvent) => {
+        e.preventDefault(); setSavingLoans(true);
+        try {
+            await settingsApi.updateLoanSettings(loanSets);
+            setDirtyLoans(false);
+            flash(true, 'Loan settings saved.');
+        } catch (err) { flash(false, getApiErrorMessage(err, 'Failed to save loan settings.')); }
+        finally { setSavingLoans(false); }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center py-24 gap-3 text-slate-400">
             <Loader2 className="animate-spin text-slate-600" size={22} />
@@ -421,7 +465,7 @@ const SaccoSettingsPage: React.FC = () => {
                     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                         {TABS.filter(t => isSystemAdmin || t.id === 'penalties').map((t, i, arr) => {
                             const active = tab === t.id;
-                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched) || (t.id === 'meetings' && dirtyMeetings);
+                            const dirty = (t.id === 'identity' && dirtyId) || (t.id === 'security' && dirtySec) || (t.id === 'communication' && dirtyComm) || (t.id === 'schedule' && dirtySched) || (t.id === 'meetings' && dirtyMeetings) || (t.id === 'loans' && dirtyLoans);
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
                                         className={`w-full text-left px-4 py-3.5 flex items-center gap-3 transition-all
@@ -767,6 +811,81 @@ const SaccoSettingsPage: React.FC = () => {
 
                             <div className="flex justify-end">
                                 <SaveBtn loading={savingMods} label="Save Module Configuration" />
+                            </div>
+                        </form>
+                    )}
+
+                    {/* LOANS */}
+                    {tab === 'loans' && (
+                        <form onSubmit={handleLoans} className="space-y-5">
+                            <Section title="Loan Eligibility" desc="Requirements before a member can apply for a loan.">
+                                <div className="grid sm:grid-cols-2 gap-5">
+                                    <NumberField label="Minimum Savings (KES)" value={loanSets.minSavingsToBorrow}
+                                                 hint="The lowest amount of savings required to borrow."
+                                                 onChange={v => setLS('minSavingsToBorrow', v)} />
+                                    <NumberField label="Minimum Membership (Months)" value={loanSets.minMembershipMonths} min={0}
+                                                 hint="How long a member must have been in the SACCO."
+                                                 onChange={v => setLS('minMembershipMonths', v)} />
+                                </div>
+                            </Section>
+
+                            <Section title="Borrowing Limits & Credit Score" desc="How the system calculates the maximum borrowing limit.">
+                                <div className="grid sm:grid-cols-2 gap-5">
+                                    <NumberField label="Base Borrowing Multiplier" value={loanSets.borrowingMultiplier}
+                                                 step="0.1"
+                                                 hint="The standard multiplier on their savings (e.g. 3x)."
+                                                 onChange={v => setLS('borrowingMultiplier', v)} />
+                                    <NumberField label="Max Credit Score Bonus" value={loanSets.maxCreditScoreMultiplier}
+                                                 step="0.1"
+                                                 hint="The bonus multiplier added for a perfect 10/10 (5-star) score."
+                                                 onChange={v => setLS('maxCreditScoreMultiplier', v)} />
+                                </div>
+                            </Section>
+
+                            <Section title="Guarantors" desc="Rules for loan guarantors.">
+                                <div className="grid sm:grid-cols-2 gap-5">
+                                    <NumberField label="Minimum Guarantors Required" value={loanSets.minGuarantorsCount} min={0}
+                                                 hint="The minimum number of guarantors needed per loan."
+                                                 onChange={v => setLS('minGuarantorsCount', v)} />
+                                    <NumberField label="Guarantor Capacity (%)" value={loanSets.guarantorCapacityPct} min={0} max={100} suffix="%"
+                                                 hint="A guarantor can only guarantee up to this percentage of their savings."
+                                                 onChange={v => setLS('guarantorCapacityPct', v)} />
+                                </div>
+                            </Section>
+
+                            <Section title="Additional Rules" desc="Processing fees and what counts towards borrowing/guaranteeing.">
+                                <div className="space-y-5">
+                                    <NumberField label="Processing Fee (KES)" value={loanSets.processingFee} min={0}
+                                                 hint="A fixed fee paid by the member before verification. Set to 0 to disable."
+                                                 onChange={v => setLS('processingFee', v)} />
+                                    
+                                    <div className="grid sm:grid-cols-2 gap-5">
+                                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                                            <button type="button" onClick={() => setLS('sharesCountBorrowing', !loanSets.sharesCountBorrowing)}
+                                                    className={loanSets.sharesCountBorrowing ? 'text-emerald-500' : 'text-slate-300'}>
+                                                {loanSets.sharesCountBorrowing ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                                            </button>
+                                            <div>
+                                                <div className="text-sm font-semibold text-slate-800">Shares count towards borrowing</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">Include shares in the borrowing limit calculation.</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                                            <button type="button" onClick={() => setLS('sharesCountGuarantor', !loanSets.sharesCountGuarantor)}
+                                                    className={loanSets.sharesCountGuarantor ? 'text-emerald-500' : 'text-slate-300'}>
+                                                {loanSets.sharesCountGuarantor ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                                            </button>
+                                            <div>
+                                                <div className="text-sm font-semibold text-slate-800">Shares count for guarantors</div>
+                                                <div className="text-xs text-slate-500 mt-0.5">Include shares in the guarantor capacity calculation.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Section>
+
+                            <div className="flex justify-end">
+                                <SaveBtn loading={savingLoans} dirty={dirtyLoans} label="Save Loan Settings" />
                             </div>
                         </form>
                     )}

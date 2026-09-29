@@ -165,6 +165,44 @@ public class SaccoSettings {
     @Builder.Default
     private Integer meetingNotificationLeadHours = 48;
 
+    // ── Loans ────────────────────────────────────────────────────────────────
+    
+    @Column(name = "min_savings_to_borrow", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal minSavingsToBorrow = new BigDecimal("5000.00");
+
+    @Column(name = "min_membership_months", nullable = false)
+    @Builder.Default
+    private Integer minMembershipMonths = 6;
+
+    @Column(name = "borrowing_multiplier", nullable = false)
+    @Builder.Default
+    private Double borrowingMultiplier = 3.0;
+
+    @Column(name = "max_credit_score_multiplier", nullable = false)
+    @Builder.Default
+    private Double maxCreditScoreMultiplier = 1.0;
+
+    @Column(name = "min_guarantors_count", nullable = false)
+    @Builder.Default
+    private Integer minGuarantorsCount = 3;
+
+    @Column(name = "guarantor_capacity_pct", nullable = false)
+    @Builder.Default
+    private Double guarantorCapacityPct = 50.0;
+
+    @Column(name = "processing_fee", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal processingFee = BigDecimal.ZERO;
+
+    @Column(name = "shares_count_borrowing", nullable = false)
+    @Builder.Default
+    private Boolean sharesCountBorrowing = false;
+
+    @Column(name = "shares_count_guarantor", nullable = false)
+    @Builder.Default
+    private Boolean sharesCountGuarantor = false;
+
     // ── Audit ────────────────────────────────────────────────────────────────
 
     @CreationTimestamp

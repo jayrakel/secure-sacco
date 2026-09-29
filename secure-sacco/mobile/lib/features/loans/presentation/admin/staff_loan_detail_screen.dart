@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/loan_dto.dart';
 import '../../data/loan_providers.dart';
+import 'disburse_loan_modal.dart';
 
 class StaffLoanDetailScreen extends ConsumerStatefulWidget {
   final String applicationId;
@@ -22,20 +23,27 @@ class _StaffLoanDetailScreenState extends ConsumerState<StaffLoanDetailScreen> {
 
   Future<void> _performAction(String action, LoanApplication app) async {
     if (action == 'DISBURSE') {
-      try {
-        final repo = ref.read(loanRepositoryProvider);
-        await repo.disburseLoan(app.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Loan disbursed successfully')),
-          );
-          ref.invalidate(allLoanApplicationsProvider);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) => DisburseLoanModal(application: app),
+      );
+      
+      if (result == true && mounted) {
+        try {
+          final repo = ref.read(loanRepositoryProvider);
+          await repo.disburseLoan(app.id);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Loan disbursed successfully')),
+            );
+            ref.invalidate(allLoanApplicationsProvider);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: $e')),
+            );
+          }
         }
       }
       return;

@@ -51,6 +51,7 @@ public class LoanApplication {
     private String purpose;
 
     @Column(name = "term_weeks", nullable = false)
+    @Builder.Default
     private Integer termWeeks = 104;
 
     // --- Tier 1: Verification (Loans Officer) ---
@@ -86,6 +87,30 @@ public class LoanApplication {
 
     @Column(name = "reference_notes", columnDefinition = "TEXT")
     private String referenceNotes;
+
+    // --- Processing Fee ---
+    @Column(name = "processing_fee_paid")
+    private Boolean processingFeePaid;
+
+    @Column(name = "processing_fee_amount", precision = 10, scale = 2)
+    private BigDecimal processingFeeAmount;
+
+    // --- Cheque Tracking ---
+    @Column(name = "cheque_number", length = 100)
+    private String chequeNumber;
+
+    @Column(name = "cheque_image_url", length = 512)
+    private String chequeImageUrl;
+
+    @Column(name = "cheque_issued_date")
+    private LocalDateTime chequeIssuedDate;
+
+    @Column(name = "cheque_cleared_date")
+    private LocalDateTime chequeClearedDate;
+
+    // --- 3-Party Disbursement Approval ---
+    @Column(name = "disbursement_nominated_member_id")
+    private UUID disbursementNominatedMemberId;
 
     // --- Audit Fields ---
     @CreationTimestamp

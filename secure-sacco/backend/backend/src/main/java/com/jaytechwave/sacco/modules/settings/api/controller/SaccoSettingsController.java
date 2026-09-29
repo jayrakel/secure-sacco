@@ -68,6 +68,16 @@ public class SaccoSettingsController {
                     Map.entry("savingsDeadlineMinute",   s.getSavingsDeadlineMinute()  != null ? s.getSavingsDeadlineMinute()  : 59),
                     // Meetings
                     Map.entry("meetingNotificationLeadHours", s.getMeetingNotificationLeadHours() != null ? s.getMeetingNotificationLeadHours() : 48),
+                    // Loans
+                    Map.entry("minSavingsToBorrow", s.getMinSavingsToBorrow()),
+                    Map.entry("minMembershipMonths", s.getMinMembershipMonths()),
+                    Map.entry("borrowingMultiplier", s.getBorrowingMultiplier()),
+                    Map.entry("maxCreditScoreMultiplier", s.getMaxCreditScoreMultiplier()),
+                    Map.entry("minGuarantorsCount", s.getMinGuarantorsCount()),
+                    Map.entry("guarantorCapacityPct", s.getGuarantorCapacityPct()),
+                    Map.entry("processingFee", s.getProcessingFee()),
+                    Map.entry("sharesCountBorrowing", s.getSharesCountBorrowing()),
+                    Map.entry("sharesCountGuarantor", s.getSharesCountGuarantor()),
                     // Modules
                     Map.entry("enabledModules", s.getEnabledModules())
             ));
@@ -204,6 +214,20 @@ public class SaccoSettingsController {
                 "message", "Meeting settings updated successfully.",
                 "meetingNotificationLeadHours", settings.getMeetingNotificationLeadHours()
         ));
+    }
+
+    // ── Loans ─────────────────────────────────────────────────────────────────
+
+    @Operation(summary = "Update loan settings", description = "Configure minimums, multipliers, and guarantor rules.")
+    @PutMapping("/loans")
+    @PreAuthorize("hasAuthority('SETTINGS_EDIT')")
+    public ResponseEntity<?> updateLoanSettings(
+            @Valid @RequestBody UpdateLoansRequest req,
+            Authentication auth, HttpServletRequest httpReq) {
+        SaccoSettings settings = settingsService.updateLoansSettings(req);
+        auditService.logEventWithActorAndIp(auth.getName(), "LOAN_SETTINGS_UPDATED",
+                "Global Settings", getClientIP(httpReq), "Loan settings updated.");
+        return ResponseEntity.ok(Map.of("message", "Loan settings updated successfully.", "settings", settings));
     }
 
 }

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { loanApi, type LoanProduct } from '../api/loan-api';
+import { loanApi, type LoanProduct, type LoanEligibility } from '../api/loan-api';
 
 interface ApplyLoanModalProps {
+    eligibility: LoanEligibility;
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
+export function ApplyLoanModal({ eligibility, onClose, onSuccess }: ApplyLoanModalProps) {
     const [products, setProducts] = useState<LoanProduct[]>([]);
     const [selectedProductId, setSelectedProductId] = useState('');
     const [amount, setAmount] = useState('');
@@ -61,7 +62,7 @@ export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
                             >
                                 <option value="">Select a product...</option>
                                 {products.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (Max: {p.maxAmount})</option>
+                                    <option key={p.id} value={p.id}>{p.name} (Max: {Math.min(p.maxAmount || Infinity, eligibility.maxBorrowingLimit).toLocaleString()} KES)</option>
                                 ))}
                             </select>
                         </div>
@@ -72,6 +73,7 @@ export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
                                     ({selectedProduct.interestModel})</p>
                                 <p><strong>Term:</strong> {selectedProduct.termWeeks} weeks</p>
                                 <p><strong>App Fee:</strong> {selectedProduct.applicationFee} KES</p>
+                                <p className="mt-2 text-xs font-semibold text-emerald-700">Your Max Borrowing Limit: {eligibility.maxBorrowingLimit.toLocaleString()} KES</p>
                             </div>
                         )}
 
@@ -96,7 +98,7 @@ export function ApplyLoanModal({ onClose, onSuccess }: ApplyLoanModalProps) {
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 min={selectedProduct?.minAmount || 1}
-                                max={selectedProduct?.maxAmount || 1000000}
+                                max={Math.min(selectedProduct?.maxAmount || Infinity, eligibility.maxBorrowingLimit)}
                                 required
                             />
                         </div>

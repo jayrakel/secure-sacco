@@ -70,6 +70,7 @@ class _ApplyLoanScreenState extends ConsumerState<ApplyLoanScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(activeLoanProductsProvider);
+    final eligibilityAsync = ref.watch(loanEligibilityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -131,21 +132,28 @@ class _ApplyLoanScreenState extends ConsumerState<ApplyLoanScreen> {
                       border: OutlineInputBorder(),
                       prefixText: 'KES ',
                     ),
-                    validator: (val) {
-                      if (val == null || val.isEmpty) return 'Required';
-                      final amount = double.tryParse(val);
-                      if (amount == null || amount <= 0) return 'Invalid amount';
-                      if (_selectedProductId != null) {
-                        final product = products.firstWhere((p) => p.id == _selectedProductId);
-                        if (product.minAmount != null && amount < product.minAmount!) {
-                          return 'Minimum amount is ${NumberFormat.currency(symbol: '').format(product.minAmount)}';
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Required';
+                        final amount = double.tryParse(val);
+                        if (amount == null || amount <= 0) return 'Invalid amount';
+
+                        // Check dynamic max borrowing limit from eligibility
+                        final currentEligibility = eligibilityAsync.valueOrNull;
+                        if (currentEligibility != null && amount > currentEligibility.maxBorrowingLimit) {
+                          return 'Exceeds max borrowing limit of ${NumberFormat.currency(symbol: '').format(currentEligibility.maxBorrowingLimit)}';
                         }
-                        if (product.maxAmount != null && amount > product.maxAmount!) {
-                          return 'Maximum amount is ${NumberFormat.currency(symbol: '').format(product.maxAmount)}';
+
+                        if (_selectedProductId != null) {
+                          final product = products.firstWhere((p) => p.id == _selectedProductId);
+                          if (product.minAmount != null && amount < product.minAmount!) {
+                            return 'Minimum amount is ${NumberFormat.currency(symbol: '').format(product.minAmount)}';
+                          }
+                          if (product.maxAmount != null && amount > product.maxAmount!) {
+                            return 'Maximum amount is ${NumberFormat.currency(symbol: '').format(product.maxAmount)}';
+                          }
                         }
-                      }
-                      return null;
-                    },
+                        return null;
+                      },
                   ),
                   const SizedBox(height: 24),
                   const Text(

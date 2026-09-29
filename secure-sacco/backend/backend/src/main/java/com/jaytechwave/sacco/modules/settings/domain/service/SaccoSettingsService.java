@@ -281,4 +281,27 @@ public class SaccoSettingsService {
             return 48; // Default if uninitialized
         }
     }
+
+    // ── Loans ─────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public SaccoSettings updateLoansSettings(UpdateLoansRequest req) {
+        SaccoSettings s = getSettings();
+        s.setMinSavingsToBorrow(req.getMinSavingsToBorrow());
+        s.setMinMembershipMonths(req.getMinMembershipMonths());
+        s.setBorrowingMultiplier(req.getBorrowingMultiplier());
+        s.setMaxCreditScoreMultiplier(req.getMaxCreditScoreMultiplier());
+        s.setMinGuarantorsCount(req.getMinGuarantorsCount());
+        s.setGuarantorCapacityPct(req.getGuarantorCapacityPct());
+        s.setProcessingFee(req.getProcessingFee());
+        s.setSharesCountBorrowing(req.getSharesCountBorrowing());
+        s.setSharesCountGuarantor(req.getSharesCountGuarantor());
+        
+        SaccoSettings saved = settingsRepository.save(s);
+        securityAuditService.logEvent(
+                "SETTINGS_UPDATED", "SACCO_SETTINGS",
+                "Loan settings updated"
+        );
+        return saved;
+    }
 }

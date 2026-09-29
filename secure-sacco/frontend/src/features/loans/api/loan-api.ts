@@ -74,10 +74,24 @@ export interface LoanSummary {
     status: string;
 }
 
+export interface LoanEligibility {
+    eligible: boolean;
+    reasons: string[];
+    memberSavings: number;
+    membershipMonths: number;
+    creditScore: number;
+    maxBorrowingLimit: number;
+    minSavingsRequired: number;
+    minMembershipMonthsRequired: number;
+}
+
 export const loanApi = {
     // ── Member endpoints ──────────────────────────────────────────
     getProducts: () =>
         apiClient.get<LoanProduct[]>('/loans/products?activeOnly=true').then(r => r.data),
+
+    getEligibility: () =>
+        apiClient.get<LoanEligibility>('/loans/applications/eligibility').then(r => r.data),
 
     getMyApplications: () =>
         apiClient.get<LoanApplication[]>('/loans/applications/my').then(r => r.data),
@@ -90,6 +104,12 @@ export const loanApi = {
 
     addGuarantor: (id: string, data: { memberNumber: string; guaranteedAmount: number }) =>
         apiClient.post<LoanGuarantor>(`/loans/applications/${id}/guarantors`, data).then(r => r.data),
+
+    removeGuarantor: (id: string, guarantorId: string) =>
+        apiClient.delete(`/loans/applications/${id}/guarantors/${guarantorId}`).then(r => r.data),
+
+    submitApplication: (id: string) =>
+        apiClient.post<LoanApplication>(`/loans/applications/${id}/submit`).then(r => r.data),
 
     getLoanSummary: (id: string) =>
         apiClient.get<LoanSummary>(`/loans/reports/${id}/summary/member`).then(r => r.data),
