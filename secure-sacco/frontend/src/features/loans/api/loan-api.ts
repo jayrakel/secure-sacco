@@ -75,14 +75,11 @@ export interface LoanSummary {
 }
 
 export interface LoanEligibility {
-    eligible: boolean;
-    reasons: string[];
-    memberSavings: number;
-    membershipMonths: number;
+    isEligible: boolean;
+    ineligibilityReason: string | null;
     creditScore: number;
+    starRating: number;
     maxBorrowingLimit: number;
-    minSavingsRequired: number;
-    minMembershipMonthsRequired: number;
 }
 
 export const loanApi = {

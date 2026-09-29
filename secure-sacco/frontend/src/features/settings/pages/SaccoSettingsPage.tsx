@@ -71,23 +71,38 @@ const Field: React.FC<{ label: string; hint?: string; warn?: string; children: R
 const NumberField: React.FC<{
     label: string; value: number; onChange: (v: number) => void;
     min?: number; max?: number; step?: number | string; suffix?: string; hint?: string; warn?: string;
-}> = ({ label, value, onChange, min = 0, max, step, suffix, hint, warn }) => (
-    <Field label={label} hint={hint} warn={warn}>
-        <div className="relative">
-            <input type="number" min={min} max={max} step={step} value={value}
-                   onChange={e => {
-                       const v = parseFloat(e.target.value);
-                       onChange(isNaN(v) ? min : v);
-                   }}
-                   className={inputCls + (suffix ? ' pr-20' : '')} />
-            {suffix && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium pointer-events-none select-none">
-                    {suffix}
-                </span>
-            )}
-        </div>
-    </Field>
-);
+}> = ({ label, value, onChange, min = 0, max, step, suffix, hint, warn }) => {
+    const [internalValue, setInternalValue] = React.useState(value.toString());
+
+    React.useEffect(() => {
+        if (parseFloat(internalValue) !== value) {
+            setInternalValue(value.toString());
+        }
+    }, [value]);
+
+    return (
+        <Field label={label} hint={hint} warn={warn}>
+            <div className="relative">
+                <input type="number" min={min} max={max} step={step} value={internalValue}
+                       onChange={e => {
+                           setInternalValue(e.target.value);
+                           const v = parseFloat(e.target.value);
+                           if (!isNaN(v)) {
+                               onChange(v);
+                           } else if (e.target.value === '') {
+                               onChange(min);
+                           }
+                       }}
+                       className={inputCls + (suffix ? ' pr-20' : '')} />
+                {suffix && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium pointer-events-none select-none">
+                        {suffix}
+                    </span>
+                )}
+            </div>
+        </Field>
+    );
+};
 
 const SaveBtn: React.FC<{ loading: boolean; dirty?: boolean; label?: string }> = ({ loading, dirty = true, label = 'Save Changes' }) => (
     <button type="submit" disabled={loading || !dirty}

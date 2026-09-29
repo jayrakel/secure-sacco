@@ -586,7 +586,7 @@ class _MyLoanDetailScreenState extends ConsumerState<MyLoanDetailScreen> {
 
   Widget _buildGuarantorProgress(LoanApplication app) {
     final settingsAsync = ref.watch(saccoSettingsProvider);
-    final capacityPct = settingsAsync.valueOrNull?.guarantorCapacityPct ?? 50.0;
+    final capacityPct = settingsAsync.asData?.value.guarantorCapacityPct ?? 50.0;
     
     final requiredAmount = app.principalAmount * (capacityPct / 100);
     final currentAmount = app.guarantors.fold<double>(0, (sum, g) => sum + g.guaranteedAmount);
