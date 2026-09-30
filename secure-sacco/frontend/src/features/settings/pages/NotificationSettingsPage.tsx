@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Bell, Smartphone, Mail, Loader2, Save } from 'lucide-react';
-import { settingsApi, NotificationPreferenceDto } from '../api/settingsApi';
-import { toast } from 'react-hot-toast';
+import { Shield, Bell, Smartphone, Mail, Loader2, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { settingsApi, type NotificationPreferenceDto } from '../api/settingsApi';
 
 export const NotificationSettingsPage: React.FC = () => {
   const [preferences, setPreferences] = useState<NotificationPreferenceDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [toastMsg, setToastMsg] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const showToast = (ok: boolean, msg: string) => {
+    setToastMsg({ ok, msg });
+    setTimeout(() => setToastMsg(null), 3000);
+  };
 
   useEffect(() => {
     fetchPreferences();
@@ -18,7 +23,7 @@ export const NotificationSettingsPage: React.FC = () => {
       const data = await settingsApi.getNotificationPreferences();
       setPreferences(data);
     } catch {
-      toast.error('Failed to load notification settings');
+      showToast(false, 'Failed to load notification settings');
     } finally {
       setLoading(false);
     }
@@ -37,9 +42,9 @@ export const NotificationSettingsPage: React.FC = () => {
     try {
       setSaving(true);
       await settingsApi.updateNotificationPreferences(preferences);
-      toast.success('Notification settings saved successfully');
+      showToast(true, 'Notification settings saved successfully');
     } catch {
-      toast.error('Failed to save notification settings');
+      showToast(false, 'Failed to save notification settings');
     } finally {
       setSaving(false);
     }
@@ -63,6 +68,13 @@ export const NotificationSettingsPage: React.FC = () => {
           Control how and when you receive alerts from Secure Sacco.
         </p>
       </div>
+
+      {toastMsg && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm shadow-sm ${toastMsg.ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-700'}`}>
+          {toastMsg.ok ? <CheckCircle2 size={15} className="text-emerald-600 shrink-0" /> : <AlertCircle size={15} className="text-red-500 shrink-0" />}
+          <span className="flex-1">{toastMsg.msg}</span>
+        </div>
+      )}
 
       {/* Global Delivery Channels */}
       <div className="bg-white shadow sm:rounded-lg overflow-hidden">

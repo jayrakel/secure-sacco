@@ -1,4 +1,4 @@
-import { apiClient } from '../../../core/api/apiClient';
+import apiClient from '../../../shared/api/api-client';
 
 export interface NotificationPreferenceDto {
   emailEnabled: boolean;
