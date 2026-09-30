@@ -102,7 +102,7 @@ export const MemberStatementPage: React.FC = () => {
     const [toDate,   setToDate]   = useState(TODAY);
 
     // Statement
-    const [filterModule, setFilterModule] = useState<'ALL' | Module>('ALL');
+    const [filterModule, setFilterModule] = useState<string>('ALL');
     const [statement,  setStatement]  = useState<StatementItemDTO[]>([]);
     const [response,   setResponse]   = useState<StatementResponseDTO | null>(null);
     const [loading,    setLoading]    = useState(false);
@@ -196,9 +196,7 @@ export const MemberStatementPage: React.FC = () => {
         // 1. FIRST, build the enriched array with the running balances
         const enriched: EnrichedRow[] = statement.map(item => {
             const isCredit = CREDIT_TYPES.has(item.type);
-            if (item.module === 'SAVINGS') {
-                balance = isCredit ? balance + item.amount : balance - item.amount;
-            }
+            balance = isCredit ? balance + item.amount : balance - item.amount;
             return { ...item, runningBalance: balance, isCredit };
         });
 
@@ -233,15 +231,13 @@ export const MemberStatementPage: React.FC = () => {
     }, [statement, response, filterModule]);
 
     const handleExportCSV = () => {
-        const header = 'Date,Module,Type,Reference,Description,Debit,Credit,Balance\n';
-        const rowsCsv = rows.map(r =>
-            [fmtDate(r.date), r.module, r.type, r.reference ?? '',
-                `"${r.description}"`,
-                r.isCredit ? '' : r.amount.toFixed(2),
-                r.isCredit ? r.amount.toFixed(2) : '',
-                r.module === 'SAVINGS' ? r.runningBalance.toFixed(2) : ''
-            ].join(',')
-        ).join('\n');
+        const showBalanceColumn = filterModule !== 'ALL';
+        const header = `Date,Module,Type,Reference,Description,Debit,Credit${showBalanceColumn ? ',Balance' : ''}\n`;
+        const rowsCsv = rows.map(r => {
+            const baseRow = [fmtDate(r.date), r.module, r.type, r.reference ?? '', `"${r.description}"`, r.isCredit ? '' : r.amount.toFixed(2), r.isCredit ? r.amount.toFixed(2) : ''];
+            if (showBalanceColumn) baseRow.push(r.runningBalance.toFixed(2));
+            return baseRow.join(',');
+        }).join('\n');
         const blob = new Blob([header + rowsCsv], { type: 'text/csv' });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
@@ -264,6 +260,7 @@ export const MemberStatementPage: React.FC = () => {
 
     // The data encoded in the QR code (Points to a verification page on your domain)
     const verificationUrl = `${window.location.origin}/verify/statement/${stmtRef}`;
+    const showBalanceColumn = filterModule !== 'ALL';
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
@@ -283,13 +280,18 @@ export const MemberStatementPage: React.FC = () => {
         }
 
         #statement-print {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
+            display: block !important;
+            position: relative !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             visibility: visible !important;
+        }
+        
+        /* Ensure all parents allow natural page breaks */
+        * {
+            overflow: visible !important;
+            height: auto !important;
         }
 
         * {
@@ -451,7 +453,7 @@ export const MemberStatementPage: React.FC = () => {
                             Statement Type
                         </label>
                         <div className="flex flex-wrap gap-2">
-                            {(['ALL', 'SAVINGS', 'LOANS', 'PENALTIES', 'CUSTOM'] as const).map(mod => (
+                            {['ALL', ...Array.from(new Set(['SAVINGS', 'LOANS', 'PENALTIES', ...statement.map(s => s.module)])).sort()].map(mod => (
                                 <button
                                     key={mod}
                                     onClick={() => setFilterModule(mod)}
@@ -651,10 +653,11 @@ export const MemberStatementPage: React.FC = () => {
                                             <th className="px-5 py-3 text-left">Description</th>
                                             <th className="px-5 py-3 text-right w-32">Debit (KES)</th>
                                             <th className="px-5 py-3 text-right w-32">Credit (KES)</th>
-                                            <th className="px-5 py-3 text-right w-36 bg-slate-100">Balance (KES)</th>
+                                            {showBalanceColumn && <th className="px-5 py-3 text-right w-36 bg-slate-100">Balance (KES)</th>}
                                         </tr>
                                         </thead>
                                         <tbody>
+                                        {showBalanceColumn && (
                                         <tr className="bg-slate-900/3 border-b border-slate-100">
                                             <td colSpan={5} className="px-5 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wide">
                                                 Opening Balance
@@ -664,10 +667,10 @@ export const MemberStatementPage: React.FC = () => {
                                                 {fmt(openingBalance)}
                                             </td>
                                         </tr>
+                                        )}
 
                                         {rows.map((row, idx) => {
                                             const badge = MODULE_BADGE[row.module as Module] ?? MODULE_BADGE.SAVINGS;
-                                            const showBalance = row.module === 'SAVINGS';
                                             return (
                                                 <tr
                                                     key={idx}
@@ -710,19 +713,18 @@ export const MemberStatementPage: React.FC = () => {
                                                             <span className="text-slate-200 text-xs">—</span>
                                                         )}
                                                     </td>
+                                                    {showBalanceColumn && (
                                                     <td className="px-5 py-3 text-right bg-slate-50/50">
-                                                        {showBalance ? (
-                                                            <span className={`font-mono font-bold text-xs ${row.runningBalance < 0 ? 'text-red-600' : 'text-slate-800'}`}>
-                                                                    {fmt(row.runningBalance)}
-                                                                </span>
-                                                        ) : (
-                                                            <span className="text-slate-200 text-xs">—</span>
-                                                        )}
+                                                        <span className={`font-mono font-bold text-xs ${row.runningBalance < 0 ? 'text-red-600' : 'text-slate-800'}`}>
+                                                            {fmt(row.runningBalance)}
+                                                        </span>
                                                     </td>
+                                                    )}
                                                 </tr>
                                             );
                                         })}
 
+                                        {showBalanceColumn && (
                                         <tr className="bg-slate-900 text-white">
                                             <td colSpan={5} className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-300">
                                                 Closing Balance
@@ -734,6 +736,7 @@ export const MemberStatementPage: React.FC = () => {
                                                     </span>
                                             </td>
                                         </tr>
+                                        )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -843,11 +846,12 @@ export const MemberStatementPage: React.FC = () => {
                                 <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px]">Description</th>
                                 <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-28">Debit</th>
                                 <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-28">Credit</th>
-                                <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-36">Balance</th>
+                                {showBalanceColumn && <th className="py-3 px-2 font-bold uppercase tracking-wider text-slate-800 text-[11px] text-right w-36">Balance</th>}
                             </tr>
                             </thead>
                             <tbody className="font-mono text-xs">
 
+                            {showBalanceColumn && (
                             <tr className="border-b border-slate-300 bg-slate-50/50 break-inside-avoid">
                                 <td colSpan={5} className="py-2.5 px-2 text-[11px] font-bold text-slate-500 uppercase tracking-widest font-sans">
                                     Opening Balance
@@ -856,6 +860,7 @@ export const MemberStatementPage: React.FC = () => {
                                     {fmt(openingBalance)}
                                 </td>
                             </tr>
+                            )}
 
                             {rows.map((row, idx) => (
                                 <tr key={idx} className="border-b border-slate-300 break-inside-avoid print:even:bg-slate-100">
@@ -866,12 +871,15 @@ export const MemberStatementPage: React.FC = () => {
                                     </td>
                                     <td className="py-3 px-2 text-right text-red-700">{!row.isCredit ? fmt(row.amount) : ''}</td>
                                     <td className="py-3 px-2 text-right text-emerald-700">{row.isCredit ? fmt(row.amount) : ''}</td>
+                                    {showBalanceColumn && (
                                     <td className="py-3 px-2 text-right font-bold text-slate-900">
-                                        {row.module === 'SAVINGS' ? fmt(row.runningBalance) : '—'}
+                                        {fmt(row.runningBalance)}
                                     </td>
+                                    )}
                                 </tr>
                             ))}
 
+                            {showBalanceColumn && (
                             <tr className="border-y-2 border-slate-900 bg-slate-50 break-inside-avoid">
                                 <td colSpan={5} className="py-3 px-2 text-xs font-bold text-slate-800 uppercase tracking-widest font-sans text-right">
                                     Closing Balance
@@ -880,6 +888,7 @@ export const MemberStatementPage: React.FC = () => {
                                     {fmt(closingBalance)}
                                 </td>
                             </tr>
+                            )}
                             </tbody>
                         </table>
 
