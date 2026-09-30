@@ -53,7 +53,7 @@ export const NotificationSettingsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
       </div>
     );
   }
@@ -68,8 +68,8 @@ export const NotificationSettingsPage: React.FC = () => {
         onClick={onChange}
         disabled={disabled}
         className={`${
-          isChecked ? 'bg-primary-600' : 'bg-slate-200'
-        } relative inline-flex flex-shrink-0 h-7 w-14 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50`}
+          isChecked ? 'bg-blue-600' : 'bg-slate-200'
+        } relative inline-flex flex-shrink-0 h-7 w-14 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50`}
       >
         <span className={`${
           isChecked ? 'translate-x-7' : 'translate-x-0'
@@ -98,7 +98,7 @@ export const NotificationSettingsPage: React.FC = () => {
       <div className="bg-white shadow sm:rounded-lg overflow-hidden">
         <div className="px-4 py-5 sm:p-6 border-b border-gray-200">
           <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-            <Bell className="h-5 w-5 mr-2 text-primary-500" />
+            <Bell className="h-5 w-5 mr-2 text-blue-500" />
             Delivery Channels
           </h3>
           <div className="mt-2 max-w-xl text-sm text-gray-500">
@@ -134,7 +134,7 @@ export const NotificationSettingsPage: React.FC = () => {
       <div className="bg-white shadow sm:rounded-lg overflow-hidden">
         <div className="px-4 py-5 sm:p-6 border-b border-gray-200">
           <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-            <Shield className="h-5 w-5 mr-2 text-primary-500" />
+            <Shield className="h-5 w-5 mr-2 text-blue-500" />
             Event Preferences
           </h3>
           <div className="mt-2 max-w-xl text-sm text-gray-500">
@@ -165,6 +165,14 @@ export const NotificationSettingsPage: React.FC = () => {
             </div>
             <ToggleSwitch checked={preferences.notifyOnTransactions} onChange={() => handleToggle('notifyOnTransactions')} disabled={saving} />
           </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-900">System Alerts</p>
+              <p className="text-sm text-gray-500">Technical alerts and system monitoring notifications (Developer Only).</p>
+            </div>
+            <ToggleSwitch checked={preferences.notifyOnSystemAlerts} onChange={() => handleToggle('notifyOnSystemAlerts')} disabled={saving} />
+          </div>
         </div>
         
         <div className="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end">
@@ -172,7 +180,7 @@ export const NotificationSettingsPage: React.FC = () => {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Save Preferences
