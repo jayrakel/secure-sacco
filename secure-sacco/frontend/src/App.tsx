@@ -15,6 +15,7 @@ import SetupGuard from "./shared/components/SetupGuard";
 import SecuritySettingsPage from "./features/auth/pages/SecuritySettingsPage";
 import { ProfilePage } from "./features/auth/pages/ProfilePage";
 import SaccoSettingsPage from './features/settings/pages/SaccoSettingsPage';
+import { NotificationSettingsPage } from './features/settings/pages/NotificationSettingsPage';
 import SystemMaintenancePage from './features/settings/pages/SystemMaintenancePage';
 import GuestRoute from "./shared/components/GuestRoute";
 import HasPermission from "./shared/components/HasPermission";
@@ -435,6 +436,12 @@ function App() {
                                 <Route path="/security" element={
                                     <ProtectedRoute>
                                         <SecuritySettingsPage />
+                                    </ProtectedRoute>
+                                } />
+
+                                <Route path="/notification-settings" element={
+                                    <ProtectedRoute>
+                                        <NotificationSettingsPage />
                                     </ProtectedRoute>
                                 } />
 

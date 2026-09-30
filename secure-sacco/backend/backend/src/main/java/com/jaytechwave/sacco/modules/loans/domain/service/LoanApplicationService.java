@@ -40,6 +40,7 @@ import com.jaytechwave.sacco.modules.public_content.api.dto.PublicContentDTOs.Ph
 import org.springframework.web.multipart.MultipartFile;
 import com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService;
 import com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService;
+import com.jaytechwave.sacco.modules.users.domain.service.NotificationPreferenceService;
 
 @Slf4j
 @Service
@@ -65,6 +66,7 @@ public class LoanApplicationService {
     private final CloudinaryUploadService cloudinaryUploadService;
     private final EmailNotificationService emailNotificationService;
     private final SmsNotificationService smsNotificationService;
+    private final NotificationPreferenceService notificationPreferenceService;
 
     @Transactional
     public LoanApplicationResponse createApplication(CreateLoanApplicationRequest request, String email) {
@@ -262,6 +264,31 @@ public class LoanApplicationService {
                 guarantor.getGuarantorMemberId().toString(),
                 "Guarantor " + newStatus.name() + " for loan application " + applicationId
         );
+        
+        try {
+            User applicantUser = userRepository.findByMemberId(guarantor.getLoanApplication().getMemberId()).orElseThrow();
+            
+            String msg = "Your guarantor request to " + user.getMember().getFirstName() + " has been " + newStatus.name() + ".";
+            
+            if (notificationPreferenceService.shouldSendEmailForGuarantorRequest(applicantUser)) {
+                emailNotificationService.sendSystemAlertEmail(
+                        applicantUser.getEmail(),
+                        "Guarantor Request " + newStatus.name(),
+                        msg
+                );
+                log.info("Sent Guarantor Response Email to {}", applicantUser.getEmail());
+            }
+            
+            if (notificationPreferenceService.shouldSendSmsForGuarantorRequest(applicantUser)) {
+                smsNotificationService.sendNotificationSms(
+                        applicantUser.getPhoneNumber(),
+                        msg
+                );
+                log.info("Sent Guarantor Response SMS to {}", applicantUser.getPhoneNumber());
+            }
+        } catch (Exception e) {
+            log.error("Failed to send notification for guarantor response", e);
+        }
         
         return mapToGuarantorResponse(guarantor, user.getMember());
     }

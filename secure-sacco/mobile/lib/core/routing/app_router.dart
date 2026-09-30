@@ -17,6 +17,7 @@ import '../../features/auth/presentation/contact_verification_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/change_password_screen.dart';
 import '../../features/profile/presentation/security_settings_screen.dart';
+import '../../features/settings/presentation/notification_settings_screen.dart';
 import '../../features/profile/presentation/session_list_screen.dart';
 import '../../features/dashboard/presentation/member_dashboard_screen.dart';
 import '../../features/staff/presentation/unified_staff_dashboard_screen.dart';
@@ -269,6 +270,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'security',
             builder: (context, state) => const SecuritySettingsScreen(),
+          ),
+          GoRoute(
+            path: 'notification-settings',
+            builder: (context, state) => const NotificationSettingsScreen(),
           ),
           GoRoute(
             path: 'sessions',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/dashboard_providers.dart';
+import '../../loans/data/loan_providers.dart';
 import '../../auth/data/auth_state.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -99,12 +100,26 @@ class DashboardScreen extends ConsumerWidget {
                 context.push('/member/loans');
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.handshake_outlined, color: AppColors.textPrimary),
-              title: const Text('Guarantor Requests', style: AppTextStyles.bodyMedium),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/member/guarantor-requests');
+            Consumer(
+              builder: (context, ref, child) {
+                final requestsAsync = ref.watch(myGuarantorRequestsProvider);
+                final pendingCount = requestsAsync.maybeWhen(
+                  data: (requests) => requests.where((r) => r.status == 'PENDING').length,
+                  orElse: () => 0,
+                );
+                return ListTile(
+                  leading: Badge(
+                    isLabelVisible: pendingCount > 0,
+                    label: Text(pendingCount.toString()),
+                    backgroundColor: Colors.red,
+                    child: const Icon(Icons.handshake_outlined, color: AppColors.textPrimary),
+                  ),
+                  title: const Text('Guarantor Requests', style: AppTextStyles.bodyMedium),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/member/guarantor-requests');
+                  },
+                );
               },
             ),
             ListTile(

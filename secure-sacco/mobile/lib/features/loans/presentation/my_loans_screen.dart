@@ -34,7 +34,52 @@ class MyLoansScreen extends ConsumerWidget {
         children: [
           eligibilityAsync.when(
             data: (eligibility) {
-              if (eligibility.isEligible) return const SizedBox.shrink();
+              if (eligibility.isEligible) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  color: Colors.green.shade50,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle_outline, color: Colors.green.shade800),
+                              const SizedBox(width: 8),
+                              Text(
+                                'You are eligible for a loan',
+                                style: TextStyle(
+                                  color: Colors.green.shade900,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: List.generate(5, (index) => Icon(
+                                index < eligibility.starRating ? Icons.star : Icons.star_border,
+                                color: Colors.amber,
+                                size: 16,
+                              )),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Qualified limit: ${currencyFormat.format(eligibility.maxBorrowingLimit)}',
+                        style: TextStyle(
+                          color: Colors.green.shade900,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
               return Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),

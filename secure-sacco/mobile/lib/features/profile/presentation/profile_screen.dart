@@ -14,6 +14,7 @@ import '../../auth/data/auth_state.dart';
 import 'change_password_screen.dart';
 import 'session_list_screen.dart';
 import 'security_settings_screen.dart';
+import '../../settings/presentation/notification_settings_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -36,7 +37,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final state = ref.watch(profileControllerProvider);
 
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -64,6 +65,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Tab(text: 'Password'),
               Tab(text: 'Two-Factor'),
               Tab(text: 'Devices'),
+              Tab(text: 'Notifications'),
             ],
           ),
         ),
@@ -94,6 +96,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const ChangePasswordScreen(embedded: true),
                       const SecuritySettingsScreen(embedded: true),
                       const SessionListScreen(embedded: true),
+                      const NotificationSettingsScreen(embedded: true),
                     ],
                   ),
       ),
