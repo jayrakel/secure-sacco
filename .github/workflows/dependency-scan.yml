@@ -2,7 +2,7 @@ name: Dependency Security Scan
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # Every day at 1am UTC
+    - cron: '0 22 * * *'  # 10 PM UTC, which is 1 AM EAT (Kenya Time)
   workflow_dispatch:
 
 jobs:
@@ -39,7 +39,21 @@ jobs:
             -DnvdApiKey="${NVD_API_KEY}" \
             -DfailBuildOnCVSS=7 \
             -Dformat=HTML
-        continue-on-error: true
+
+      - name: Trigger System Alerts on Failure
+        if: failure()
+        env:
+          SYSTEM_ALERT_API_KEY: ${{ secrets.SYSTEM_ALERT_API_KEY }}
+        run: |
+          curl -X POST https://api.secure-sacco.com/api/v1/system-alerts/dispatch \
+            -H "X-System-Alert-Api-Key: $SYSTEM_ALERT_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "source": "GitHub Actions",
+              "service": "Dependency Scanner",
+              "severity": "CRITICAL",
+              "message": "OWASP Dependency Scan failed! New vulnerabilities detected."
+            }'
 
       - name: Upload OWASP HTML report
         if: always()

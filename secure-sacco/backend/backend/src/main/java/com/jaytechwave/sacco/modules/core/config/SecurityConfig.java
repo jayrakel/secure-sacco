@@ -109,6 +109,7 @@ public class SecurityConfig {
 
                         // --- Africa's Talking callbacks (unauthenticated) ---
                         .requestMatchers("/api/v1/callbacks/africastalking/**").permitAll()
+                        .requestMatchers("/api/v1/system-alerts/**").permitAll()
 
                         // --- Setup wizard status — public so the frontend can check before login ---
                         .requestMatchers("/api/v1/setup/**").permitAll()
