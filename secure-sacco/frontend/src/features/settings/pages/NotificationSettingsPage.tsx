@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Bell, Smartphone, Mail, AlertCircle, Loader2, Save } from 'lucide-react';
+import { Shield, Bell, Smartphone, Mail, Loader2, Save } from 'lucide-react';
 import { settingsApi, NotificationPreferenceDto } from '../api/settingsApi';
 import { toast } from 'react-hot-toast';
 
@@ -17,7 +17,7 @@ export const NotificationSettingsPage: React.FC = () => {
       setLoading(true);
       const data = await settingsApi.getNotificationPreferences();
       setPreferences(data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load notification settings');
     } finally {
       setLoading(false);
@@ -38,7 +38,7 @@ export const NotificationSettingsPage: React.FC = () => {
       setSaving(true);
       await settingsApi.updateNotificationPreferences(preferences);
       toast.success('Notification settings saved successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save notification settings');
     } finally {
       setSaving(false);
