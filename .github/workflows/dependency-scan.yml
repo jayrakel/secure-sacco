@@ -2,7 +2,7 @@ name: Dependency Security Scan
 
 on:
   schedule:
-    - cron: '0 3 * * 1'   # Every Monday at 3am UTC
+    - cron: '0 1 * * *'   # Every day at 1am UTC
   workflow_dispatch:
 
 jobs:
