@@ -7,13 +7,13 @@ import os
 # ==========================================
 # CONFIGURATION
 # ==========================================
-BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
-EMAIL = "admin@jaytechwavesolutions.co.ke"
-PASSWORD = "M1chira._2000"
-#
-# BASE_URL = "http://localhost:8080/api/v1"
-# EMAIL = "jaytechwavesolutions@gmail.com"
-# PASSWORD = "Michira._2000"
+# BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
+# EMAIL = "admin@jaytechwavesolutions.co.ke"
+# PASSWORD = "M1chira._2000"
+
+BASE_URL = "http://localhost:8080/api/v1"
+EMAIL = "jaytechwavesolutions@gmail.com"
+PASSWORD = "S@cc0_.Adm!n123"
 
 CSV_DIR = os.path.dirname(os.path.abspath(__file__))
 session = requests.Session()
@@ -151,7 +151,7 @@ def migrate_salesio():
                     "principal": 100000.00,
                     "interest": 20000.40,
                     "weeklyScheduled": 1153.85,
-                    "firstPaymentDate": "2024-09-12",
+                    "firstPaymentDate": "2024-10-17",
                     "termWeeks": 104,
                     "referenceNumber": "MIG-SAL-L3-DISB"
                 })

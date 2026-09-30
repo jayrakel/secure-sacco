@@ -21,5 +21,10 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @Configuration
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 public class WebConfig implements WebMvcConfigurer {
+
+    @org.springframework.context.annotation.Bean
+    public com.fasterxml.jackson.databind.ObjectMapper jackson2ObjectMapper() {
+        return new com.fasterxml.jackson.databind.ObjectMapper();
+    }
 }
 

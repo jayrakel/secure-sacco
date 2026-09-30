@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/main.dart';
-import 'package:mobile/core/networking/cookie_manager_provider.dart';
+import 'package:betterlink_connect/main.dart';
+import 'package:betterlink_connect/core/networking/cookie_manager_provider.dart';
 import 'dart:io';
 
 void main() {

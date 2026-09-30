@@ -7,9 +7,9 @@ import os
 # ==========================================
 # CONFIGURATION
 # ==========================================
-BASE_URL = "https://staging.jaytechwavesolutions.co.ke/api/v1"
-EMAIL = "admin@jaytechwavesolutions.co.ke"
-PASSWORD = "M1chira._2000"
+BASE_URL = "http://localhost:8080/api/v1"
+EMAIL = "jaytechwavesolutions@gmail.com"
+PASSWORD = "S@cc0_.Adm!n123"
 MEMBER_NUMBER = "BVL-2022-000003"
 
 CSV_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -201,8 +201,7 @@ if __name__ == "__main__":
 
             if module == 'LOANS' and row_type == 'REPAYMENT':
                 submit_payment(api_date, amount, ref)
-            elif module == 'PENALTIES' and row_type == 'PENALTY_REPAYMENT':
-                submit_penalty(api_date, amount, ref)
+
 
     # Final jump to today to lock in the arrears calculation
     jump_to_date("20 Nov 2025")
