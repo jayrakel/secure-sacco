@@ -4,7 +4,7 @@ import { useSettings } from '../../features/settings/context/useSettings';
 import {
     LayoutDashboard, BookOpen, FileText, Users, ShieldCheck,
     UserCircle, Coins, PiggyBank, BarChart3, Shield, Settings,
-    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe, Wallet, HandCoins,
+    ChevronLeft, ChevronRight, ChevronDown, AlertCircle, CalendarDays, Scale, PenLine, X, Database, Receipt, Package, Globe, Wallet, HandCoins, Bell
 } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { paymentProductsApi } from '../../features/paymentproducts/api/payment-products-api';
@@ -101,6 +101,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
                 { label: 'Audit Log', path: '/audit/logs', icon: Shield, requiredPermission: 'AUDIT_LOG_READ' },
                 { label: 'SMS Logs',  path: '/audit/sms-logs', icon: ShieldCheck, requiredPermission: 'AUDIT_LOG_READ' },
                 { label: 'Settings',  path: '/settings',   icon: Settings, requiredPermission: 'PENALTIES_MANAGE_RULES' },
+                { label: 'Notification Settings', path: '/notification-settings', icon: Bell },
                 { label: 'System Maintenance', path: '/admin/maintenance', icon: AlertCircle, requiredPermission: 'SETTINGS_EDIT' },
                 { label: 'Migration',             path: '/migration',             icon: Database, requiredPermission: 'DATA_MIGRATION' },
                 { label: 'Permissions Registry', path: '/permissions-registry', icon: Shield,   adminOnly: true },
@@ -131,6 +132,7 @@ export const Sidebar = ({ mobileOpen = false, onMobileClose }: SidebarProps) => 
             sectionLabel: 'Account',
             items: [
                 { label: 'My Reports', path: '/my-reports', icon: BarChart3 },
+                { label: 'Notification Settings', path: '/notification-settings', icon: Bell },
             ],
         },
     ];

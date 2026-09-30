@@ -14,10 +14,10 @@ class MyGuarantorRequestsScreen extends ConsumerStatefulWidget {
 class _MyGuarantorRequestsScreenState extends ConsumerState<MyGuarantorRequestsScreen> {
   final _currencyFormat = NumberFormat.currency(symbol: 'KES ', decimalDigits: 2);
 
-  Future<void> _respond(String id, String status) async {
+  Future<void> _respond(String applicationId, String guarantorId, String status) async {
     try {
       final repo = ref.read(loanRepositoryProvider);
-      await repo.respondToGuarantorRequest(id, status);
+      await repo.respondToGuarantorRequest(applicationId, guarantorId, status);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Request ${status.toLowerCase()} successfully')),
       );
@@ -180,13 +180,13 @@ class _MyGuarantorRequestsScreenState extends ConsumerState<MyGuarantorRequestsS
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => _respond(request.id, 'REJECTED'),
+                    onPressed: () => _respond(request.loanApplicationId, request.id, 'REJECTED'),
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                     child: const Text('Reject'),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: () => _respond(request.id, 'ACCEPTED'),
+                    onPressed: () => _respond(request.loanApplicationId, request.id, 'ACCEPTED'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
