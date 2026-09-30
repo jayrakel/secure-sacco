@@ -5,5 +5,6 @@ public record NotificationPreferenceDto(
     boolean smsEnabled,
     boolean notifyOnGuarantorRequests,
     boolean notifyOnLoanUpdates,
-    boolean notifyOnTransactions
+    boolean notifyOnTransactions,
+    boolean notifyOnSystemAlerts
 ) {}

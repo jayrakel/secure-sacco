@@ -45,6 +45,10 @@ public class NotificationPreference {
     @Column(nullable = false)
     private boolean notifyOnTransactions = true;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean notifyOnSystemAlerts = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

@@ -3,6 +3,7 @@ package com.jaytechwave.sacco.modules.core.notifications;
 import com.jaytechwave.sacco.modules.core.notifications.api.dto.SystemAlertDTOs.SystemAlertRequest;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
+import com.jaytechwave.sacco.modules.users.domain.service.NotificationPreferenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class SystemAlertService {
 
     private final UserRepository userRepository;
     private final SmsNotificationService smsNotificationService;
+    private final NotificationPreferenceService notificationPreferenceService;
 
     public void dispatchAlert(SystemAlertRequest request) {
         log.info("Received system alert from source={}, service={}, severity={}: {}",
@@ -49,8 +51,12 @@ public class SystemAlertService {
         for (User developer : developers) {
             String phone = developer.getPhoneNumber();
             if (phone != null && !phone.isBlank()) {
-                log.info("Dispatching system alert SMS to developer: {}", developer.getEmail());
-                smsNotificationService.sendNotificationSms(phone, smsMessage);
+                if (notificationPreferenceService.shouldSendSmsForSystemAlert(developer)) {
+                    log.info("Dispatching system alert SMS to developer: {}", developer.getEmail());
+                    smsNotificationService.sendNotificationSms(phone, smsMessage);
+                } else {
+                    log.debug("Skipping SMS alert for developer: {} due to notification preferences", developer.getEmail());
+                }
             }
         }
     }
