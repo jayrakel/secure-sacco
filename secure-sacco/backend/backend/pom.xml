@@ -6,14 +6,14 @@
 
     <groupId>com.jaytechwave</groupId>
     <artifactId>sacco</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>sacco</name>
     <description>secure SACCO management system</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.11</version>
+        <version>4.1.1</version>
         <relativePath/>
     </parent>
 
@@ -50,9 +50,9 @@
     </scm>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>26</java.version>
         <testcontainers.version>1.19.8</testcontainers.version>
-        <jjwt.version>0.12.6</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
     </properties>
 
     <dependencies>
@@ -141,6 +141,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.resend</groupId>
             <artifactId>resend-java</artifactId>
             <version>3.1.0</version>
@@ -178,12 +183,14 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -265,7 +272,10 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
+                <version>0.8.13</version>
+                <configuration>
+                    <skip>true</skip> <!-- Skipping because JaCoCo currently lacks Java 26 support -->
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -333,6 +343,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.jaytechwave.sacco.BackendApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

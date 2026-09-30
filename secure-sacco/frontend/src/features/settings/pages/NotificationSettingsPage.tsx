@@ -60,6 +60,21 @@ export const NotificationSettingsPage: React.FC = () => {
 
   if (!preferences) return null;
 
+  const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: () => void, disabled?: boolean }) => (
+    <button
+      type="button"
+      onClick={onChange}
+      disabled={disabled}
+      className={`${
+        checked ? 'bg-primary-600 border-primary-600' : 'bg-gray-400 border-gray-400'
+      } relative inline-flex flex-shrink-0 h-7 w-14 border-2 rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50`}
+    >
+      <span className={`${
+        checked ? 'translate-x-7 bg-white' : 'translate-x-0 bg-white'
+      } pointer-events-none inline-block h-6 w-6 rounded-full shadow transform ring-0 transition ease-in-out duration-200`} />
+    </button>
+  );
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
@@ -96,17 +111,7 @@ export const NotificationSettingsPage: React.FC = () => {
                 <p className="text-sm text-gray-500">Receive alerts to your registered email address.</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('emailEnabled')}
-              className={`${
-                preferences.emailEnabled ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`}
-            >
-              <span className={`${
-                preferences.emailEnabled ? 'translate-x-5' : 'translate-x-0'
-              } pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-            </button>
+            <ToggleSwitch checked={preferences.emailEnabled} onChange={() => handleToggle('emailEnabled')} disabled={saving} />
           </div>
 
           <div className="flex items-center justify-between">
@@ -117,17 +122,7 @@ export const NotificationSettingsPage: React.FC = () => {
                 <p className="text-sm text-gray-500">Receive urgent alerts via text message.</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('smsEnabled')}
-              className={`${
-                preferences.smsEnabled ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`}
-            >
-              <span className={`${
-                preferences.smsEnabled ? 'translate-x-5' : 'translate-x-0'
-              } pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-            </button>
+            <ToggleSwitch checked={preferences.smsEnabled} onChange={() => handleToggle('smsEnabled')} disabled={saving} />
           </div>
         </div>
       </div>
@@ -149,17 +144,7 @@ export const NotificationSettingsPage: React.FC = () => {
               <p className="text-sm font-medium text-gray-900">Guarantor Requests</p>
               <p className="text-sm text-gray-500">When someone asks you to guarantee a loan, or responds to your request.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('notifyOnGuarantorRequests')}
-              className={`${
-                preferences.notifyOnGuarantorRequests ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200`}
-            >
-              <span className={`${
-                preferences.notifyOnGuarantorRequests ? 'translate-x-5' : 'translate-x-0'
-              } inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200`} />
-            </button>
+            <ToggleSwitch checked={preferences.notifyOnGuarantorRequests} onChange={() => handleToggle('notifyOnGuarantorRequests')} disabled={saving} />
           </div>
 
           <div className="flex items-center justify-between">
@@ -167,17 +152,7 @@ export const NotificationSettingsPage: React.FC = () => {
               <p className="text-sm font-medium text-gray-900">Loan Updates</p>
               <p className="text-sm text-gray-500">Status changes on your loan applications (Approvals, Rejections).</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('notifyOnLoanUpdates')}
-              className={`${
-                preferences.notifyOnLoanUpdates ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200`}
-            >
-              <span className={`${
-                preferences.notifyOnLoanUpdates ? 'translate-x-5' : 'translate-x-0'
-              } inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200`} />
-            </button>
+            <ToggleSwitch checked={preferences.notifyOnLoanUpdates} onChange={() => handleToggle('notifyOnLoanUpdates')} disabled={saving} />
           </div>
 
           <div className="flex items-center justify-between">
@@ -185,17 +160,7 @@ export const NotificationSettingsPage: React.FC = () => {
               <p className="text-sm font-medium text-gray-900">Transactions</p>
               <p className="text-sm text-gray-500">Alerts for deposits, withdrawals, and loan repayments.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => handleToggle('notifyOnTransactions')}
-              className={`${
-                preferences.notifyOnTransactions ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200`}
-            >
-              <span className={`${
-                preferences.notifyOnTransactions ? 'translate-x-5' : 'translate-x-0'
-              } inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200`} />
-            </button>
+            <ToggleSwitch checked={preferences.notifyOnTransactions} onChange={() => handleToggle('notifyOnTransactions')} disabled={saving} />
           </div>
         </div>
         
