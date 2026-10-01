@@ -212,7 +212,7 @@ const ContactTab: React.FC = () => {
         setErr(''); setMsg('');
         
         let hasChanges = false;
-        let changePayload: { email?: string; phone?: string } = {};
+        const changePayload: { email?: string; phone?: string } = {};
 
         if (type === 'email' && emailForm.email.trim() !== user?.email) {
             hasChanges = true;
