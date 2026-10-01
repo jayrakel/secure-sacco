@@ -16,6 +16,9 @@ COPY src ./src
 # Build application
 RUN mvn -B clean package -DskipTests
 
+# Extract layers for faster subsequent Docker builds
+RUN java -Djarmode=layertools -jar target/*.jar extract --destination target/extracted
+
 # ─────────────────────────────────────────────────────────────
 # Stage 2 — Runtime
 # ─────────────────────────────────────────────────────────────
@@ -26,11 +29,14 @@ RUN addgroup -S sacco && adduser -S -G sacco sacco
 
 WORKDIR /app
 
-# Copy application with correct ownership
-COPY --from=build --chown=sacco:sacco /app/target/*.jar app.jar
+# Copy extracted layers one by one (order matters for caching!)
+COPY --from=build --chown=sacco:sacco /app/target/extracted/dependencies/ ./
+COPY --from=build --chown=sacco:sacco /app/target/extracted/spring-boot-loader/ ./
+COPY --from=build --chown=sacco:sacco /app/target/extracted/snapshot-dependencies/ ./
+COPY --from=build --chown=sacco:sacco /app/target/extracted/application/ ./
 
 USER sacco
 
 EXPOSE 8080
 
-ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75.0","-XX:+UseG1GC","-XX:+ExitOnOutOfMemoryError","-Djava.security.egd=file:/dev/./urandom","-jar","app.jar"]
+ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75.0","-XX:+UseG1GC","-XX:+ExitOnOutOfMemoryError","-Djava.security.egd=file:/dev/./urandom","org.springframework.boot.loader.launch.JarLauncher"]
