@@ -28,12 +28,37 @@ public class SessionService {
         Map<String, ? extends Session> sessions = sessionRepository.findByPrincipalName(user.getEmail());
 
         return sessions.values().stream()
-                .map(session -> SessionResponse.builder()
+                .map(session -> {
+                    String ip = session.getAttribute("clientIp");
+                    String ua = session.getAttribute("userAgent");
+                    
+                    String os = "Unknown OS";
+                    String browser = "Unknown Browser";
+                    
+                    if (ua != null) {
+                        if (ua.contains("Windows")) os = "Windows";
+                        else if (ua.contains("Mac OS X")) os = "macOS";
+                        else if (ua.contains("Linux")) os = "Linux";
+                        else if (ua.contains("Android")) os = "Android";
+                        else if (ua.contains("iPhone") || ua.contains("iPad")) os = "iOS";
+                        
+                        if (ua.contains("Edg/")) browser = "Edge";
+                        else if (ua.contains("Chrome/")) browser = "Chrome";
+                        else if (ua.contains("Firefox/")) browser = "Firefox";
+                        else if (ua.contains("Safari/") && !ua.contains("Chrome")) browser = "Safari";
+                    }
+
+                    return SessionResponse.builder()
                         .sessionId(session.getId())
                         .creationTime(session.getCreationTime())
                         .lastAccessedTime(session.getLastAccessedTime())
                         .isExpired(session.isExpired())
-                        .build())
+                        .ipAddress(ip)
+                        .os(os)
+                        .browser(browser)
+                        .location(ip != null ? "Location lookup pending" : "Unknown")
+                        .build();
+                })
                 .collect(Collectors.toList());
     }
 

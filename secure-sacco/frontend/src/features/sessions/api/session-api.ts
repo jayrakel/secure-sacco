@@ -5,6 +5,10 @@ export interface SessionResponse {
     creationTime: string; // ISO String
     lastAccessedTime: string; // ISO String
     isExpired: boolean;
+    os?: string;
+    browser?: string;
+    ipAddress?: string;
+    location?: string;
 }
 
 export const sessionApi = {

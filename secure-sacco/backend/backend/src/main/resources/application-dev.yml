@@ -49,5 +49,5 @@ spring:
 #    metrics:
 #      export:
 #        password: Michira._2000
-spring.jpa.hibernate.ddl-auto: none
+spring.jpa.hibernate.ddl-auto: validate
 spring.data.redis.password: Michira._2000

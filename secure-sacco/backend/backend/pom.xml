@@ -81,6 +81,13 @@
             <version>1.80</version>
         </dependency>
 
+        <!-- WebAuthn (Passkeys) -->
+        <dependency>
+            <groupId>com.yubico</groupId>
+            <artifactId>webauthn-server-core</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+
         <!--    Validation   -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -11,6 +11,16 @@ spring:
   application:
     name: ${APP_NAME:Secure SACCO}
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_OAUTH_CLIENT_ID:dummy-id}
+            client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:dummy-secret}
+            scope:
+              - email
+              - profile
   data:
     redis:
       host: ${REDIS_HOST:localhost}

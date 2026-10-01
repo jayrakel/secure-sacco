@@ -123,20 +123,30 @@ export default function UserSessionsModal({ userId, userName, onClose }: Props) 
                                         </div>
                                         <div>
                                             <div className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                                Session #{session.sessionId.substring(0, 8)}...
+                                                {session.os || 'Unknown Device'} • {session.browser || 'Unknown Browser'}
                                                 {idx === 0 && (
                                                     <span className="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
-                                                        Most Recent
+                                                        Current Session
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex flex-col text-xs text-slate-500 mt-1 space-y-1">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock size={12} /> Created: {formatDate(session.creationTime)}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Clock size={12} /> Last Active: {formatDate(session.lastAccessedTime)}
-                                                </span>
+                                            <div className="flex flex-col text-xs text-slate-500 mt-2 space-y-1">
+                                                <div className="flex items-center gap-4">
+                                                    <span className="flex items-center gap-1 font-medium text-slate-600">
+                                                        IP: {session.ipAddress || 'N/A'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        Location: {session.location || 'Unknown'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock size={12} /> Started: {formatDate(session.creationTime)}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock size={12} /> Last Active: {formatDate(session.lastAccessedTime)}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

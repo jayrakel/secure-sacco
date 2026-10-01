@@ -2,7 +2,7 @@ import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../../features/auth/context/AuthProvider';
 import { useSettings } from '../../features/settings/context/useSettings';
-import { LogOut, ChevronRight, Menu, UserCircle, AlertTriangle } from 'lucide-react';
+import { LogOut, ChevronRight, Menu, UserCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { maintenanceApi } from '../../features/settings/api/maintenanceApi';
 import type { MaintenanceEvent } from '../../features/settings/api/maintenanceApi';
@@ -171,6 +171,12 @@ export const DashboardLayout = () => {
                                         <Link to="/profile">
                                             <UserCircle className="mr-2 h-4 w-4" />
                                             <span>My Profile</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/security">
+                                            <ShieldCheck className="mr-2 h-4 w-4" />
+                                            <span>Security Settings</span>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={logout}>

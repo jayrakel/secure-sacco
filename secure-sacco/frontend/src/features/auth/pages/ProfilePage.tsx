@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
 import { sessionApi, type SessionResponse } from '../../sessions/api/session-api';
 import apiClient from '../../../shared/api/api-client';
@@ -507,244 +508,33 @@ const PasswordTab: React.FC = () => {
 };
 
 const SecurityTab: React.FC = () => {
-    const { user, refreshUser } = useAuth();
-    const [qrCode, setQrCode] = useState('');
-    const [secret, setSecret] = useState('');
-    const [code, setCode] = useState('');
-    const [status, setStatus] = useState<'loading' | 'idle' | 'submitting' | 'success' | 'error'>('loading');
-    const [errMsgState, setErrMsg] = useState('');
-    const [disabling, setDisabling] = useState(false);
-
-    useEffect(() => {
-        if (!user || user.mfaEnabled) {
-            if (user?.mfaEnabled && status !== 'idle') {
-                setStatus('idle');
-            }
-            return;
-        }
-
-        let isMounted = true;
-        if (status === 'error') {
-            setStatus('loading');
-        }
-
-        apiClient.get('/auth/mfa/setup')
-            .then(r => {
-                if (isMounted) {
-                    setQrCode(r.data.qrCode);
-                    setSecret(r.data.secret);
-                    setStatus('idle');
-                }
-            })
-            .catch(() => {
-                if (isMounted) {
-                    setStatus('error');
-                    setErrMsg('Failed to load MFA setup.');
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
-    }, [user, status]);
-
-    const handleEnable = async (e: React.FormEvent) => {
-        e.preventDefault(); setStatus('submitting'); setErrMsg('');
-        try {
-            await apiClient.post('/auth/mfa/enable', { code });
-            await refreshUser();
-            setStatus('success');
-            setCode('');
-        } catch (err) {
-            setStatus('error');
-            setErrMsg(errMsg(err, 'Invalid code. Please try again.'));
-        }
-    };
-
-    const handleDisable = async () => {
-        if (!window.confirm('Disable Two-Factor Authentication? This makes your account significantly less secure.')) return;
-        setDisabling(true);
-        try {
-            await apiClient.post('/auth/mfa/disable');
-            await refreshUser();
-            setStatus('idle');
-            setQrCode('');
-            setSecret('');
-        } catch {
-            alert('Failed to disable MFA.');
-        } finally {
-            setDisabling(false);
-        }
-    };
-
-    if (user?.mfaEnabled) return (
-        <div className="text-center py-12 max-w-sm mx-auto">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200 shadow-sm">
-                <ShieldCheck size={32} className="text-emerald-600" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1.5">2FA is Active</h3>
-            <p className="text-sm text-slate-500 mb-6">Your account is fully protected with two-factor authentication.</p>
-            <button onClick={handleDisable} disabled={disabling}
-                    className="flex items-center gap-2 mx-auto px-5 py-2.5 border border-red-200 text-red-600 bg-white hover:bg-red-50 text-sm font-semibold rounded-xl transition disabled:opacity-50 shadow-sm">
-                {disabling ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />}
-                Disable 2FA
-            </button>
-        </div>
-    );
-
-    if (status === 'success') return (
-        <div className="text-center py-12 max-w-sm mx-auto">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200 shadow-sm">
-                <CheckCircle size={32} className="text-emerald-600" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1.5">2FA Enabled!</h3>
-            <p className="text-sm text-slate-500">Your account is now protected with two-factor authentication.</p>
-        </div>
-    );
-
     return (
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80">
-                <h3 className="font-bold text-slate-900 mb-2">Step 1 — Scan QR Code</h3>
-                <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-                    Open Google Authenticator, Authy, or any TOTP authenticator app and scan this QR code.
-                </p>
-                <div className="bg-white border border-slate-200 rounded-xl p-6 flex justify-center items-center min-h-48 shadow-sm">
-                    {status === 'loading' ? (
-                        <Loader2 size={28} className="animate-spin text-slate-400" />
-                    ) : qrCode ? (
-                        <img src={qrCode} alt="MFA QR Code" className="w-40 h-40 rounded" />
-                    ) : null}
-                </div>
-                {secret && (
-                    <div className="mt-4 text-center">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Or enter manual key:</p>
-                        <code className="bg-white px-3 py-1.5 rounded-lg font-mono text-xs text-slate-800 select-all border border-slate-200 inline-block shadow-2xs">
-                            {secret}
-                        </code>
-                    </div>
-                )}
+        <div className="text-center py-12 max-w-sm mx-auto">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 shadow-sm">
+                <ShieldCheck size={32} className="text-slate-600" />
             </div>
-
-            <div>
-                <h3 className="font-bold text-slate-900 mb-2">Step 2 — Verify Code</h3>
-                <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                    Enter the 6-digit verification code generated by your authenticator app to complete setup.
-                </p>
-                {status === 'error' && <div className="mb-4"><Alert type="error" message={errMsgState} /></div>}
-                <form onSubmit={handleEnable} className="space-y-4">
-                    <div>
-                        <label className={labelCls}>6-Digit Code</label>
-                        <div className="relative">
-                            <Key size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input type="text" required maxLength={6} value={code}
-                                   onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-                                   placeholder="123456"
-                                   className={inputCls + ' pl-10 text-lg tracking-widest font-mono font-bold'} />
-                        </div>
-                    </div>
-                    <button type="submit" disabled={status === 'submitting' || code.length < 6 || status === 'loading'}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition w-full justify-center shadow-sm">
-                        {status === 'submitting' ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />}
-                        {status === 'submitting' ? 'Verifying…' : 'Enable 2FA'}
-                    </button>
-                </form>
-            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Advanced Security</h3>
+            <p className="text-sm text-slate-500 mb-6">Manage Two-Factor Authentication (SMS, Email, Authenticator App) and Passkeys in the advanced security settings.</p>
+            <Link to="/security"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Go to Security Settings
+            </Link>
         </div>
     );
 };
 
 const SessionsTab: React.FC = () => {
-    const { user } = useAuth();
-    const [sessions, setSessions] = useState<SessionResponse[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    const load = useCallback(async (isRefresh = false) => {
-        if (!user) return;
-        if (isRefresh) {
-            setLoading(true);
-        }
-        setError('');
-        try {
-            const data = await sessionApi.getUserSessions(user.id);
-            setSessions(data.sort((a, b) => new Date(b.lastAccessedTime).getTime() - new Date(a.lastAccessedTime).getTime()));
-        } catch {
-            setError('Failed to load active sessions.');
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        load();
-    }, [load]);
-
-    const revoke = async (id: string) => {
-        if (!window.confirm('Sign out of this device session?')) return;
-        await sessionApi.revokeSpecificSession(id);
-        setSessions(s => s.filter(x => x.sessionId !== id));
-    };
-
-    const revokeAll = async () => {
-        if (!window.confirm('Sign out of ALL devices? You will be logged out of your current session immediately.')) return;
-        await sessionApi.revokeAllUserSessions(user!.id);
-        window.location.href = '/login';
-    };
-
-    const fmt = (s: string) => new Date(s).toLocaleString('en-KE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-    if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-slate-400" /></div>;
-    if (error)   return <Alert type="error" message={error} />;
-
     return (
-        <div className="space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <p className="text-sm text-slate-600 font-medium">
-                    You have <span className="font-bold text-slate-900">{sessions.length}</span> active session{sessions.length !== 1 ? 's' : ''}.
-                </p>
-                <button onClick={() => load(true)} className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                    <RefreshCw size={12} /> Refresh
-                </button>
+        <div className="text-center py-12 max-w-sm mx-auto">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 shadow-sm">
+                <MonitorSmartphone size={32} className="text-slate-600" />
             </div>
-
-            <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-                {sessions.map((session, idx) => (
-                    <div key={session.sessionId} className="flex items-center gap-4 p-4 bg-white hover:bg-slate-50/80 transition">
-                        <div className="p-2.5 bg-slate-100 rounded-xl shrink-0 border border-slate-200/60">
-                            <MonitorSmartphone size={18} className="text-slate-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold text-slate-800 font-mono">
-                                    {session.sessionId.substring(0, 14)}…
-                                </p>
-                                {idx === 0 && (
-                                    <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                                        Current Device
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-xs text-slate-400 flex items-center gap-1 mt-1 font-medium">
-                                <Clock size={12} className="text-slate-400" /> Last active: {fmt(session.lastAccessedTime)}
-                            </p>
-                        </div>
-                        <button onClick={() => revoke(session.sessionId)}
-                                className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 hover:border-red-200 hover:bg-red-50 text-red-600 text-xs font-semibold rounded-xl transition shrink-0">
-                            <Trash2 size={13} /> Sign Out
-                        </button>
-                    </div>
-                ))}
-            </div>
-
-            {sessions.length > 1 && (
-                <div className="flex justify-end pt-2">
-                    <button onClick={revokeAll}
-                            className="flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/80 border border-red-200 px-4 py-2 rounded-xl transition">
-                        <ShieldAlert size={14} /> Sign out of all active devices
-                    </button>
-                </div>
-            )}
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Manage Devices</h3>
+            <p className="text-sm text-slate-500 mb-6">View your active sessions and log out of unrecognized devices in the advanced security settings.</p>
+            <Link to="/security"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition shadow-sm">
+                Go to Security Settings
+            </Link>
         </div>
     );
 };

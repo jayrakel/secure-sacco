@@ -149,7 +149,10 @@ public class AuthController {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
-        request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+        HttpSession session = request.getSession(true);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+        session.setAttribute("clientIp", getClientIP(request));
+        session.setAttribute("userAgent", request.getHeader("User-Agent"));
     }
 
     private Map<String, Object> buildLoginResponse(CustomUserDetailsService.CustomUserDetails userDetails) {

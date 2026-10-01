@@ -4,8 +4,10 @@ import { sessionApi, type SessionResponse } from '../../sessions/api/session-api
 import apiClient from '../../../shared/api/api-client';
 import {
     MonitorSmartphone, Trash2, ShieldAlert, Loader2, Clock,
-    ShieldCheck, Smartphone, CheckCircle, AlertTriangle, Key, XCircle
+    ShieldCheck, Smartphone, CheckCircle, AlertTriangle, Key, XCircle, Fingerprint
 } from 'lucide-react';
+import { webAuthnApi } from '../api/webauthn-api';
+import { startRegistration } from '@simplewebauthn/browser';
 
 export default function SecuritySettingsPage() {
     const { user, refreshUser } = useAuth();
@@ -23,6 +25,11 @@ export default function SecuritySettingsPage() {
     const [selectedMethod, setSelectedMethod] = useState<'TOTP' | 'SMS' | 'EMAIL'>('TOTP');
     const [mfaErrorMsg, setMfaErrorMsg] = useState('');
     const [isDisabling, setIsDisabling] = useState(false);
+
+    // --- PASSKEY STATE ---
+    const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+    const [passkeyError, setPasskeyError] = useState('');
+    const [passkeySuccess, setPasskeySuccess] = useState(false);
 
     // 1. Fetch Sessions
     useEffect(() => {
@@ -64,6 +71,40 @@ export default function SecuritySettingsPage() {
     };
 
     // --- HANDLERS ---
+    const handleRegisterPasskey = async () => {
+        setIsRegisteringPasskey(true);
+        setPasskeyError('');
+        setPasskeySuccess(false);
+
+        try {
+            // 1. Get options from server
+            const optionsStr = await webAuthnApi.startRegistration();
+            const options = JSON.parse(optionsStr);
+            
+            // 2. Pass options to authenticator
+            const attResp = await startRegistration(options);
+            
+            // 3. Send response back to server
+            // Using a generic name for now, e.g., "My Authenticator" or prompt user
+            const deviceName = prompt("Give this device/passkey a name (e.g., Personal Phone):", "My Passkey") || "My Passkey";
+            
+            await webAuthnApi.finishRegistration(JSON.stringify(attResp), deviceName);
+            
+            setPasskeySuccess(true);
+        } catch (error: any) {
+            console.error(error);
+            if (error.name === 'NotAllowedError') {
+                setPasskeyError('Registration was cancelled or timed out.');
+            } else if (error.name === 'InvalidStateError') {
+                setPasskeyError('This device is already registered as a passkey.');
+            } else {
+                setPasskeyError(error?.response?.data?.message || error.message || 'Failed to register passkey. Ensure your device supports it.');
+            }
+        } finally {
+            setIsRegisteringPasskey(false);
+        }
+    };
+
     const handleEnableMfa = async (e: React.FormEvent) => {
         e.preventDefault();
         setMfaStatus('submitting');
@@ -186,8 +227,7 @@ export default function SecuritySettingsPage() {
                             <h3 className="text-xl font-bold text-slate-800 mb-2">2FA Enabled Successfully!</h3>
                             <p className="text-slate-600">Your account is now protected with two-factor authentication.</p>
                         </div>
-                    ) : (
-                        {mfaStatus === 'method_select' ? (
+                    ) : mfaStatus === 'method_select' ? (
                         <div className="max-w-xl mx-auto py-4">
                             <h3 className="font-bold text-slate-800 mb-4 text-center">Choose 2FA Method</h3>
                             <p className="text-sm text-slate-600 mb-6 text-center">Select how you want to receive your security codes.</p>
@@ -324,11 +364,61 @@ export default function SecuritySettingsPage() {
                             </div>
                         </div>
                     )}
-                    )}
                 </div>
             </div>
 
-            {/* --- SECTION 2: ACTIVE SESSIONS --- */}
+            {/* --- SECTION 2: PASSKEYS (WEBAUTHN) --- */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-blue-100 text-blue-700 rounded-xl">
+                            <Fingerprint size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-800">Passkeys & Security Keys</h2>
+                            <p className="text-slate-500 text-sm mt-1">Log in securely using your fingerprint, face scan, or a hardware security key.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="p-6 text-center py-8">
+                    {passkeySuccess && (
+                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center justify-center gap-2">
+                            <CheckCircle size={18} />
+                            <span>Passkey successfully registered! You can now use it to log in.</span>
+                        </div>
+                    )}
+                    
+                    {passkeyError && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center justify-center gap-2">
+                            <AlertTriangle size={18} />
+                            <span>{passkeyError}</span>
+                        </div>
+                    )}
+
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Fingerprint size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">Passwordless Sign-In</h3>
+                    <p className="text-slate-600 mb-8 max-w-md mx-auto">
+                        Passkeys offer a faster, more secure way to log into your account without a password. Register your device now.
+                    </p>
+
+                    <button
+                        onClick={handleRegisterPasskey}
+                        disabled={isRegisteringPasskey}
+                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mx-auto shadow-sm disabled:opacity-50"
+                    >
+                        {isRegisteringPasskey ? (
+                            <><Loader2 className="animate-spin" size={18} /> Registering...</>
+                        ) : (
+                            <><Fingerprint size={18} /> Register Passkey</>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* --- SECTION 3: ACTIVE SESSIONS --- */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
                 <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                     <div className="p-3 bg-purple-100 text-purple-700 rounded-xl">
