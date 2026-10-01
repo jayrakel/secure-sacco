@@ -68,6 +68,12 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- OAuth2 Client for Google Login -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
         <!-- BouncyCastle - required by Argon2PasswordEncoder at runtime -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
@@ -97,6 +103,10 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
         </dependency>
 
         <!-- postgres-->
