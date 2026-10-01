@@ -47,6 +47,13 @@ public class SaccoSettings {
     @Builder.Default
     private String faviconUrl = "";
 
+    // ── Setup tracking ──────────────────────────────────────────────────────────
+
+    /** Whether SACCO settings have been explicitly configured by admin (vs. auto-seeded defaults) */
+    @Column(name = "is_configured", nullable = false)
+    @Builder.Default
+    private Boolean configured = false;
+
     // ── Financial ────────────────────────────────────────────────────────────
 
     @Column(name = "registration_fee", nullable = false, precision = 15, scale = 2)
@@ -245,5 +252,14 @@ public class SaccoSettings {
     @Column(name = "contact_address", columnDefinition = "TEXT DEFAULT ''")
     @Builder.Default
     private String contactAddress = "";
+
+    // ── Helper methods ──────────────────────────────────────────────────────────
+
+    /**
+     * Convenience getter for the configured field (works with Lombok's @Getter)
+     */
+    public Boolean isConfigured() {
+        return this.configured;
+    }
 
 }

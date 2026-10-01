@@ -50,3 +50,4 @@ spring:
 #      export:
 #        password: Michira._2000
 spring.jpa.hibernate.ddl-auto: none
+spring.data.redis.password: Michira._2000

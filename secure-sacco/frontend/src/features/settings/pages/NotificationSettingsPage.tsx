@@ -2,6 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Bell, Smartphone, Mail, Loader2, Save, CheckCircle2, AlertCircle } from 'lucide-react';
 import { settingsApi, type NotificationPreferenceDto } from '../api/settingsApi';
 
+const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: () => void, disabled?: boolean }) => {
+  const isChecked = Boolean(checked);
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      disabled={disabled}
+      className={`${
+        isChecked ? 'bg-blue-600' : 'bg-slate-200'
+      } relative inline-flex flex-shrink-0 h-7 w-14 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50`}
+    >
+      <span className={`${
+        isChecked ? 'translate-x-7' : 'translate-x-0'
+      } pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
+    </button>
+  );
+};
+
 export const NotificationSettingsPage: React.FC = () => {
   const [preferences, setPreferences] = useState<NotificationPreferenceDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,23 +78,7 @@ export const NotificationSettingsPage: React.FC = () => {
 
   if (!preferences) return null;
 
-  const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: () => void, disabled?: boolean }) => {
-    const isChecked = Boolean(checked);
-    return (
-      <button
-        type="button"
-        onClick={onChange}
-        disabled={disabled}
-        className={`${
-          isChecked ? 'bg-blue-600' : 'bg-slate-200'
-        } relative inline-flex flex-shrink-0 h-7 w-14 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50`}
-      >
-        <span className={`${
-          isChecked ? 'translate-x-7' : 'translate-x-0'
-        } pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`} />
-      </button>
-    );
-  };
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

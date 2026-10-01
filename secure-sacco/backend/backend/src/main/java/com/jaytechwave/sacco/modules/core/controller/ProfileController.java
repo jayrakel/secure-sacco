@@ -1,5 +1,6 @@
 package com.jaytechwave.sacco.modules.core.controller;
 
+import com.jaytechwave.sacco.modules.core.setup.ContactVerificationService;
 import com.jaytechwave.sacco.modules.audit.service.SecurityAuditService;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
@@ -29,13 +30,16 @@ public class ProfileController {
     private final UserRepository userRepository;
     private final UserService userService;
     private final SecurityAuditService auditService;
+    private final ContactVerificationService contactVerificationService;
 
     // ── DTOs ─────────────────────────────────────────────────────────────────
 
     public record UpdateProfileRequest(
             @NotBlank(message = "First name is required") String firstName,
             @NotBlank(message = "Last name is required")  String lastName,
-            String phoneNumber      // optional; null = keep existing
+            String email,           // optional; null = keep existing
+            String phoneNumber,     // optional; null = keep existing
+            String otp              // required only if email or phone is changing
     ) {}
 
     // ── GET /auth/profile ─────────────────────────────────────────────────────
@@ -62,10 +66,25 @@ public class ProfileController {
         return ResponseEntity.ok(body);
     }
 
+    // ── POST /auth/profile/authorize-change ───────────────────────────────────
+
+    @Operation(summary = "Request Profile Change OTP",
+            description = "Sends an OTP to the user's current phone/email to authorize sensitive profile changes.")
+    @PostMapping("/authorize-change")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, String>> authorizeProfileChange(Authentication auth) {
+        // We autowire ContactVerificationService below via constructor? 
+        // Wait, ProfileController doesn't have ContactVerificationService injected yet.
+        // Let's assume we'll inject it.
+        contactVerificationService.sendProfileUpdateOtp(auth.getName());
+        return ResponseEntity.ok(Map.of("message", "OTP sent to your verified contact method."));
+    }
+
+
     // ── PUT /auth/profile ─────────────────────────────────────────────────────
 
     @Operation(summary = "Update own profile",
-            description = "Lets a user update their own first name, last name, and phone number.")
+            description = "Lets a user update their own profile. Changing email or phone requires an OTP.")
     @PutMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> updateProfile(
@@ -78,27 +97,57 @@ public class ProfileController {
 
         String oldName = user.getFirstName() + " " + user.getLastName();
 
+        boolean sensitiveChange = false;
+
+        String newPhone = request.phoneNumber() == null || request.phoneNumber().trim().isEmpty() ? null : request.phoneNumber().trim();
+        if (newPhone != null && !newPhone.equals(user.getPhoneNumber())) {
+            sensitiveChange = true;
+        }
+
+        String newEmail = request.email() == null || request.email().trim().isEmpty() ? null : request.email().trim().toLowerCase();
+        if (newEmail != null && !newEmail.equals(user.getEmail())) {
+            sensitiveChange = true;
+        }
+
+        if (sensitiveChange) {
+            if (request.otp() == null || request.otp().trim().isEmpty()) {
+                throw new IllegalArgumentException("OTP is required to change email or phone number.");
+            }
+            contactVerificationService.verifyProfileUpdateOtp(auth.getName(), request.otp().trim());
+        }
+
         user.setFirstName(request.firstName().trim());
         user.setLastName(request.lastName().trim());
-        if (request.phoneNumber() != null) {
-            user.setPhoneNumber(request.phoneNumber().trim().isEmpty() ? null : request.phoneNumber().trim());
+        
+        if (newPhone != null && !newPhone.equals(user.getPhoneNumber())) {
+            user.setPhoneNumber(newPhone);
+            user.setPhoneVerified(false);
+        }
+
+        if (newEmail != null && !newEmail.equals(user.getEmail())) {
+            // Check if email is already taken
+            if (userRepository.existsByEmail(newEmail)) {
+                throw new IllegalArgumentException("Email is already in use by another account.");
+            }
+            user.setEmail(newEmail);
+            user.setEmailVerified(false);
         }
 
         userRepository.save(user);
 
         auditService.logEventWithActorAndIp(
-                auth.getName(),
+                auth.getName(), // Note: auth.getName() is the OLD email, which is fine for audit log actor.
                 "PROFILE_UPDATED",
                 "USER-" + user.getId(),
                 httpRequest.getRemoteAddr(),
-                String.format("Name changed from '%s' to '%s %s'",
-                        oldName, request.firstName(), request.lastName())
+                String.format("Profile updated (Sensitive: %b)", sensitiveChange)
         );
 
         Map<String, Object> body = new HashMap<>();
         body.put("message",   "Profile updated successfully.");
         body.put("firstName", user.getFirstName());
         body.put("lastName",  user.getLastName());
+        body.put("email",     user.getEmail());
         body.put("phoneNumber", user.getPhoneNumber());
         return ResponseEntity.ok(body);
     }
