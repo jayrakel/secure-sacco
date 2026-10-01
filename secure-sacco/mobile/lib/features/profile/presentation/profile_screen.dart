@@ -312,15 +312,79 @@ class _ContactTabState extends ConsumerState<_ContactTab> {
   }
 
   Future<void> _saveChanges() async {
-    try {
-      await ref.read(profileControllerProvider.notifier).updateProfile(
-            firstName: widget.profileData?['firstName'] ?? '',
-            lastName: widget.profileData?['lastName'] ?? '',
-            phoneNumber: _phoneController.text.trim(),
-          );
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number updated successfully!', style: TextStyle(color: Colors.white)), backgroundColor: AppColors.positive));
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update phone number.', style: TextStyle(color: Colors.white)), backgroundColor: AppColors.negative));
+    final currentPhone = widget.profileData?['phoneNumber'] ?? '';
+    final newPhone = _phoneController.text.trim();
+
+    if (currentPhone != newPhone) {
+      // Step-up authentication for sensitive change
+      try {
+        await ref.read(profileControllerProvider.notifier).requestProfileChangeOtp();
+        if (!mounted) return;
+        
+        final otp = await showDialog<String>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) {
+            String tempOtp = '';
+            return AlertDialog(
+              title: const Text('Verify Changes'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Enter the 6-digit OTP sent to your email or current phone number.'),
+                  const SizedBox(height: AppSpacing.md),
+                  TextField(
+                    onChanged: (val) => tempOtp = val,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    decoration: const InputDecoration(
+                      labelText: 'OTP',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(tempOtp),
+                  child: const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (otp == null || otp.trim().isEmpty) {
+          return; // Cancelled or empty OTP
+        }
+
+        await ref.read(profileControllerProvider.notifier).updateProfile(
+              firstName: widget.profileData?['firstName'] ?? '',
+              lastName: widget.profileData?['lastName'] ?? '',
+              phoneNumber: newPhone,
+              otp: otp.trim(),
+            );
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number updated successfully!', style: TextStyle(color: Colors.white)), backgroundColor: AppColors.positive));
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update phone number.', style: TextStyle(color: Colors.white)), backgroundColor: AppColors.negative));
+      }
+    } else {
+      // No sensitive change
+      try {
+        await ref.read(profileControllerProvider.notifier).updateProfile(
+              firstName: widget.profileData?['firstName'] ?? '',
+              lastName: widget.profileData?['lastName'] ?? '',
+              phoneNumber: currentPhone,
+            );
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated successfully!', style: TextStyle(color: Colors.white)), backgroundColor: AppColors.positive));
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update profile.', style: TextStyle(color: Colors.white)), backgroundColor: AppColors.negative));
+      }
     }
   }
 

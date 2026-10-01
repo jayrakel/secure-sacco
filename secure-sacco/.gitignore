@@ -54,4 +54,4 @@ build/
 *.jks
 
 # ===== Docker volumes (if any local) =====
-**/data/
+# (Removed **/data/ to avoid ignoring Flutter lib/**/data/ folders)
