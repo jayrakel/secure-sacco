@@ -108,7 +108,11 @@ public class UserService {
         User user = getUserEntityById(id);
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setPhoneNumber(normalizePhone(request.getPhoneNumber()));
+        String newPhone = normalizePhone(request.getPhoneNumber());
+        if (user.getPhoneNumber() == null || !user.getPhoneNumber().equals(newPhone)) {
+            user.setPhoneNumber(newPhone);
+            user.setPhoneVerified(false);
+        }
         UserResponse response = mapToResponse(userRepository.save(user));
 
         securityAuditService.logEvent(

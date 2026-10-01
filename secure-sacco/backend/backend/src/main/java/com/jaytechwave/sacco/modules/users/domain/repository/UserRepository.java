@@ -30,14 +30,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findWithMemberByEmail(String email);
 
     /**
-     * Looks up a user by email (plaintext) OR by phone number hash (HMAC-SHA256).
+     * Looks up a user by email (plaintext), phone number hash (HMAC-SHA256), or Member Number.
      * The phone_number column is AES-GCM encrypted with a per-write random IV,
      * so direct equality matching is impossible — we match on the deterministic hash instead.
      *
      * Callers must pre-compute the phone hash via PiiSearchHashConverter before passing it here.
      */
-    @Query("SELECT u FROM User u WHERE u.email = :email OR u.phoneNumberHash = :phoneHash")
-    Optional<User> findByEmailOrPhoneNumberHash(@Param("email") String email, @Param("phoneHash") String phoneHash);
+    @Query("SELECT u FROM User u LEFT JOIN u.member m WHERE u.email = :email OR u.phoneNumberHash = :phoneHash OR (m IS NOT NULL AND m.memberNumber = :memberNumber)")
+    Optional<User> findByEmailOrPhoneNumberHashOrMemberNumber(@Param("email") String email, @Param("phoneHash") String phoneHash, @Param("memberNumber") String memberNumber);
 
     List<User> findAllByIsDeletedFalse();
 

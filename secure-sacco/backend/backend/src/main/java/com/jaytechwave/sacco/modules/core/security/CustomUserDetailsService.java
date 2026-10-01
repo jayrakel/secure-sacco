@@ -32,11 +32,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-        // 1. Fetch user by email or phone
+        // 1. Fetch user by email, phone, or member number
         // Phone numbers are AES-GCM encrypted (random IV per write) — direct equality
         // matching is broken. Compute the deterministic HMAC hash and match on that instead.
         String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(identifier);
-        User user = userRepository.findByEmailOrPhoneNumberHash(identifier, phoneHash)
+        User user = userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(identifier, phoneHash, identifier)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
 
         Set<GrantedAuthority> authorities = new HashSet<>();

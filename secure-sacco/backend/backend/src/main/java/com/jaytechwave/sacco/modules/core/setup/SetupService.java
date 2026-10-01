@@ -5,6 +5,7 @@ import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.List;
  * <h3>Phase progression</h3>
  * <ol>
  *   <li>{@code CHANGE_PASSWORD} — admin still has {@code must_change_password=true}</li>
- *   <li>{@code VERIFY_CONTACT}  — admin's email or phone is not verified</li>
+ *   <li>{@code VERIFY_CONTACT}  — admin's email or phone is not verified (both required)</li>
  *   <li>{@code CREATE_OFFICERS} — at least one of the four mandatory officer roles is unassigned</li>
  *   <li>{@code CONFIGURE_PLATFORM} — {@code sacco_settings} row has not been initialized</li>
  *   <li>{@code COMPLETE}        — everything done; system is live</li>
@@ -38,29 +39,29 @@ public class SetupService {
 
     // ── Public API ───────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
-    public SetupPhase currentPhase() {
-        User admin = userRepository.findFirstByRolesName("SYSTEM_ADMIN").orElse(null);
+     @Transactional(readOnly = true)
+     public SetupPhase currentPhase() {
+         User admin = userRepository.findFirstByRolesName("SYSTEM_ADMIN").orElse(null);
 
-        // No admin yet — system has never been booted (edge case)
-        if (admin == null) return SetupPhase.CHANGE_PASSWORD;
+         // No admin yet — system has never been booted (edge case)
+         if (admin == null) return SetupPhase.CHANGE_PASSWORD;
 
-        // Phase 1: password not yet changed
-        if (admin.isMustChangePassword()) return SetupPhase.CHANGE_PASSWORD;
+         // Phase 1: password not yet changed
+         if (admin.isMustChangePassword()) return SetupPhase.CHANGE_PASSWORD;
 
-        // Phase 2: email not verified (only email required — phone bypassed until Africa's Talking is integrated)
-        if (!admin.isEmailVerified()) return SetupPhase.VERIFY_CONTACT;
+         // Phase 2: email and phone not verified (both required with Africa's Talking SMS integration)
+         if (!admin.isEmailVerified() || !admin.isPhoneVerified()) return SetupPhase.VERIFY_CONTACT;
 
-        // Phase 3: required officers not yet created
-        for (String role : REQUIRED_OFFICER_ROLES) {
-            if (!userRepository.existsByRolesName(role)) return SetupPhase.CREATE_OFFICERS;
-        }
+         // Phase 3: required officers not yet created
+         for (String role : REQUIRED_OFFICER_ROLES) {
+             if (!userRepository.existsByRolesName(role)) return SetupPhase.CREATE_OFFICERS;
+         }
 
-        // Phase 4: platform not configured
-        if (!settingsService.isInitialized()) return SetupPhase.CONFIGURE_PLATFORM;
+         // Phase 4: platform not configured (check for explicit admin configuration, not just default seeding)
+         if (!settingsService.isConfigured()) return SetupPhase.CONFIGURE_PLATFORM;
 
-        return SetupPhase.COMPLETE;
-    }
+         return SetupPhase.COMPLETE;
+     }
 
     /** Convenience — returns true only when every setup phase has been completed. */
     @Transactional(readOnly = true)

@@ -6,6 +6,7 @@ export interface NotificationPreferenceDto {
   notifyOnGuarantorRequests: boolean;
   notifyOnLoanUpdates: boolean;
   notifyOnTransactions: boolean;
+  notifyOnSystemAlerts: boolean;
 }
 
 export const settingsApi = {

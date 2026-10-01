@@ -63,7 +63,7 @@ public class PasswordResetService {
     @Transactional
     public void generatePasswordResetToken(String email) {
         String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(email);
-        Optional<User> userOpt = userRepository.findByEmailOrPhoneNumberHash(email, phoneHash);
+        Optional<User> userOpt = userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(email, phoneHash, email);
         if (userOpt.isEmpty()) {
             log.info("Password reset requested for non-existent account: {}", email);
             return;

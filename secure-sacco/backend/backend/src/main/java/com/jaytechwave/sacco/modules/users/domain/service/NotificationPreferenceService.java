@@ -44,6 +44,7 @@ public class NotificationPreferenceService {
         pref.setNotifyOnGuarantorRequests(dto.notifyOnGuarantorRequests());
         pref.setNotifyOnLoanUpdates(dto.notifyOnLoanUpdates());
         pref.setNotifyOnTransactions(dto.notifyOnTransactions());
+        pref.setNotifyOnSystemAlerts(dto.notifyOnSystemAlerts());
 
         pref = notificationPreferenceRepository.save(pref);
         return mapToDto(pref);
@@ -58,6 +59,11 @@ public class NotificationPreferenceService {
         NotificationPreference pref = getPreferencesEntity(user);
         return pref.isSmsEnabled() && pref.isNotifyOnGuarantorRequests();
     }
+    
+    public boolean shouldSendSmsForSystemAlert(User user) {
+        NotificationPreference pref = getPreferencesEntity(user);
+        return pref.isSmsEnabled() && pref.isNotifyOnSystemAlerts();
+    }
 
     private NotificationPreference createDefaultPreferences(User user) {
         NotificationPreference pref = NotificationPreference.builder()
@@ -67,6 +73,7 @@ public class NotificationPreferenceService {
                 .notifyOnGuarantorRequests(true)
                 .notifyOnLoanUpdates(true)
                 .notifyOnTransactions(true)
+                .notifyOnSystemAlerts(true)
                 .build();
         return notificationPreferenceRepository.save(pref);
     }
@@ -77,7 +84,8 @@ public class NotificationPreferenceService {
                 pref.isSmsEnabled(),
                 pref.isNotifyOnGuarantorRequests(),
                 pref.isNotifyOnLoanUpdates(),
-                pref.isNotifyOnTransactions()
+                pref.isNotifyOnTransactions(),
+                pref.isNotifyOnSystemAlerts()
         );
     }
 }

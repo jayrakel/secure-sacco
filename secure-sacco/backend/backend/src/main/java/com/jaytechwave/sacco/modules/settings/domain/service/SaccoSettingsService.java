@@ -6,6 +6,7 @@ import com.jaytechwave.sacco.modules.settings.domain.entity.SaccoSettings;
 import com.jaytechwave.sacco.modules.settings.domain.repository.SaccoSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -20,17 +21,36 @@ public class SaccoSettingsService {
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     public SaccoSettings getSettings() {
         return settingsRepository.findAll().stream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("SACCO settings have not been initialized yet."));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     public boolean isInitialized() {
         try {
             return settingsRepository.count() > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if SACCO settings have been explicitly configured by the admin via setup wizard.
+     * Returns false if settings are only auto-seeded defaults (not yet user-configured).
+     *
+     * Uses PROPAGATION.SUPPORTS to avoid nested transaction issues when called from
+     * other transactional methods like SetupService.currentPhase().
+     */
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    public boolean isConfigured() {
+        try {
+            return settingsRepository.findAll().stream()
+                    .findFirst()
+                    .map(s -> s.isConfigured() != null && s.isConfigured())
+                    .orElse(false);
         } catch (Exception e) {
             return false;
         }
@@ -43,8 +63,12 @@ public class SaccoSettingsService {
             String saccoName, String prefix, int padLength,
             BigDecimal registrationFee, String logoUrl, String faviconUrl) {
 
-        if (isInitialized()) {
-            throw new IllegalStateException("SACCO settings are already initialized. Use update instead.");
+        // Allow initialization if:
+        // 1. No settings exist yet, OR
+        // 2. Settings exist but haven't been explicitly configured by admin yet
+        SaccoSettings existing = settingsRepository.findAll().stream().findFirst().orElse(null);
+        if (existing != null && existing.isConfigured()) {
+            throw new IllegalStateException("SACCO settings are already configured. Use update instead.");
         }
 
         Map<String, Boolean> initialModules = Map.of(
@@ -54,29 +78,45 @@ public class SaccoSettingsService {
                 "reports", false
         );
 
-        SaccoSettings settings = SaccoSettings.builder()
-                .saccoName(saccoName)
-                .memberNumberPrefix(prefix.toUpperCase())
-                .memberNumberPadLength(padLength)
-                .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00"))
-                .logoUrl(logoUrl != null ? logoUrl : "")
-                .faviconUrl(faviconUrl != null ? faviconUrl : "")
-                .enabledModules(initialModules)
-                // Security / policy defaults
-                .maxLoginAttempts(5)
-                .lockoutDurationMinutes(15)
-                .sessionTimeoutMinutes(30)
-                .passwordResetExpiryMin(15)
-                .mfaTokenExpiryMinutes(5)
-                .emailVerifyExpiryHours(24)
-                .minPasswordLength(12)
-                .contactVerifyRateLimit(3)
-                .contactVerifyWindowMin(15)
-                .rateLimitGeneralPerMin(60)
-                // Communication defaults
-                .smtpFromName("Secure SACCO")
-                .supportEmail("")
-                .build();
+        SaccoSettings settings;
+        if (existing != null) {
+            // Update auto-seeded defaults with admin-provided configuration
+            existing.setSaccoName(saccoName);
+            existing.setMemberNumberPrefix(prefix.toUpperCase());
+            existing.setMemberNumberPadLength(padLength);
+            existing.setRegistrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00"));
+            existing.setLogoUrl(logoUrl != null ? logoUrl : "");
+            existing.setFaviconUrl(faviconUrl != null ? faviconUrl : "");
+            existing.setEnabledModules(initialModules);
+            existing.setConfigured(true);
+            settings = existing;
+        } else {
+            // Create new settings
+            settings = SaccoSettings.builder()
+                    .saccoName(saccoName)
+                    .memberNumberPrefix(prefix.toUpperCase())
+                    .memberNumberPadLength(padLength)
+                    .registrationFee(registrationFee != null ? registrationFee : new BigDecimal("1000.00"))
+                    .logoUrl(logoUrl != null ? logoUrl : "")
+                    .faviconUrl(faviconUrl != null ? faviconUrl : "")
+                    .enabledModules(initialModules)
+                    .configured(true)
+                    // Security / policy defaults
+                    .maxLoginAttempts(5)
+                    .lockoutDurationMinutes(15)
+                    .sessionTimeoutMinutes(30)
+                    .passwordResetExpiryMin(15)
+                    .mfaTokenExpiryMinutes(5)
+                    .emailVerifyExpiryHours(24)
+                    .minPasswordLength(12)
+                    .contactVerifyRateLimit(3)
+                    .contactVerifyWindowMin(15)
+                    .rateLimitGeneralPerMin(60)
+                    // Communication defaults
+                    .smtpFromName("Secure SACCO")
+                    .supportEmail("")
+                    .build();
+        }
 
         SaccoSettings saved = settingsRepository.save(settings);
 

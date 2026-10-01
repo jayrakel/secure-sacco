@@ -1,4 +1,14 @@
 .idea/
+
+# Local editor memory and temporary data investigation scripts
+.junie/
+secure-sacco/backend/.~lock.*
+secure-sacco/backend/read_excel.py
+secure-sacco/backend/read_oct_sheet.py
+secure-sacco/backend/read_sept26_sheet.py
+secure-sacco/backend/scratch.py
+secure-sacco/backend/scratch2.py
+secure-sacco/backend/scratch3.py
 .idea/
 secure-sacco/backend/BETTER LINK VEN TURES..xlsx
 images/screenshots-overview.png

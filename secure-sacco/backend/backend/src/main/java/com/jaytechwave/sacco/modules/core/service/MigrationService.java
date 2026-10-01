@@ -106,7 +106,7 @@ public class MigrationService {
         user.setPasswordHash(passwordEncoder.encode(request.plainTextPassword()));
         user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerified(true);
-        user.setPhoneVerified(true);
+        user.setPhoneVerified(false);
         user.setMustChangePassword(false);
         userRepository.save(user);
 
