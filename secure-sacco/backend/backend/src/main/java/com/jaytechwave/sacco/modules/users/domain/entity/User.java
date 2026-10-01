@@ -77,6 +77,11 @@ public class User {
     @Column(name = "mfa_secret")
     private String mfaSecret;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mfa_method", nullable = false)
+    @Builder.Default
+    private MfaMethod mfaMethod = MfaMethod.TOTP;
+
     @Column(name = "must_change_password", nullable = false)
     @Builder.Default
     private boolean mustChangePassword = false;

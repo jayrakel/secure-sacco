@@ -19,7 +19,8 @@ export default function SecuritySettingsPage() {
     const [qrCode, setQrCode] = useState<string>('');
     const [secret, setSecret] = useState<string>('');
     const [mfaCode, setMfaCode] = useState('');
-    const [mfaStatus, setMfaStatus] = useState<'loading_qr' | 'idle' | 'submitting' | 'success' | 'error'>('loading_qr');
+    const [mfaStatus, setMfaStatus] = useState<'method_select' | 'loading_qr' | 'idle' | 'submitting' | 'success' | 'error'>('method_select');
+    const [selectedMethod, setSelectedMethod] = useState<'TOTP' | 'SMS' | 'EMAIL'>('TOTP');
     const [mfaErrorMsg, setMfaErrorMsg] = useState('');
     const [isDisabling, setIsDisabling] = useState(false);
 
@@ -42,15 +43,17 @@ export default function SecuritySettingsPage() {
     // 2. Fetch MFA QR Code if not enabled
     useEffect(() => {
         if (user && !user.mfaEnabled) {
-            fetchMfaSetup();
+            setMfaStatus('method_select');
         } else {
             setMfaStatus('idle');
         }
     }, [user]);
 
-    const fetchMfaSetup = async () => {
+    const fetchMfaSetup = async (method: string) => {
+        setMfaStatus('loading_qr');
+        setMfaErrorMsg('');
         try {
-            const response = await apiClient.get('/auth/mfa/setup');
+            const response = await apiClient.post('/auth/mfa/setup', { method });
             setQrCode(response.data.qrCode);
             setSecret(response.data.secret);
             setMfaStatus('idle');
@@ -67,7 +70,7 @@ export default function SecuritySettingsPage() {
         setMfaErrorMsg('');
 
         try {
-            await apiClient.post('/auth/mfa/enable', { code: mfaCode });
+            await apiClient.post('/auth/mfa/enable', { code: mfaCode, method: selectedMethod });
             await refreshUser();
             setMfaStatus('success');
             setMfaCode('');
@@ -85,7 +88,7 @@ export default function SecuritySettingsPage() {
             await apiClient.post('/auth/mfa/disable');
             await refreshUser(); // Refreshes context so mfaEnabled becomes false
             setMfaStatus('idle'); // Reset the UI to show the setup process again
-            fetchMfaSetup(); // Grab a fresh QR code
+            setMfaStatus('method_select');
         } catch {
             alert("Failed to disable MFA. Please try again.");
         } finally {
@@ -184,28 +187,83 @@ export default function SecuritySettingsPage() {
                             <p className="text-slate-600">Your account is now protected with two-factor authentication.</p>
                         </div>
                     ) : (
+                        {mfaStatus === 'method_select' ? (
+                        <div className="max-w-xl mx-auto py-4">
+                            <h3 className="font-bold text-slate-800 mb-4 text-center">Choose 2FA Method</h3>
+                            <p className="text-sm text-slate-600 mb-6 text-center">Select how you want to receive your security codes.</p>
+                            
+                            <div className="space-y-4">
+                                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition ${selectedMethod === 'TOTP' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'}`}>
+                                    <input type="radio" name="mfaMethod" value="TOTP" checked={selectedMethod === 'TOTP'} onChange={() => setSelectedMethod('TOTP')} className="w-5 h-5 text-emerald-600 focus:ring-emerald-500" />
+                                    <div>
+                                        <div className="font-bold text-slate-800">Authenticator App (Recommended)</div>
+                                        <div className="text-sm text-slate-500">Google Authenticator, Authy, etc.</div>
+                                    </div>
+                                </label>
+                                
+                                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition ${selectedMethod === 'SMS' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'}`}>
+                                    <input type="radio" name="mfaMethod" value="SMS" checked={selectedMethod === 'SMS'} onChange={() => setSelectedMethod('SMS')} className="w-5 h-5 text-emerald-600 focus:ring-emerald-500" />
+                                    <div>
+                                        <div className="font-bold text-slate-800">SMS Text Message</div>
+                                        <div className="text-sm text-slate-500">Receive codes via SMS to {user?.phoneNumber}</div>
+                                    </div>
+                                </label>
+                                
+                                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition ${selectedMethod === 'EMAIL' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'}`}>
+                                    <input type="radio" name="mfaMethod" value="EMAIL" checked={selectedMethod === 'EMAIL'} onChange={() => setSelectedMethod('EMAIL')} className="w-5 h-5 text-emerald-600 focus:ring-emerald-500" />
+                                    <div>
+                                        <div className="font-bold text-slate-800">Email Address</div>
+                                        <div className="text-sm text-slate-500">Receive codes via email to {user?.email}</div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <button 
+                                onClick={() => fetchMfaSetup(selectedMethod)}
+                                className="w-full mt-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition flex justify-center items-center gap-2 shadow-sm"
+                            >
+                                Continue with {selectedMethod === 'TOTP' ? 'App' : selectedMethod}
+                            </button>
+                        </div>
+                    ) : (
                         <div className="grid md:grid-cols-2 gap-10">
-                            {/* Left Side: Instructions & QR Code */}
+                            {/* Left Side: Instructions & QR Code or SMS/Email Status */}
                             <div>
-                                <h3 className="font-bold text-slate-800 mb-4">Step 1: Scan the QR Code</h3>
-                                <p className="text-sm text-slate-600 mb-6">
-                                    Open your preferred authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator) and scan the QR code below.
-                                </p>
-
-                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex justify-center mb-4 min-h-62.5 items-center">
-                                    {mfaStatus === 'loading_qr' ? (
-                                        <Loader2 className="animate-spin text-slate-400" size={32} />
-                                    ) : qrCode ? (
-                                        <img src={qrCode} alt="MFA QR Code" className="w-48 h-48 rounded shadow-sm bg-white p-2 border border-slate-200" />
-                                    ) : null}
-                                </div>
-
-                                {secret && (
-                                    <div className="text-center">
-                                        <p className="text-xs text-slate-500 mb-1">Can't scan the code? Use this setup key:</p>
-                                        <code className="bg-slate-100 px-3 py-1.5 rounded text-sm text-slate-800 font-bold select-all border border-slate-200">
-                                            {secret}
-                                        </code>
+                                <h3 className="font-bold text-slate-800 mb-4">Step 1: {selectedMethod === 'TOTP' ? 'Scan the QR Code' : 'Check your ' + (selectedMethod === 'SMS' ? 'Phone' : 'Email')}</h3>
+                                
+                                {selectedMethod === 'TOTP' ? (
+                                    <>
+                                        <p className="text-sm text-slate-600 mb-6">
+                                            Open your preferred authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator) and scan the QR code below.
+                                        </p>
+                                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex justify-center mb-4 min-h-62.5 items-center">
+                                            {mfaStatus === 'loading_qr' ? (
+                                                <Loader2 className="animate-spin text-slate-400" size={32} />
+                                            ) : qrCode ? (
+                                                <img src={qrCode} alt="MFA QR Code" className="w-48 h-48 rounded shadow-sm bg-white p-2 border border-slate-200" />
+                                            ) : null}
+                                        </div>
+                                        {secret && (
+                                            <div className="text-center">
+                                                <p className="text-xs text-slate-500 mb-1">Can't scan the code? Use this setup key:</p>
+                                                <code className="bg-slate-100 px-3 py-1.5 rounded text-sm text-slate-800 font-bold select-all border border-slate-200">
+                                                    {secret}
+                                                </code>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col justify-center mb-4 items-center h-full">
+                                        {mfaStatus === 'loading_qr' ? (
+                                            <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
+                                        ) : (
+                                            <CheckCircle className="text-emerald-500 mb-4" size={48} />
+                                        )}
+                                        <p className="text-center text-slate-600">
+                                            {mfaStatus === 'loading_qr' 
+                                                ? `Sending code to your ${selectedMethod.toLowerCase()}...` 
+                                                : `A 6-digit code has been sent to your ${selectedMethod.toLowerCase()}.`}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -214,7 +272,7 @@ export default function SecuritySettingsPage() {
                             <div>
                                 <h3 className="font-bold text-slate-800 mb-4">Step 2: Verify & Enable</h3>
                                 <p className="text-sm text-slate-600 mb-6">
-                                    Enter the 6-digit code generated by your authenticator app to verify the setup and enable 2FA.
+                                    Enter the 6-digit code you received to verify the setup and enable 2FA.
                                 </p>
 
                                 {mfaErrorMsg && mfaStatus === 'error' && (
@@ -226,7 +284,7 @@ export default function SecuritySettingsPage() {
 
                                 <form onSubmit={handleEnableMfa} className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Authenticator Code</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Verification Code</label>
                                         <div className="relative">
                                             <Key className="absolute left-3 top-3.5 text-slate-400" size={20} />
                                             <input
@@ -252,9 +310,20 @@ export default function SecuritySettingsPage() {
                                             <><ShieldCheck size={20} /> Enable 2FA</>
                                         )}
                                     </button>
+                                    
+                                    <div className="text-center mt-4">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setMfaStatus('method_select')}
+                                            className="text-sm font-semibold text-slate-500 hover:text-slate-800"
+                                        >
+                                            &larr; Choose a different method
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
+                    )}
                     )}
                 </div>
             </div>

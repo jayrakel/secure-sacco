@@ -62,6 +62,11 @@ public class EmailNotificationService {
     send(toEmail, title, buildSystemAlertBody(title, message));
   }
 
+  @Async
+  public void sendMfaEmail(String toEmail, String otpCode) {
+    send(toEmail, "Your Authentication Code", buildMfaBody(otpCode));
+  }
+
   // ── Private helpers ───────────────────────────────────────────────────────
 
   private void send(String to, String subject, String htmlBody) {
@@ -150,5 +155,19 @@ public class EmailNotificationService {
         </div>
         """
         .formatted(title, message);
+  }
+
+  private String buildMfaBody(String otpCode) {
+    return """
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;">
+          <h2 style="color:#059669;">Secure SACCO Authentication</h2>
+          <p>Please use the following code to complete your login:</p>
+          <p style="font-size:28px;font-weight:bold;letter-spacing:6px;color:#1e293b;">%s</p>
+          <p style="color:#64748b;font-size:12px;margin-top:24px;">
+            If you did not attempt to sign in, please secure your account immediately.
+          </p>
+        </div>
+        """
+        .formatted(otpCode);
   }
 }
