@@ -194,54 +194,136 @@ const PersonalInfoTab: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
 
 const ContactTab: React.FC = () => {
     const { user, refreshUser } = useAuth();
+    
+    // Separate forms for email and phone
     const [phoneForm, setPhoneForm] = useState({ phone: user?.phoneNumber ?? '', editing: false });
-    const [phoneSaving, setPhoneSaving] = useState(false);
-    const [phoneMsg, setPhoneMsg] = useState('');
-    const [phoneErr, setPhoneErr] = useState('');
+    const [emailForm, setEmailForm] = useState({ email: user?.email ?? '', editing: false });
+    
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState('');
+    const [err, setErr] = useState('');
+    
+    // OTP Modal state
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [pendingChange, setPendingChange] = useState<{ email?: string; phone?: string } | null>(null);
 
-    const savePhone = async (e: React.FormEvent) => {
+    const handleSaveRequest = async (type: 'email' | 'phone') => {
+        setErr(''); setMsg('');
+        
+        let hasChanges = false;
+        let changePayload: { email?: string; phone?: string } = {};
+
+        if (type === 'email' && emailForm.email.trim() !== user?.email) {
+            hasChanges = true;
+            changePayload.email = emailForm.email.trim();
+        } else if (type === 'phone' && phoneForm.phone.trim() !== user?.phoneNumber) {
+            hasChanges = true;
+            changePayload.phone = phoneForm.phone.trim();
+        }
+
+        if (!hasChanges) {
+            if (type === 'email') setEmailForm(f => ({ ...f, editing: false }));
+            if (type === 'phone') setPhoneForm(f => ({ ...f, editing: false }));
+            return;
+        }
+
+        setSaving(true);
+        try {
+            // Request OTP
+            await apiClient.post('/auth/profile/authorize-change');
+            setPendingChange(changePayload);
+            setShowOtpModal(true);
+            setMsg('An OTP has been sent to your verified contact method.');
+        } catch (error) {
+            setErr(errMsg(error, 'Failed to request authorization code.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const confirmSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        setPhoneSaving(true); setPhoneErr(''); setPhoneMsg('');
+        if (!pendingChange || !otp.trim()) return;
+
+        setSaving(true); setErr(''); setMsg('');
         try {
             await apiClient.put('/auth/profile', {
                 firstName: user?.firstName,
                 lastName: user?.lastName,
-                phoneNumber: phoneForm.phone.trim(),
+                email: pendingChange.email,
+                phoneNumber: pendingChange.phone,
+                otp: otp.trim()
             });
             await refreshUser();
-            setPhoneMsg('Phone number updated.');
+            setMsg('Contact information updated successfully.');
             setPhoneForm(f => ({ ...f, editing: false }));
-        } catch (err) {
-            setPhoneErr(errMsg(err, 'Failed to update phone.'));
+            setEmailForm(f => ({ ...f, editing: false }));
+            setShowOtpModal(false);
+            setOtp('');
+            setPendingChange(null);
+        } catch (error) {
+            setErr(errMsg(error, 'Failed to update contact info. Invalid OTP?'));
         } finally {
-            setPhoneSaving(false);
+            setSaving(false);
         }
     };
 
     return (
         <div className="space-y-6">
+            {msg && <Alert type="success" message={msg} />}
+            {err && <Alert type="error" message={err} />}
+
             <section>
                 <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <Mail size={16} className="text-slate-500" /> Email Address
                 </h3>
-                <div>
-                    <label className={labelCls}>Login Email</label>
-                    <div className="flex items-center gap-2">
-                        <input className={inputCls} value={user?.email ?? ''} disabled />
-                        {user?.emailVerified ? (
-                            <span className="flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-2 rounded-xl whitespace-nowrap font-semibold">
-                                <CheckCircle2 size={13} /> Verified
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-2 rounded-xl whitespace-nowrap font-semibold">
-                                <AlertTriangle size={13} /> Unverified
-                            </span>
-                        )}
+                
+                {emailForm.editing ? (
+                    <div className="space-y-3 mt-3">
+                        <div>
+                            <label className={labelCls}>Login Email</label>
+                            <input className={inputCls} type="email"
+                                   value={emailForm.email}
+                                   onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))}
+                                   placeholder="you@example.com" />
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                            <button onClick={() => handleSaveRequest('email')} disabled={saving}
+                                    className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition">
+                                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                {saving ? 'Requesting…' : 'Save'}
+                            </button>
+                            <button onClick={() => setEmailForm({ editing: false, email: user?.email ?? '' })}
+                                    className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition">
+                                <X size={14} /> Cancel
+                            </button>
+                        </div>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1.5">
-                        Email changes must be requested through your System Administrator for security purposes.
-                    </p>
-                </div>
+                ) : (
+                    <div>
+                        <label className={labelCls}>Login Email</label>
+                        <div className="flex items-center gap-2.5">
+                            <input className={inputCls} value={user?.email ?? ''} disabled />
+                            {user?.emailVerified ? (
+                                <span className="flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-2 rounded-xl whitespace-nowrap font-semibold">
+                                    <CheckCircle2 size={13} /> Verified
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-2 rounded-xl whitespace-nowrap font-semibold">
+                                    <AlertTriangle size={13} /> Unverified
+                                </span>
+                            )}
+                            <button onClick={() => setEmailForm(f => ({ ...f, editing: true }))}
+                                    className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition whitespace-nowrap">
+                                <Edit3 size={14} /> Edit
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1.5">
+                            Changing your email requires authorization via an OTP sent to your verified contact method.
+                        </p>
+                    </div>
+                )}
             </section>
 
             <section className="pt-6 border-t border-slate-100">
@@ -249,11 +331,8 @@ const ContactTab: React.FC = () => {
                     <Phone size={16} className="text-slate-500" /> Phone Number
                 </h3>
 
-                {phoneMsg && <Alert type="success" message={phoneMsg} />}
-                {phoneErr && <Alert type="error" message={phoneErr} />}
-
                 {phoneForm.editing ? (
-                    <form onSubmit={savePhone} className="space-y-3 mt-3">
+                    <div className="space-y-3 mt-3">
                         <div>
                             <label className={labelCls}>Phone Number</label>
                             <input className={inputCls} type="tel"
@@ -262,10 +341,10 @@ const ContactTab: React.FC = () => {
                                    placeholder="+254 700 000 000" />
                         </div>
                         <div className="flex gap-2 pt-1">
-                            <button type="submit" disabled={phoneSaving}
+                            <button onClick={() => handleSaveRequest('phone')} disabled={saving}
                                     className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition">
-                                {phoneSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                {phoneSaving ? 'Saving…' : 'Save'}
+                                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                {saving ? 'Requesting…' : 'Save'}
                             </button>
                             <button type="button"
                                     onClick={() => setPhoneForm({ editing: false, phone: user?.phoneNumber ?? '' })}
@@ -273,7 +352,7 @@ const ContactTab: React.FC = () => {
                                 <X size={14} /> Cancel
                             </button>
                         </div>
-                    </form>
+                    </div>
                 ) : (
                     <div className="flex items-center gap-2.5">
                         <input className={inputCls} value={user?.phoneNumber ?? '—'} disabled />
@@ -289,6 +368,44 @@ const ContactTab: React.FC = () => {
                     </div>
                 )}
             </section>
+
+            {/* OTP Modal */}
+            {showOtpModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-fade-in">
+                        <div className="p-6">
+                            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4 border border-slate-200">
+                                <ShieldCheck size={24} className="text-slate-700" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">Security Verification</h3>
+                            <p className="text-sm text-slate-500 mb-5">
+                                Please enter the 6-digit authorization code we just sent you to confirm these changes.
+                            </p>
+                            
+                            <form onSubmit={confirmSave} className="space-y-4">
+                                <div>
+                                    <label className={labelCls}>6-Digit Code</label>
+                                    <input type="text" required maxLength={6} value={otp}
+                                           onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                                           placeholder="123456"
+                                           className={inputCls + ' text-center text-xl tracking-[0.5em] font-mono font-bold'} />
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button type="submit" disabled={saving || otp.length < 6}
+                                            className="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl disabled:opacity-40 transition">
+                                        {saving ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                                        Verify
+                                    </button>
+                                    <button type="button" onClick={() => { setShowOtpModal(false); setOtp(''); setPendingChange(null); }}
+                                            className="px-4 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold rounded-xl transition">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

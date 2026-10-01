@@ -7,5 +7,8 @@ public enum VerificationTokenType {
 
     /** Used when an already-ACTIVE user needs to verify their email/phone (e.g. setup wizard, admin-created officers). */
     EMAIL_VERIFICATION,
-    PHONE_VERIFICATION
+    PHONE_VERIFICATION,
+
+    /** Used to authorize changes to sensitive profile fields like email or phone number */
+    PROFILE_UPDATE_AUTHORIZATION
 }

@@ -147,6 +147,58 @@ public class ContactVerificationService {
         log.info("Phone verified for {}", email);
     }
 
+    // ── Profile Update Authorization ──────────────────────────────────────────
+
+    @Transactional
+    public void sendProfileUpdateOtp(String email) {
+        User user = requireUser(email);
+
+        // We require them to have either an email or phone number to receive the OTP
+        if ((user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) && !user.isEmailVerified()) {
+            throw new IllegalStateException("No verified contact method available to receive OTP.");
+        }
+
+        enforceRateLimit(user, VerificationTokenType.PROFILE_UPDATE_AUTHORIZATION);
+
+        // Generate 6-digit OTP
+        String otp = String.format("%06d", (int)(Math.random() * 1_000_000));
+        
+        // Save token
+        String token = UUID.randomUUID().toString();
+        tokenRepository.save(VerificationToken.builder()
+                .user(user)
+                .token(otp)
+                .tokenType(VerificationTokenType.PROFILE_UPDATE_AUTHORIZATION)
+                .expiryDate(ZonedDateTime.now().plusMinutes(DEFAULT_OTP_EXPIRY_MINUTES))
+                .build());
+
+        // Dispatch via Phone if available, else Email
+        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+            smsNotificationService.sendOtp(user.getPhoneNumber(), otp);
+            log.info("Profile update OTP dispatched via SMS to {}", user.getPhoneNumber());
+        } else {
+            // For now, we reuse the verification email method but ideally you'd have a specific "Here is your OTP for profile update" email.
+            // But since this system relies heavily on SMS, if they don't have SMS, we send an email with the raw OTP.
+            // We can add a method in emailNotificationService later if needed.
+            log.info("Profile update OTP generated for email fallback. Currently only SMS is implemented for OTP.");
+            throw new IllegalStateException("Profile update authorization currently requires a valid phone number for SMS OTP.");
+        }
+    }
+
+    @Transactional
+    public void verifyProfileUpdateOtp(String email, String otp) {
+        User user = requireUser(email);
+        VerificationToken vt = tokenRepository
+                .findFirstByUserIdAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(
+                        user.getId(), VerificationTokenType.PROFILE_UPDATE_AUTHORIZATION)
+                .orElseThrow(() -> new IllegalArgumentException("No active OTP found. Please request a new code."));
+
+        validateToken(vt, otp);
+        vt.setUsed(true);
+        tokenRepository.save(vt);
+        log.info("Profile update OTP verified for {}", email);
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private User requireUser(String email) {

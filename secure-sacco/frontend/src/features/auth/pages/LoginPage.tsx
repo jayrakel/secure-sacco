@@ -343,7 +343,7 @@ export default function LoginPage() {
                             /* --- STANDARD LOGIN FORM --- */
                             <form onSubmit={handleLogin} className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Email or Phone Number</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Email, Phone, or Member Number</label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-3 text-slate-400" size={20} />
                                         <input
@@ -357,7 +357,7 @@ export default function LoginPage() {
                                                 setIdentifier(e.target.value);
                                                 setShowAccountsDropdown(true);
                                             }}
-                                            placeholder="admin@jaytechwave.org or +254..."
+                                            placeholder="admin@jaytechwave.org, +254..., or BVL-..."
                                             autoComplete="off"
                                         />
                                         {showAccountsDropdown && savedAccounts.filter(acc => acc.toLowerCase().includes(identifier.toLowerCase())).length > 0 && (
