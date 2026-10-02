@@ -54,8 +54,11 @@ public class WebAuthnController {
                 .build();
 
         PublicKeyCredentialCreationOptions creationOptions = relyingParty.startRegistration(options);
-        
-        session.setAttribute("webauthn_registration_request", creationOptions);
+
+        // Store as JSON string — raw Yubico objects are not JDK-Serializable and cannot be stored
+        // in Redis sessions using the default JDK serializer.
+        String creationOptionsJson = creationOptions.toJson();
+        session.setAttribute("webauthn_registration_request", creationOptionsJson);
 
         return ResponseEntity.ok(creationOptions.toCredentialsCreateJson());
     }
@@ -67,11 +70,12 @@ public class WebAuthnController {
             @RequestParam(defaultValue = "My Passkey") String name,
             HttpSession session) throws IOException, RegistrationFailedException {
 
-        PublicKeyCredentialCreationOptions requestOptions = 
-                (PublicKeyCredentialCreationOptions) session.getAttribute("webauthn_registration_request");
-        if (requestOptions == null) {
+        String requestOptionsJson = (String) session.getAttribute("webauthn_registration_request");
+        if (requestOptionsJson == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Registration options not found in session"));
         }
+        PublicKeyCredentialCreationOptions requestOptions =
+                PublicKeyCredentialCreationOptions.fromJson(requestOptionsJson);
 
         PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
                 PublicKeyCredential.parseRegistrationResponseJson(credentialJson);
@@ -113,7 +117,9 @@ public class WebAuthnController {
                 .build();
 
         AssertionRequest request = relyingParty.startAssertion(options);
-        session.setAttribute("webauthn_assertion_request", request);
+
+        // Store as JSON string — raw Yubico objects are not JDK-Serializable.
+        session.setAttribute("webauthn_assertion_request", request.toJson());
 
         return ResponseEntity.ok(request.toCredentialsGetJson());
     }
@@ -124,10 +130,11 @@ public class WebAuthnController {
             HttpSession session,
             HttpServletRequest httpRequest) throws IOException, AssertionFailedException {
 
-        AssertionRequest request = (AssertionRequest) session.getAttribute("webauthn_assertion_request");
-        if (request == null) {
+        String assertionRequestJson = (String) session.getAttribute("webauthn_assertion_request");
+        if (assertionRequestJson == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Assertion request not found in session"));
         }
+        AssertionRequest request = AssertionRequest.fromJson(assertionRequestJson);
 
         PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
                 PublicKeyCredential.parseAssertionResponseJson(credentialJson);
