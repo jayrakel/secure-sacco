@@ -78,8 +78,8 @@ export default function SecuritySettingsPage() {
 
         try {
             // 1. Get options from server
-            const optionsStr = await webAuthnApi.startRegistration();
-            const options = JSON.parse(optionsStr);
+            const optionsResp = await webAuthnApi.startRegistration();
+            const options = typeof optionsResp === 'string' ? JSON.parse(optionsResp) : optionsResp;
             
             // 2. Pass options to authenticator
             const attResp = await startRegistration(options);
