@@ -209,12 +209,13 @@ export default function LoginPage() {
             
             navigate(userData?.mustChangePassword ? '/change-password' : redirectTo);
             
-        } catch (error: any) {
-            console.error(error);
-            if (error.name === 'NotAllowedError') {
+        } catch (err) {
+            console.error(err);
+            const error = err as { name?: string; response?: { data?: { message?: string } }; message?: string }; // Bypass for Axios/DOMException typing
+            if (error?.name === 'NotAllowedError') {
                 setError('Passkey login was cancelled or timed out.');
             } else {
-                setError(error?.response?.data?.message || error.message || 'Passkey login failed. You may need to register this device first.');
+                setError(error?.response?.data?.message || error?.message || 'Passkey login failed. You may need to register this device first.');
             }
         } finally {
             setLocalLoading(false);

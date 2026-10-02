@@ -57,6 +57,7 @@ class ExpenseClaimServiceTest {
     @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.repository.DepositAllocationRepository depositAllocationRepository;
     @Mock private com.jaytechwave.sacco.modules.paymentproducts.domain.service.DepositAllocationRouterService depositAllocationRouterService;
     @Mock private com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService smsNotificationService;
+    @Mock private com.jaytechwave.sacco.modules.expense.domain.repository.SaccoExpenseRepository saccoExpenseRepository;
 
     @InjectMocks
     private ExpenseClaimService expenseClaimService;

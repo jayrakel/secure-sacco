@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthProvider';
-import { sessionApi, type SessionResponse } from '../../sessions/api/session-api';
+
 import apiClient from '../../../shared/api/api-client';
 import {
     User, Mail, Phone, Lock, MonitorSmartphone, Shield,
-    ShieldCheck, ShieldAlert, CheckCircle, CheckCircle2,
-    AlertTriangle, Key, XCircle, Loader2, Clock, Trash2,
-    Edit3, Save, X, RefreshCw, Eye, EyeOff, Camera, Upload
+    ShieldCheck, CheckCircle2,
+    AlertTriangle, Loader2, 
+    Edit3, Save, X, Eye, EyeOff, Camera, Upload
 } from 'lucide-react';
 import { AuthenticatedImage } from '../../../shared/components/AuthenticatedImage';
 

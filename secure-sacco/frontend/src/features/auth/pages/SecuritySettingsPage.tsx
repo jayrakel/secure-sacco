@@ -91,14 +91,15 @@ export default function SecuritySettingsPage() {
             await webAuthnApi.finishRegistration(JSON.stringify(attResp), deviceName);
             
             setPasskeySuccess(true);
-        } catch (error: any) {
-            console.error(error);
-            if (error.name === 'NotAllowedError') {
+        } catch (err) {
+            console.error(err);
+            const error = err as { name?: string; response?: { data?: { message?: string } }; message?: string }; // Bypass for Axios/DOMException typing
+            if (error?.name === 'NotAllowedError') {
                 setPasskeyError('Registration was cancelled or timed out.');
-            } else if (error.name === 'InvalidStateError') {
+            } else if (error?.name === 'InvalidStateError') {
                 setPasskeyError('This device is already registered as a passkey.');
             } else {
-                setPasskeyError(error?.response?.data?.message || error.message || 'Failed to register passkey. Ensure your device supports it.');
+                setPasskeyError(error?.response?.data?.message || error?.message || 'Failed to register passkey. Ensure your device supports it.');
             }
         } finally {
             setIsRegisteringPasskey(false);
