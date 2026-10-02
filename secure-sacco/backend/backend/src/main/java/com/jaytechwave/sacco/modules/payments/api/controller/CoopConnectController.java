@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RestController
@@ -505,6 +506,7 @@ public class CoopConnectController {
     @Operation(summary = "Manually assign a member to an unmatched Co-op transaction and route funds")
     @PostMapping("/coop/transactions/{id}/assign-member")
     @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','TREASURER') or hasAuthority('BANKING_WRITE')")
+    @Transactional
     public ResponseEntity<?> assignMemberToTransaction(
             @PathVariable UUID id,
             @RequestBody MatchTransactionRequest request) {

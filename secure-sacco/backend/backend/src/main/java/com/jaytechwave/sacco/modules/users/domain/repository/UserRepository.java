@@ -23,7 +23,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * member_id set — skips orphan/duplicate user accounts that share
      * the same name but were never linked to a member record.
      * Used by CoopEventNormalizer to resolve phone → member name.
+     *
+     * <p>Uses {@code @EntityGraph} to eagerly JOIN FETCH the {@code member}
+     * relationship. Without this, accessing {@code user.getMember().getId()}
+     * in {@link com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer}
+     * throws a {@code LazyInitializationException} under Hibernate 6+ (used
+     * since the Java 17 → 26 / Spring Boot 3 upgrade), because the proxy
+     * initializer can no longer reopen the session automatically.
      */
+    @EntityGraph(attributePaths = {"member"})
     Optional<User> findFirstByPhoneNumberHashAndMemberIdIsNotNull(String phoneNumberHash);
 
     @EntityGraph(attributePaths = {"member"})

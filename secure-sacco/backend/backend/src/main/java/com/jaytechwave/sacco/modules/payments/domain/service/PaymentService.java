@@ -273,6 +273,30 @@ public class PaymentService {
                         }
                     }
                 }
+                
+                // Fallback: Try alternative phone format (with/without '+') to handle edge cases
+                if (payment == null) {
+                    String altPhone = phone.startsWith("+") ? phone.substring(1) : "+" + phone;
+                    List<Payment> altPending = paymentRepository
+                            .findBySenderPhoneNumberAndStatus(altPhone, PaymentStatus.PENDING);
+                    if (!altPending.isEmpty()) {
+                        payment = altPending.get(0);
+                        log.info("Co-op IPN: matched to pending payment id={} ref={} via alt phone {}",
+                                payment.getId(), payment.getInternalRef(), altPhone);
+                    } else {
+                        List<Payment> altCompleted = paymentRepository
+                                .findBySenderPhoneNumberAndStatus(altPhone, PaymentStatus.COMPLETED);
+                        for (Payment p : altCompleted) {
+                            if ("STK_PUSH".equals(p.getPaymentType()) &&
+                                p.getAmount().compareTo(amount) == 0 &&
+                                p.getMpesaRef() != null && p.getMpesaRef().length() > 15 &&
+                                p.getCreatedAt().isAfter(java.time.ZonedDateTime.now(com.jaytechwave.sacco.modules.core.util.SaccoDateUtils.NAIROBI).minusDays(7))) {
+                                payment = p;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             
             if (payment != null && payment.getStatus() == PaymentStatus.COMPLETED) {
@@ -477,11 +501,7 @@ public class PaymentService {
     }
 
     private String normalisePhone(String raw) {
-        String phone = raw.replaceAll("\\s+", "");
-        if (phone.startsWith("+"))  return phone.substring(1);
-        if (phone.startsWith("0"))  return "254" + phone.substring(1);
-        if (phone.matches("^[71][0-9]{8}$")) return "254" + phone;
-        return phone;
+        return com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(raw);
     }
 
     private String extractPhone(String memoLine1) {

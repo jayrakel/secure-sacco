@@ -147,7 +147,7 @@ class PaymentServiceTest {
         );
 
         verify(coopConnectService).initiateStkPush(
-                eq("254700123456"), any(), anyString(), anyString(), anyString()
+                eq("+254700123456"), any(), anyString(), anyString(), anyString()
         );
     }
 
@@ -164,7 +164,7 @@ class PaymentServiceTest {
         );
 
         verify(coopConnectService).initiateStkPush(
-                eq("254712345678"), any(), anyString(), anyString(), anyString()
+                eq("+254712345678"), any(), anyString(), anyString(), anyString()
         );
     }
 

@@ -62,22 +62,34 @@ public interface CoopTransactionRepository extends JpaRepository<CoopTransaction
             SELECT ct.*
             FROM coop_transactions ct
             WHERE ct.source = 'IPN'
-               OR (ct.source = 'MINI_STATEMENT'
+               OR (ct.source = 'STK_CALLBACK'
                    AND NOT EXISTS (
                        SELECT 1 FROM coop_transactions ct2
                        WHERE ct2.mpesa_ref = ct.mpesa_ref
                          AND ct2.source = 'IPN'
+                   ))
+               OR (ct.source = 'MINI_STATEMENT'
+                   AND NOT EXISTS (
+                       SELECT 1 FROM coop_transactions ct2
+                       WHERE ct2.mpesa_ref = ct.mpesa_ref
+                         AND ct2.source IN ('IPN', 'STK_CALLBACK')
                    ))
             ORDER BY COALESCE(ct.value_date, ct.transaction_date, ct.created_at) DESC
             """,
             countQuery = """
             SELECT COUNT(*) FROM coop_transactions ct
             WHERE ct.source = 'IPN'
-               OR (ct.source = 'MINI_STATEMENT'
+               OR (ct.source = 'STK_CALLBACK'
                    AND NOT EXISTS (
                        SELECT 1 FROM coop_transactions ct2
                        WHERE ct2.mpesa_ref = ct.mpesa_ref
                          AND ct2.source = 'IPN'
+                   ))
+               OR (ct.source = 'MINI_STATEMENT'
+                   AND NOT EXISTS (
+                       SELECT 1 FROM coop_transactions ct2
+                       WHERE ct2.mpesa_ref = ct.mpesa_ref
+                         AND ct2.source IN ('IPN', 'STK_CALLBACK')
                    ))
             """,
             nativeQuery = true)
