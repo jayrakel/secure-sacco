@@ -349,9 +349,18 @@ public class ReportService {
                 SELECT payment_method, SUM(amount) AS total
                 FROM (
                     SELECT payment_method, amount
-                    FROM payments
+                    FROM payments p
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
-                    
+                      AND NOT (
+                          p.payment_type = 'PAYBILL_DEPOSIT'
+                          AND p.transaction_ref IS NOT NULL
+                          AND EXISTS (
+                              SELECT 1 FROM payments stk
+                              WHERE stk.payment_type = 'STK_PUSH'
+                                AND stk.status = 'COMPLETED'
+                                AND stk.transaction_ref = p.transaction_ref
+                          )
+                      )
                     UNION ALL
                     
                     SELECT 'MANUAL_ENTRY' AS payment_method, amount
@@ -380,9 +389,18 @@ public class ReportService {
                 SELECT payment_type, SUM(amount) AS total
                 FROM (
                     SELECT payment_type, amount
-                    FROM payments
+                    FROM payments p
                     WHERE CAST(created_at AS DATE) = CAST(? AS DATE) AND status = 'COMPLETED'
-                    
+                      AND NOT (
+                          p.payment_type = 'PAYBILL_DEPOSIT'
+                          AND p.transaction_ref IS NOT NULL
+                          AND EXISTS (
+                              SELECT 1 FROM payments stk
+                              WHERE stk.payment_type = 'STK_PUSH'
+                                AND stk.status = 'COMPLETED'
+                                AND stk.transaction_ref = p.transaction_ref
+                          )
+                      )
                     UNION ALL
                     
                     SELECT 'LOAN_REPAYMENT' AS payment_type, amount
@@ -476,6 +494,16 @@ public class ReportService {
                     LEFT JOIN members mem ON p.member_id = mem.id AND mem.is_deleted = false
                     WHERE CAST(p.created_at AS DATE) = CAST(? AS DATE)
                       AND p.status = 'COMPLETED'
+                      AND NOT (
+                          p.payment_type = 'PAYBILL_DEPOSIT'
+                          AND p.transaction_ref IS NOT NULL
+                          AND EXISTS (
+                              SELECT 1 FROM payments stk
+                              WHERE stk.payment_type = 'STK_PUSH'
+                                AND stk.status = 'COMPLETED'
+                                AND stk.transaction_ref = p.transaction_ref
+                          )
+                      )
 
                     UNION ALL
 
