@@ -35,8 +35,16 @@ public class CustomUserDetailsService implements UserDetailsService {
         // 1. Fetch user by email, phone, or member number
         // Phone numbers are AES-GCM encrypted (random IV per write) — direct equality
         // matching is broken. Compute the deterministic HMAC hash and match on that instead.
-        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(identifier);
-        User user = userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(identifier, phoneHash, identifier)
+        
+        String cleanIdentifier = identifier.trim();
+        String normalizedEmail = cleanIdentifier.toLowerCase(java.util.Locale.ROOT);
+        String normalizedPhone = com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(cleanIdentifier);
+        
+        // If normalization yielded a valid phone string, use it for the hash; otherwise fallback to the raw input
+        String phoneToHash = normalizedPhone != null ? normalizedPhone : cleanIdentifier;
+        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(phoneToHash);
+        
+        User user = userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(normalizedEmail, phoneHash, cleanIdentifier)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
 
         Set<GrantedAuthority> authorities = new HashSet<>();
