@@ -30,8 +30,8 @@ public class MaintenanceAutomationJob {
     private final EmailNotificationService emailService;
     private final SmsNotificationService smsService;
 
-    // Run every 15 minutes
-    @Scheduled(cron = "0 0/15 * * * ?")
+    // Run every minute to ensure prompt notifications
+    @Scheduled(cron = "0 * * * * ?")
     @Transactional
     public void processMaintenanceAutomations() {
         processMemberNotifications();
