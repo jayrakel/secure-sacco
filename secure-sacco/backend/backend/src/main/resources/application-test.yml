@@ -5,7 +5,7 @@ spring:
   # on localhost:5432 and passes DB_URL / DB_USERNAME / DB_PASSWORD as env vars,
   # so we just need to let those through instead of overriding with H2.
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/sacco_test}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/sacco_test}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -25,7 +25,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}     # Was incorrectly 6370 — fixed to match CI service
-      password: ${REDIS_PASSWORD:}
+      password: ${REDIS_PASSWORD:Michira._2000}
 
   session:
     store-type: none               # In-memory sessions for tests

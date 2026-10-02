@@ -337,4 +337,18 @@ public class CoopConnectDTOs {
         @JsonProperty("Transactions")
         private List<TransactionEntry> transactions;
     }
+    @Data
+    public static class MatchTransactionRequest {
+        private java.util.UUID memberId;
+        private List<Allocation> allocations;
+
+        @Data
+        public static class Allocation {
+            private String destination;
+            private java.math.BigDecimal amount;
+            private java.util.UUID loanId;
+            private java.util.UUID penaltyId;
+            private java.util.UUID productId;
+        }
+    }
 }
