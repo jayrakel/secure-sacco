@@ -161,9 +161,10 @@ public class NotificationPaymentListener {
 
         // Admin SMS: notify with purpose = Loan Application Fee
         String fullName = buildFullName(member);
+        String dateStr = ZonedDateTime.now(ZoneId.of("Africa/Nairobi")).format(DateTimeFormatter.ofPattern("d/M/yy HH:mm"));
         String adminMessage = String.format(
-                "Fee Received: Ksh %s from %s. Ref: %s.",
-                formatAmount(amount), fullName, receiptRef
+                "Dear BETTER LINK VENTURES LTD, you have received Ksh. %s from %s on %s. MPESA Ref: %s. [Loan Application Fee]",
+                formatAmount(amount), fullName, dateStr, receiptRef
         );
 
         List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
@@ -226,7 +227,7 @@ public class NotificationPaymentListener {
         // Send to the actual person who made the payment if different
         if (!normalizedSenderPhone.isBlank() && !normalizedSenderPhone.equals(normalizedMemberPhone)) {
             String senderMessage = String.format(
-                    "Dear Customer, payment of KES %s received. Ref: %s. Thank you for choosing Betterlink Ventures SACCO.",
+                    "Dear Customer, we received your payment of KES %s (Ref: %s). However, this phone number is not linked to a member account. Please contact Betterlink Ventures SACCO.",
                     formatAmount(amount), receiptRef
             );
             log.info("NotificationPaymentListener: Sending SMS to Payment Sender (Sender Phone: {}) Ref: {}", senderPhone, receiptRef);
@@ -286,9 +287,17 @@ public class NotificationPaymentListener {
     public void handleNonMemberPaymentReceived(NonMemberPaymentReceivedEvent event) {
         try {
             if (event.senderPhone() != null && !event.senderPhone().isBlank()) {
+                String name = event.senderName();
+                if (name == null || name.isBlank()) {
+                    name = "Customer";
+                }
+
+                String[] parts = name.trim().split("\\s+");
+                String firstName = parts.length > 0 ? capitalize(parts[0]) : "Customer";
+
                 String message = String.format(
-                        "Dear Customer, payment of KES %s received. Ref: %s. Thank you for choosing Betterlink Ventures SACCO.",
-                        formatAmount(event.amount()), sanitizeRef(event.mpesaRef())
+                        "Dear %s, we received your payment of KES %s (Ref: %s). However, your phone number is not linked to a member account. Please contact Betterlink Ventures SACCO.",
+                        firstName, formatAmount(event.amount()), sanitizeRef(event.mpesaRef())
                 );
 
                 log.info("NotificationPaymentListener: Sending SMS to Non-Member (Phone: {})", event.senderPhone());
@@ -340,8 +349,8 @@ public class NotificationPaymentListener {
             }
         }
 
-        String adminMessage = String.format("Payment: Ksh %s from %s. Ref: %s.%s",
-                formattedAmount, name, mpesaRef, allocationsStr);
+        String adminMessage = String.format("Dear BETTER LINK VENTURES LTD, you have received Ksh. %s from %s on %s. MPESA Ref: %s.%s",
+                formattedAmount, name, dateStr, mpesaRef, allocationsStr);
 
         List<User> admins = userRepository.findAllByRolesNameInAndIsDeletedFalse(adminAlertRoles);
         log.info("NotificationPaymentListener: Sending admin alerts to {} admins for payment {}", admins.size(), paymentId);
