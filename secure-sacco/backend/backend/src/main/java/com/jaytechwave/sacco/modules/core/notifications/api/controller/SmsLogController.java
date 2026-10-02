@@ -60,4 +60,17 @@ public class SmsLogController {
         smsNotificationService.sendNotificationSms(request.getPhoneNumber(), request.getMessage());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/send-bulk")
+    @PreAuthorize("hasAuthority('AUDIT_LOG_READ') or hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<Void> sendBulkSms(@RequestBody com.jaytechwave.sacco.modules.core.notifications.api.dto.SendBulkSmsRequest request) {
+        if (request.getPhoneNumbers() != null) {
+            for (String phone : request.getPhoneNumbers()) {
+                if (phone != null && !phone.isBlank()) {
+                    smsNotificationService.sendNotificationSms(phone, request.getMessage());
+                }
+            }
+        }
+        return ResponseEntity.ok().build();
+    }
 }

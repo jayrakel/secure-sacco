@@ -49,5 +49,10 @@ export const smsApi = {
     sendCustomSms: async (data: { phoneNumber: string, message: string }): Promise<void> => {
         const response = await apiClient.post<void>('/sms-logs/send', data);
         return response.data;
+    },
+
+    sendBulkSms: async (data: { phoneNumbers: string[], message: string }): Promise<void> => {
+        const response = await apiClient.post<void>('/sms-logs/send-bulk', data);
+        return response.data;
     }
 };
