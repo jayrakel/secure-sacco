@@ -42,6 +42,7 @@ public class MemberService {
     public MemberResponse createMember(CreateMemberRequest request) {
         validateUniqueConstraints(request.getNationalId(), request.getEmail(), request.getPhoneNumber(), null);
 
+        String normalizedPhone = request.getPhoneNumber() != null ? com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(request.getPhoneNumber()) : request.getPhoneNumber();
         String generatedMemberNumber = numberGeneratorService.generateNextMemberNumber();
         Member member = Member.builder()
                 .memberNumber(generatedMemberNumber)
@@ -50,8 +51,8 @@ public class MemberService {
                 .lastName(request.getLastName())
                 .nationalId(request.getNationalId())
                 .nationalIdHash(piiSearchHashConverter.convertToDatabaseColumn(request.getNationalId()))
-                .phoneNumber(request.getPhoneNumber())
-                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(request.getPhoneNumber()))
+                .phoneNumber(normalizedPhone)
+                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone))
                 .email(request.getEmail())
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
@@ -70,8 +71,8 @@ public class MemberService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .status(UserStatus.PENDING_ACTIVATION)
-                .phoneNumber(request.getPhoneNumber())
-                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(request.getPhoneNumber()))
+                .phoneNumber(normalizedPhone)
+                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone))
                 .mfaEnabled(false)
                 .member(savedMember)
                 .roles(new HashSet<>(Set.of(memberRole)))
@@ -130,13 +131,14 @@ public class MemberService {
 
         validateUniqueConstraints(request.getNationalId(), request.getEmail(), request.getPhoneNumber(), member);
 
+        String normalizedPhone = request.getPhoneNumber() != null ? com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(request.getPhoneNumber()) : request.getPhoneNumber();
         member.setFirstName(request.getFirstName());
         member.setMiddleName(request.getMiddleName());
         member.setLastName(request.getLastName());
         member.setNationalId(request.getNationalId());
         member.setNationalIdHash(piiSearchHashConverter.convertToDatabaseColumn(request.getNationalId()));
-        member.setPhoneNumber(request.getPhoneNumber());
-        member.setPhoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(request.getPhoneNumber()));
+        member.setPhoneNumber(normalizedPhone);
+        member.setPhoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone));
         member.setEmail(request.getEmail());
         member.setDateOfBirth(request.getDateOfBirth());
         member.setGender(request.getGender());
@@ -209,7 +211,8 @@ public class MemberService {
         }
 
         if (phone != null && !phone.trim().isEmpty()) {
-            String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(phone);
+            String normalizedPhone = com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(phone);
+            String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone);
             if (currentMember == null || !phoneHash.equals(currentMember.getPhoneNumberHash())) {
                 if (memberRepository.existsByPhoneNumberHash(phoneHash)) {
                     throw new IllegalArgumentException("Phone number is already registered to another member.");
