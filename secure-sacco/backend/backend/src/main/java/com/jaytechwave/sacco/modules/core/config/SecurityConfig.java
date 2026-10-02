@@ -77,6 +77,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/login/mfa",
+                                "/api/v1/auth/webauthn/login/options",
+                                "/api/v1/auth/webauthn/login",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
                                 "/api/v1/auth/activation/**",
@@ -100,6 +102,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/login/mfa",
+                                "/api/v1/auth/webauthn/login/options",
+                                "/api/v1/auth/webauthn/login",
                                 "/api/v1/auth/csrf",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/activation/**",

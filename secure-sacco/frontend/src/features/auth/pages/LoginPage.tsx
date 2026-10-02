@@ -186,10 +186,11 @@ export default function LoginPage() {
         try {
             // 1. Get options from server
             const optionsResp = await webAuthnApi.startLogin(identifier.trim());
-            const options = typeof optionsResp === 'string' ? JSON.parse(optionsResp) : optionsResp;
+            const parsed = typeof optionsResp === 'string' ? JSON.parse(optionsResp) : optionsResp;
+            const webAuthnOptions = parsed.publicKey ? parsed.publicKey : parsed;
             
             // 2. Pass options to authenticator
-            const authResp = await startAuthentication(options);
+            const authResp = await startAuthentication({ optionsJSON: webAuthnOptions });
             
             // 3. Send response back to server
             const response = await webAuthnApi.finishLogin(JSON.stringify(authResp));
