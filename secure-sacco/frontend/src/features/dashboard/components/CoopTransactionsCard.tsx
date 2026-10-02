@@ -333,10 +333,16 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
     const [openPenalties, setOpenPenalties] = useState<OpenPenalty[]>([]);
     const [products, setProducts] = useState<PaymentProduct[]>([]);
     const [loadingExtras, setLoadingExtras] = useState(false);
-    const [destination, setDestination] = useState<'SAVINGS' | 'PENALTY' | 'LOAN' | 'PRODUCT'>('SAVINGS');
-    const [selectedLoanId, setSelectedLoanId] = useState<string>('');
-    const [selectedPenaltyId, setSelectedPenaltyId] = useState<string>('');
-    const [selectedProductId, setSelectedProductId] = useState<string>('');
+    
+    interface Allocation {
+        id: number;
+        destination: 'SAVINGS' | 'PENALTY' | 'LOAN' | 'PRODUCT';
+        amount: number | '';
+        loanId: string;
+        penaltyId: string;
+        productId: string;
+    }
+    const [allocations, setAllocations] = useState<Allocation[]>([]);
 
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -374,10 +380,14 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
             );
             setProducts(customProducts);
 
-            setDestination('SAVINGS');
-            setSelectedLoanId('');
-            setSelectedPenaltyId('');
-            setSelectedProductId('');
+            setAllocations([{ 
+                id: new Date().getTime(), 
+                destination: 'SAVINGS', 
+                amount: tx.amount, 
+                loanId: '', 
+                penaltyId: '', 
+                productId: '' 
+            }]);
         } catch (e: unknown) {
             console.error(e);
             setError('Failed to fetch extras for this member.');
@@ -388,31 +398,47 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
 
     const handleMatch = async () => {
         if (!selectedMember) return;
-        if (destination === 'LOAN' && !selectedLoanId) {
-            setError('Please select a specific loan to repay.');
+        
+        // Validation
+        const totalAllocated = allocations.reduce((s, a) => s + (Number(a.amount) || 0), 0);
+        if (totalAllocated !== tx.amount) {
+            setError(`Total allocated amount (KES ${totalAllocated}) must exactly match the transaction amount (KES ${tx.amount}).`);
             return;
         }
-        if (destination === 'PENALTY' && !selectedPenaltyId) {
-            setError('Please select an open penalty.');
-            return;
-        }
-        if (destination === 'PRODUCT' && !selectedProductId) {
-            setError('Please select a custom or share product.');
-            return;
+
+        for (const alloc of allocations) {
+            if (alloc.destination === 'LOAN' && !alloc.loanId) {
+                setError('Please select a specific loan to repay for all loan allocations.');
+                return;
+            }
+            if (alloc.destination === 'PENALTY' && !alloc.penaltyId) {
+                setError('Please select an open penalty for all penalty allocations.');
+                return;
+            }
+            if (alloc.destination === 'PRODUCT' && !alloc.productId) {
+                setError('Please select a product for all product allocations.');
+                return;
+            }
+            if (!alloc.amount || Number(alloc.amount) <= 0) {
+                setError('All allocations must have a valid amount greater than 0.');
+                return;
+            }
         }
 
         setMatching(true);
         setError(null);
         try {
-            let url = `/payments/coop/transactions/${tx.id}/assign-member?memberId=${selectedMember.id}&destination=${destination}`;
-            if (destination === 'LOAN') {
-                url += `&loanId=${selectedLoanId}`;
-            } else if (destination === 'PENALTY') {
-                url += `&penaltyId=${selectedPenaltyId}`;
-            } else if (destination === 'PRODUCT') {
-                url += `&productId=${selectedProductId}`;
-            }
-            await apiClient.post(url);
+            const payload = {
+                memberId: selectedMember.id,
+                allocations: allocations.map(a => ({
+                    destination: a.destination,
+                    amount: Number(a.amount),
+                    loanId: a.loanId || null,
+                    penaltyId: a.penaltyId || null,
+                    productId: a.productId || null
+                }))
+            };
+            await apiClient.post(`/payments/coop/transactions/${tx.id}/assign-member`, payload);
             onSuccess();
         } catch (e: unknown) {
             const err = e as { response?: { data?: { error?: string } } };
@@ -501,139 +527,184 @@ function MatchModal({ tx, onClose, onSuccess }: { tx: CoopTransaction; onClose: 
                             </div>
 
                             <div className="space-y-3">
-                                <label className="block text-sm font-semibold text-slate-700">Route funds to</label>
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-sm font-semibold text-slate-700">Allocations</label>
+                                    <button 
+                                        onClick={() => setAllocations(prev => [...prev, { id: new Date().getTime(), destination: 'SAVINGS', amount: '', loanId: '', penaltyId: '', productId: '' }])}
+                                        className="text-xs text-blue-600 font-semibold hover:underline bg-blue-50 px-2 py-1 rounded"
+                                    >
+                                        + Add Route
+                                    </button>
+                                </div>
                                 
                                 {loadingExtras ? (
                                     <p className="text-xs text-slate-500">Checking for active accounts...</p>
                                 ) : (
-                                    <div className="space-y-2">
-                                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${destination === 'SAVINGS' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                            <input 
-                                                type="radio" 
-                                                name="destination" 
-                                                value="SAVINGS" 
-                                                checked={destination === 'SAVINGS'}
-                                                onChange={() => setDestination('SAVINGS')}
-                                                className="w-4 h-4 text-slate-900"
-                                            />
-                                            <span className="text-sm font-medium text-slate-800">Savings Account</span>
-                                        </label>
-                                        
-                                        {/* Products Dropdown */}
-                                        <label className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'PRODUCT' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                            <div className="flex items-center gap-3">
-                                                <input 
-                                                    type="radio" 
-                                                    name="destination" 
-                                                    value="PRODUCT" 
-                                                    checked={destination === 'PRODUCT'}
-                                                    onChange={() => setDestination('PRODUCT')}
-                                                    className="w-4 h-4 text-slate-900"
-                                                />
-                                                <span className="text-sm font-medium text-slate-800">Custom/Share Product</span>
-                                            </div>
-                                            {destination === 'PRODUCT' && (
-                                                <div className="ml-7">
-                                                    {products.length > 0 ? (
-                                                        <select
-                                                            value={selectedProductId}
-                                                            onChange={e => setSelectedProductId(e.target.value)}
+                                    <div className="space-y-3">
+                                        {allocations.map((alloc, idx) => (
+                                            <div key={alloc.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-3 relative">
+                                                {allocations.length > 1 && (
+                                                    <button 
+                                                        onClick={() => setAllocations(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="absolute top-2 right-2 p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
+                                                
+                                                <div className="grid grid-cols-2 gap-3 pr-6">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Destination</label>
+                                                        <select 
+                                                            value={alloc.destination}
+                                                            onChange={e => {
+                                                                const dest = e.target.value as Allocation['destination'];
+                                                                setAllocations(prev => {
+                                                                    const next = [...prev];
+                                                                    next[idx].destination = dest;
+                                                                    next[idx].loanId = '';
+                                                                    next[idx].penaltyId = '';
+                                                                    next[idx].productId = '';
+                                                                    return next;
+                                                                });
+                                                            }}
                                                             className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
                                                         >
-                                                            <option value="">Select a product...</option>
-                                                            {products.map(p => (
-                                                                <option key={p.id} value={p.id}>
-                                                                    {p.name} ({p.moduleType.replace('_', ' ')})
-                                                                </option>
-                                                            ))}
+                                                            <option value="SAVINGS">Savings Account</option>
+                                                            <option value="LOAN">Loan Repayment</option>
+                                                            <option value="PENALTY">Penalty</option>
+                                                            <option value="PRODUCT">Custom/Share Product</option>
                                                         </select>
-                                                    ) : (
-                                                        <p className="text-xs text-amber-600 mt-1">No active custom or share products found.</p>
-                                                    )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-slate-500 uppercase">Amount (KES)</label>
+                                                        <input 
+                                                            type="number" 
+                                                            value={alloc.amount}
+                                                            onChange={e => {
+                                                                const val = e.target.value ? Number(e.target.value) : '';
+                                                                setAllocations(prev => {
+                                                                    const next = [...prev];
+                                                                    next[idx].amount = val;
+                                                                    return next;
+                                                                });
+                                                            }}
+                                                            className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </label>
 
-                                        {/* Penalties Dropdown */}
-                                        <label className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'PENALTY' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                            <div className="flex items-center gap-3">
-                                                <input 
-                                                    type="radio" 
-                                                    name="destination" 
-                                                    value="PENALTY" 
-                                                    checked={destination === 'PENALTY'}
-                                                    onChange={() => setDestination('PENALTY')}
-                                                    className="w-4 h-4 text-slate-900"
-                                                />
-                                                <span className="text-sm font-medium text-slate-800">Penalty Repayment</span>
-                                            </div>
-                                            {destination === 'PENALTY' && (
-                                                <div className="ml-7">
-                                                    {openPenalties.length > 0 ? (
-                                                        <select
-                                                            value={selectedPenaltyId}
-                                                            onChange={e => setSelectedPenaltyId(e.target.value)}
-                                                            className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
-                                                        >
-                                                            <option value="">Select an open penalty...</option>
-                                                            {openPenalties.map(p => (
-                                                                <option key={p.id} value={p.id}>
-                                                                    {p.ruleName} (Owes: KES {p.outstandingAmount?.toLocaleString('en-KE')})
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <p className="text-xs text-amber-600 mt-1">No open penalties found.</p>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </label>
+                                                {alloc.destination === 'PRODUCT' && (
+                                                    <div>
+                                                        {products.length > 0 ? (
+                                                            <select
+                                                                value={alloc.productId}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    setAllocations(prev => {
+                                                                        const next = [...prev];
+                                                                        next[idx].productId = val;
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                className="w-full p-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                            >
+                                                                <option value="">Select a product...</option>
+                                                                {products.map(p => (
+                                                                    <option key={p.id} value={p.id}>
+                                                                        {p.name} ({p.moduleType.replace('_', ' ')})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <p className="text-xs text-amber-600 mt-1">No active custom or share products found.</p>
+                                                        )}
+                                                    </div>
+                                                )}
 
-                                        {/* Loans Dropdown */}
-                                        <label className={`flex flex-col gap-2 p-3 rounded-lg border cursor-pointer transition ${destination === 'LOAN' ? 'border-slate-900 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                                            <div className="flex items-center gap-3">
-                                                <input 
-                                                    type="radio" 
-                                                    name="destination" 
-                                                    value="LOAN" 
-                                                    checked={destination === 'LOAN'}
-                                                    onChange={() => setDestination('LOAN')}
-                                                    className="w-4 h-4 text-slate-900"
-                                                />
-                                                <span className="text-sm font-medium text-slate-800">Loan Repayment</span>
+                                                {alloc.destination === 'PENALTY' && (
+                                                    <div>
+                                                        {openPenalties.length > 0 ? (
+                                                            <select
+                                                                value={alloc.penaltyId}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    setAllocations(prev => {
+                                                                        const next = [...prev];
+                                                                        next[idx].penaltyId = val;
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                className="w-full p-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                            >
+                                                                <option value="">Select an open penalty...</option>
+                                                                {openPenalties.map(p => (
+                                                                    <option key={p.id} value={p.id}>
+                                                                        {p.ruleName} (Owes: KES {p.outstandingAmount?.toLocaleString('en-KE')})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <p className="text-xs text-amber-600 mt-1">No open penalties found.</p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {alloc.destination === 'LOAN' && (
+                                                    <div>
+                                                        {activeLoans.length > 0 ? (
+                                                            <select
+                                                                value={alloc.loanId}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    setAllocations(prev => {
+                                                                        const next = [...prev];
+                                                                        next[idx].loanId = val;
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                className="w-full p-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
+                                                            >
+                                                                <option value="">Select a specific loan...</option>
+                                                                {activeLoans.map(l => (
+                                                                    <option key={l.id} value={l.id}>
+                                                                        {l.loanProduct?.name || 'Loan'} · Bal KES {l.balance?.toLocaleString('en-KE')}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <p className="text-xs text-amber-600 mt-1">No active loans found.</p>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                            {destination === 'LOAN' && (
-                                                <div className="ml-7">
-                                                    {activeLoans.length > 0 ? (
-                                                        <select
-                                                            value={selectedLoanId}
-                                                            onChange={e => setSelectedLoanId(e.target.value)}
-                                                            className="w-full p-2 mt-1 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-slate-400"
-                                                        >
-                                                            <option value="">Select a specific loan...</option>
-                                                            {activeLoans.map(l => (
-                                                                <option key={l.id} value={l.id}>
-                                                                    {l.loanProduct?.name || 'Loan'} · Bal KES {l.balance?.toLocaleString('en-KE')}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    ) : (
-                                                        <p className="text-xs text-amber-600 mt-1">No active loans found.</p>
-                                                    )}
+                                        ))}
+
+                                        {(() => {
+                                            const totalAllocated = allocations.reduce((s, a) => s + (Number(a.amount) || 0), 0);
+                                            const diff = tx.amount - totalAllocated;
+                                            const isMatching = diff === 0;
+                                            return (
+                                                <div className={`p-3 rounded-lg border text-sm font-semibold flex justify-between ${
+                                                    isMatching ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 
+                                                    diff < 0 ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-blue-50 border-blue-200 text-blue-700'
+                                                }`}>
+                                                    <span>Total Allocated: KES {totalAllocated.toLocaleString('en-KE')}</span>
+                                                    <span>
+                                                        {isMatching ? 'Matched ✓' : 
+                                                         diff < 0 ? `Over-allocated by KES ${Math.abs(diff).toLocaleString('en-KE')}` : 
+                                                         `Remaining: KES ${diff.toLocaleString('en-KE')}`}
+                                                    </span>
                                                 </div>
-                                            )}
-                                        </label>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
 
                             <button 
-                                disabled={
-                                    matching || loadingExtras || 
-                                    (destination === 'LOAN' && !selectedLoanId) ||
-                                    (destination === 'PENALTY' && !selectedPenaltyId) ||
-                                    (destination === 'PRODUCT' && !selectedProductId)
-                                }
+                                disabled={matching || loadingExtras || allocations.reduce((s, a) => s + (Number(a.amount) || 0), 0) !== tx.amount}
                                 onClick={handleMatch}
                                 className="w-full mt-4 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition"
                             >

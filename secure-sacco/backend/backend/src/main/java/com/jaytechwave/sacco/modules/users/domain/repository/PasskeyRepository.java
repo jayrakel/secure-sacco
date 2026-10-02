@@ -11,5 +11,6 @@ import java.util.UUID;
 @Repository
 public interface PasskeyRepository extends JpaRepository<Passkey, UUID> {
     List<Passkey> findAllByUserId(UUID userId);
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user"})
     Optional<Passkey> findByCredentialId(byte[] credentialId);
 }
