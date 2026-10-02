@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import com.jaytechwave.sacco.modules.core.security.OAuth2SuccessHandler;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,8 +33,14 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("#{'${sacco.security.cors.allowed-origins}'.split(',')}")
+    @Value("${sacco.security.cors.allowed-origins}")
     private List<String> allowedOrigins;
+
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    public SecurityConfig(OAuth2SuccessHandler oAuth2SuccessHandler) {
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, SecurityHeadersFilter securityHeadersFilter, MustChangePasswordFilter mustChangePasswordFilter, ContactVerificationFilter contactVerificationFilter, MpesaIpWhitelistFilter mpesaIpWhitelistFilter, ApiRateLimitFilter apiRateLimitFilter) throws Exception {
@@ -140,6 +147,9 @@ public class SecurityConfig {
 
                         // --- Everything else requires authentication ---
                         .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2SuccessHandler)
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {

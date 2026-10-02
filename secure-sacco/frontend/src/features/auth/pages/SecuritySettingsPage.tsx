@@ -4,8 +4,10 @@ import { sessionApi, type SessionResponse } from '../../sessions/api/session-api
 import apiClient from '../../../shared/api/api-client';
 import {
     MonitorSmartphone, Trash2, ShieldAlert, Loader2, Clock,
-    ShieldCheck, Smartphone, CheckCircle, AlertTriangle, Key, XCircle
+    ShieldCheck, Smartphone, CheckCircle, AlertTriangle, Key, XCircle, Fingerprint
 } from 'lucide-react';
+import { webAuthnApi } from '../api/webauthn-api';
+import { startRegistration } from '@simplewebauthn/browser';
 
 export default function SecuritySettingsPage() {
     const { user, refreshUser } = useAuth();
@@ -19,9 +21,15 @@ export default function SecuritySettingsPage() {
     const [qrCode, setQrCode] = useState<string>('');
     const [secret, setSecret] = useState<string>('');
     const [mfaCode, setMfaCode] = useState('');
-    const [mfaStatus, setMfaStatus] = useState<'loading_qr' | 'idle' | 'submitting' | 'success' | 'error'>('loading_qr');
+    const [mfaStatus, setMfaStatus] = useState<'method_select' | 'loading_qr' | 'idle' | 'submitting' | 'success' | 'error'>('method_select');
+    const [selectedMethod, setSelectedMethod] = useState<'TOTP' | 'SMS' | 'EMAIL'>('TOTP');
     const [mfaErrorMsg, setMfaErrorMsg] = useState('');
     const [isDisabling, setIsDisabling] = useState(false);
+
+    // --- PASSKEY STATE ---
+    const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+    const [passkeyError, setPasskeyError] = useState('');
+    const [passkeySuccess, setPasskeySuccess] = useState(false);
 
     // 1. Fetch Sessions
     useEffect(() => {
@@ -42,15 +50,17 @@ export default function SecuritySettingsPage() {
     // 2. Fetch MFA QR Code if not enabled
     useEffect(() => {
         if (user && !user.mfaEnabled) {
-            fetchMfaSetup();
+            setMfaStatus('method_select');
         } else {
             setMfaStatus('idle');
         }
     }, [user]);
 
-    const fetchMfaSetup = async () => {
+    const fetchMfaSetup = async (method: string) => {
+        setMfaStatus('loading_qr');
+        setMfaErrorMsg('');
         try {
-            const response = await apiClient.get('/auth/mfa/setup');
+            const response = await apiClient.post('/auth/mfa/setup', { method });
             setQrCode(response.data.qrCode);
             setSecret(response.data.secret);
             setMfaStatus('idle');
@@ -61,13 +71,48 @@ export default function SecuritySettingsPage() {
     };
 
     // --- HANDLERS ---
+    const handleRegisterPasskey = async () => {
+        setIsRegisteringPasskey(true);
+        setPasskeyError('');
+        setPasskeySuccess(false);
+
+        try {
+            // 1. Get options from server
+            const optionsStr = await webAuthnApi.startRegistration();
+            const options = JSON.parse(optionsStr);
+            
+            // 2. Pass options to authenticator
+            const attResp = await startRegistration(options);
+            
+            // 3. Send response back to server
+            // Using a generic name for now, e.g., "My Authenticator" or prompt user
+            const deviceName = prompt("Give this device/passkey a name (e.g., Personal Phone):", "My Passkey") || "My Passkey";
+            
+            await webAuthnApi.finishRegistration(JSON.stringify(attResp), deviceName);
+            
+            setPasskeySuccess(true);
+        } catch (err) {
+            console.error(err);
+            const error = err as { name?: string; response?: { data?: { message?: string } }; message?: string }; // Bypass for Axios/DOMException typing
+            if (error?.name === 'NotAllowedError') {
+                setPasskeyError('Registration was cancelled or timed out.');
+            } else if (error?.name === 'InvalidStateError') {
+                setPasskeyError('This device is already registered as a passkey.');
+            } else {
+                setPasskeyError(error?.response?.data?.message || error?.message || 'Failed to register passkey. Ensure your device supports it.');
+            }
+        } finally {
+            setIsRegisteringPasskey(false);
+        }
+    };
+
     const handleEnableMfa = async (e: React.FormEvent) => {
         e.preventDefault();
         setMfaStatus('submitting');
         setMfaErrorMsg('');
 
         try {
-            await apiClient.post('/auth/mfa/enable', { code: mfaCode });
+            await apiClient.post('/auth/mfa/enable', { code: mfaCode, method: selectedMethod });
             await refreshUser();
             setMfaStatus('success');
             setMfaCode('');
@@ -85,7 +130,7 @@ export default function SecuritySettingsPage() {
             await apiClient.post('/auth/mfa/disable');
             await refreshUser(); // Refreshes context so mfaEnabled becomes false
             setMfaStatus('idle'); // Reset the UI to show the setup process again
-            fetchMfaSetup(); // Grab a fresh QR code
+            setMfaStatus('method_select');
         } catch {
             alert("Failed to disable MFA. Please try again.");
         } finally {
@@ -183,29 +228,83 @@ export default function SecuritySettingsPage() {
                             <h3 className="text-xl font-bold text-slate-800 mb-2">2FA Enabled Successfully!</h3>
                             <p className="text-slate-600">Your account is now protected with two-factor authentication.</p>
                         </div>
+                    ) : mfaStatus === 'method_select' ? (
+                        <div className="max-w-xl mx-auto py-4">
+                            <h3 className="font-bold text-slate-800 mb-4 text-center">Choose 2FA Method</h3>
+                            <p className="text-sm text-slate-600 mb-6 text-center">Select how you want to receive your security codes.</p>
+                            
+                            <div className="space-y-4">
+                                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition ${selectedMethod === 'TOTP' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'}`}>
+                                    <input type="radio" name="mfaMethod" value="TOTP" checked={selectedMethod === 'TOTP'} onChange={() => setSelectedMethod('TOTP')} className="w-5 h-5 text-emerald-600 focus:ring-emerald-500" />
+                                    <div>
+                                        <div className="font-bold text-slate-800">Authenticator App (Recommended)</div>
+                                        <div className="text-sm text-slate-500">Google Authenticator, Authy, etc.</div>
+                                    </div>
+                                </label>
+                                
+                                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition ${selectedMethod === 'SMS' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'}`}>
+                                    <input type="radio" name="mfaMethod" value="SMS" checked={selectedMethod === 'SMS'} onChange={() => setSelectedMethod('SMS')} className="w-5 h-5 text-emerald-600 focus:ring-emerald-500" />
+                                    <div>
+                                        <div className="font-bold text-slate-800">SMS Text Message</div>
+                                        <div className="text-sm text-slate-500">Receive codes via SMS to {user?.phoneNumber}</div>
+                                    </div>
+                                </label>
+                                
+                                <label className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition ${selectedMethod === 'EMAIL' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'}`}>
+                                    <input type="radio" name="mfaMethod" value="EMAIL" checked={selectedMethod === 'EMAIL'} onChange={() => setSelectedMethod('EMAIL')} className="w-5 h-5 text-emerald-600 focus:ring-emerald-500" />
+                                    <div>
+                                        <div className="font-bold text-slate-800">Email Address</div>
+                                        <div className="text-sm text-slate-500">Receive codes via email to {user?.email}</div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <button 
+                                onClick={() => fetchMfaSetup(selectedMethod)}
+                                className="w-full mt-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition flex justify-center items-center gap-2 shadow-sm"
+                            >
+                                Continue with {selectedMethod === 'TOTP' ? 'App' : selectedMethod}
+                            </button>
+                        </div>
                     ) : (
                         <div className="grid md:grid-cols-2 gap-10">
-                            {/* Left Side: Instructions & QR Code */}
+                            {/* Left Side: Instructions & QR Code or SMS/Email Status */}
                             <div>
-                                <h3 className="font-bold text-slate-800 mb-4">Step 1: Scan the QR Code</h3>
-                                <p className="text-sm text-slate-600 mb-6">
-                                    Open your preferred authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator) and scan the QR code below.
-                                </p>
-
-                                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex justify-center mb-4 min-h-62.5 items-center">
-                                    {mfaStatus === 'loading_qr' ? (
-                                        <Loader2 className="animate-spin text-slate-400" size={32} />
-                                    ) : qrCode ? (
-                                        <img src={qrCode} alt="MFA QR Code" className="w-48 h-48 rounded shadow-sm bg-white p-2 border border-slate-200" />
-                                    ) : null}
-                                </div>
-
-                                {secret && (
-                                    <div className="text-center">
-                                        <p className="text-xs text-slate-500 mb-1">Can't scan the code? Use this setup key:</p>
-                                        <code className="bg-slate-100 px-3 py-1.5 rounded text-sm text-slate-800 font-bold select-all border border-slate-200">
-                                            {secret}
-                                        </code>
+                                <h3 className="font-bold text-slate-800 mb-4">Step 1: {selectedMethod === 'TOTP' ? 'Scan the QR Code' : 'Check your ' + (selectedMethod === 'SMS' ? 'Phone' : 'Email')}</h3>
+                                
+                                {selectedMethod === 'TOTP' ? (
+                                    <>
+                                        <p className="text-sm text-slate-600 mb-6">
+                                            Open your preferred authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator) and scan the QR code below.
+                                        </p>
+                                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex justify-center mb-4 min-h-62.5 items-center">
+                                            {mfaStatus === 'loading_qr' ? (
+                                                <Loader2 className="animate-spin text-slate-400" size={32} />
+                                            ) : qrCode ? (
+                                                <img src={qrCode} alt="MFA QR Code" className="w-48 h-48 rounded shadow-sm bg-white p-2 border border-slate-200" />
+                                            ) : null}
+                                        </div>
+                                        {secret && (
+                                            <div className="text-center">
+                                                <p className="text-xs text-slate-500 mb-1">Can't scan the code? Use this setup key:</p>
+                                                <code className="bg-slate-100 px-3 py-1.5 rounded text-sm text-slate-800 font-bold select-all border border-slate-200">
+                                                    {secret}
+                                                </code>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col justify-center mb-4 items-center h-full">
+                                        {mfaStatus === 'loading_qr' ? (
+                                            <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
+                                        ) : (
+                                            <CheckCircle className="text-emerald-500 mb-4" size={48} />
+                                        )}
+                                        <p className="text-center text-slate-600">
+                                            {mfaStatus === 'loading_qr' 
+                                                ? `Sending code to your ${selectedMethod.toLowerCase()}...` 
+                                                : `A 6-digit code has been sent to your ${selectedMethod.toLowerCase()}.`}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -214,7 +313,7 @@ export default function SecuritySettingsPage() {
                             <div>
                                 <h3 className="font-bold text-slate-800 mb-4">Step 2: Verify & Enable</h3>
                                 <p className="text-sm text-slate-600 mb-6">
-                                    Enter the 6-digit code generated by your authenticator app to verify the setup and enable 2FA.
+                                    Enter the 6-digit code you received to verify the setup and enable 2FA.
                                 </p>
 
                                 {mfaErrorMsg && mfaStatus === 'error' && (
@@ -226,7 +325,7 @@ export default function SecuritySettingsPage() {
 
                                 <form onSubmit={handleEnableMfa} className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Authenticator Code</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Verification Code</label>
                                         <div className="relative">
                                             <Key className="absolute left-3 top-3.5 text-slate-400" size={20} />
                                             <input
@@ -252,6 +351,16 @@ export default function SecuritySettingsPage() {
                                             <><ShieldCheck size={20} /> Enable 2FA</>
                                         )}
                                     </button>
+                                    
+                                    <div className="text-center mt-4">
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setMfaStatus('method_select')}
+                                            className="text-sm font-semibold text-slate-500 hover:text-slate-800"
+                                        >
+                                            &larr; Choose a different method
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -259,7 +368,58 @@ export default function SecuritySettingsPage() {
                 </div>
             </div>
 
-            {/* --- SECTION 2: ACTIVE SESSIONS --- */}
+            {/* --- SECTION 2: PASSKEYS (WEBAUTHN) --- */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-blue-100 text-blue-700 rounded-xl">
+                            <Fingerprint size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-800">Passkeys & Security Keys</h2>
+                            <p className="text-slate-500 text-sm mt-1">Log in securely using your fingerprint, face scan, or a hardware security key.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="p-6 text-center py-8">
+                    {passkeySuccess && (
+                        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl flex items-center justify-center gap-2">
+                            <CheckCircle size={18} />
+                            <span>Passkey successfully registered! You can now use it to log in.</span>
+                        </div>
+                    )}
+                    
+                    {passkeyError && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center justify-center gap-2">
+                            <AlertTriangle size={18} />
+                            <span>{passkeyError}</span>
+                        </div>
+                    )}
+
+                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Fingerprint size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">Passwordless Sign-In</h3>
+                    <p className="text-slate-600 mb-8 max-w-md mx-auto">
+                        Passkeys offer a faster, more secure way to log into your account without a password. Register your device now.
+                    </p>
+
+                    <button
+                        onClick={handleRegisterPasskey}
+                        disabled={isRegisteringPasskey}
+                        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mx-auto shadow-sm disabled:opacity-50"
+                    >
+                        {isRegisteringPasskey ? (
+                            <><Loader2 className="animate-spin" size={18} /> Registering...</>
+                        ) : (
+                            <><Fingerprint size={18} /> Register Passkey</>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* --- SECTION 3: ACTIVE SESSIONS --- */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
                 <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
                     <div className="p-3 bg-purple-100 text-purple-700 rounded-xl">

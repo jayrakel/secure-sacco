@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, ChevronRight, AlertTriangle, RefreshCw, X, Loader2, Smartphone, ArrowLeft } from 'lucide-react'; // Added Smartphone & ArrowLeft
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { ShieldCheck, Lock, Mail, ChevronRight, AlertTriangle, RefreshCw, X, Loader2, Smartphone, ArrowLeft, LogIn, Fingerprint } from 'lucide-react';
 import axios from 'axios';
 
 import { useAuth } from '../context/AuthProvider';
 import apiClient from '../../../shared/api/api-client';
+import { webAuthnApi } from '../api/webauthn-api';
+import { startAuthentication } from '@simplewebauthn/browser';
 
 export default function LoginPage() {
     const [identifier, setIdentifier] = useState('');
@@ -27,6 +29,33 @@ export default function LoginPage() {
     // Saved Accounts for Dropdown
     const [savedAccounts, setSavedAccounts] = useState<string[]>([]);
     const [showAccountsDropdown, setShowAccountsDropdown] = useState(false);
+
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const token = searchParams.get('mfaToken');
+        if (token) {
+            setMfaToken(token);
+            setRequiresMfa(true);
+        }
+        
+        const errorParam = searchParams.get('error');
+        if (errorParam) {
+            switch(errorParam) {
+                case 'no_email':
+                    setError("Google did not provide an email address.");
+                    break;
+                case 'account_not_found':
+                    setError("No account found linked to that Google email.");
+                    break;
+                case 'staff_google_login_disabled':
+                    setError("Staff and Admins cannot log in with Google for security reasons.");
+                    break;
+                default:
+                    setError("Google Login failed.");
+            }
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         try {
@@ -67,6 +96,8 @@ export default function LoginPage() {
         } catch { /* ignore */ }
         return false;
     });
+
+
 
     useEffect(() => {
         axios.get('/api/v1/settings/sacco')
@@ -138,6 +169,53 @@ export default function LoginPage() {
                 const msg = (err as {response?: {data?: {message?: string}}})?.response?.data?.message || "Connection failed. Please try again.";
                 setError(msg);
                 if (msg.includes("verify your email")) setShowResend(true);
+            }
+        } finally {
+            setLocalLoading(false);
+        }
+    };
+
+    const handlePasskeyLogin = async () => {
+        if (!identifier) {
+            setError('Please enter your email to use Passkey login.');
+            return;
+        }
+        setLocalLoading(true);
+        setError('');
+        
+        try {
+            // 1. Get options from server
+            const optionsStr = await webAuthnApi.startLogin(identifier.trim());
+            const options = JSON.parse(optionsStr);
+            
+            // 2. Pass options to authenticator
+            const authResp = await startAuthentication(options);
+            
+            // 3. Send response back to server
+            const response = await webAuthnApi.finishLogin(JSON.stringify(authResp));
+            
+            // --- INTERCEPT MFA CHALLENGE ---
+            if (response?.status === 'REQUIRES_MFA') {
+                setMfaToken(response.mfaToken);
+                setRequiresMfa(true);
+                return;
+            }
+            
+            // 4. Normal Login Success Flow
+            const userData = await refreshUser();
+            const updatedAccounts = Array.from(new Set([identifier.trim(), ...savedAccounts])).slice(0, 5);
+            setSavedAccounts(updatedAccounts);
+            localStorage.setItem('recent_accounts', JSON.stringify(updatedAccounts));
+            
+            navigate(userData?.mustChangePassword ? '/change-password' : redirectTo);
+            
+        } catch (err) {
+            console.error(err);
+            const error = err as { name?: string; response?: { data?: { message?: string } }; message?: string }; // Bypass for Axios/DOMException typing
+            if (error?.name === 'NotAllowedError') {
+                setError('Passkey login was cancelled or timed out.');
+            } else {
+                setError(error?.response?.data?.message || error?.message || 'Passkey login failed. You may need to register this device first.');
             }
         } finally {
             setLocalLoading(false);
@@ -412,11 +490,46 @@ export default function LoginPage() {
                                     {localLoading ? (
                                         <div className="flex items-center gap-2">
                                             <Loader2 className="animate-spin" size={20} />
-                                            <span>Verifying...</span>
+                                            <span>Signing In...</span>
                                         </div>
                                     ) : (
-                                        <>Sign In <ChevronRight size={20} /></>
+                                        <><LogIn size={20} /> Sign In</>
                                     )}
+                                </button>
+                                
+                                <div className="mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={handlePasskeyLogin}
+                                        disabled={localLoading || !identifier}
+                                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3.5 rounded-xl transition flex justify-center gap-2 items-center disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200"
+                                    >
+                                        <Fingerprint size={20} className="text-blue-600" />
+                                        Log in with Passkey
+                                    </button>
+                                </div>
+                                
+                                <div className="relative my-6">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-slate-200"></div>
+                                    </div>
+                                    <div className="relative flex justify-center text-sm">
+                                        <span className="px-2 bg-white text-slate-500 font-medium">Or continue with</span>
+                                    </div>
+                                </div>
+                                
+                                <button
+                                    type="button"
+                                    onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/google'}
+                                    className="w-full bg-white border border-slate-300 text-slate-700 font-bold py-3.5 px-4 rounded-xl hover:bg-slate-50 transition shadow-sm flex items-center justify-center gap-3"
+                                >
+                                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                    </svg>
+                                    Google
                                 </button>
                             </form>
                         )}
@@ -477,10 +590,9 @@ export default function LoginPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={forgotStatus.type === 'loading'}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                     >
-                                        {forgotStatus.type === 'loading' ? 'Sending...' : 'Send Reset Link'}
+                                        Send Reset Link
                                     </button>
                                 </div>
                             </form>

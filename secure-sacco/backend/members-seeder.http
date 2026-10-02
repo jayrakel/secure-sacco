@@ -10,7 +10,7 @@ Content-Type: application/json
 
 {
   "identifier": "jaytechwavesolutions@gmail.com",
-  "password": "S@cc0_.Adm!n123"
+  "password": "Michira._2000"
 }
 
 > {%
@@ -44,7 +44,7 @@ Cookie: XSRF-TOKEN={{csrf_token}}; SACCO_SESSION={{sacco_cookie}}
 {
   "firstName": "Benjamin",
   "lastName": "Muketha",
-  "email": "muketha63.bm@gmail.com",
+  "email": "nathangesora01@gmail.com",
   "phoneNumber": "+254721338747",
   "plainTextPassword": "Password123!",
   "registrationDate": "2022-09-01"

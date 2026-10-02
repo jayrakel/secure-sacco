@@ -32,15 +32,21 @@ public class MfaService {
     private final UserRepository       userRepository;
     private final StringRedisTemplate  redisTemplate;
     private final SaccoSettingsService settingsService;
+    private final com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService smsNotificationService;
+    private final com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService emailNotificationService;
 
     @Autowired
     public MfaService(
             UserRepository userRepository,
             StringRedisTemplate redisTemplate,
-            @Lazy SaccoSettingsService settingsService) {
+            @Lazy SaccoSettingsService settingsService,
+            com.jaytechwave.sacco.modules.core.notifications.SmsNotificationService smsNotificationService,
+            com.jaytechwave.sacco.modules.core.notifications.EmailNotificationService emailNotificationService) {
         this.userRepository  = userRepository;
         this.redisTemplate   = redisTemplate;
         this.settingsService = settingsService;
+        this.smsNotificationService = smsNotificationService;
+        this.emailNotificationService = emailNotificationService;
     }
 
     private int tokenExpiryMinutes() {
@@ -84,11 +90,21 @@ public class MfaService {
     }
 
     @Transactional
-    public void enableMfa(UUID userId, String code) {
+    public void enableMfa(UUID userId, String code, com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod method) {
         User user = userRepository.findById(userId).orElseThrow();
         if (user.isMfaEnabled()) throw new IllegalStateException("MFA is already enabled");
-        if (!verifyCode(user.getMfaSecret(), code)) throw new IllegalArgumentException("Invalid MFA code");
+        
+        boolean isValid = false;
+        if (method == com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod.TOTP) {
+            isValid = verifyCode(user.getMfaSecret(), code);
+        } else {
+            isValid = verifyDispatchedCode(userId, code);
+        }
+        
+        if (!isValid) throw new IllegalArgumentException("Invalid MFA code");
+        
         user.setMfaEnabled(true);
+        user.setMfaMethod(method);
         userRepository.save(user);
     }
 
@@ -127,5 +143,48 @@ public class MfaService {
 
     public void clearPreAuthToken(String token) {
         redisTemplate.delete("mfa:auth:" + token);
+    }
+    
+    // ── Dispatch (SMS/Email/WhatsApp) MFA ──────────────────────────────────────
+
+    public void dispatchMfaCode(User user) {
+        if (user.getMfaMethod() == com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod.TOTP) {
+            return; // TOTP doesn't require dispatch
+        }
+
+        // Generate 6-digit code
+        String code = String.format("%06d", new java.util.Random().nextInt(999999));
+        
+        // Store in Redis (Valid for 5 mins)
+        redisTemplate.opsForValue().set(
+                "mfa:code:" + user.getId().toString(),
+                code,
+                Duration.ofMinutes(tokenExpiryMinutes())
+        );
+
+        String message = "Your Secure SACCO verification code is: " + code + ". Valid for " + tokenExpiryMinutes() + " minutes.";
+
+        switch (user.getMfaMethod()) {
+            case SMS:
+                smsNotificationService.sendOtp(user.getPhoneNumber(), code);
+                break;
+            case EMAIL:
+                emailNotificationService.sendMfaEmail(user.getEmail(), code);
+                break;
+            case WHATSAPP:
+                System.out.println("Dispatching WhatsApp to " + user.getPhoneNumber() + ": " + code);
+                break;
+            default:
+                throw new IllegalStateException("Unsupported MFA method");
+        }
+    }
+
+    public boolean verifyDispatchedCode(UUID userId, String code) {
+        String storedCode = redisTemplate.opsForValue().get("mfa:code:" + userId.toString());
+        if (storedCode != null && storedCode.equals(code)) {
+            redisTemplate.delete("mfa:code:" + userId.toString());
+            return true;
+        }
+        return false;
     }
 }

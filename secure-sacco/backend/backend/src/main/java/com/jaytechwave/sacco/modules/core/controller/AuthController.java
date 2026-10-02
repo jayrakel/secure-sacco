@@ -111,13 +111,17 @@ public class AuthController {
 
             // --- INTERCEPT FOR MFA ---
             if (userDetails.isMfaEnabled()) {
+                User user = userRepository.findById(userDetails.getId()).orElseThrow();
+                mfaService.dispatchMfaCode(user); // Dispatches SMS/Email if applicable
+                
                 String mfaToken = mfaService.createPreAuthToken(userDetails.getId());
                 securityAuditService.logEventWithActorAndIp(identifier, "MFA_CHALLENGE_ISSUED", "Account: " + identifier, clientIp, "Password valid, pending MFA");
 
                 return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
                         "status", "REQUIRES_MFA",
                         "mfaToken", mfaToken,
-                        "message", "MFA is required. Please submit your authenticator code."
+                        "mfaMethod", user.getMfaMethod().name(),
+                        "message", "MFA is required. Please submit your authentication code."
                 ));
             }
 
@@ -145,7 +149,10 @@ public class AuthController {
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
-        request.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+        HttpSession session = request.getSession(true);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+        session.setAttribute("clientIp", getClientIP(request));
+        session.setAttribute("userAgent", request.getHeader("User-Agent"));
     }
 
     private Map<String, Object> buildLoginResponse(CustomUserDetailsService.CustomUserDetails userDetails) {
@@ -182,8 +189,15 @@ public class AuthController {
             UUID userId = mfaService.verifyPreAuthToken(mfaRequest.getMfaToken());
             User user = userRepository.findById(userId).orElseThrow();
 
-            if (!mfaService.verifyCode(user.getMfaSecret(), mfaRequest.getCode())) {
-                securityAuditService.logEventWithActorAndIp(user.getEmail(), "MFA_FAILED", "Account: " + user.getEmail(), getClientIP(httpRequest), "Invalid TOTP Code");
+            boolean isValid = false;
+            if (user.getMfaMethod() == com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod.TOTP) {
+                isValid = mfaService.verifyCode(user.getMfaSecret(), mfaRequest.getCode());
+            } else {
+                isValid = mfaService.verifyDispatchedCode(user.getId(), mfaRequest.getCode());
+            }
+
+            if (!isValid) {
+                securityAuditService.logEventWithActorAndIp(user.getEmail(), "MFA_FAILED", "Account: " + user.getEmail(), getClientIP(httpRequest), "Invalid MFA Code");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized", "message", "Invalid MFA code."));
             }
 
@@ -203,22 +217,35 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/mfa/setup")
-    public ResponseEntity<?> generateMfaQrCode(Authentication authentication) throws QrGenerationException {
+    @PostMapping("/mfa/setup")
+    public ResponseEntity<?> setupMfa(@Valid @RequestBody com.jaytechwave.sacco.modules.core.api.dto.MfaDTOs.SetupMfaRequest request, Authentication authentication) throws QrGenerationException {
         CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
-        Map<String, String> mfaData = mfaService.generateMfaSetup(userDetails.getId());
-        return ResponseEntity.ok(mfaData);
+        User user = userRepository.findById(userDetails.getId()).orElseThrow();
+        
+        com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod method = com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod.valueOf(request.getMethod());
+
+        if (method == com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod.TOTP) {
+            Map<String, String> mfaData = mfaService.generateMfaSetup(userDetails.getId());
+            return ResponseEntity.ok(mfaData);
+        } else {
+            // Temporarily set the method on user just to dispatch the code, but don't save it permanently until verified
+            user.setMfaMethod(method); 
+            mfaService.dispatchMfaCode(user);
+            return ResponseEntity.ok(Map.of("message", "A verification code has been dispatched to your " + method.name().toLowerCase() + "."));
+        }
     }
 
     @PostMapping("/mfa/enable")
     public ResponseEntity<?> enableMfa(@Valid @RequestBody VerifyMfaRequest request, Authentication authentication, HttpServletRequest httpRequest) {
         try {
             CustomUserDetailsService.CustomUserDetails userDetails = (CustomUserDetailsService.CustomUserDetails) authentication.getPrincipal();
-            mfaService.enableMfa(userDetails.getId(), request.getCode());
+            com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod method = com.jaytechwave.sacco.modules.users.domain.entity.MfaMethod.valueOf(request.getMethod());
+            
+            mfaService.enableMfa(userDetails.getId(), request.getCode(), method);
 
             refreshSessionAuthentication(userDetails.getUsername(), httpRequest);
 
-            securityAuditService.logEventWithActorAndIp(userDetails.getUsername(), "MFA_ENABLED", "Account: " + userDetails.getUsername(), getClientIP(httpRequest), "User successfully turned on MFA");
+            securityAuditService.logEventWithActorAndIp(userDetails.getUsername(), "MFA_ENABLED", "Account: " + userDetails.getUsername(), getClientIP(httpRequest), "User successfully turned on MFA with method: " + method.name());
 
             return ResponseEntity.ok(Map.of("message", "MFA successfully enabled."));
         } catch (IllegalArgumentException | IllegalStateException e) {

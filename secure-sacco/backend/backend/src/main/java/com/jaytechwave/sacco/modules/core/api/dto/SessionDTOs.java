@@ -14,5 +14,9 @@ public class SessionDTOs {
         private Instant creationTime;
         private Instant lastAccessedTime;
         private boolean isExpired;
+        private String os;
+        private String browser;
+        private String ipAddress;
+        private String location;
     }
 }

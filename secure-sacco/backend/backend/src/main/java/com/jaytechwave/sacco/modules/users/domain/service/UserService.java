@@ -36,6 +36,7 @@ public class UserService {
     private final SecurityAuditService securityAuditService;
     private final CacheManager cacheManager;
     private final SessionInvalidationService sessionInvalidationService;
+    private final com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter piiSearchHashConverter;
 
     /**
      * Security check helper used in @PreAuthorize annotations.
@@ -76,12 +77,22 @@ public class UserService {
             throw new IllegalArgumentException("Valid roles must be provided");
         }
 
+        String normalizedPhone = normalizePhone(request.getPhoneNumber());
+        String phoneHash = null;
+        if (normalizedPhone != null) {
+            phoneHash = piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone);
+            if (userRepository.existsByPhoneNumberHash(phoneHash)) {
+                throw new IllegalArgumentException("Phone number already exists");
+            }
+        }
+
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(normalizedEmail)
                 .officialEmail(normalizeOptionalEmail(request.getOfficialEmail()))
-                .phoneNumber(normalizePhone(request.getPhoneNumber()))
+                .phoneNumber(normalizedPhone)
+                .phoneNumberHash(phoneHash)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .status(UserStatus.ACTIVE)
                 .mustChangePassword(true)
@@ -110,6 +121,15 @@ public class UserService {
         user.setLastName(request.getLastName());
         String newPhone = normalizePhone(request.getPhoneNumber());
         if (user.getPhoneNumber() == null || !user.getPhoneNumber().equals(newPhone)) {
+            if (newPhone != null) {
+                String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(newPhone);
+                if (userRepository.existsByPhoneNumberHash(phoneHash)) {
+                    throw new IllegalArgumentException("Phone number already exists");
+                }
+                user.setPhoneNumberHash(phoneHash);
+            } else {
+                user.setPhoneNumberHash(null);
+            }
             user.setPhoneNumber(newPhone);
             user.setPhoneVerified(false);
         }
@@ -248,12 +268,18 @@ public class UserService {
         var systemAdminRole = roleRepository.findByName("SYSTEM_ADMIN")
                 .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found."));
 
+        String phoneHash = null;
+        if (normalizedPhone != null) {
+            phoneHash = piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone);
+        }
+
         User user = User.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(normalizedLoginEmail)
                 .officialEmail(normalizedOfficialEmail)
                 .phoneNumber(normalizedPhone)
+                .phoneNumberHash(phoneHash)
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .status(UserStatus.ACTIVE)
                 .isDeleted(false)

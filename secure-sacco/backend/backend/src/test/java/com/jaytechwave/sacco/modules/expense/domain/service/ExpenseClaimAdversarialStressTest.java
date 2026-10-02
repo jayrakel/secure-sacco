@@ -66,6 +66,7 @@ public class ExpenseClaimAdversarialStressTest {
     @Mock private DepositAllocationRepository depositAllocationRepository;
     @Mock private DepositAllocationRouterService depositAllocationRouterService;
     @Mock private SmsNotificationService smsNotificationService;
+    @Mock private com.jaytechwave.sacco.modules.expense.domain.repository.SaccoExpenseRepository saccoExpenseRepository;
 
     @InjectMocks
     private ExpenseClaimService expenseClaimService;

@@ -9,6 +9,8 @@ import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimAllocatio
 import com.jaytechwave.sacco.modules.expense.domain.entity.ExpenseClaimStatus;
 import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimAllocationRepository;
 import com.jaytechwave.sacco.modules.expense.domain.repository.ExpenseClaimRepository;
+import com.jaytechwave.sacco.modules.expense.domain.repository.SaccoExpenseRepository;
+import com.jaytechwave.sacco.modules.expense.domain.entity.SaccoExpense;
 import com.jaytechwave.sacco.modules.members.domain.entity.Member;
 import com.jaytechwave.sacco.modules.members.domain.entity.MemberStatus;
 import com.jaytechwave.sacco.modules.members.domain.repository.MemberRepository;
@@ -49,6 +51,7 @@ public class ExpenseClaimService {
 
     private final ExpenseClaimRepository expenseClaimRepository;
     private final ExpenseClaimAllocationRepository allocationRepository;
+    private final SaccoExpenseRepository saccoExpenseRepository;
     private final MemberRepository       memberRepository;
     private final UserRepository         userRepository;
     private final JournalEntryService    journalEntryService;
@@ -333,6 +336,19 @@ public class ExpenseClaimService {
                 // Fallback to legacy single-savings routing
                 savingsService.creditExpenseReimbursement(member.getId(), claim.getAmount(), claim.getId());
             }
+
+            // SAC-220: Record in SaccoExpenses table for tracking, bypassing SaccoExpenseService to avoid double GL entry
+            SaccoExpense expenseRecord = SaccoExpense.builder()
+                    .expenseDate(java.time.LocalDate.now())
+                    .amount(claim.getAmount())
+                    .glAccountCode("5360") // Member Expense Reimbursement
+                    .narration("Member Expense Reimbursement - " + claim.getDescription())
+                    .journalReference(journalRef)
+                    .reference(claim.getReceiptReference())
+                    .createdByUserId(reviewer.getId())
+                    .createdAt(ZonedDateTime.now())
+                    .build();
+            saccoExpenseRepository.save(expenseRecord);
 
             securityAuditService.logEventWithActorAndIp(
                     actorEmail,
