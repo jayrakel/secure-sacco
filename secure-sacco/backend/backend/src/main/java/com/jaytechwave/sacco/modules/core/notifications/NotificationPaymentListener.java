@@ -227,7 +227,7 @@ public class NotificationPaymentListener {
         // Send to the actual person who made the payment if different
         if (!normalizedSenderPhone.isBlank() && !normalizedSenderPhone.equals(normalizedMemberPhone)) {
             String senderMessage = String.format(
-                    "Dear Customer, we received your payment of KES %s (Ref: %s). However, this phone number is not linked to a member account. Please contact Betterlink Ventures SACCO.",
+                    "Dear Customer, we received your payment of KES %s (Ref: %s). Thank you for choosing Betterlink Ventures SACCO.",
                     formatAmount(amount), receiptRef
             );
             log.info("NotificationPaymentListener: Sending SMS to Payment Sender (Sender Phone: {}) Ref: {}", senderPhone, receiptRef);
@@ -296,7 +296,7 @@ public class NotificationPaymentListener {
                 String firstName = parts.length > 0 ? capitalize(parts[0]) : "Customer";
 
                 String message = String.format(
-                        "Dear %s, we received your payment of KES %s (Ref: %s). However, your phone number is not linked to a member account. Please contact Betterlink Ventures SACCO.",
+                        "Dear %s, we received your payment of KES %s (Ref: %s). Thank you for choosing Betterlink Ventures SACCO.",
                         firstName, formatAmount(event.amount()), sanitizeRef(event.mpesaRef())
                 );
 
