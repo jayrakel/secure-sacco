@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/compon
 import { smsApi, type SmsLog, type SmsLogPage as SmsLogPageType } from '../api/sms-api';
 import { format } from 'date-fns';
 import { Loader2, RefreshCw, Search, Phone, Send, X } from 'lucide-react';
+import { memberApi, type Member } from '../../members/api/member-api';
 
 export const SmsLogPage: React.FC = () => {
     const [page, setPage] = useState(0);
@@ -14,7 +15,8 @@ export const SmsLogPage: React.FC = () => {
     
     // Custom SMS Modal State
     const [showSendModal, setShowSendModal] = useState(false);
-    const [sendPhone, setSendPhone] = useState('');
+    const [recipient, setRecipient] = useState('');
+    const [members, setMembers] = useState<Member[]>([]);
     const [sendMessage, setSendMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
 
@@ -38,6 +40,15 @@ export const SmsLogPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [page, search, status, fetchLogs]);
 
+    // Fetch members for the modal dropdown
+    useEffect(() => {
+        if (showSendModal && members.length === 0) {
+            memberApi.getMembers('', '', 0, 1000).then(data => {
+                setMembers(data.content);
+            }).catch(err => console.error("Failed to load members for SMS dropdown", err));
+        }
+    }, [showSendModal, members.length]);
+
     const handleRetry = async (id: string) => {
         setIsRetrying(prev => ({ ...prev, [id]: true }));
         try {
@@ -52,11 +63,32 @@ export const SmsLogPage: React.FC = () => {
 
     const handleSendCustomSms = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!recipient) {
+            alert('Please select a recipient.');
+            return;
+        }
+
         setIsSending(true);
         try {
-            await smsApi.sendCustomSms({ phoneNumber: sendPhone, message: sendMessage });
+            if (recipient === 'ALL') {
+                const phones = members
+                    .map(m => m.phoneNumber)
+                    .filter((p): p is string => !!p && p.trim().length > 0);
+                const uniquePhones = Array.from(new Set(phones));
+                
+                if (uniquePhones.length > 0) {
+                    await smsApi.sendBulkSms({ phoneNumbers: uniquePhones, message: sendMessage });
+                } else {
+                    alert('No members with valid phone numbers found.');
+                    setIsSending(false);
+                    return;
+                }
+            } else {
+                await smsApi.sendCustomSms({ phoneNumber: recipient, message: sendMessage });
+            }
             setShowSendModal(false);
-            setSendPhone('');
+            setRecipient('');
             setSendMessage('');
             // Refresh logs
             fetchLogs(0, '', '');
@@ -263,16 +295,22 @@ export const SmsLogPage: React.FC = () => {
                         <form onSubmit={handleSendCustomSms} className="p-4 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Phone Number
+                                    Recipient
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     required
-                                    placeholder="e.g. 0712345678"
-                                    value={sendPhone}
-                                    onChange={(e) => setSendPhone(e.target.value)}
-                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                />
+                                    value={recipient}
+                                    onChange={(e) => setRecipient(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                                >
+                                    <option value="" disabled>Select a recipient...</option>
+                                    <option value="ALL">Send to All Members</option>
+                                    {members.filter(m => m.phoneNumber).map(m => (
+                                        <option key={m.id} value={m.phoneNumber}>
+                                            {m.firstName} {m.lastName} ({m.phoneNumber})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
