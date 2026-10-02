@@ -20,6 +20,7 @@ public class SessionService {
     // This repository is automatically provided by Spring Session Redis
     private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
     private final UserRepository userRepository;
+    private final GeoLocationService geoLocationService;
 
     public List<SessionResponse> getUserSessions(UUID userId) {
         User user = getUserById(userId);
@@ -38,8 +39,8 @@ public class SessionService {
                     if (ua != null) {
                         if (ua.contains("Windows")) os = "Windows";
                         else if (ua.contains("Mac OS X")) os = "macOS";
-                        else if (ua.contains("Linux")) os = "Linux";
                         else if (ua.contains("Android")) os = "Android";
+                        else if (ua.contains("Linux")) os = "Linux";
                         else if (ua.contains("iPhone") || ua.contains("iPad")) os = "iOS";
                         
                         if (ua.contains("Edg/")) browser = "Edge";
@@ -56,7 +57,7 @@ public class SessionService {
                         .ipAddress(ip)
                         .os(os)
                         .browser(browser)
-                        .location(ip != null ? "Location lookup pending" : "Unknown")
+                        .location(ip != null ? geoLocationService.getLocation(ip) : "Unknown")
                         .build();
                 })
                 .collect(Collectors.toList());
