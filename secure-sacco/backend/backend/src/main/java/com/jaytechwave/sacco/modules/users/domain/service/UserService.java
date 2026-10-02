@@ -320,8 +320,7 @@ public class UserService {
     }
 
     private String normalizePhone(String phone) {
-        if (phone == null || phone.isBlank()) return null;
-        return phone.trim();
+        return com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(phone);
     }
 
     @Transactional

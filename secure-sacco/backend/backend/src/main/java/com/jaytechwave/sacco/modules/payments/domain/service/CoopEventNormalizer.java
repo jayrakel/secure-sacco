@@ -485,13 +485,7 @@ public class CoopEventNormalizer {
     // ── Parsing helpers ────────────────────────────────────────────────────────
 
     private String normalizePhone(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) return null;
-        if (digits.startsWith("07") || digits.startsWith("01")) return "254" + digits.substring(1);
-        if (digits.startsWith("7")  || digits.startsWith("1"))  return "254" + digits;
-        if (digits.startsWith("254") && digits.length() == 12)  return digits;
-        return digits.length() >= 9 ? digits : null;
+        return com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(raw);
     }
 
     private BigDecimal parseAmount(String raw) {

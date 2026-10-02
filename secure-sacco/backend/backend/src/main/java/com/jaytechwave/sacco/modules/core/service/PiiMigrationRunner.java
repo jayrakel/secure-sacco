@@ -77,6 +77,12 @@ public class PiiMigrationRunner {
             // Resolve plaintext: if the value is already encrypted, decrypt it first.
             String plainNationalId  = resolvePlaintext(nationalId,  "national_id",  id);
             String plainPhoneNumber = resolvePlaintext(phoneNumber, "phone_number", id);
+            
+            // Normalize phone number system-wide
+            if (plainPhoneNumber != null) {
+                String normalized = com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(plainPhoneNumber);
+                plainPhoneNumber = normalized != null ? normalized : plainPhoneNumber;
+            }
 
             // Encrypt (converter will produce a fresh IV:ciphertext string)
             String encNationalId  = encryptedStringConverter.convertToDatabaseColumn(plainNationalId);
@@ -114,6 +120,10 @@ public class PiiMigrationRunner {
             String phoneNumber = (String) row.get("phone_number");
 
             String plainPhone    = resolvePlaintext(phoneNumber, "phone_number", id);
+            if (plainPhone != null) {
+                String normalized = com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(plainPhone);
+                plainPhone = normalized != null ? normalized : plainPhone;
+            }
             String encPhone      = encryptedStringConverter.convertToDatabaseColumn(plainPhone);
             String hashPhone     = piiSearchHashConverter.convertToDatabaseColumn(plainPhone);
 
