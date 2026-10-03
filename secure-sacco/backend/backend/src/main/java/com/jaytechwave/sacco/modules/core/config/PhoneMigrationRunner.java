@@ -22,7 +22,7 @@ public class PhoneMigrationRunner implements CommandLineRunner {
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
     private final PiiSearchHashConverter piiSearchHashConverter;
-    private final CoopEventNormalizer coopEventNormalizer;
+
 
     @Override
     public void run(String... args) {
@@ -35,7 +35,7 @@ public class PhoneMigrationRunner implements CommandLineRunner {
                 if (normalized != null && !normalized.equals(member.getPhoneNumber())) {
                     log.info("Normalizing phone for member {}: {} -> {}", member.getMemberNumber(), member.getPhoneNumber(), normalized);
                     member.setPhoneNumber(normalized);
-                    member.setPhoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalized));
+                    member.setPhoneNumberHash(normalized);
                     memberRepository.save(member);
                 }
             }
@@ -48,14 +48,12 @@ public class PhoneMigrationRunner implements CommandLineRunner {
                 if (normalized != null && !normalized.equals(user.getPhoneNumber())) {
                     log.info("Normalizing phone for user {}: {} -> {}", user.getEmail(), user.getPhoneNumber(), normalized);
                     user.setPhoneNumber(normalized);
-                    user.setPhoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalized));
+                    user.setPhoneNumberHash(normalized);
                     userRepository.save(user);
                 }
             }
         }
         
-        log.info("Phone Migration Complete. Re-enriching unmatched payments...");
-        int matched = coopEventNormalizer.reEnrichAllUnmatched();
-        log.info("Re-enriched {} unmatched payments.", matched);
+        log.info("Phone Migration Complete.");
     }
 }

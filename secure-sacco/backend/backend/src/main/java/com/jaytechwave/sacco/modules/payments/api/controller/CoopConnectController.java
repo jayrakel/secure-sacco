@@ -470,6 +470,9 @@ public class CoopConnectController {
                     java.time.LocalDateTime valueDate =
                             tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
 
+                    // Reverse the suspense entry that was created when the IPN was initially unmatched
+                    journalEntryService.reverseNonMemberBankCredit(tx.getAmount(), tx.getMpesaRef(), valueDate.toLocalDate());
+
                     savingsService.processMpesaPaybillDeposit(
                             tx.getMemberId(), tx.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
 

@@ -78,10 +78,8 @@ public class UserService {
         }
 
         String normalizedPhone = normalizePhone(request.getPhoneNumber());
-        String phoneHash = null;
         if (normalizedPhone != null) {
-            phoneHash = piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone);
-            if (userRepository.existsByPhoneNumberHash(phoneHash)) {
+            if (userRepository.existsByPhoneNumberHash(normalizedPhone)) {
                 throw new IllegalArgumentException("Phone number already exists");
             }
         }
@@ -92,7 +90,7 @@ public class UserService {
                 .email(normalizedEmail)
                 .officialEmail(normalizeOptionalEmail(request.getOfficialEmail()))
                 .phoneNumber(normalizedPhone)
-                .phoneNumberHash(phoneHash)
+                .phoneNumberHash(normalizedPhone)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .status(UserStatus.ACTIVE)
                 .mustChangePassword(true)
@@ -122,11 +120,10 @@ public class UserService {
         String newPhone = normalizePhone(request.getPhoneNumber());
         if (user.getPhoneNumber() == null || !user.getPhoneNumber().equals(newPhone)) {
             if (newPhone != null) {
-                String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(newPhone);
-                if (userRepository.existsByPhoneNumberHash(phoneHash)) {
+                if (userRepository.existsByPhoneNumberHash(newPhone)) {
                     throw new IllegalArgumentException("Phone number already exists");
                 }
-                user.setPhoneNumberHash(phoneHash);
+                user.setPhoneNumberHash(newPhone);
             } else {
                 user.setPhoneNumberHash(null);
             }
@@ -268,10 +265,7 @@ public class UserService {
         var systemAdminRole = roleRepository.findByName("SYSTEM_ADMIN")
                 .orElseThrow(() -> new IllegalStateException("SYSTEM_ADMIN role not found."));
 
-        String phoneHash = null;
-        if (normalizedPhone != null) {
-            phoneHash = piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone);
-        }
+
 
         User user = User.builder()
                 .firstName(firstName)
@@ -279,7 +273,7 @@ public class UserService {
                 .email(normalizedLoginEmail)
                 .officialEmail(normalizedOfficialEmail)
                 .phoneNumber(normalizedPhone)
-                .phoneNumberHash(phoneHash)
+                .phoneNumberHash(normalizedPhone)
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .status(UserStatus.ACTIVE)
                 .isDeleted(false)

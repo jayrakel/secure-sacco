@@ -26,11 +26,22 @@ public class WebAuthnCredentialRepositoryImpl implements CredentialRepository {
     private final PasskeyRepository passkeyRepository;
     private final PiiSearchHashConverter piiSearchHashConverter;
 
+    private Optional<User> findUser(String identifier) {
+        if (identifier == null) return Optional.empty();
+        String cleanIdentifier = identifier.trim();
+        String normalizedEmail = cleanIdentifier.toLowerCase(java.util.Locale.ROOT);
+        String normalizedPhone = com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(cleanIdentifier);
+        
+        String phoneToHash = normalizedPhone != null ? normalizedPhone : cleanIdentifier;
+        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(phoneToHash);
+        
+        return userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(normalizedEmail, phoneHash, cleanIdentifier);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
-        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(username);
-        User user = userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(username, phoneHash, username)
+        User user = findUser(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         return passkeyRepository.findAllByUserId(user.getId()).stream()
                 .map(passkey -> PublicKeyCredentialDescriptor.builder()
@@ -42,8 +53,7 @@ public class WebAuthnCredentialRepositoryImpl implements CredentialRepository {
     @Override
     @Transactional(readOnly = true)
     public Optional<ByteArray> getUserHandleForUsername(String username) {
-        String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(username);
-        return userRepository.findByEmailOrPhoneNumberHashOrMemberNumber(username, phoneHash, username)
+        return findUser(username)
                 .map(user -> new ByteArray(user.getId().toString().getBytes()));
     }
 

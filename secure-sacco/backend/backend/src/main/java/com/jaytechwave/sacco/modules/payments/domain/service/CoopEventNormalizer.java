@@ -8,6 +8,7 @@ import com.jaytechwave.sacco.modules.payments.api.dto.CoopConnectDTOs.*;
 import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransaction;
 import com.jaytechwave.sacco.modules.payments.domain.entity.CoopTransactionSource;
 import com.jaytechwave.sacco.modules.payments.domain.repository.CoopTransactionRepository;
+import com.jaytechwave.sacco.modules.payments.domain.repository.PaymentRepository;
 import com.jaytechwave.sacco.modules.users.domain.entity.User;
 import com.jaytechwave.sacco.modules.users.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,7 @@ public class CoopEventNormalizer {
     private final CoopTransactionRepository coopTransactionRepository;
     private final UserRepository            userRepository;
     private final MemberRepository          memberRepository;
+    private final PaymentRepository         paymentRepository;
     private final PiiSearchHashConverter    piiHashConverter;
 
     private static final DateTimeFormatter DT_FMT =
@@ -396,6 +398,11 @@ public class CoopEventNormalizer {
             enrichWithMember(tx, tx.getSenderPhone());
             if (tx.getMemberId() != null) {
                 coopTransactionRepository.save(tx);
+                paymentRepository.findByMpesaRef(tx.getMpesaRef()).ifPresent(payment -> {
+                    payment.setMemberId(tx.getMemberId());
+                    payment.setSenderName(tx.getSenderName());
+                    paymentRepository.save(payment);
+                });
                 matched++;
             }
         }
