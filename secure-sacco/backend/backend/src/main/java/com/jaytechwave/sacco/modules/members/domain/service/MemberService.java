@@ -49,6 +49,7 @@ public class MemberService {
                 .firstName(request.getFirstName())
                 .middleName(request.getMiddleName())
                 .lastName(request.getLastName())
+                .nationalId(request.getNationalId())
                 .nationalIdHash(request.getNationalId())
                 .phoneNumber(normalizedPhone)
                 .phoneNumberHash(normalizedPhone)

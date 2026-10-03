@@ -23,6 +23,7 @@ public class PhoneMigrationRunner implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PiiSearchHashConverter piiSearchHashConverter;
 
+
     @Override
     public void run(String... args) {
         log.info("Starting Phone Migration Runner...");
