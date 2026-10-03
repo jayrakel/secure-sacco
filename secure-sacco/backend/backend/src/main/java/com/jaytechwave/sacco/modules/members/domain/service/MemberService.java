@@ -49,10 +49,9 @@ public class MemberService {
                 .firstName(request.getFirstName())
                 .middleName(request.getMiddleName())
                 .lastName(request.getLastName())
-                .nationalId(request.getNationalId())
-                .nationalIdHash(piiSearchHashConverter.convertToDatabaseColumn(request.getNationalId()))
+                .nationalIdHash(request.getNationalId())
                 .phoneNumber(normalizedPhone)
-                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone))
+                .phoneNumberHash(normalizedPhone)
                 .email(request.getEmail())
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
@@ -72,7 +71,7 @@ public class MemberService {
                 .lastName(request.getLastName())
                 .status(UserStatus.PENDING_ACTIVATION)
                 .phoneNumber(normalizedPhone)
-                .phoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone))
+                .phoneNumberHash(normalizedPhone)
                 .mfaEnabled(false)
                 .member(savedMember)
                 .roles(new HashSet<>(Set.of(memberRole)))
@@ -136,9 +135,9 @@ public class MemberService {
         member.setMiddleName(request.getMiddleName());
         member.setLastName(request.getLastName());
         member.setNationalId(request.getNationalId());
-        member.setNationalIdHash(piiSearchHashConverter.convertToDatabaseColumn(request.getNationalId()));
+        member.setNationalIdHash(request.getNationalId());
         member.setPhoneNumber(normalizedPhone);
-        member.setPhoneNumberHash(piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone));
+        member.setPhoneNumberHash(normalizedPhone);
         member.setEmail(request.getEmail());
         member.setDateOfBirth(request.getDateOfBirth());
         member.setGender(request.getGender());
@@ -191,9 +190,8 @@ public class MemberService {
 
     private void validateUniqueConstraints(String nationalId, String email, String phone, Member currentMember) {
         if (nationalId != null && !nationalId.trim().isEmpty()) {
-            String hash = piiSearchHashConverter.convertToDatabaseColumn(nationalId);
-            if (currentMember == null || !hash.equals(currentMember.getNationalIdHash())) {
-                if (memberRepository.existsByNationalIdHash(hash)) {
+            if (currentMember == null || !nationalId.equals(currentMember.getNationalIdHash())) {
+                if (memberRepository.existsByNationalIdHash(nationalId)) {
                     throw new IllegalArgumentException("National ID is already registered to another member.");
                 }
             }
@@ -212,9 +210,8 @@ public class MemberService {
 
         if (phone != null && !phone.trim().isEmpty()) {
             String normalizedPhone = com.jaytechwave.sacco.modules.core.utils.PhoneUtils.normalizePhone(phone);
-            String phoneHash = piiSearchHashConverter.convertToDatabaseColumn(normalizedPhone);
-            if (currentMember == null || !phoneHash.equals(currentMember.getPhoneNumberHash())) {
-                if (memberRepository.existsByPhoneNumberHash(phoneHash)) {
+            if (currentMember == null || !normalizedPhone.equals(currentMember.getPhoneNumberHash())) {
+                if (memberRepository.existsByPhoneNumberHash(normalizedPhone)) {
                     throw new IllegalArgumentException("Phone number is already registered to another member.");
                 }
             }

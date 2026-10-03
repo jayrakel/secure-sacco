@@ -2,6 +2,7 @@ package com.jaytechwave.sacco.modules.core.service;
 
 import com.jaytechwave.sacco.modules.core.security.EncryptedStringConverter;
 import com.jaytechwave.sacco.modules.core.security.PiiSearchHashConverter;
+import com.jaytechwave.sacco.modules.payments.domain.service.CoopEventNormalizer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -37,6 +38,7 @@ public class PiiMigrationRunner {
     private final JdbcTemplate jdbc;
     private final EncryptedStringConverter encryptedStringConverter;
     private final PiiSearchHashConverter piiSearchHashConverter;
+    private final CoopEventNormalizer coopEventNormalizer;
 
     /** Format stored by {@link EncryptedStringConverter}: {@code Base64(iv):Base64(ciphertext)} */
     private static boolean isAlreadyEncrypted(String value) {
@@ -53,13 +55,17 @@ public class PiiMigrationRunner {
     public void backfillPiiHashes() {
         backfillMemberHashes();
         backfillUserHashes();
+
+        log.info("PII Migration Complete. Re-enriching unmatched payments...");
+        int matched = coopEventNormalizer.reEnrichAllUnmatched();
+        log.info("Re-enriched {} unmatched payments.", matched);
     }
 
     // ── members ───────────────────────────────────────────────────────────────
 
     private void backfillMemberHashes() {
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "SELECT id, national_id, phone_number FROM members WHERE national_id_hash IS NULL");
+                "SELECT id, national_id, phone_number FROM members WHERE national_id_hash IS NULL OR phone_number_hash IS NULL");
 
         if (rows.isEmpty()) {
             log.debug("PiiMigrationRunner: no member rows require PII migration.");
