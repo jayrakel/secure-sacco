@@ -898,6 +898,43 @@ public class JournalEntryService {
     }
 
     /**
+     * Reverses the suspense entry (2110) created by postNonMemberBankCredit when the
+     * transaction is successfully matched to a member.
+     */
+    @Transactional
+    public void reverseNonMemberBankCredit(BigDecimal amount, String reference, java.time.LocalDate transactionDate) {
+        String journalRef = "BANK-CR-REV-" + reference;
+        if (journalEntryRepository.findByReferenceNumber(journalRef).isPresent()) {
+            log.info("Idempotency: Reversal GL entry {} already exists — skipping", journalRef);
+            return;
+        }
+
+        Account mpesaClearing = accountRepository.findByAccountCode("1001")
+                .orElseThrow(() -> new IllegalStateException("System account 1001 not found"));
+        Account suspense = accountRepository.findByAccountCode("2110")
+                .orElseThrow(() -> new IllegalStateException("System account 2110 (Unallocated Funds) not found"));
+
+        JournalEntry entry = JournalEntry.builder()
+                .transactionDate(transactionDate != null ? transactionDate : java.time.LocalDate.now())
+                .referenceNumber(journalRef)
+                .description("Reversal of unmatched bank credit — ref " + reference)
+                .status(JournalEntryStatus.POSTED)
+                .build();
+
+        entry.setLines(java.util.List.of(
+                JournalEntryLine.builder().journalEntry(entry).account(suspense)
+                        .debitAmount(amount).creditAmount(BigDecimal.ZERO)
+                        .description("Clearing suspense — matched to member").build(),
+                JournalEntryLine.builder().journalEntry(entry).account(mpesaClearing)
+                        .debitAmount(BigDecimal.ZERO).creditAmount(amount)
+                        .description("Reversal of unmatched clearing").build()
+        ));
+
+        journalEntryRepository.save(entry);
+        log.info("Posted suspense reversal GL: {} KES {} ref={}", journalRef, amount, reference);
+    }
+
+    /**
      * Posts a GL entry for a bank debit — money going out of the SACCO Co-op account.
      *
      * <p>Covers bank charges, transfers out, reversals, and any other debit transaction.
