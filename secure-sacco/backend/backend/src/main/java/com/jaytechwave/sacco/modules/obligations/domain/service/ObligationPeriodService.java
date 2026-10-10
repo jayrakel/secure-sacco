@@ -283,7 +283,7 @@ public class ObligationPeriodService {
 
         penalty.addAccrual(accrual);
         penaltyRepository.save(penalty);
-        journalEntryService.postPenaltyCreation(obligation.getMemberId(), amount, accrualId.toString());
+        journalEntryService.postPenaltyCreation(obligation.getMemberId(), amount, accrualId.toString(), "Obligation penalty: " + rule.getCode());
         log.info("Penalty KES {} created for member {} period {}", amount, obligation.getMemberId(), period.getId());
     }
 }

@@ -149,7 +149,7 @@ public class MeetingPenaltyService {
         penalty.addAccrual(accrual);
         penaltyRepository.save(penalty);
 
-        journalEntryService.postPenaltyCreation(memberId, amount, accrualId.toString());
+        journalEntryService.postPenaltyCreation(memberId, amount, accrualId.toString(), "Meeting penalty: " + ruleCode + " for " + meeting.getTitle());
 
         securityAuditService.logEvent(
                 "PENALTY_CREATED",
@@ -214,7 +214,11 @@ public class MeetingPenaltyService {
             log.info("reconcilePenaltyForMember: Member {} is now {}, deleting old penalty {}.", memberId, newStatus, existingPenalty.getId());
             for (PenaltyAccrual accrual : existingPenalty.getAccruals()) {
                 if (accrual.getJournalReference() != null) {
-                    journalEntryService.deleteJournalEntry(accrual.getJournalReference());
+                    journalEntryService.reverseJournalEntry(
+                            accrual.getJournalReference(),
+                            "REV-" + accrual.getJournalReference(),
+                            "Reversal of deleted penalty"
+                    );
                 }
             }
             penaltyRepository.delete(existingPenalty);
@@ -248,7 +252,19 @@ public class MeetingPenaltyService {
                 accrual.setAmount(newAmount);
                 accrual.setIdempotencyKey(newIdempotencyKey);
                 if (accrual.getJournalReference() != null) {
-                    journalEntryService.updatePenaltyCreationJournalEntry(accrual.getJournalReference(), newAmount);
+                    // Reverse the old GL entry
+                    journalEntryService.reverseJournalEntry(
+                            accrual.getJournalReference(),
+                            "REV-" + accrual.getJournalReference(),
+                            "Reversing for penalty update"
+                    );
+                    
+                    // Create a new GL entry for the updated penalty
+                    String newRefUuid = UUID.randomUUID().toString();
+                    journalEntryService.postPenaltyCreation(memberId, newAmount, newRefUuid, "Meeting penalty update: " + expectedRuleCode + " for " + meeting.getTitle());
+                    
+                    // Update accrual reference so future changes point to the new GL entry
+                    accrual.setJournalReference("PENC-" + newRefUuid);
                 }
             }
         }

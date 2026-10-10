@@ -319,46 +319,53 @@ public class JournalEntryService {
     }
 
     @Transactional
-    public void postPenaltyCreation(UUID memberId, BigDecimal amount, String reference) {
+    public void postPenaltyCreation(UUID memberId, BigDecimal amount, String reference, String reason) {
         Account penaltyReceivable = accountRepository.findByAccountCode("1300").orElseThrow();
         Account penaltyIncome = accountRepository.findByAccountCode("4120").orElseThrow();
 
         JournalEntry entry = JournalEntry.builder()
-                .referenceNumber("PENC-" + reference).description("Penalty levied against member")
+                .referenceNumber("PENC-" + reference).description(reason != null ? reason : "Penalty levied against member")
                 .transactionDate(LocalDate.now()).status(JournalEntryStatus.POSTED).build();
 
         entry.addLine(JournalEntryLine.builder().account(penaltyReceivable).memberId(memberId)
-                .debitAmount(amount).creditAmount(BigDecimal.ZERO).description("Penalty Receivable").build());
+                .debitAmount(amount).creditAmount(BigDecimal.ZERO).description(reason != null ? "Receivable: " + reason : "Penalty Receivable").build());
         entry.addLine(JournalEntryLine.builder().account(penaltyIncome).memberId(memberId)
-                .debitAmount(BigDecimal.ZERO).creditAmount(amount).description("Penalty Income Accrued").build());
+                .debitAmount(BigDecimal.ZERO).creditAmount(amount).description(reason != null ? "Income: " + reason : "Penalty Income Accrued").build());
 
         journalEntryRepository.save(entry);
     }
 
     @Transactional
-    public void updatePenaltyCreationJournalEntry(String referenceNumber, BigDecimal newAmount) {
-        JournalEntry entry = journalEntryRepository.findByReferenceNumber(referenceNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Journal Entry not found: " + referenceNumber));
-
-        for (JournalEntryLine line : entry.getLines()) {
-            if (line.getDebitAmount().compareTo(BigDecimal.ZERO) > 0) {
-                line.setDebitAmount(newAmount);
+    public void reverseJournalEntry(String originalReference, String reversalReference, String description) {
+        journalEntryRepository.findByReferenceNumber(originalReference).ifPresent(original -> {
+            if (journalEntryRepository.existsByReferenceNumber(reversalReference)) {
+                log.info("Idempotency: Reversal GL entry {} already exists — skipping", reversalReference);
+                return;
             }
-            if (line.getCreditAmount().compareTo(BigDecimal.ZERO) > 0) {
-                line.setCreditAmount(newAmount);
-            }
-        }
-        journalEntryRepository.save(entry);
-        log.info("Updated Journal Entry {}: new amount {}", referenceNumber, newAmount);
-    }
 
-    @Transactional
-    public void deleteJournalEntry(String referenceNumber) {
-        journalEntryRepository.findByReferenceNumber(referenceNumber)
-                .ifPresent(entry -> {
-                    journalEntryRepository.delete(entry);
-                    log.info("Deleted Journal Entry {}", referenceNumber);
-                });
+            JournalEntry reversal = JournalEntry.builder()
+                    .transactionDate(LocalDate.now())
+                    .referenceNumber(reversalReference)
+                    .description(description)
+                    .status(JournalEntryStatus.POSTED)
+                    .build();
+
+            for (JournalEntryLine line : original.getLines()) {
+                reversal.addLine(JournalEntryLine.builder()
+                        .account(line.getAccount())
+                        .memberId(line.getMemberId())
+                        .debitAmount(line.getCreditAmount()) // Swap debit and credit
+                        .creditAmount(line.getDebitAmount())
+                        .description("Reversal: " + line.getDescription())
+                        .build());
+            }
+
+            original.setStatus(JournalEntryStatus.REVERSED);
+            journalEntryRepository.save(original);
+            journalEntryRepository.save(reversal);
+
+            log.info("Reversed Journal Entry {} with {}", originalReference, reversalReference);
+        });
     }
 
     @Transactional
