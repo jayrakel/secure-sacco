@@ -26,16 +26,12 @@ public class MessageTemplateService {
 
         String parsedMessage = template;
 
-        // Replace Time Greeting
-        if (parsedMessage.contains("<< Time Greeting >>")) {
-            parsedMessage = parsedMessage.replace("<< Time Greeting >>", getTimeGreeting());
-        }
+        // Replace Time Greeting (case-insensitive, allows optional spaces)
+        parsedMessage = parsedMessage.replaceAll("(?i)<<\\s*Time\\s+Greeting\\s*>>", getTimeGreeting());
 
-        // Replace Member Name
-        if (parsedMessage.contains("<<Member Name>>")) {
-            String nameToUse = (memberFirstName != null && !memberFirstName.isBlank()) ? memberFirstName : "Member";
-            parsedMessage = parsedMessage.replace("<<Member Name>>", nameToUse);
-        }
+        // Replace Member Name (case-insensitive, allows optional spaces)
+        String nameToUse = (memberFirstName != null && !memberFirstName.isBlank()) ? memberFirstName : "Member";
+        parsedMessage = parsedMessage.replaceAll("(?i)<<\\s*Member\\s+Name\\s*>>", nameToUse);
 
         return parsedMessage;
     }
