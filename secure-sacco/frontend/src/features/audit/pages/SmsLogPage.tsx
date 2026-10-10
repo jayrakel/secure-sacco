@@ -20,6 +20,78 @@ export const SmsLogPage: React.FC = () => {
     const [sendMessage, setSendMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
 
+    const textAreaRef = React.useRef<HTMLTextAreaElement>(null);
+    const templateChips = [
+        { label: '+ Time Greeting', value: '<< Time Greeting >>' },
+        { label: '+ Member Name', value: '<<Member Name>>' },
+        { label: '+ Hello', value: 'Hello' },
+        { label: '+ Dear', value: 'Dear' },
+        { label: '+ Hi', value: 'Hi' },
+        { label: '+ Kindly note', value: 'Kindly note' },
+        { label: '+ Reminder', value: 'This is a reminder' },
+        { label: '+ Thank you', value: 'Thank you' },
+    ];
+
+    const insertTemplate = (text: string) => {
+        if (!textAreaRef.current) {
+            setSendMessage(prev => prev + (prev.endsWith(' ') || prev.length === 0 ? '' : ' ') + text + ' ');
+            return;
+        }
+
+        const start = textAreaRef.current.selectionStart;
+        const end = textAreaRef.current.selectionEnd;
+        
+        const textBefore = sendMessage.substring(0, start);
+        const textAfter = sendMessage.substring(end);
+        
+        const prefix = (textBefore.length > 0 && !textBefore.endsWith(' ')) ? ' ' : '';
+        const suffix = (textAfter.length > 0 && !textAfter.startsWith(' ')) ? ' ' : '';
+        
+        const newText = textBefore + prefix + text + suffix + textAfter;
+        setSendMessage(newText);
+        
+        setTimeout(() => {
+            if (textAreaRef.current) {
+                textAreaRef.current.focus();
+                const newPos = start + prefix.length + text.length + suffix.length;
+                textAreaRef.current.setSelectionRange(newPos, newPos);
+            }
+        }, 0);
+    };
+
+    const getPreviewMessage = () => {
+        if (!sendMessage) return '';
+        
+        let preview = sendMessage;
+        let memberName = 'John';
+        
+        if (recipient === 'ALL' && members.length > 0) {
+            const firstValidMember = members.find(m => m.phoneNumber && m.firstName);
+            if (firstValidMember) {
+                memberName = firstValidMember.firstName;
+            }
+        } else if (recipient && recipient !== 'ALL') {
+            const selectedMember = members.find(m => m.phoneNumber === recipient);
+            if (selectedMember && selectedMember.firstName) {
+                memberName = selectedMember.firstName;
+            }
+        }
+        
+        const hour = new Date().getHours();
+        let greeting = 'Good morning';
+        if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
+        else if (hour >= 17) greeting = 'Good evening';
+
+        preview = preview.replace(/<<\s*Time\s+Greeting\s*>>/gi, greeting);
+        preview = preview.replace(/<<\s*Member\s+Name\s*>>/gi, memberName);
+        
+        return preview;
+    };
+
+    const previewText = getPreviewMessage();
+    const previewLength = previewText.length;
+    const isOverLimit = previewLength > 160;
+
     const fetchLogs = useCallback(async (p: number, s: string, st: string) => {
         setIsLoading(true);
         try {
@@ -313,22 +385,48 @@ export const SmsLogPage: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 mb-2">
                                     Message
                                 </label>
+                                
+                                {/* Template Chips */}
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {templateChips.map((chip, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => insertTemplate(chip.value)}
+                                            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md font-medium border border-slate-200 transition-colors"
+                                        >
+                                            {chip.label}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <textarea
+                                    ref={textAreaRef}
                                     required
                                     rows={4}
-                                    maxLength={160}
                                     placeholder="Type your message here..."
                                     value={sendMessage}
                                     onChange={(e) => setSendMessage(e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                                 />
-                                <div className="flex justify-between items-center mt-1">
-                                    <p className="text-xs text-slate-500">Keep it under 160 characters to avoid multiple SMS charges.</p>
-                                    <p className={`text-xs font-medium ${sendMessage.length > 158 ? 'text-red-500' : 'text-slate-500'}`}>
-                                        {sendMessage.length} / 160
+                                
+                                {/* Live Preview Box */}
+                                {sendMessage && (
+                                    <div className="mt-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                                        <p className="text-xs font-semibold text-emerald-800 mb-1">Live Preview:</p>
+                                        <p className="text-sm text-slate-700 break-words">{previewText}</p>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between items-center mt-2">
+                                    <p className="text-xs text-slate-500">
+                                        Limit is 160 characters. Placeholders are dynamically calculated.
+                                    </p>
+                                    <p className={`text-xs font-medium ${isOverLimit ? 'text-red-500' : 'text-slate-500'}`}>
+                                        {previewLength} / 160
                                     </p>
                                 </div>
                             </div>
@@ -342,7 +440,7 @@ export const SmsLogPage: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={isSending}
+                                    disabled={isSending || isOverLimit}
                                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
                                 >
                                     {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
