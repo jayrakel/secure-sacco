@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import apiClient from '../../../shared/api/api-client';
 import { getApiErrorMessage } from '../../../shared/utils/getApiErrorMessage';
 import { Loader2, Plus, RefreshCw, Calendar, CheckCircle } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -31,10 +31,8 @@ export const FinancialYearsPage: React.FC = () => {
         try {
             setLoading(true);
             setError(null);
-            const token = localStorage.getItem('token');
-            const res = await axios.get('/api/v1/accounting/financial-years', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            
+            const res = await apiClient.get('/accounting/financial-years');
             setYears(res.data);
         } catch (err) {
             setError(getApiErrorMessage(err));
@@ -52,13 +50,11 @@ export const FinancialYearsPage: React.FC = () => {
         try {
             setIsCreating(true);
             setCreateError(null);
-            const token = localStorage.getItem('token');
-            await axios.post('/api/v1/accounting/financial-years', {
+            
+            await apiClient.post('/accounting/financial-years', {
                 yearName,
                 startDate,
                 endDate
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
             setShowCreateModal(false);
             loadYears();
@@ -72,10 +68,8 @@ export const FinancialYearsPage: React.FC = () => {
     const handleCloseYear = async (id: string) => {
         if (!window.confirm("Are you sure you want to close this financial year? This cannot be undone.")) return;
         try {
-            const token = localStorage.getItem('token');
-            await axios.post(`/api/v1/accounting/financial-years/${id}/close`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            
+            await apiClient.post(`/accounting/financial-years/${id}/close`);
             loadYears();
         } catch (err) {
             alert(getApiErrorMessage(err));
@@ -84,10 +78,8 @@ export const FinancialYearsPage: React.FC = () => {
 
     const handleSetCurrent = async (id: string) => {
         try {
-            const token = localStorage.getItem('token');
-            await axios.post(`/api/v1/accounting/financial-years/${id}/current`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            
+            await apiClient.post(`/accounting/financial-years/${id}/current`);
             loadYears();
         } catch (err) {
             alert(getApiErrorMessage(err));

@@ -128,7 +128,8 @@ export default function LoginPage() {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const redirectTo = new URLSearchParams(location.search).get('redirect') || '/dashboard';
+    const rawRedirect = new URLSearchParams(location.search).get('redirect') || '/dashboard';
+    const redirectTo = (rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')) ? rawRedirect : '/dashboard';
     const { refreshUser } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -521,7 +522,7 @@ export default function LoginPage() {
                                 
                                 <button
                                     type="button"
-                                    onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/google'}
+                                    onClick={() => window.location.href = '/oauth2/authorization/google'}
                                     className="w-full bg-white border border-slate-300 text-slate-700 font-bold py-3.5 px-4 rounded-xl hover:bg-slate-50 transition shadow-sm flex items-center justify-center gap-3"
                                 >
                                     <svg className="w-5 h-5" viewBox="0 0 24 24">
