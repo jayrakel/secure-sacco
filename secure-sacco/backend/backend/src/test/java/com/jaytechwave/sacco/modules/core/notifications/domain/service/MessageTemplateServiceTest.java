@@ -48,6 +48,16 @@ class MessageTemplateServiceTest {
     }
 
     @Test
+    void parseMessage_shouldHandleMissingSpacesAndCases() {
+        String template = "<<time greeting>> <<member name>>, hello!";
+        String parsed = templateService.parseMessage(template, "Alex");
+        
+        assertTrue(parsed.startsWith("Good morning Alex,") || 
+                   parsed.startsWith("Good afternoon Alex,") || 
+                   parsed.startsWith("Good evening Alex,"));
+    }
+
+    @Test
     void parseMessage_shouldHandleNullTemplate() {
         assertNull(templateService.parseMessage(null, "John"));
     }
