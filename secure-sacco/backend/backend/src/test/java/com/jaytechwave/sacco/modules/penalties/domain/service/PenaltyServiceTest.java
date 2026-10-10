@@ -104,7 +104,7 @@ class PenaltyServiceTest {
         assertThat(created.getStatus()).isEqualTo(PenaltyStatus.OPEN);
         assertThat(created.getMemberId()).isEqualTo(memberId);
 
-        verify(journalEntryService).postPenaltyCreation(eq(memberId), eq(new BigDecimal("500.00")), anyString());
+        verify(journalEntryService).postPenaltyCreation(eq(memberId), eq(new BigDecimal("500.00")), anyString(), anyString());
     }
 
     @Test
@@ -150,7 +150,7 @@ class PenaltyServiceTest {
         service.applyMissedInstallmentPenalty(event);
 
         verify(penaltyRepository, never()).save(any());
-        verify(journalEntryService, never()).postPenaltyCreation(any(), any(), any());
+        verify(journalEntryService, never()).postPenaltyCreation(any(), any(), any(), any());
     }
 
     @Test

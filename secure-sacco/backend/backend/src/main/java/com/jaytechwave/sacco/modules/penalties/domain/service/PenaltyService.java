@@ -91,7 +91,7 @@ public class PenaltyService {
         penaltyRepository.save(penalty);
 
         // 4. Post to the GL to maintain immutable accounting
-        journalEntryService.postPenaltyCreation(app.getMemberId(), penaltyAmount, tempAccrualId.toString());
+        journalEntryService.postPenaltyCreation(app.getMemberId(), penaltyAmount, tempAccrualId.toString(), "Manual penalty creation: " + rule.getCode());
 
         log.info("Applied ledger-backed {} penalty to Member {}. Amount: {} on {}", rule.getCode(), app.getMemberId(), penaltyAmount, historicalPenaltyDate);
     }
