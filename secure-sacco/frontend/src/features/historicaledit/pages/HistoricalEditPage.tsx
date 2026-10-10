@@ -115,8 +115,9 @@ const HistoricalEditPage: React.FC = () => {
         try {
             const res = await apiClient.post('/admin/historical-edit/savings/search', { memberId: mId, from: from || null, to: to || null });
             setTransactions(res.data);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load transactions');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setError(e.response?.data?.message || 'Failed to load transactions');
         } finally {
             setLoading(false);
         }
@@ -225,8 +226,9 @@ const HistoricalEditPage: React.FC = () => {
             setLastResult(res.data);
             setEditing(null);
             if (member) loadTransactions(member.id);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Edit failed');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            setError(e.response?.data?.message || 'Edit failed');
         } finally {
             setSaving(false);
         }
