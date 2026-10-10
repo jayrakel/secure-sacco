@@ -39,7 +39,6 @@ public class User {
     @Column(name = "phone_number", length = 512)
     private String phoneNumber;
 
-    @Convert(converter = PiiSearchHashConverter.class)
     @Column(name = "phone_number_hash", length = 88)
     private String phoneNumberHash;
 

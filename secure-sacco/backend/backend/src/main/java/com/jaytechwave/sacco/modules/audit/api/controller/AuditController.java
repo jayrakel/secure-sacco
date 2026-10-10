@@ -55,7 +55,7 @@ public class AuditController {
     }
 
     private Specification<SecurityAuditLog> buildSpec(String actorEmail, String eventType, LocalDate from, LocalDate to) {
-        Specification<SecurityAuditLog> spec = Specification.where((Specification<SecurityAuditLog>) null);
+        Specification<SecurityAuditLog> spec = (root, query, cb) -> cb.conjunction();
         if (actorEmail != null && !actorEmail.isBlank()) {
             String p = "%" + actorEmail.trim().toLowerCase() + "%";
             spec = spec.and((root, q, cb) -> cb.like(cb.lower(root.get("actor")), p));
