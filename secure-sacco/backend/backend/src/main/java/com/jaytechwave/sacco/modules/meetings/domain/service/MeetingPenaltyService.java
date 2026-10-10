@@ -54,10 +54,9 @@ public class MeetingPenaltyService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void generatePenalties(Meeting meeting) {
-        PenaltyRule late30Rule  = penaltyRuleRepository.findByCode("MEETING_LATE_30")
-                .filter(PenaltyRule::getIsActive).orElse(null);
-        PenaltyRule late120Rule = penaltyRuleRepository.findByCode("MEETING_LATE_120")
-                .filter(PenaltyRule::getIsActive).orElse(null);
+        List<PenaltyRule> lateRules = penaltyRuleRepository.findByIsActiveTrueAndCodeStartingWith("MEETING_LATE_");
+        lateRules.sort((r1, r2) -> Integer.compare(parseTier(r1.getCode()), parseTier(r2.getCode())));
+
         PenaltyRule absentRule  = penaltyRuleRepository.findByCode("MEETING_ABSENT")
                 .filter(PenaltyRule::getIsActive).orElse(null);
 
@@ -85,17 +84,16 @@ public class MeetingPenaltyService {
                     if (arrivedAt == null) {
                         // Staff marked LATE but didn't provide arrival time.
                         // Apply the minimum tier (LATE_30) as a safe, fair default.
-                        if (late30Rule != null) {
-                            createPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
+                        if (!lateRules.isEmpty()) {
+                            PenaltyRule rule = lateRules.get(0);
+                            createPenalty(meeting, record.getMemberId(), rule, rule.getCode());
                             penaltiesCreated++;
                         }
                     } else {
                         long minutesLate = java.time.Duration.between(meeting.getStartAt(), arrivedAt).toMinutes();
-                        if (minutesLate >= 120 && late120Rule != null) {
-                            createPenalty(meeting, record.getMemberId(), late120Rule, "MEETING_LATE_120");
-                            penaltiesCreated++;
-                        } else if (late30Rule != null) {
-                            createPenalty(meeting, record.getMemberId(), late30Rule, "MEETING_LATE_30");
+                        PenaltyRule rule = determineLateRule(minutesLate, lateRules);
+                        if (rule != null) {
+                            createPenalty(meeting, record.getMemberId(), rule, rule.getCode());
                             penaltiesCreated++;
                         }
                     }
@@ -179,20 +177,19 @@ public class MeetingPenaltyService {
             expectedRule = penaltyRuleRepository.findByCode("MEETING_ABSENT").filter(PenaltyRule::getIsActive).orElse(null);
             expectedRuleCode = "MEETING_ABSENT";
         } else if (newStatus == AttendanceStatus.LATE) {
-            PenaltyRule late30Rule = penaltyRuleRepository.findByCode("MEETING_LATE_30").filter(PenaltyRule::getIsActive).orElse(null);
-            PenaltyRule late120Rule = penaltyRuleRepository.findByCode("MEETING_LATE_120").filter(PenaltyRule::getIsActive).orElse(null);
+            List<PenaltyRule> lateRules = penaltyRuleRepository.findByIsActiveTrueAndCodeStartingWith("MEETING_LATE_");
+            lateRules.sort((r1, r2) -> Integer.compare(parseTier(r1.getCode()), parseTier(r2.getCode())));
 
             if (arrivedAt == null) {
-                expectedRule = late30Rule;
-                expectedRuleCode = "MEETING_LATE_30";
+                if (!lateRules.isEmpty()) {
+                    expectedRule = lateRules.get(0);
+                    expectedRuleCode = expectedRule.getCode();
+                }
             } else {
                 long minutesLate = java.time.Duration.between(meeting.getStartAt(), arrivedAt).toMinutes();
-                if (minutesLate >= 120 && late120Rule != null) {
-                    expectedRule = late120Rule;
-                    expectedRuleCode = "MEETING_LATE_120";
-                } else if (late30Rule != null) {
-                    expectedRule = late30Rule;
-                    expectedRuleCode = "MEETING_LATE_30";
+                expectedRule = determineLateRule(minutesLate, lateRules);
+                if (expectedRule != null) {
+                    expectedRuleCode = expectedRule.getCode();
                 }
             }
         }
@@ -258,5 +255,24 @@ public class MeetingPenaltyService {
 
         penaltyRepository.save(existingPenalty);
         securityAuditService.logEvent("PENALTY_UPDATED", "PENALTY-" + existingPenalty.getId(), "Meeting penalty updated in-place to " + expectedRuleCode + " due to attendance change");
+    }
+
+    private int parseTier(String code) {
+        try {
+            return Integer.parseInt(code.replace("MEETING_LATE_", ""));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private PenaltyRule determineLateRule(long minutesLate, List<PenaltyRule> sortedLateRules) {
+        if (sortedLateRules.isEmpty()) return null;
+        for (PenaltyRule rule : sortedLateRules) {
+            int tier = parseTier(rule.getCode());
+            if (tier >= 0 && minutesLate <= tier) {
+                return rule;
+            }
+        }
+        return sortedLateRules.get(sortedLateRules.size() - 1);
     }
 }

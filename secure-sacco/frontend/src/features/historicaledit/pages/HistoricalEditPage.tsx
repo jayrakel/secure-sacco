@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Loader2, CheckCircle2, AlertCircle, PencilLine, X } from 'lucide-react';
+import apiClient from '../../../shared/api/api-client';
 
 interface MemberSearch {
     id: string;
@@ -87,11 +88,8 @@ const HistoricalEditPage: React.FC = () => {
         if (!q.trim()) return;
         setSearching(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/v1/members/search?q=${encodeURIComponent(q)}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) setMemberResults(await res.json());
+            const res = await apiClient.get(`/members/search?q=${encodeURIComponent(q)}`);
+            setMemberResults(res.data);
         } catch {
             // Ignored network error for search
         } finally {
@@ -115,20 +113,10 @@ const HistoricalEditPage: React.FC = () => {
         setError(null);
         setLastResult(null);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/v1/admin/historical-edit/savings/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ memberId: mId, from: from || null, to: to || null })
-            });
-            if (res.ok) {
-                setTransactions(await res.json());
-            } else {
-                const err = await res.json();
-                setError(err.message || 'Failed to load transactions');
-            }
-        } catch {
-            setError('Network error');
+            const res = await apiClient.post('/admin/historical-edit/savings/search', { memberId: mId, from: from || null, to: to || null });
+            setTransactions(res.data);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to load transactions');
         } finally {
             setLoading(false);
         }
@@ -138,15 +126,10 @@ const HistoricalEditPage: React.FC = () => {
         if (!member) return;
         setLoadingLoans(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/v1/loans/applications/member/${member.id}/active`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setActiveLoans(data);
-                if (data.length > 0) setSelectedLoanId(data[0].id);
-            }
+            const res = await apiClient.get(`/loans/applications/member/${member.id}/active`);
+            const data = res.data;
+            setActiveLoans(data);
+            if (data.length > 0) setSelectedLoanId(data[0].id);
         } catch (err) {
             console.error(err);
         } finally {
@@ -158,15 +141,10 @@ const HistoricalEditPage: React.FC = () => {
         if (!member) return;
         setLoadingPenalties(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/v1/penalties/member/${member.id}/open`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setPenalties(data);
-                if (data.length > 0) setSelectedPenaltyId(data[0].id);
-            }
+            const res = await apiClient.get(`/penalties/member/${member.id}/open`);
+            const data = res.data;
+            setPenalties(data);
+            if (data.length > 0) setSelectedPenaltyId(data[0].id);
         } catch (err) {
             console.error(err);
         } finally {
@@ -177,16 +155,11 @@ const HistoricalEditPage: React.FC = () => {
     const fetchProducts = async () => {
         setLoadingProducts(true);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`/api/v1/payment-products/active`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data: PaymentProduct[] = await res.json();
-                const filtered = data.filter(p => p.moduleType === 'SHARE_CAPITAL' || p.moduleType === 'DEPOSIT_SHARES' || p.moduleType === 'CUSTOM');
-                setProducts(filtered);
-                if (filtered.length > 0) setSelectedProductId(filtered[0].id);
-            }
+            const res = await apiClient.get(`/payment-products/active`);
+            const data: PaymentProduct[] = res.data;
+            const filtered = data.filter(p => p.moduleType === 'SHARE_CAPITAL' || p.moduleType === 'DEPOSIT_SHARES' || p.moduleType === 'CUSTOM');
+            setProducts(filtered);
+            if (filtered.length > 0) setSelectedProductId(filtered[0].id);
         } catch (err) {
             console.error(err);
         } finally {
@@ -237,34 +210,23 @@ const HistoricalEditPage: React.FC = () => {
         setSaving(true);
         setError(null);
         try {
-            const token = localStorage.getItem('token');
-            const res = await fetch('/api/v1/admin/historical-edit/savings/edit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    transactionId: editing.transactionId,
-                    newAmount: newAmount ? parseFloat(newAmount) : null,
-                    newReference: newReference || null,
-                    newPostedAt: null, // UI doesn't allow changing date yet
-                    reason,
-                    destination,
-                    loanId: destination === 'LOAN' ? selectedLoanId : null,
-                    penaltyId: destination === 'PENALTY' ? selectedPenaltyId : null,
-                    productId: destination === 'PRODUCT' ? selectedProductId : null
-                })
+            const res = await apiClient.post('/admin/historical-edit/savings/edit', {
+                transactionId: editing.transactionId,
+                newAmount: newAmount ? parseFloat(newAmount) : null,
+                newReference: newReference || null,
+                newPostedAt: null, // UI doesn't allow changing date yet
+                reason,
+                destination,
+                loanId: destination === 'LOAN' ? selectedLoanId : null,
+                penaltyId: destination === 'PENALTY' ? selectedPenaltyId : null,
+                productId: destination === 'PRODUCT' ? selectedProductId : null
             });
 
-            if (res.ok) {
-                const result = await res.json();
-                setLastResult(result);
-                setEditing(null);
-                if (member) loadTransactions(member.id);
-            } else {
-                const err = await res.json();
-                setError(err.message || 'Edit failed');
-            }
-        } catch {
-            setError('Network error');
+            setLastResult(res.data);
+            setEditing(null);
+            if (member) loadTransactions(member.id);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Edit failed');
         } finally {
             setSaving(false);
         }

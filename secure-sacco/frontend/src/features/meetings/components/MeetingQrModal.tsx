@@ -56,9 +56,22 @@ export const MeetingQrModal: React.FC<MeetingQrModalProps> = ({
     const handlePrint = () => {
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
+        
+        const escapeHtml = (unsafe: string) => {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        };
+
+        const safeTitle = escapeHtml(meeting.title);
+        const safeUrl = escapeHtml(checkInUrl);
+        
         const qrSvg = printRef.current?.querySelector('svg')?.outerHTML ?? '';
         printWindow.document.write(`
-            <html><head><title>Meeting QR — ${meeting.title}</title>
+            <html><head><title>Meeting QR — ${safeTitle}</title>
             <style>
                 body { font-family: sans-serif; text-align: center; padding: 40px; }
                 h2 { font-size: 24px; margin-bottom: 4px; }
@@ -68,11 +81,11 @@ export const MeetingQrModal: React.FC<MeetingQrModalProps> = ({
                 .instruction { font-size: 16px; font-weight: 600; margin-top: 20px; color: #1e293b; }
             </style></head>
             <body>
-                <h2>${meeting.title}</h2>
+                <h2>${safeTitle}</h2>
                 <p>${new Date(meeting.startAt).toLocaleString('en-KE', { dateStyle: 'full', timeStyle: 'short' })}</p>
                 <div class="qr">${qrSvg}</div>
                 <p class="instruction">Scan to mark your attendance</p>
-                <p class="url">${checkInUrl}</p>
+                <p class="url">${safeUrl}</p>
             </body></html>
         `);
         printWindow.document.close();
