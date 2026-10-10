@@ -200,9 +200,18 @@ public class CoopEventNormalizer {
                                                                  String rawJson) {
         if (t.getTransactionId() == null) return Optional.empty();
 
-        // Use TransactionReference as mpesaRef (most unique field Co-op gives us)
-        String mpesaRef = t.getTransactionReference() != null
-                ? t.getTransactionReference() : t.getTransactionId();
+        String narration = t.getNarration() != null ? t.getNarration() : "";
+        String[] parts   = narration.split("~");
+
+        // Try to extract M-Pesa Ref from narration first (same as IPN)
+        String mpesaRef = null;
+        if (parts.length > 0 && !parts[0].isBlank() && parts[0].trim().matches("^[A-Z0-9]{9,12}$")) {
+            mpesaRef = parts[0].trim();
+        } else {
+            // Use TransactionReference as mpesaRef fallback
+            mpesaRef = t.getTransactionReference() != null
+                    ? t.getTransactionReference() : t.getTransactionId();
+        }
 
         if (coopTransactionRepository.existsByMpesaRef(mpesaRef)) {
             log.debug("CoopEventNormalizer: duplicate mini-statement mpesaRef={} — skipping", mpesaRef);
@@ -224,9 +233,6 @@ public class CoopEventNormalizer {
         double debit   = t.getDebitAmount()  != null ? t.getDebitAmount()  : 0.0;
         BigDecimal amount = BigDecimal.valueOf(isCredit ? credit : debit);
 
-        // Parse narration: "REF~SACCO_NAME~SENDER_PHONE~..."
-        String narration = t.getNarration() != null ? t.getNarration() : "";
-        String[] parts   = narration.split("~");
         String phone     = null;
         String accountRef = null;
 

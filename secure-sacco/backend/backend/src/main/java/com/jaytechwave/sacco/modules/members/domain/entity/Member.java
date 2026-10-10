@@ -48,7 +48,6 @@ public class Member {
     @Column(name = "national_id", length = 512)
     private String nationalId;
 
-    @Convert(converter = PiiSearchHashConverter.class)
     @Column(name = "national_id_hash", length = 88)
     private String nationalIdHash;
 
@@ -56,7 +55,6 @@ public class Member {
     @Column(name = "phone_number", length = 512)
     private String phoneNumber;
 
-    @Convert(converter = PiiSearchHashConverter.class)
     @Column(name = "phone_number_hash", length = 88)
     private String phoneNumberHash;
 

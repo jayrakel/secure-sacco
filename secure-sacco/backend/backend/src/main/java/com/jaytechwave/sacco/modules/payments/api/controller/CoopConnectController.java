@@ -548,13 +548,22 @@ public class CoopConnectController {
 
             if ("CR".equals(tx.getTransactionType()) && !tx.isSavingsCredited()) {
                 java.time.LocalDateTime valueDate = tx.getValueDate() != null ? tx.getValueDate() : tx.getCreatedAt();
-                String ref = tx.getMpesaRef() != null ? tx.getMpesaRef() : tx.getCoopTransactionId();
+                String baseRef = tx.getMpesaRef() != null ? tx.getMpesaRef() : tx.getCoopTransactionId();
                 
+                // Reverse the suspense entry that was created when the IPN was initially unmatched
+                journalEntryService.reverseNonMemberBankCredit(tx.getAmount(), baseRef, valueDate.toLocalDate());
+
+                int allocIndex = 1;
+                boolean multipleAllocations = request.getAllocations().size() > 1;
+
                 for (var allocation : request.getAllocations()) {
+                    String ref = multipleAllocations ? baseRef + "-" + allocIndex : baseRef;
+                    allocIndex++;
+
                     switch (allocation.getDestination().toUpperCase()) {
                         case "SAVINGS" -> {
                             savingsService.processMpesaPaybillDeposit(
-                                    memberId, allocation.getAmount(), tx.getMpesaRef(), tx.getSenderPhone(), valueDate);
+                                    memberId, allocation.getAmount(), ref, tx.getSenderPhone(), valueDate);
                         }
                         case "LOAN" -> {
                             if (allocation.getLoanId() == null) {
